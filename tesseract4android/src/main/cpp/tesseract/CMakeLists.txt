@@ -95,6 +95,9 @@ include_directories(${TESS_PATH}wordrec)
 
 # Define preprocessor constants
 add_definitions(-DHAVE_CONFIG_H)
+# NOTE: We can't use ANDROID_BUILD, because otherwise it disables LSTM and during that breaks whole build
+#add_definitions(-DANDROID_BUILD)
+add_definitions(-DGRAPHICS_DISABLED)
 
 # Specifies libraries CMake should link to your target library. You
 # can link multiple libraries, such as libraries you define in this
