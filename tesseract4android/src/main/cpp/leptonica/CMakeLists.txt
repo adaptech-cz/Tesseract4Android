@@ -37,6 +37,9 @@ add_definitions(-DHAVE_LIBJPEG=1)
 add_definitions(-DHAVE_LIBPNG=1)
 add_definitions(-DHAVE_LIBZ=1)
 
+# Ignore some warnings during build
+target_compile_options(leptonica PRIVATE "-Wno-address-of-packed-member")
+
 # Specifies libraries CMake should link to your target library. You
 # can link multiple libraries, such as libraries you define in this
 # build script, prebuilt third-party libraries, or system libraries.

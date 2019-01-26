@@ -99,6 +99,9 @@ add_definitions(-DHAVE_CONFIG_H)
 #add_definitions(-DANDROID_BUILD)
 add_definitions(-DGRAPHICS_DISABLED)
 
+# Ignore some warnings during build
+target_compile_options(tesseract PRIVATE "-Wno-null-dereference")
+
 # Specifies libraries CMake should link to your target library. You
 # can link multiple libraries, such as libraries you define in this
 # build script, prebuilt third-party libraries, or system libraries.
