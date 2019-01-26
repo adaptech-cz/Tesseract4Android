@@ -13,6 +13,20 @@ cmake_minimum_required(VERSION 3.4.1)
 set(TESS_PATH "src/src/")
 set(LEPT_PATH "../leptonica/src/src/")
 
+# NOTE: When updating Tesseract sources, update this version number correspondingly
+set(GENERIC_MAJOR_VERSION 4)
+set(GENERIC_MINOR_VERSION 0)
+set(GENERIC_MICRO_VERSION 0)
+set(PACKAGE_VERSION "${GENERIC_MAJOR_VERSION}.${GENERIC_MINOR_VERSION}.${GENERIC_MICRO_VERSION}")
+
+configure_file(
+        ${TESS_PATH}api/tess_version.h.in
+        ${CMAKE_CURRENT_SOURCE_DIR}/${TESS_PATH}api/tess_version.h @ONLY)
+
+configure_file(
+        config_auto.h.in
+        ${CMAKE_CURRENT_SOURCE_DIR}/${TESS_PATH}api/config_auto.h @ONLY)
+
 file(GLOB tesseract_src
         ${TESS_PATH}api/*.cpp
         ${TESS_PATH}arch/*.cpp
@@ -72,6 +86,9 @@ include_directories(${TESS_PATH}opencl)
 include_directories(${TESS_PATH}textord)
 include_directories(${TESS_PATH}viewer)
 include_directories(${TESS_PATH}wordrec)
+
+# Define preprocessor constants
+add_definitions(-DHAVE_CONFIG_H)
 
 # Specifies libraries CMake should link to your target library. You
 # can link multiple libraries, such as libraries you define in this
