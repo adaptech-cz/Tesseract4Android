@@ -1,0 +1,115 @@
+# For more information about using CMake with Android Studio, read the
+# documentation: https://d.android.com/studio/projects/add-native-code.html
+
+# Sets the minimum version of CMake required to build the native library.
+
+cmake_minimum_required(VERSION 3.4.1)
+
+# Creates and names a library, sets it as either STATIC
+# or SHARED, and provides the relative paths to its source code.
+# You can define multiple libraries, and CMake builds them for you.
+# Gradle automatically packages shared libraries with your APK.
+
+set(TESS_PATH "src/src/")
+set(LEPT_PATH "../leptonica/src/src/")
+
+# NOTE: When updating Tesseract sources, update this version number correspondingly
+set(GENERIC_MAJOR_VERSION 4)
+set(GENERIC_MINOR_VERSION 0)
+set(GENERIC_MICRO_VERSION 0)
+set(PACKAGE_VERSION "${GENERIC_MAJOR_VERSION}.${GENERIC_MINOR_VERSION}.${GENERIC_MICRO_VERSION}")
+
+configure_file(
+        ${TESS_PATH}api/tess_version.h.in
+        ${CMAKE_CURRENT_SOURCE_DIR}/${TESS_PATH}api/tess_version.h @ONLY)
+
+configure_file(
+        config_auto.h.in
+        ${CMAKE_CURRENT_SOURCE_DIR}/${TESS_PATH}api/config_auto.h @ONLY)
+
+file(GLOB tesseract_src
+        ${TESS_PATH}api/*.cpp
+        ${TESS_PATH}arch/*.cpp
+        ${TESS_PATH}ccmain/*.cpp
+        ${TESS_PATH}ccstruct/*.cpp
+        ${TESS_PATH}ccutil/*.cpp
+        ${TESS_PATH}classify/*.cpp
+        ${TESS_PATH}cutil/*.cpp
+        ${TESS_PATH}dict/*.cpp
+        ${TESS_PATH}lstm/*.cpp
+        ${TESS_PATH}opencl/*.cpp
+        ${TESS_PATH}textord/*.cpp
+        ${TESS_PATH}viewer/*.cpp
+        ${TESS_PATH}wordrec/*.cpp
+        )
+
+file(GLOB tesseract_hdr
+        ${TESS_PATH}api/*.h
+        ${TESS_PATH}arch/*.h
+        ${TESS_PATH}ccmain/*.h
+        ${TESS_PATH}ccstruct/*.h
+        ${TESS_PATH}ccutil/*.h
+        ${TESS_PATH}classify/*.h
+        ${TESS_PATH}cutil/*.h
+        ${TESS_PATH}dict/*.h
+        ${TESS_PATH}lstm/*.h
+        ${TESS_PATH}opencl/*.h
+        ${TESS_PATH}textord/*.h
+        ${TESS_PATH}viewer/*.h
+        ${TESS_PATH}wordrec/*.h
+        )
+
+# Explicitly remove some unwanted files
+list(REMOVE_ITEM tesseract_src "${CMAKE_CURRENT_SOURCE_DIR}/${TESS_PATH}api/tesseractmain.cpp")
+# Remove fileio as it contains unsupported glob/globfree functions and is used only for training anyway
+list(REMOVE_ITEM tesseract_src "${CMAKE_CURRENT_SOURCE_DIR}/${TESS_PATH}ccutil/fileio.cpp")
+list(REMOVE_ITEM tesseract_hdr "${CMAKE_CURRENT_SOURCE_DIR}/${TESS_PATH}ccutil/fileio.h")
+
+add_library( # Sets the name of the library.
+        tesseract
+
+        # Sets the library as a shared library.
+        SHARED
+
+        # Provides a relative path to your source file(s).
+        ${tesseract_src}
+        ${tesseract_hdr}
+        )
+
+# Specifies a path to native header files.
+include_directories(${LEPT_PATH})
+
+include_directories(${TESS_PATH}api)
+include_directories(${TESS_PATH}arch)
+include_directories(${TESS_PATH}ccmain)
+include_directories(${TESS_PATH}ccstruct)
+include_directories(${TESS_PATH}ccutil)
+include_directories(${TESS_PATH}classify)
+include_directories(${TESS_PATH}cutil)
+include_directories(${TESS_PATH}dict)
+include_directories(${TESS_PATH}lstm)
+include_directories(${TESS_PATH}opencl)
+include_directories(${TESS_PATH}textord)
+include_directories(${TESS_PATH}viewer)
+include_directories(${TESS_PATH}wordrec)
+
+# Define preprocessor constants
+add_definitions(-DHAVE_CONFIG_H)
+# NOTE: We can't use ANDROID_BUILD, because otherwise it disables LSTM and during that breaks whole build
+#add_definitions(-DANDROID_BUILD)
+add_definitions(-DGRAPHICS_DISABLED)
+
+# Specifies libraries CMake should link to your target library. You
+# can link multiple libraries, such as libraries you define in this
+# build script, prebuilt third-party libraries, or system libraries.
+
+target_link_libraries( # Specifies the target library.
+        tesseract
+
+        # Links the target library to the z library included in the NDK.
+        atomic
+        dl
+        log
+        jnigraphics
+        leptonica
+        )
