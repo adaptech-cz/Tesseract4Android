@@ -60,6 +60,7 @@ file(GLOB tesseract_hdr
         )
 
 # Explicitly remove some unwanted files
+list(REMOVE_ITEM tesseract_src "${CMAKE_CURRENT_SOURCE_DIR}/${TESS_PATH}api/tesseractmain.cpp")
 # Remove fileio as it contains unsupported glob/globfree functions and is used only for training anyway
 list(REMOVE_ITEM tesseract_src "${CMAKE_CURRENT_SOURCE_DIR}/${TESS_PATH}ccutil/fileio.cpp")
 list(REMOVE_ITEM tesseract_hdr "${CMAKE_CURRENT_SOURCE_DIR}/${TESS_PATH}ccutil/fileio.h")
