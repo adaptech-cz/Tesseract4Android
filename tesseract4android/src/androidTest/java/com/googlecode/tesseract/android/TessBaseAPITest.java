@@ -227,6 +227,16 @@ public class TessBaseAPITest  {
     }
 
     @Test
+    public void testGetHOCRText_combined() {
+        testGetHOCRText(DEFAULT_LANGUAGE, TessBaseAPI.OEM_TESSERACT_LSTM_COMBINED);
+    }
+
+    @Test
+    public void testGetHOCRText_lstm() {
+        testGetHOCRText(DEFAULT_LANGUAGE, TessBaseAPI.OEM_LSTM_ONLY);
+    }
+
+    @Test
     public void testGetHOCRText_tesseract() {
         testGetHOCRText(DEFAULT_LANGUAGE, TessBaseAPI.OEM_TESSERACT_ONLY);
     }
@@ -292,6 +302,16 @@ public class TessBaseAPITest  {
         baseApi.end();
         bmp.recycle();
         pixd.recycle();
+    }
+
+    @Test
+    public void testGetUTF8Text_combined() {
+        testGetUTF8Text(DEFAULT_LANGUAGE, TessBaseAPI.OEM_TESSERACT_LSTM_COMBINED);
+    }
+
+    @Test
+    public void testGetUTF8Text_lstm() {
+        testGetUTF8Text(DEFAULT_LANGUAGE, TessBaseAPI.OEM_LSTM_ONLY);
     }
 
     @Test
