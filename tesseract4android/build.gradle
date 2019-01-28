@@ -16,7 +16,7 @@ android {
 		ndk {
 			// Specify the ABI configurations that Gradle should build and package.
 			// By default it compiles all available ABIs.
-			//abiFilters 'x86', 'x86_64', 'armeabi', 'armeabi-v7a', 'arm64-v8a'
+			//abiFilters 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
 		}
 	}
 	buildTypes {
