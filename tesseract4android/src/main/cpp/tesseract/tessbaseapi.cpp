@@ -624,7 +624,7 @@ void Java_com_googlecode_tesseract_android_TessBaseAPI_nativeReadConfigFile(JNIE
 }
 
 jlong Java_com_googlecode_tesseract_android_TessPdfRenderer_nativeCreate(JNIEnv *env,
-                                                                         jobject thiz,
+                                                                         jclass type,
                                                                          jlong jTessBaseApi,
                                                                          jstring outputPath) {
   native_data_t *nat = (native_data_t*) jTessBaseApi;
@@ -638,7 +638,7 @@ jlong Java_com_googlecode_tesseract_android_TessPdfRenderer_nativeCreate(JNIEnv 
 }
 
 void Java_com_googlecode_tesseract_android_TessPdfRenderer_nativeRecycle(JNIEnv *env,
-                                                                         jobject thiz,
+                                                                         jclass type,
                                                                          jlong jPointer) {
   tesseract::TessPDFRenderer* renderer = (tesseract::TessPDFRenderer*) jPointer;
   delete renderer;
