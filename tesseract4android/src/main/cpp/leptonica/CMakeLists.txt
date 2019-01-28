@@ -15,6 +15,7 @@ set(JPEG_PATH "../libjpeg/src/")
 set(PNG_PATH "../libpng/src/")
 
 file(GLOB leptonica_src "${LEPT_PATH}*.c")
+file(GLOB leptonica_hdr "${LEPT_PATH}*.h")
 
 add_library( # Sets the name of the library.
         leptonica
@@ -24,6 +25,7 @@ add_library( # Sets the name of the library.
 
         # Provides a relative path to your source file(s).
         ${leptonica_src}
+        ${leptonica_hdr}
         )
 
 # Specifies a path to native header files.
