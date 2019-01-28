@@ -23,7 +23,7 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
       LOGE("ERROR: GetEnv failed\n");
       return -1;
   }
-  assert(env != NULL);
+  assert(env != nullptr);
 
   return JNI_VERSION_1_6;
 }

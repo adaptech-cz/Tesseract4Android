@@ -15,7 +15,7 @@
  */
 
 #include "common.h"
-#include <string.h>
+#include <cstring>
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,7 +33,7 @@ jlong Java_com_googlecode_leptonica_android_Pix_nativeCreateFromData(JNIEnv *env
                                                                      jint h, jint d) {
   PIX *pix = pixCreateNoInit((l_int32) w, (l_int32) h, (l_int32) d);
 
-  jbyte *data_buffer = env->GetByteArrayElements(data, NULL);
+  jbyte *data_buffer = env->GetByteArrayElements(data, nullptr);
   l_uint8 *byte_buffer = (l_uint8 *) data_buffer;
 
   size_t size = 4 * pixGetWpl(pix) * pixGetHeight(pix);
@@ -50,9 +50,9 @@ jbyteArray Java_com_googlecode_leptonica_android_Pix_nativeGetData(JNIEnv *env, 
   size_t size = 4 * pixGetWpl(pix) * pixGetHeight(pix);
 
   jbyteArray result = env->NewByteArray(size);
-  if (result == NULL) {
+  if (result == nullptr) {
     LOGE("Cannot allocate JNI Byte Array");
-    return NULL;
+    return nullptr;
   }
 
   env->SetByteArrayRegion(result, 0, size, (jbyte *)pixGetData(pix));
@@ -69,7 +69,7 @@ jlong Java_com_googlecode_leptonica_android_Pix_nativeClone(JNIEnv *env, jclass 
 
 jlong Java_com_googlecode_leptonica_android_Pix_nativeCopy(JNIEnv *env, jclass clazz, jlong nativePix) {
   PIX *pixs = (PIX *) nativePix;
-  PIX *pixd = pixCopy(NULL, pixs);
+  PIX *pixd = pixCopy(nullptr, pixs);
 
   return (jlong) pixd;
 }
@@ -96,7 +96,7 @@ jboolean Java_com_googlecode_leptonica_android_Pix_nativeGetDimensions(JNIEnv *e
                                                                        jlong nativePix,
                                                                        jintArray dimensions) {
   PIX *pix = (PIX *) nativePix;
-  jint *dimensionArray = env->GetIntArrayElements(dimensions, NULL);
+  jint *dimensionArray = env->GetIntArrayElements(dimensions, nullptr);
   l_int32 w, h, d;
 
   if (pixGetDimensions(pix, &w, &h, &d)) {

@@ -16,7 +16,7 @@
 
 #include "common.h"
 
-#include <string.h>
+#include <cstring>
 #include <android/bitmap.h>
 
 #ifdef __cplusplus
@@ -36,7 +36,7 @@ jlong Java_com_googlecode_leptonica_android_AdaptiveMap_nativeBackgroundNormMorp
   // Normalizes the background of each element in pixa.
 
   PIX *pixs = (PIX *) nativePix;
-  PIX *pixd = pixBackgroundNormMorph(pixs, NULL, (l_int32) reduction, (l_int32) size,
+  PIX *pixd = pixBackgroundNormMorph(pixs, nullptr, (l_int32) reduction, (l_int32) size,
                                      (l_int32) bgval);
 
   return jlong(pixd);
@@ -52,7 +52,7 @@ jlong Java_com_googlecode_leptonica_android_AdaptiveMap_nativePixContrastNorm(JN
                                                                               jint smoothY) {
 
   PIX *pixs = (PIX *) nativePix;
-  PIX *pixd = pixContrastNorm(NULL, pixs, (l_int32) sizeX, (l_int32) sizeY,
+  PIX *pixd = pixContrastNorm(nullptr, pixs, (l_int32) sizeX, (l_int32) sizeY,
                                      (l_int32) minDiff, (l_int32) smoothX, (l_int32) smoothY);
 
   return jlong(pixd);
@@ -75,7 +75,7 @@ jlong Java_com_googlecode_leptonica_android_Binarize_nativeOtsuAdaptiveThreshold
   PIX *pixd;
 
   if (pixOtsuAdaptiveThreshold(pixs, (l_int32) sizeX, (l_int32) sizeY, (l_int32) smoothX,
-                               (l_int32) smoothY, (l_float32) scoreFract, NULL, &pixd)) {
+                               (l_int32) smoothY, (l_float32) scoreFract, nullptr, &pixd)) {
     return (jlong) 0;
   }
 
@@ -94,7 +94,7 @@ jlong Java_com_googlecode_leptonica_android_Binarize_nativeSauvolaBinarizeTiled(
   PIX *pixd;
 
   if (pixSauvolaBinarizeTiled(pixs, (l_int32) whsize, (l_float32) factor, (l_int32) nx,
-                               (l_int32) ny, NULL, &pixd)) {
+                               (l_int32) ny, nullptr, &pixd)) {
     return (jlong) 0;
   }
 
@@ -111,7 +111,7 @@ jlong Java_com_googlecode_leptonica_android_Clip_nativeClipRectangle(JNIEnv *env
   PIX *pixs = (PIX *) nativePix;
   BOX *box = (BOX *) nativeBox;
   PIX *pixd;
-  pixd = pixClipRectangle(pixs,box,NULL);
+  pixd = pixClipRectangle(pixs,box, nullptr);
   return jlong(pixd);
 }
 
@@ -184,7 +184,7 @@ jbyteArray Java_com_googlecode_leptonica_android_JpegIO_nativeCompressToJpeg(JNI
   if (pixWriteMemJpeg(&data, &size, pix, (l_int32) quality, progressive == JNI_TRUE ? 1 : 0)) {
     LOGE("Failed to write JPEG data");
 
-    return NULL;
+    return nullptr;
   }
 
   // TODO Can we just use the byte array directly?

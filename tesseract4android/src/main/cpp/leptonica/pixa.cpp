@@ -37,7 +37,7 @@ jlong Java_com_googlecode_leptonica_android_Pixa_nativeCopy(JNIEnv *env, jclass 
 jlong Java_com_googlecode_leptonica_android_Pixa_nativeSort(JNIEnv *env, jclass clazz,
                                                             jlong nativePixa, jint field, jint order) {
   PIXA *pixas = (PIXA *) nativePixa;
-  PIXA *pixad = pixaSort(pixas, field, order, NULL, L_CLONE);
+  PIXA *pixad = pixaSort(pixas, field, order, nullptr, L_CLONE);
 
   return (jlong) pixad;
 }
@@ -154,8 +154,8 @@ jboolean Java_com_googlecode_leptonica_android_Pixa_nativeWriteToFileRandomCmap(
   PIX *pixtemp;
   PIXA *pixa = (PIXA *) nativePixa;
 
-  const char *c_fileName = env->GetStringUTFChars(fileName, NULL);
-  if (c_fileName == NULL) {
+  const char *c_fileName = env->GetStringUTFChars(fileName, nullptr);
+  if (c_fileName == nullptr) {
     LOGE("could not extract fileName string!");
     return JNI_FALSE;
   }
@@ -195,7 +195,7 @@ jboolean Java_com_googlecode_leptonica_android_Pixa_nativeGetBoxGeometry(JNIEnv 
                                                                          jint index,
                                                                          jintArray dimensions) {
   PIXA *pixa = (PIXA *) nativePixa;
-  jint *dimensionArray = env->GetIntArrayElements(dimensions, NULL);
+  jint *dimensionArray = env->GetIntArrayElements(dimensions, nullptr);
   l_int32 x, y, w, h;
 
   if (pixaGetBoxGeometry(pixa, (l_int32) index, &x, &y, &w, &h)) {

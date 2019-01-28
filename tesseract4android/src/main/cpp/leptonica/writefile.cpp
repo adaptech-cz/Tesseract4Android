@@ -16,7 +16,7 @@
 
 #include "common.h"
 
-#include <string.h>
+#include <cstring>
 #include <android/bitmap.h>
 
 #ifdef __cplusplus
@@ -34,8 +34,8 @@ jint Java_com_googlecode_leptonica_android_WriteFile_nativeWriteBytes8(JNIEnv *e
   PIX *pix = (PIX *) nativePix;
   pixGetDimensions(pix, &w, &h, &d);
 
-  l_uint8 **lineptrs = pixSetupByteProcessing(pix, NULL, NULL);
-  jbyte *data_buffer = env->GetByteArrayElements(data, NULL);
+  l_uint8 **lineptrs = pixSetupByteProcessing(pix, nullptr, nullptr);
+  jbyte *data_buffer = env->GetByteArrayElements(data, nullptr);
   l_uint8 *byte_buffer = (l_uint8 *) data_buffer;
 
   for (int i = 0; i < h; i++) {
@@ -54,8 +54,8 @@ jboolean Java_com_googlecode_leptonica_android_WriteFile_nativeWriteImpliedForma
                                                                                   jstring fileName) {
   PIX *pixs = (PIX *) nativePix;
 
-  const char *c_fileName = env->GetStringUTFChars(fileName, NULL);
-  if (c_fileName == NULL) {
+  const char *c_fileName = env->GetStringUTFChars(fileName, nullptr);
+  if (c_fileName == nullptr) {
     LOGE("could not extract fileName string!");
     return JNI_FALSE;
   }

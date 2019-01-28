@@ -31,7 +31,7 @@ jboolean Java_com_googlecode_leptonica_android_Boxa_nativeGetGeometry(JNIEnv *en
                                                                      jint index,
                                                                      jintArray dimensions) {
   BOXA *boxa = (BOXA *) nativeBoxa;
-  jint *dimensionArray = env->GetIntArrayElements(dimensions, NULL);
+  jint *dimensionArray = env->GetIntArrayElements(dimensions, nullptr);
   l_int32 x, y, w, h;
 
   if (boxaGetBoxGeometry(boxa,index,  &x, &y, &w, &h)) {

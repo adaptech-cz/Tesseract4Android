@@ -18,7 +18,7 @@
 #define LEPTONICA_JNI_COMMON_H
 
 #include <jni.h>
-#include <assert.h>
+#include <cassert>
 #include <allheaders.h>
 #include <android/log.h>
 #include <asm/byteorder.h>

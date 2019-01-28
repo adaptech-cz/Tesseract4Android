@@ -64,7 +64,7 @@ jboolean Java_com_googlecode_leptonica_android_Box_nativeGetGeometry(JNIEnv *env
                                                                      jlong nativeBox,
                                                                      jintArray dimensions) {
   BOX *box = (BOX *) nativeBox;
-  jint *dimensionArray = env->GetIntArrayElements(dimensions, NULL);
+  jint *dimensionArray = env->GetIntArrayElements(dimensions, nullptr);
   l_int32 x, y, w, h;
 
   if (boxGetGeometry(box, &x, &y, &w, &h)) {

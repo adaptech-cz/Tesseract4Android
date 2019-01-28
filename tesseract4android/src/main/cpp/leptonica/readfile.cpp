@@ -16,7 +16,7 @@
 
 #include "common.h"
 
-#include <string.h>
+#include <cstring>
 #include <android/bitmap.h>
 
 #ifdef __cplusplus
@@ -29,7 +29,7 @@ extern "C" {
 
 jlong Java_com_googlecode_leptonica_android_ReadFile_nativeReadMem(JNIEnv *env, jclass clazz,
                                                                    jbyteArray image, jint length) {
-  jbyte *image_buffer = env->GetByteArrayElements(image, NULL);
+  jbyte *image_buffer = env->GetByteArrayElements(image, nullptr);
   int buffer_length = env->GetArrayLength(image);
 
   PIX *pix = pixReadMem((const l_uint8 *) image_buffer, buffer_length);
@@ -43,8 +43,8 @@ jlong Java_com_googlecode_leptonica_android_ReadFile_nativeReadBytes8(JNIEnv *en
                                                                       jbyteArray data, jint w,
                                                                       jint h) {
   PIX *pix = pixCreateNoInit((l_int32) w, (l_int32) h, 8);
-  l_uint8 **lineptrs = pixSetupByteProcessing(pix, NULL, NULL);
-  jbyte *data_buffer = env->GetByteArrayElements(data, NULL);
+  l_uint8 **lineptrs = pixSetupByteProcessing(pix, nullptr, nullptr);
+  jbyte *data_buffer = env->GetByteArrayElements(data, nullptr);
   l_uint8 *byte_buffer = (l_uint8 *) data_buffer;
 
   for (int i = 0; i < h; i++) {
@@ -79,8 +79,8 @@ jboolean Java_com_googlecode_leptonica_android_ReadFile_nativeReplaceBytes8(JNIE
     return JNI_FALSE;
   }
 
-  l_uint8 **lineptrs = pixSetupByteProcessing(pix, NULL, NULL);
-  jbyte *data_buffer = env->GetByteArrayElements(data, NULL);
+  l_uint8 **lineptrs = pixSetupByteProcessing(pix, nullptr, nullptr);
+  jbyte *data_buffer = env->GetByteArrayElements(data, nullptr);
   l_uint8 *byte_buffer = (l_uint8 *) data_buffer;
 
   for (int i = 0; i < h; i++) {
@@ -95,10 +95,10 @@ jboolean Java_com_googlecode_leptonica_android_ReadFile_nativeReplaceBytes8(JNIE
 
 jlong Java_com_googlecode_leptonica_android_ReadFile_nativeReadFile(JNIEnv *env, jclass clazz,
                                                                     jstring fileName) {
-  PIX *pixd = NULL;
+  PIX *pixd = nullptr;
 
-  const char *c_fileName = env->GetStringUTFChars(fileName, NULL);
-  if (c_fileName == NULL) {
+  const char *c_fileName = env->GetStringUTFChars(fileName, nullptr);
+  if (c_fileName == nullptr) {
     LOGE("could not extract fileName string!");
     return (jlong) NULL;
   }

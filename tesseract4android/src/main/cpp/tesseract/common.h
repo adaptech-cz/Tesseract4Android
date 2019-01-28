@@ -19,7 +19,7 @@
 
 #include <jni.h>
 #include <android/log.h>
-#include <assert.h>
+#include <cassert>
 
 #define LOG_TAG "Tesseract(native)"
 #define LOGV(...) __android_log_print(ANDROID_LOG_VERBOSE, LOG_TAG, __VA_ARGS__)
