@@ -29,9 +29,9 @@ import java.io.File;
  */
 public class ReadFile {
     static {
-        System.loadLibrary("jpgt");
-        System.loadLibrary("pngt");
-        System.loadLibrary("lept");
+        System.loadLibrary("jpg");
+        System.loadLibrary("png");
+        System.loadLibrary("leptonica");
     }
 
     private static final String LOG_TAG = ReadFile.class.getSimpleName();

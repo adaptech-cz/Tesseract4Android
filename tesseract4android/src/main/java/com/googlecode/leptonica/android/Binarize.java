@@ -26,9 +26,9 @@ import androidx.annotation.FloatRange;
 @SuppressWarnings("WeakerAccess")
 public class Binarize {
     static {
-        System.loadLibrary("jpgt");
-        System.loadLibrary("pngt");
-        System.loadLibrary("lept");
+        System.loadLibrary("jpg");
+        System.loadLibrary("png");
+        System.loadLibrary("leptonica");
     }
 
     // Otsu thresholding constants

@@ -32,9 +32,9 @@ import androidx.annotation.IntRange;
 @SuppressWarnings("WeakerAccess")
 public class JpegIO {
     static {
-        System.loadLibrary("jpgt");
-        System.loadLibrary("pngt");
-        System.loadLibrary("lept");
+        System.loadLibrary("jpg");
+        System.loadLibrary("png");
+        System.loadLibrary("leptonica");
     }
 
     /** Default quality is 85%, which is reasonably good. */

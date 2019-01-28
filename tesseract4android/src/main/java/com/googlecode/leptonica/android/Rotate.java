@@ -24,9 +24,9 @@ import androidx.annotation.IntRange;
 @SuppressWarnings("WeakerAccess")
 public class Rotate {
     static {
-        System.loadLibrary("jpgt");
-        System.loadLibrary("pngt");
-        System.loadLibrary("lept");
+        System.loadLibrary("jpg");
+        System.loadLibrary("png");
+        System.loadLibrary("leptonica");
     }
 
     // Rotation default

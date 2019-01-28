@@ -29,9 +29,9 @@ import androidx.annotation.Size;
 @SuppressWarnings("WeakerAccess")
 public class Pix {
     static {
-        System.loadLibrary("jpgt");
-        System.loadLibrary("pngt");
-        System.loadLibrary("lept");
+        System.loadLibrary("jpg");
+        System.loadLibrary("png");
+        System.loadLibrary("leptonica");
     }
 
     /** Index of the image width within the dimensions array. */

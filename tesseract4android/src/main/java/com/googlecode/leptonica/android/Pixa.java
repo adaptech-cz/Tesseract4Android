@@ -34,9 +34,9 @@ import androidx.annotation.Size;
 @SuppressWarnings("WeakerAccess")
 public class Pixa implements Iterable<Pix> {
     static {
-        System.loadLibrary("jpgt");
-        System.loadLibrary("pngt");
-        System.loadLibrary("lept");
+        System.loadLibrary("jpg");
+        System.loadLibrary("png");
+        System.loadLibrary("leptonica");
     }
 
     private static final String TAG = Pixa.class.getSimpleName();

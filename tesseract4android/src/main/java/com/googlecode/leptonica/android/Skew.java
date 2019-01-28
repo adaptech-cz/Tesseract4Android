@@ -24,9 +24,9 @@ package com.googlecode.leptonica.android;
 @SuppressWarnings("WeakerAccess")
 public class Skew {
     static {
-        System.loadLibrary("jpgt");
-        System.loadLibrary("pngt");
-        System.loadLibrary("lept");
+        System.loadLibrary("jpg");
+        System.loadLibrary("png");
+        System.loadLibrary("leptonica");
     }
 
     // Text alignment defaults

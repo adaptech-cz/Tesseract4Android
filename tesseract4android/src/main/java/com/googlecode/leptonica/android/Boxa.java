@@ -29,9 +29,9 @@ import androidx.annotation.Size;
 @SuppressWarnings("WeakerAccess")
 public class Boxa {
     static {
-        System.loadLibrary("jpgt");
-        System.loadLibrary("pngt");
-        System.loadLibrary("lept");
+        System.loadLibrary("jpg");
+        System.loadLibrary("png");
+        System.loadLibrary("leptonica");
     }
 
     private static final String TAG = Boxa.class.getSimpleName();
