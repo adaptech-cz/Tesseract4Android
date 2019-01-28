@@ -204,6 +204,8 @@ TessBaseAPI::TessBaseAPI()
       rect_height_(0),
       image_width_(0),
       image_height_(0) {
+// Tesseract4Android: Android doesn't support setting locale, calling that will result in crash.
+#ifndef ANDROID
   const char *locale;
   locale = std::setlocale(LC_ALL, nullptr);
   ASSERT_HOST(!strcmp(locale, "C"));
@@ -211,6 +213,7 @@ TessBaseAPI::TessBaseAPI()
   ASSERT_HOST(!strcmp(locale, "C"));
   locale = std::setlocale(LC_NUMERIC, nullptr);
   ASSERT_HOST(!strcmp(locale, "C"));
+#endif
 }
 
 TessBaseAPI::~TessBaseAPI() {
