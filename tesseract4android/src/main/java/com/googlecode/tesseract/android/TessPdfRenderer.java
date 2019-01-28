@@ -27,10 +27,10 @@ public class TessPdfRenderer {
     private final long mNativePdfRenderer;
 
     static {
-        System.loadLibrary("jpgt");
-        System.loadLibrary("pngt");
-        System.loadLibrary("lept");
-        System.loadLibrary("tess");
+        System.loadLibrary("jpg");
+        System.loadLibrary("png");
+        System.loadLibrary("leptonica");
+        System.loadLibrary("tesseract");
     }
 
     private boolean mRecycled;

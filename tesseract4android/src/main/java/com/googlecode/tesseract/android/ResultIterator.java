@@ -33,10 +33,10 @@ import com.googlecode.tesseract.android.TessBaseAPI.PageIteratorLevel;
  */
 public class ResultIterator extends PageIterator {
     static {
-        System.loadLibrary("jpgt");
-        System.loadLibrary("pngt");
-        System.loadLibrary("lept");
-        System.loadLibrary("tess");
+        System.loadLibrary("jpg");
+        System.loadLibrary("png");
+        System.loadLibrary("leptonica");
+        System.loadLibrary("tesseract");
     }
 
     /** Pointer to native result iterator. */

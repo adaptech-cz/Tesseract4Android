@@ -47,10 +47,10 @@ public class TessBaseAPI {
     private long mNativeData;
 
     static {
-        System.loadLibrary("jpgt");
-        System.loadLibrary("pngt");
-        System.loadLibrary("lept");
-        System.loadLibrary("tess");
+        System.loadLibrary("jpg");
+        System.loadLibrary("png");
+        System.loadLibrary("leptonica");
+        System.loadLibrary("tesseract");
 
         nativeClassInit();
     }
