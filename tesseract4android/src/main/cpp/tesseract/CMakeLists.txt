@@ -74,6 +74,10 @@ add_library( # Sets the name of the library.
         # Provides a relative path to your source file(s).
         ${tesseract_src}
         ${tesseract_hdr}
+        pageiterator.cpp
+        resultiterator.cpp
+        tessbaseapi.cpp
+        common.h
         )
 
 # Specifies a path to native header files.
