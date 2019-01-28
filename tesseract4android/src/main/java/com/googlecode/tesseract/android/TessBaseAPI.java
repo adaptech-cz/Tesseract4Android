@@ -19,8 +19,6 @@ package com.googlecode.tesseract.android;
 
 import android.graphics.Bitmap;
 import android.graphics.Rect;
-import android.support.annotation.IntDef;
-import android.support.annotation.WorkerThread;
 
 import com.googlecode.leptonica.android.Pix;
 import com.googlecode.leptonica.android.Pixa;
@@ -28,6 +26,9 @@ import com.googlecode.leptonica.android.ReadFile;
 
 import java.io.File;
 import java.lang.annotation.Retention;
+
+import androidx.annotation.IntDef;
+import androidx.annotation.WorkerThread;
 
 import static java.lang.annotation.RetentionPolicy.SOURCE;
 
