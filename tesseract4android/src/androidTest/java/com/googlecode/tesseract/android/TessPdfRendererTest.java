@@ -59,13 +59,17 @@ public class TessPdfRendererTest  {
         assertTrue(success);
 
         String pdfBasename = "testCreate";
-        
+
         // Attempt to create a TessPdfRenderer instance.
         TessPdfRenderer pdfRenderer = new TessPdfRenderer(baseApi, OUTPUT_PATH
                 + pdfBasename);
 
         pdfRenderer.recycle();
         baseApi.end();
+
+        // Delete created PDF file.
+        //noinspection ResultOfMethodCallIgnored
+        new File(OUTPUT_PATH + pdfBasename + ".pdf").delete();
     }
 
     /**
@@ -119,6 +123,10 @@ public class TessPdfRendererTest  {
         baseApi.end();
         pixOne.recycle();
         pixTwo.recycle();
+
+        // Delete created PDF file.
+        //noinspection ResultOfMethodCallIgnored
+        new File(OUTPUT_PATH + pdfBasename + ".pdf").delete();
     }
 
     private static Pix getTextImage(String text, int width, int height) {
