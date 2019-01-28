@@ -44,8 +44,7 @@ jlong Java_com_googlecode_leptonica_android_Pix_nativeCreateFromData(JNIEnv *env
   return (jlong) pix;
 }
 
-jbyteArray Java_com_googlecode_leptonica_android_Pix_nativeGetData(JNIEnv *env, jclass clazz,
-                                                                   jlong nativePix, jbyteArray data) {
+jbyteArray Java_com_googlecode_leptonica_android_Pix_nativeGetData(JNIEnv *env, jclass clazz, jlong nativePix) {
   PIX *pix = (PIX *) nativePix;
 
   size_t size = 4 * pixGetWpl(pix) * pixGetHeight(pix);
