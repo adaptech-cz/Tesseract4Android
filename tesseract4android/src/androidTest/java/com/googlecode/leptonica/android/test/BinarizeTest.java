@@ -16,8 +16,6 @@
 
 package com.googlecode.leptonica.android.test;
 
-import junit.framework.TestCase;
-
-public class BinarizeTest extends TestCase {
+public class BinarizeTest  {
 
 }

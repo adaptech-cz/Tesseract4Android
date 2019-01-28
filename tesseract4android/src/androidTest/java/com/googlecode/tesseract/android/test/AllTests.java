@@ -21,18 +21,17 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
-import android.support.annotation.NonNull;
-import android.test.suitebuilder.TestSuiteBuilder;
 
 import com.googlecode.leptonica.android.test.ReadFileTest;
 
-import junit.framework.Test;
 import junit.framework.TestSuite;
 
 import java.io.IOException;
 
-import static android.support.test.InstrumentationRegistry.getInstrumentation;
-import static android.support.test.InstrumentationRegistry.getTargetContext;
+import androidx.annotation.NonNull;
+
+import static androidx.test.InstrumentationRegistry.getTargetContext;
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 /**
  * To run all suites found in this apk:
@@ -55,11 +54,11 @@ import static android.support.test.InstrumentationRegistry.getTargetContext;
  *   com.googlecode.tesseract.android.test/android.test.InstrumentationTestRunner
  */
 public class AllTests extends TestSuite {
-    public static Test suite() {
+    /*public static Test suite() {
         return new TestSuiteBuilder(AllTests.class)
                 .includeAllPackagesUnderHere()
                 .build();
-    }
+    }*/
 
     public static void grantPermissions(@NonNull String[] permissions) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {

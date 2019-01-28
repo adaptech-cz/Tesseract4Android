@@ -15,15 +15,18 @@
  */
 package com.googlecode.leptonica.android.test;
 
-import junit.framework.TestCase;
-import android.test.suitebuilder.annotation.SmallTest;
-
 import com.googlecode.leptonica.android.Box;
 import com.googlecode.leptonica.android.Clip;
 import com.googlecode.leptonica.android.Pix;
 
-public class ClipTest extends TestCase {
-    @SmallTest
+import org.junit.Test;
+
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertTrue;
+
+public class ClipTest  {
+    @Test
     public void testClipRectangle() {
         final int newWidth = 100;
         final int newHeight = 75;

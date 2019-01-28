@@ -16,17 +16,18 @@
 
 package com.googlecode.leptonica.android.test;
 
-import android.test.suitebuilder.annotation.SmallTest;
-
 import com.googlecode.leptonica.android.Box;
 import com.googlecode.leptonica.android.Constants;
 import com.googlecode.leptonica.android.Pix;
 import com.googlecode.leptonica.android.Pixa;
 
-import junit.framework.TestCase;
+import org.junit.Test;
 
-public class PixaTest extends TestCase {
-    @SmallTest
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+public class PixaTest  {
+    @Test
     public void testPixaCreate() {
         internalTestPixaCreate(0, 0, 0);
         internalTestPixaCreate(1, 0, 0);
@@ -54,7 +55,7 @@ public class PixaTest extends TestCase {
         pixa.recycle();
     }
 
-    @SmallTest
+    @Test
     public void testPixaCopy() {
         internalTestPixaCopy(0, 0, 0);
         internalTestPixaCopy(5, 0, 0);
@@ -85,7 +86,7 @@ public class PixaTest extends TestCase {
         pixaCopy.recycle();
     }
 
-    @SmallTest
+    @Test
     public void testPixaSort() {
         Pixa pixa = Pixa.createPixa(0);
 
@@ -114,7 +115,7 @@ public class PixaTest extends TestCase {
         pixaSorted.recycle();
     }
 
-    @SmallTest
+    @Test
     public void testPixaJoin() {
         internalTestPixaJoin(0, 0);
         internalTestPixaJoin(1, 0);
@@ -146,7 +147,7 @@ public class PixaTest extends TestCase {
         pixaB.recycle();
     }
 
-//    @SmallTest
+//    @Test
 //    public void testPixaReplacePix() {
 //        Pixa pixa = Pixa.createPixa(0, 640, 480);
 //
@@ -179,7 +180,7 @@ public class PixaTest extends TestCase {
 //        pixa.recycle();
 //    }
 
-    @SmallTest
+    @Test
     public void testPixaMergeAndReplacePix() {
         Pixa pixa = Pixa.createPixa(0, 640, 480);
 

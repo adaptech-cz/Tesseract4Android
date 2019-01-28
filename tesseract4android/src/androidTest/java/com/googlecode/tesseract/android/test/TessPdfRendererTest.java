@@ -16,11 +16,6 @@
 
 package com.googlecode.tesseract.android.test;
 
-import java.io.File;
-import java.io.IOException;
-
-import junit.framework.TestCase;
-
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
@@ -29,7 +24,6 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Paint.Align;
 import android.graphics.Paint.Style;
-import android.test.suitebuilder.annotation.SmallTest;
 
 import com.googlecode.leptonica.android.Pix;
 import com.googlecode.leptonica.android.ReadFile;
@@ -37,15 +31,21 @@ import com.googlecode.leptonica.android.WriteFile;
 import com.googlecode.tesseract.android.TessBaseAPI;
 import com.googlecode.tesseract.android.TessPdfRenderer;
 
-public class TessPdfRendererTest extends TestCase {
+import org.junit.Before;
+import org.junit.Test;
+
+import java.io.File;
+import java.io.IOException;
+
+import static org.junit.Assert.assertTrue;
+
+public class TessPdfRendererTest  {
 
     @SuppressLint("SdCardPath")
     private final static String OUTPUT_PATH = "/sdcard/";
 
-    @Override
+    @Before
     protected void setUp() throws Exception {
-        super.setUp();
-
         // Grant permission to use external storage
         AllTests.grantPermissions(new String[] {
                 Manifest.permission.READ_EXTERNAL_STORAGE,
@@ -53,7 +53,7 @@ public class TessPdfRendererTest extends TestCase {
         });
     }
 
-    @SmallTest
+    @Test
     public void testCreate() {
         // Attempt to initialize the API.
         final TessBaseAPI baseApi = new TessBaseAPI();
@@ -71,7 +71,7 @@ public class TessPdfRendererTest extends TestCase {
         baseApi.end();
     }
 
-    @SmallTest
+    @Test
     public void testAddPageToDocument() throws IOException {
         // Attempt to initialize the API.
         final TessBaseAPI baseApi = new TessBaseAPI();

@@ -16,13 +16,14 @@
 
 package com.googlecode.leptonica.android.test;
 
-import junit.framework.TestCase;
-import android.test.suitebuilder.annotation.SmallTest;
-
 import com.googlecode.leptonica.android.Box;
 
-public class BoxTest extends TestCase {
-    @SmallTest
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+
+public class BoxTest  {
+    @Test
     public void testBoxCreate() {
         testBoxCreate(10, 10, 10, 10);
         testBoxCreate(0, 0, 1, 1);

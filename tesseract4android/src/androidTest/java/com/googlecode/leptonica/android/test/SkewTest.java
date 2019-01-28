@@ -16,14 +16,12 @@
 
 package com.googlecode.leptonica.android.test;
 
-import junit.framework.TestCase;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Paint.Align;
 import android.graphics.Paint.Style;
-import android.test.suitebuilder.annotation.SmallTest;
 
 import com.googlecode.leptonica.android.Convert;
 import com.googlecode.leptonica.android.GrayQuant;
@@ -31,11 +29,16 @@ import com.googlecode.leptonica.android.Pix;
 import com.googlecode.leptonica.android.ReadFile;
 import com.googlecode.leptonica.android.Skew;
 
-public class SkewTest extends TestCase {
+import org.junit.Test;
+
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+public class SkewTest  {
 
     private static final String SENTENCE = "The quick brown fox jumps over the lazy dog.";
 
-    @SmallTest
+    @Test
     public void testFindSkew() {
         testFindSkew(SENTENCE, 640, 480, -15.0f);
         testFindSkew(SENTENCE, 640, 480, 0.0f);

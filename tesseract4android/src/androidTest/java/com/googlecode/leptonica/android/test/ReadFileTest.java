@@ -16,37 +16,41 @@
 
 package com.googlecode.leptonica.android.test;
 
+import android.graphics.Bitmap;
+import android.graphics.Bitmap.CompressFormat;
+
+import com.googlecode.leptonica.android.Pix;
+import com.googlecode.leptonica.android.ReadFile;
+
+import org.junit.Test;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-import junit.framework.TestCase;
-import android.graphics.Bitmap;
-import android.graphics.Bitmap.CompressFormat;
-import android.test.suitebuilder.annotation.SmallTest;
-
-import com.googlecode.leptonica.android.Pix;
-import com.googlecode.leptonica.android.ReadFile;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author alanv@google.com (Alan Viverette)
  */
-public class ReadFileTest extends TestCase {
+public class ReadFileTest  {
 
     private static final String TAG = ReadFileTest.class.getSimpleName();
 
-    @SmallTest
+    @Test
     public void testReadBitmap_1x1() {
         testReadBitmap(1, 1, Bitmap.Config.ARGB_8888);
     }
 
-    @SmallTest
+    @Test
     public void testReadBitmap_100x100() {
         testReadBitmap(100, 100, Bitmap.Config.ARGB_8888);
     }
 
-    @SmallTest
+    @Test
     public void testReadBitmap_640x480() {
         testReadBitmap(640, 480, Bitmap.Config.ARGB_8888);
     }
@@ -65,7 +69,7 @@ public class ReadFileTest extends TestCase {
         pix.recycle();
     }
 
-    @SmallTest
+    @Test
     public void testReadFile_bmp() throws IOException {
         File file = File.createTempFile("testReadFile", ".bmp");
         FileOutputStream fileStream = new FileOutputStream(file);
@@ -87,7 +91,7 @@ public class ReadFileTest extends TestCase {
         pix.recycle();
     }
 
-    @SmallTest
+    @Test
     public void testReadFile_jpg() throws IOException {        
         File file = File.createTempFile("testReadFile", ".jpg");
         FileOutputStream fileStream = new FileOutputStream(file);
@@ -109,7 +113,7 @@ public class ReadFileTest extends TestCase {
         pix.recycle();
     }
 
-    @SmallTest
+    @Test
     public void testReadFile_png() throws IOException {
         File file = File.createTempFile("testReadFile", ".png");
         FileOutputStream fileStream = new FileOutputStream(file);
@@ -131,7 +135,7 @@ public class ReadFileTest extends TestCase {
         pix.recycle();
     }
 
-    @SmallTest
+    @Test
     public void testReadMem_jpg() throws IOException {
         ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
         Bitmap bmp = TestUtils.createTestBitmap(100, 100, Bitmap.Config.RGB_565);
@@ -155,7 +159,7 @@ public class ReadFileTest extends TestCase {
         pix.recycle();
     }
 
-    @SmallTest
+    @Test
     public void testReadMem_png() throws IOException {
         ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
         Bitmap bmp = TestUtils.createTestBitmap(100, 100, Bitmap.Config.RGB_565);

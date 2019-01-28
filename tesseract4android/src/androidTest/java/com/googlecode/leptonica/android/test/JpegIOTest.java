@@ -18,16 +18,17 @@ package com.googlecode.leptonica.android.test;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.test.suitebuilder.annotation.SmallTest;
 
 import com.googlecode.leptonica.android.JpegIO;
 import com.googlecode.leptonica.android.Pix;
 import com.googlecode.leptonica.android.ReadFile;
 
-import junit.framework.TestCase;
+import org.junit.Test;
 
-public class JpegIOTest extends TestCase {
-    @SmallTest
+import static org.junit.Assert.assertEquals;
+
+public class JpegIOTest  {
+    @Test
     public void testCompressToJpeg() {
         testCompressToJpeg(640, 480, 85, true);
         testCompressToJpeg(640, 480, 85, false);

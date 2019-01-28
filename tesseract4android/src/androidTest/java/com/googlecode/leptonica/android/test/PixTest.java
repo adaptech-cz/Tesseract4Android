@@ -16,21 +16,25 @@
 
 package com.googlecode.leptonica.android.test;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-
-import junit.framework.TestCase;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
 import android.graphics.Color;
-import android.test.suitebuilder.annotation.SmallTest;
 
 import com.googlecode.leptonica.android.Pix;
 import com.googlecode.leptonica.android.ReadFile;
 
-public class PixTest extends TestCase {
-    @SmallTest
+import org.junit.Test;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+
+public class PixTest  {
+    @Test
     public void testGetData() throws IOException {
         File file = File.createTempFile("testGetData", ".jpg");
         FileOutputStream fileStream = new FileOutputStream(file);
@@ -45,7 +49,7 @@ public class PixTest extends TestCase {
         pix.recycle();
     }
 
-    @SmallTest
+    @Test
     public void testGetDimensions() {
         int width = 640;
         int height = 480;
@@ -62,7 +66,7 @@ public class PixTest extends TestCase {
                 dimens[Pix.INDEX_D]);
     }
 
-    @SmallTest
+    @Test
     public void testPixClone() {
         Pix pix = new Pix(640, 480, 32);
         Pix pixCopy = pix.clone();
@@ -79,7 +83,7 @@ public class PixTest extends TestCase {
         pixCopy.recycle();
     }
 
-    @SmallTest
+    @Test
     public void testPixCreate() {
         testPixCreate(1, 1, 1);
         testPixCreate(640, 480, 32);
@@ -97,7 +101,7 @@ public class PixTest extends TestCase {
         pix.recycle();
     }
 
-    @SmallTest
+    @Test
     public void testPixPixelOps() {
         Pix pix = new Pix(640, 480, 32);
 

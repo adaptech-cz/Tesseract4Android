@@ -17,22 +17,23 @@
 package com.googlecode.leptonica.android.test;
 
 import android.graphics.Bitmap;
-import android.test.suitebuilder.annotation.SmallTest;
 
 import com.googlecode.leptonica.android.Pix;
 import com.googlecode.leptonica.android.ReadFile;
 import com.googlecode.leptonica.android.Scale;
 
-import junit.framework.TestCase;
+import org.junit.Test;
 
-public class ScaleTest extends TestCase {
-    @SmallTest
+import static org.junit.Assert.assertEquals;
+
+public class ScaleTest  {
+    @Test
     public void testScale() {
         testScale(640, 480, 1.0f, 1.0f);
         testScale(640, 480, 0.5f, 0.25f);
     }
 
-    @SmallTest
+    @Test
     public void testScaleGeneral() {
         testScaleGeneral(640, 480, 1.0f);
         testScaleGeneral(640, 480, 0.5f);

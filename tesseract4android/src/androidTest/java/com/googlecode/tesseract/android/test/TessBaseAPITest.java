@@ -27,7 +27,6 @@ import android.graphics.Paint.Style;
 import android.graphics.Rect;
 import android.os.AsyncTask;
 import android.os.Environment;
-import android.test.suitebuilder.annotation.SmallTest;
 import android.text.Html;
 import android.util.Pair;
 
@@ -39,7 +38,8 @@ import com.googlecode.tesseract.android.TessBaseAPI.PageIteratorLevel;
 import com.googlecode.tesseract.android.TessBaseAPI.ProgressNotifier;
 import com.googlecode.tesseract.android.TessBaseAPI.ProgressValues;
 
-import junit.framework.TestCase;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -47,7 +47,14 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 
-public class TessBaseAPITest extends TestCase {
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+public class TessBaseAPITest  {
     static final String TESSBASE_PATH = Environment.getExternalStorageDirectory().toString();
     static final String DEFAULT_LANGUAGE = "eng";
     private static final String TESSDATA_PATH = TESSBASE_PATH + "/tessdata/";
@@ -65,9 +72,8 @@ public class TessBaseAPITest extends TestCase {
     private static final int DEFAULT_PAGE_SEG_MODE =
             TessBaseAPI.PageSegMode.PSM_SINGLE_BLOCK;
 
+    @Before
     protected void setUp() throws Exception {
-        super.setUp();
-
         // Grant permission to use external storage
         AllTests.grantPermissions(new String[] {
                 Manifest.permission.READ_EXTERNAL_STORAGE,
@@ -95,7 +101,7 @@ public class TessBaseAPITest extends TestCase {
         }
     }
 
-    @SmallTest
+    @Test
     public void testChoiceIterator() {
         final String inputText = "hello";
         final Bitmap bmp = TessBaseAPITest.getTextImage(inputText, 640, 480);
@@ -182,7 +188,7 @@ public class TessBaseAPITest extends TestCase {
         }
     }
 
-    @SmallTest
+    @Test
     public void testClear() {
         final String inputText = "hello";
         final Bitmap bmp = getTextImage(inputText, 640, 480);
@@ -206,7 +212,7 @@ public class TessBaseAPITest extends TestCase {
         bmp.recycle();
     }
 
-    @SmallTest
+    @Test
     public void testEnd() {
         final String inputText = "hello";
         final Bitmap bmp = getTextImage(inputText, 640, 480);
@@ -243,21 +249,21 @@ public class TessBaseAPITest extends TestCase {
         bmp2.recycle();
     }
 
-    //    @SmallTest
+    //    @Test
     //    public void testGetHOCRText_combined() {
     //        checkCubeData();
     //
     //        testGetHOCRText("eng", TessBaseAPI.OEM_TESSERACT_CUBE_COMBINED);
     //    }
     //
-    //    @SmallTest
+    //    @Test
     //    public void testGetHOCRText_cube() {
     //        checkCubeData();
     //
     //        testGetHOCRText("eng", TessBaseAPI.OEM_CUBE_ONLY);
     //    }
 
-    @SmallTest
+    @Test
     public void testGetHOCRText_tesseract() {
         testGetHOCRText(DEFAULT_LANGUAGE, TessBaseAPI.OEM_TESSERACT_ONLY);
     }
@@ -287,7 +293,7 @@ public class TessBaseAPITest extends TestCase {
         bmp.recycle();
     }
 
-    @SmallTest
+    @Test
     public void testGetInitLanguagesAsString() {
         // Attempt to initialize the API.
         final TessBaseAPI baseApi = new TessBaseAPI();
@@ -302,7 +308,7 @@ public class TessBaseAPITest extends TestCase {
         baseApi.end();
     }
 
-    @SmallTest
+    @Test
     public void testGetThresholdedImage() {
         // Attempt to initialize the API.
         final TessBaseAPI baseApi = new TessBaseAPI();
@@ -325,21 +331,21 @@ public class TessBaseAPITest extends TestCase {
         pixd.recycle();
     }
 
-    //    @SmallTest
+    //    @Test
     //    public void testGetUTF8Text_combined() {
     //        checkCubeData();
     //
     //        testGetUTF8Text("eng", TessBaseAPI.OEM_TESSERACT_CUBE_COMBINED);
     //    }
     //
-    //    @SmallTest
+    //    @Test
     //    public void testGetUTF8Text_cube() {
     //        checkCubeData();
     //
     //        testGetUTF8Text("eng", TessBaseAPI.OEM_CUBE_ONLY);
     //    }
 
-    @SmallTest
+    @Test
     public void testGetUTF8Text_tesseract() {
         testGetUTF8Text(DEFAULT_LANGUAGE, TessBaseAPI.OEM_TESSERACT_ONLY);
     }
@@ -416,7 +422,7 @@ public class TessBaseAPITest extends TestCase {
         bmp.recycle();
     }
 
-    @SmallTest
+    @Test
     public void testInit() {
         // Attempt to initialize the API.
         final TessBaseAPI baseApi = new TessBaseAPI();
@@ -427,7 +433,7 @@ public class TessBaseAPITest extends TestCase {
         baseApi.end();
     }
 
-    @SmallTest
+    @Test
     public void testInit_ocrEngineMode() {
         // Attempt to initialize the API.
         final TessBaseAPI baseApi = new TessBaseAPI();
@@ -440,7 +446,7 @@ public class TessBaseAPITest extends TestCase {
         baseApi.end();
     }
 
-    @SmallTest
+    @Test
     public void testProgressValues() {
         final String inputText = "hello";
         final Bitmap bmp = getTextImage(inputText, 640, 480);
@@ -475,7 +481,7 @@ public class TessBaseAPITest extends TestCase {
         bmp.recycle();
     }
 
-    @SmallTest
+    @Test
     public void testProgressValues_setRectangle() {
         class Notifier implements ProgressNotifier {
             public boolean receivedProgress = false;
@@ -575,7 +581,7 @@ public class TessBaseAPITest extends TestCase {
         assertTrue(textRect.contains(absoluteWordRect));
     }
 
-    @SmallTest
+    @Test
     public void testSetImage_bitmap() {
         // Attempt to initialize the API.
         final TessBaseAPI baseApi = new TessBaseAPI();
@@ -591,7 +597,7 @@ public class TessBaseAPITest extends TestCase {
         bmp.recycle();
     }
 
-    @SmallTest
+    @Test
     public void testSetImage_file() throws IOException {
         // Attempt to initialize the API.
         final TessBaseAPI baseApi = new TessBaseAPI();
@@ -613,7 +619,7 @@ public class TessBaseAPITest extends TestCase {
         bmp.recycle();
     }
 
-    @SmallTest
+    @Test
     public void testSetImage_pix() throws IOException {
         // Attempt to initialize the API.
         final TessBaseAPI baseApi = new TessBaseAPI();
@@ -629,7 +635,7 @@ public class TessBaseAPITest extends TestCase {
         pix.recycle();
     }
 
-    @SmallTest
+    @Test
     public void testSetPageSegMode() {
         // Attempt to initialize the API.
         final TessBaseAPI baseApi = new TessBaseAPI();
@@ -650,7 +656,7 @@ public class TessBaseAPITest extends TestCase {
         baseApi.end();
     }
 
-    @SmallTest
+    @Test
     public void testSetRectangle() {
         // Attempt to initialize the API.
         final TessBaseAPI baseApi = new TessBaseAPI();
@@ -699,7 +705,7 @@ public class TessBaseAPITest extends TestCase {
         bmp.recycle();
     }
 
-    @SmallTest
+    @Test
     public void testSetVariable() {
         final String inputText = "hello";
         final Bitmap bmp = getTextImage(inputText, 640, 480);
@@ -723,7 +729,7 @@ public class TessBaseAPITest extends TestCase {
         bmp.recycle();
     }
 
-    @SmallTest
+    @Test
     public void testStop() throws InterruptedException {
 
         StringBuilder inputTextBuilder = new StringBuilder();
@@ -774,7 +780,7 @@ public class TessBaseAPITest extends TestCase {
         bmp.recycle();
     }
 
-    @SmallTest
+    @Test
     public void testWordConfidences() {
         final String inputText = "one two three";
         final Bitmap bmp = getTextImage(inputText, 640, 480);
@@ -810,7 +816,7 @@ public class TessBaseAPITest extends TestCase {
         bmp.recycle();
     }
 
-    @SmallTest
+    @Test
     public void testGetVersion() {
         // Attempt to initialize the API.
         final TessBaseAPI baseApi = new TessBaseAPI();

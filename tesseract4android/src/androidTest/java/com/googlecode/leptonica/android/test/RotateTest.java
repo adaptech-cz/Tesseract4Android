@@ -16,22 +16,24 @@
 
 package com.googlecode.leptonica.android.test;
 
-import com.googlecode.leptonica.android.Pix;
-import com.googlecode.leptonica.android.ReadFile;
-import com.googlecode.leptonica.android.Rotate;
-import com.googlecode.leptonica.android.WriteFile;
-
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Paint.Style;
-import android.test.suitebuilder.annotation.SmallTest;
 
-import junit.framework.TestCase;
+import com.googlecode.leptonica.android.Pix;
+import com.googlecode.leptonica.android.ReadFile;
+import com.googlecode.leptonica.android.Rotate;
+import com.googlecode.leptonica.android.WriteFile;
 
-public class RotateTest extends TestCase {
-    @SmallTest
+import org.junit.Test;
+
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+public class RotateTest  {
+    @Test
     public void testRotate() {
         Bitmap bmp = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bmp);
@@ -61,7 +63,7 @@ public class RotateTest extends TestCase {
         assertTrue("Bitmaps do not match.", (match > 0.99f));
     }
 
-    @SmallTest
+    @Test
     public void testRotateOrth() {
         Bitmap bmp = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bmp);
@@ -91,7 +93,7 @@ public class RotateTest extends TestCase {
         assertTrue("Bitmaps do not match.", (match > 0.99f));
     }
 
-    @SmallTest
+    @Test
     public void testRotateResize() {
         Bitmap bmp = Bitmap.createBitmap(100, 10, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bmp);

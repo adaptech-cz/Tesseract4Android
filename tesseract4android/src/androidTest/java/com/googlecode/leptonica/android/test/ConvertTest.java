@@ -17,15 +17,17 @@
 package com.googlecode.leptonica.android.test;
 
 import android.graphics.Color;
-import android.test.suitebuilder.annotation.SmallTest;
 
 import com.googlecode.leptonica.android.Convert;
 import com.googlecode.leptonica.android.Pix;
 
-import junit.framework.TestCase;
+import org.junit.Test;
 
-public class ConvertTest extends TestCase {
-    @SmallTest
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
+
+public class ConvertTest  {
+    @Test
     public void testConvertTo8() {
         Pix pixs = new Pix(640, 480, 32);
         pixs.setPixel(0, 0, Color.RED);

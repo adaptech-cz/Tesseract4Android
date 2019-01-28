@@ -16,29 +16,33 @@
 
 package com.googlecode.leptonica.android.test;
 
-import java.io.File;
-import java.io.IOException;
-
-import junit.framework.TestCase;
 import android.graphics.Bitmap;
-import android.test.suitebuilder.annotation.SmallTest;
 
 import com.googlecode.leptonica.android.Pix;
 import com.googlecode.leptonica.android.ReadFile;
 import com.googlecode.leptonica.android.WriteFile;
 
-public class WriteFileTest extends TestCase {
-    @SmallTest
+import org.junit.Test;
+
+import java.io.File;
+import java.io.IOException;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+public class WriteFileTest  {
+    @Test
     public void testWriteBitmap_1x1() {
         testWriteBitmap(1, 1);
     }
 
-    @SmallTest
+    @Test
     public void testWriteBitmap_100x100() {
         testWriteBitmap(100, 100);
     }
 
-    @SmallTest
+    @Test
     public void testWriteBitmap_640x480() {
         testWriteBitmap(640, 480);
     }
@@ -58,17 +62,17 @@ public class WriteFileTest extends TestCase {
         assertTrue("Images do not match. match=" + match, (match >= 0.99f));
     }
 
-    @SmallTest
+    @Test
     public void testWriteBytes8_1x1() {
         testWriteBytes8(1, 1);
     }
 
-    @SmallTest
+    @Test
     public void testWriteBytes8_100x100() {
         testWriteBytes8(100, 100);
     }
 
-    @SmallTest
+    @Test
     public void testWriteBytes8_640x480() {
         testWriteBytes8(640, 480);
     }
@@ -88,7 +92,7 @@ public class WriteFileTest extends TestCase {
         assertTrue("Images do not match. match=" + match, (match >= 0.99f));
     }
 
-    @SmallTest
+    @Test
     public void testWriteImpliedFormat_bmp() throws IOException {
         Pix pixs = TestUtils.createTestPix(100, 100);
         File file = File.createTempFile("testWriteImpliedFormat", ".bmp");
@@ -96,7 +100,7 @@ public class WriteFileTest extends TestCase {
         pixs.recycle();
     }
 
-    @SmallTest
+    @Test
     public void testWriteImpliedFormat_jpg() throws IOException {
         Pix pixs = TestUtils.createTestPix(100, 100);
         File file = File.createTempFile("testWriteImpliedFormat", ".jpg");
@@ -104,7 +108,7 @@ public class WriteFileTest extends TestCase {
         pixs.recycle();
     }
 
-    @SmallTest
+    @Test
     public void testWriteImpliedFormat_png() throws IOException {
         Pix pixs = TestUtils.createTestPix(100, 100);
         File file = File.createTempFile("testWriteImpliedFormat", ".png");
