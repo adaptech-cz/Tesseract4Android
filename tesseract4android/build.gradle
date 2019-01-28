@@ -10,6 +10,9 @@ android {
 		testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 		externalNativeBuild {
 			cmake {
+				// Specifies which native libraries or executables to build and package.
+				// TODO: Include eyes-two in some build flavor of the library?
+				// targets "jpeg", "png", "leptonica", "tesseract"
 				cppFlags ""
 			}
 		}
