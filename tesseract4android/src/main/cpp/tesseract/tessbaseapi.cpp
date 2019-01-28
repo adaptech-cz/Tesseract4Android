@@ -41,7 +41,7 @@ struct native_data_t {
   jobject* cachedObject;
 
   bool isStateValid() {
-    if (cancel_ocr == false && cachedEnv != NULL && cachedObject != NULL) {
+    if (!cancel_ocr && cachedEnv != NULL && cachedObject != NULL) {
       return true;
     } else {
       LOGI("state is cancelled");
@@ -138,11 +138,6 @@ jlong Java_com_googlecode_tesseract_android_TessBaseAPI_nativeConstruct(JNIEnv* 
                                                                        jobject object) {
 
   native_data_t *nat = new native_data_t;
-
-  if (nat == NULL) {
-    LOGE("%s: out of memory!", __FUNCTION__);
-    return 0;
-  }
 
   return (jlong) nat;
 }
@@ -262,7 +257,7 @@ void Java_com_googlecode_tesseract_android_TessBaseAPI_nativeSetImagePix(JNIEnv 
   if (pixd) {
     l_int32 width = pixGetWidth(pixd);
     l_int32 height = pixGetHeight(pixd);
-    nat->setTextBoundaries(0, 0, width, height);
+    nat->setTextBoundaries(0, 0, static_cast<l_uint32>(width), static_cast<l_uint32>(height));
   }
   nat->api.SetImage(pixd);
 
@@ -287,7 +282,8 @@ void Java_com_googlecode_tesseract_android_TessBaseAPI_nativeSetRectangle(JNIEnv
 
   native_data_t *nat = (native_data_t*) mNativeData;
 
-  nat->setTextBoundaries(left, top, width, height);
+  nat->setTextBoundaries(static_cast<l_uint32>(left), static_cast<l_uint32>(top),
+                         static_cast<l_uint32>(width), static_cast<l_uint32>(height));
 
   nat->api.SetRectangle(left, top, width, height);
 }
@@ -370,12 +366,12 @@ jboolean Java_com_googlecode_tesseract_android_TessBaseAPI_nativeSetVariable(JNI
   const char *c_var = env->GetStringUTFChars(var, NULL);
   const char *c_value = env->GetStringUTFChars(value, NULL);
 
-  jboolean set = nat->api.SetVariable(c_var, c_value) ? JNI_TRUE : JNI_FALSE;
+  bool set = nat->api.SetVariable(c_var, c_value);
 
   env->ReleaseStringUTFChars(var, c_var);
   env->ReleaseStringUTFChars(value, c_value);
 
-  return set;
+  return static_cast<jboolean>(set);
 }
 
 void Java_com_googlecode_tesseract_android_TessBaseAPI_nativeClear(JNIEnv *env,
@@ -426,7 +422,7 @@ void Java_com_googlecode_tesseract_android_TessBaseAPI_nativeSetDebug(JNIEnv *en
 
   native_data_t *nat = (native_data_t*) mNativeData;
 
-  nat->debug = (debug == JNI_TRUE) ? TRUE : FALSE;
+  nat->debug = (debug == JNI_TRUE);
 }
 
 jint Java_com_googlecode_tesseract_android_TessBaseAPI_nativeGetPageSegMode(JNIEnv *env,
@@ -656,7 +652,7 @@ jboolean Java_com_googlecode_tesseract_android_TessBaseAPI_nativeBeginDocument(J
 
   env->ReleaseStringUTFChars(title, c_title);
 
-  return (jboolean) (res ? JNI_TRUE : JNI_FALSE);
+  return static_cast<jboolean>(res);
 }
 
 jboolean Java_com_googlecode_tesseract_android_TessBaseAPI_nativeEndDocument(JNIEnv *env,
@@ -664,7 +660,10 @@ jboolean Java_com_googlecode_tesseract_android_TessBaseAPI_nativeEndDocument(JNI
                                                                              jlong jRenderer) {
 
   tesseract::TessPDFRenderer* pdfRenderer = (tesseract::TessPDFRenderer*) jRenderer;
-  return pdfRenderer->EndDocument();
+
+  bool res = pdfRenderer->EndDocument();
+
+  return static_cast<jboolean>(res);
 }
 
 jboolean Java_com_googlecode_tesseract_android_TessBaseAPI_nativeAddPageToDocument(JNIEnv *env,
@@ -684,7 +683,7 @@ jboolean Java_com_googlecode_tesseract_android_TessBaseAPI_nativeAddPageToDocume
 
   env->ReleaseStringUTFChars(jPath, inputImage);
 
-  return true;
+  return JNI_TRUE;
 }
 
 #ifdef __cplusplus
