@@ -58,9 +58,10 @@ public class TessBaseAPI {
     /** Page segmentation mode. */
     public static final class PageSegMode {
         @Retention(SOURCE)
-        @IntDef({PSM_OSD_ONLY, PSM_AUTO_OSD, PSM_AUTO_ONLY, PSM_AUTO, PSM_SINGLE_COLUMN,
-                PSM_SINGLE_BLOCK_VERT_TEXT, PSM_SINGLE_BLOCK, PSM_SINGLE_LINE, PSM_SINGLE_WORD,
-        PSM_CIRCLE_WORD, PSM_SINGLE_CHAR, PSM_SPARSE_TEXT, PSM_SPARSE_TEXT_OSD, PSM_RAW_LINE})
+        @IntDef({PSM_OSD_ONLY, PSM_AUTO_OSD, PSM_AUTO_ONLY, PSM_AUTO, PSM_SINGLE_COLUMN, PSM_SINGLE_BLOCK_VERT_TEXT,
+                PSM_SINGLE_BLOCK, PSM_SINGLE_LINE, PSM_SINGLE_WORD, PSM_CIRCLE_WORD, PSM_SINGLE_CHAR, PSM_SPARSE_TEXT,
+                PSM_SPARSE_TEXT_OSD})
+
         public @interface Mode {}
 
         /** Orientation and script detection only. */
@@ -101,9 +102,6 @@ public class TessBaseAPI {
 
         /** Sparse text with orientation and script detection. */
         public static final int PSM_SPARSE_TEXT_OSD = 12;
-
-        /** Treat the image as a single text line, bypassing hacks that are Tesseract-specific. */
-        public static final int PSM_RAW_LINE = 13;
     }
 
     /** Whitelist of characters to recognize. */
@@ -122,19 +120,17 @@ public class TessBaseAPI {
     public static final String VAR_FALSE = "F";
 
     @Retention(SOURCE)
-    @IntDef({OEM_TESSERACT_ONLY, OEM_CUBE_ONLY, OEM_TESSERACT_CUBE_COMBINED, OEM_DEFAULT})
+    @IntDef({OEM_TESSERACT_ONLY, OEM_LSTM_ONLY, OEM_TESSERACT_LSTM_COMBINED, OEM_DEFAULT})
     public @interface OcrEngineMode {}
 
     /** Run Tesseract only - fastest */
     public static final int OEM_TESSERACT_ONLY = 0;
 
-    /** Run Cube only - better accuracy, but slower */
-    @Deprecated
-    public static final int OEM_CUBE_ONLY = 1;
+    /** Run LSTM only - better accuracy, but slower */
+    public static final int OEM_LSTM_ONLY = 1;
 
     /** Run both and combine results - best accuracy */
-    @Deprecated
-    public static final int OEM_TESSERACT_CUBE_COMBINED = 2;
+    public static final int OEM_TESSERACT_LSTM_COMBINED = 2;
 
     /** Default OCR engine mode. */
     public static final int OEM_DEFAULT = 3;
@@ -331,7 +327,7 @@ public class TessBaseAPI {
             throw new IllegalArgumentException("Data path must contain subfolder tessdata!");
 
         //noinspection deprecation
-        if (ocrEngineMode != OEM_CUBE_ONLY) {
+        /*if (ocrEngineMode != OEM_CUBE_ONLY) {
             for (String languageCode : language.split("\\+")) {
                 if (!languageCode.startsWith("~")) {
                     File datafile = new File(tessdata + File.separator + 
@@ -351,7 +347,7 @@ public class TessBaseAPI {
                     }
                 }
             }
-        }
+        }*/
 
         boolean success = nativeInitOem(mNativeData, datapath + "tessdata", language, ocrEngineMode);
 
