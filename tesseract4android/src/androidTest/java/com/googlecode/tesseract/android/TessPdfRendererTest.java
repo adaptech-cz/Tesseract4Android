@@ -17,13 +17,13 @@
 package com.googlecode.tesseract.android;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Paint.Align;
 import android.graphics.Paint.Style;
+import android.os.Environment;
 
 import com.googlecode.leptonica.android.Pix;
 import com.googlecode.leptonica.android.ReadFile;
@@ -39,8 +39,7 @@ import static org.junit.Assert.assertTrue;
 
 public class TessPdfRendererTest  {
 
-    @SuppressLint("SdCardPath")
-    private final static String OUTPUT_PATH = "/sdcard/";
+    private final static String OUTPUT_PATH = Environment.getExternalStorageDirectory().toString() + "/";
 
     @Before
     public void setup() {
