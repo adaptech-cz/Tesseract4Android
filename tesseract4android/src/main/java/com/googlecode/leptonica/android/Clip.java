@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2019 Adaptech s.r.o., Robert Pösel
  * Copyright 2014 Robert Theis
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not

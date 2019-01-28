@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2019 Adaptech s.r.o., Robert Pösel
  * Copyright 2011, Google Inc.
  * Copyright 2011, Robert Theis
  *

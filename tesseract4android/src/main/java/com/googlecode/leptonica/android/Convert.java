@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2019 Adaptech s.r.o., Robert Pösel
  * Copyright (C) 2010 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
