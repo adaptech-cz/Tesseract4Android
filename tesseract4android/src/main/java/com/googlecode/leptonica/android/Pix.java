@@ -1,12 +1,12 @@
 /*
  * Copyright (C) 2011 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -17,8 +17,9 @@
 package com.googlecode.leptonica.android;
 
 import android.graphics.Rect;
-import android.support.annotation.ColorInt;
-import android.support.annotation.Size;
+
+import androidx.annotation.ColorInt;
+import androidx.annotation.Size;
 
 /**
  * Java representation of a native Leptonica PIX object.
@@ -292,7 +293,7 @@ public class Pix {
 
     /**
      * Sets the {@link android.graphics.Color} at the specified location.
-     * 
+     *
      * @param x The x coordinate (0...width-1) of the pixel to set.
      * @param y The y coordinate (0...height-1) of the pixel to set.
      * @param color The argb {@link android.graphics.Color} to set at the
