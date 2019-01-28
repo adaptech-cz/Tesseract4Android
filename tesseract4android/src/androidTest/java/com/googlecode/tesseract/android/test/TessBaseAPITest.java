@@ -73,9 +73,9 @@ public class TessBaseAPITest  {
             TessBaseAPI.PageSegMode.PSM_SINGLE_BLOCK;
 
     @Before
-    protected void setUp() throws Exception {
+    public void setup() {
         // Grant permission to use external storage
-        AllTests.grantPermissions(new String[] {
+        TestUtils.grantPermissions(new String[] {
                 Manifest.permission.READ_EXTERNAL_STORAGE,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE,
         });
