@@ -353,7 +353,7 @@ public class TessBaseAPI {
             }
         }
 
-        boolean success = nativeInitOem(mNativeData, datapath, language, ocrEngineMode);
+        boolean success = nativeInitOem(mNativeData, datapath + "tessdata", language, ocrEngineMode);
 
         if (success) {
             mRecycled = false;
