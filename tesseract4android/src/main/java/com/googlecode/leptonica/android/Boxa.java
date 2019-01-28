@@ -157,7 +157,7 @@ public class Boxa {
     // * NATIVE CODE *
     // ***************
 
-    private static native void nativeDestroy(long nativeBox);
+    private static native void nativeDestroy(long nativeBoxa);
     private static native boolean nativeGetGeometry(long nativeBoxa, int index,  int[] geometry);
     private static native int nativeGetCount(long nativeBoxa);
 }
