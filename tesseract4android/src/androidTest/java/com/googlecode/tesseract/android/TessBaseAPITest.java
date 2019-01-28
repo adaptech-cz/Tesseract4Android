@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.googlecode.tesseract.android.test;
+package com.googlecode.tesseract.android;
 
 import android.Manifest;
 import android.graphics.Bitmap;
@@ -32,8 +32,6 @@ import android.util.Pair;
 
 import com.googlecode.leptonica.android.Pix;
 import com.googlecode.leptonica.android.Pixa;
-import com.googlecode.tesseract.android.ResultIterator;
-import com.googlecode.tesseract.android.TessBaseAPI;
 import com.googlecode.tesseract.android.TessBaseAPI.PageIteratorLevel;
 import com.googlecode.tesseract.android.TessBaseAPI.ProgressNotifier;
 import com.googlecode.tesseract.android.TessBaseAPI.ProgressValues;

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.googlecode.leptonica.android.test;
+package com.googlecode.leptonica.android;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -22,12 +22,6 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Paint.Align;
 import android.graphics.Paint.Style;
-
-import com.googlecode.leptonica.android.Convert;
-import com.googlecode.leptonica.android.GrayQuant;
-import com.googlecode.leptonica.android.Pix;
-import com.googlecode.leptonica.android.ReadFile;
-import com.googlecode.leptonica.android.Skew;
 
 import org.junit.Test;
 

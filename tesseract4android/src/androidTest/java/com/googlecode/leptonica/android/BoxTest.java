@@ -14,9 +14,7 @@
  * the License.
  */
 
-package com.googlecode.leptonica.android.test;
-
-import com.googlecode.leptonica.android.Box;
+package com.googlecode.leptonica.android;
 
 import org.junit.Test;
 

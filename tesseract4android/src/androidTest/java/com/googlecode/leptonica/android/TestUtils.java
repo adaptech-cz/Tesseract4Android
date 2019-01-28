@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.googlecode.leptonica.android.test;
+package com.googlecode.leptonica.android;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -22,9 +22,6 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Paint.Style;
 import android.graphics.Rect;
-
-import com.googlecode.leptonica.android.Pix;
-import com.googlecode.leptonica.android.ReadFile;
 
 /**
  * Utility methods for running Leptonica unit tests.

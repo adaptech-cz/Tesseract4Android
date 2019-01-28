@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.googlecode.leptonica.android.test;
+package com.googlecode.leptonica.android;
 
 public class BoxaTest  {
 

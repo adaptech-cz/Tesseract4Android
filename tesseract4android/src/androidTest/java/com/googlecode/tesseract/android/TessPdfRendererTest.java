@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.googlecode.tesseract.android.test;
+package com.googlecode.tesseract.android;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -28,8 +28,6 @@ import android.graphics.Paint.Style;
 import com.googlecode.leptonica.android.Pix;
 import com.googlecode.leptonica.android.ReadFile;
 import com.googlecode.leptonica.android.WriteFile;
-import com.googlecode.tesseract.android.TessBaseAPI;
-import com.googlecode.tesseract.android.TessPdfRenderer;
 
 import org.junit.Before;
 import org.junit.Test;

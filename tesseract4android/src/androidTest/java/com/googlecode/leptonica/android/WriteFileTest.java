@@ -14,13 +14,9 @@
  * the License.
  */
 
-package com.googlecode.leptonica.android.test;
+package com.googlecode.leptonica.android;
 
 import android.graphics.Bitmap;
-
-import com.googlecode.leptonica.android.Pix;
-import com.googlecode.leptonica.android.ReadFile;
-import com.googlecode.leptonica.android.WriteFile;
 
 import org.junit.Test;
 

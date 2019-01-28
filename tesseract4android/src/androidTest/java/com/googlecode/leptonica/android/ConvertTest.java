@@ -14,12 +14,9 @@
  * the License.
  */
 
-package com.googlecode.leptonica.android.test;
+package com.googlecode.leptonica.android;
 
 import android.graphics.Color;
-
-import com.googlecode.leptonica.android.Convert;
-import com.googlecode.leptonica.android.Pix;
 
 import org.junit.Test;
 

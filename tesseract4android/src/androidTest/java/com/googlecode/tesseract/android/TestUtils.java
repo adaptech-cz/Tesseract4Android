@@ -1,4 +1,4 @@
-package com.googlecode.tesseract.android.test;
+package com.googlecode.tesseract.android;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
