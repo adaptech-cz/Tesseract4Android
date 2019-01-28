@@ -56,19 +56,8 @@ public class TessBaseAPITest  {
     static final String TESSBASE_PATH = Environment.getExternalStorageDirectory().toString();
     static final String DEFAULT_LANGUAGE = "eng";
     private static final String TESSDATA_PATH = TESSBASE_PATH + "/tessdata/";
-    private static final String[] EXPECTED_CUBE_DATA_FILES_ENG = {
-        "eng.cube.bigrams",
-        "eng.cube.fold",
-        "eng.cube.lm",
-        "eng.cube.nn",
-        "eng.cube.params",
-        "eng.cube.size",
-        "eng.cube.word-freq",
-        "eng.tesseract_cube.nn"
-    };
 
-    private static final int DEFAULT_PAGE_SEG_MODE =
-            TessBaseAPI.PageSegMode.PSM_SINGLE_BLOCK;
+    private static final int DEFAULT_PAGE_SEG_MODE = TessBaseAPI.PageSegMode.PSM_SINGLE_BLOCK;
 
     @Before
     public void setup() {
@@ -86,16 +75,6 @@ public class TessBaseAPITest  {
                 assertTrue("Make sure that you've copied " + languageCode +
                         ".traineddata to " + TESSDATA_PATH, expectedFile.exists());
             }
-        }
-    }
-
-    private void checkCubeData() {
-        // Make sure the cube data files exist.
-        for (String expectedFilename : EXPECTED_CUBE_DATA_FILES_ENG) {
-            String expectedFilePath = TESSDATA_PATH + expectedFilename;
-            File expectedFile = new File(expectedFilePath);
-            assertTrue("Make sure that you've copied " + expectedFilename +
-                    " to " + expectedFilePath, expectedFile.exists());
         }
     }
 
@@ -247,20 +226,6 @@ public class TessBaseAPITest  {
         bmp2.recycle();
     }
 
-    //    @Test
-    //    public void testGetHOCRText_combined() {
-    //        checkCubeData();
-    //
-    //        testGetHOCRText("eng", TessBaseAPI.OEM_TESSERACT_CUBE_COMBINED);
-    //    }
-    //
-    //    @Test
-    //    public void testGetHOCRText_cube() {
-    //        checkCubeData();
-    //
-    //        testGetHOCRText("eng", TessBaseAPI.OEM_CUBE_ONLY);
-    //    }
-
     @Test
     public void testGetHOCRText_tesseract() {
         testGetHOCRText(DEFAULT_LANGUAGE, TessBaseAPI.OEM_TESSERACT_ONLY);
@@ -328,20 +293,6 @@ public class TessBaseAPITest  {
         bmp.recycle();
         pixd.recycle();
     }
-
-    //    @Test
-    //    public void testGetUTF8Text_combined() {
-    //        checkCubeData();
-    //
-    //        testGetUTF8Text("eng", TessBaseAPI.OEM_TESSERACT_CUBE_COMBINED);
-    //    }
-    //
-    //    @Test
-    //    public void testGetUTF8Text_cube() {
-    //        checkCubeData();
-    //
-    //        testGetUTF8Text("eng", TessBaseAPI.OEM_CUBE_ONLY);
-    //    }
 
     @Test
     public void testGetUTF8Text_tesseract() {

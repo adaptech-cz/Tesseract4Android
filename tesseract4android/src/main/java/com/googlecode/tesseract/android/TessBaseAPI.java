@@ -326,29 +326,6 @@ public class TessBaseAPI {
         if (!tessdata.exists() || !tessdata.isDirectory())
             throw new IllegalArgumentException("Data path must contain subfolder tessdata!");
 
-        //noinspection deprecation
-        /*if (ocrEngineMode != OEM_CUBE_ONLY) {
-            for (String languageCode : language.split("\\+")) {
-                if (!languageCode.startsWith("~")) {
-                    File datafile = new File(tessdata + File.separator + 
-                            languageCode + ".traineddata");
-                    if (!datafile.exists())
-                        throw new IllegalArgumentException("Data file not found at " + datafile);
-
-                    // Catch some common problematic initialization cases.
-                    if (languageCode.equals("ara") || (languageCode.equals("hin") &&
-                            ocrEngineMode == OEM_DEFAULT)) {
-                        boolean sampleCubeFileExists = new File(tessdata +
-                                File.separator + languageCode + ".cube.params").exists();
-                        if (!sampleCubeFileExists) {
-                            throw new IllegalArgumentException("Cube data files not found." +
-                                    " See https://github.com/rmtheis/tess-two/issues/239");
-                        }
-                    }
-                }
-            }
-        }*/
-
         boolean success = nativeInitOem(mNativeData, datapath + "tessdata", language, ocrEngineMode);
 
         if (success) {
