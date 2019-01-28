@@ -29,7 +29,7 @@ import androidx.annotation.Size;
 @SuppressWarnings("WeakerAccess")
 public class Boxa {
     static {
-        System.loadLibrary("jpg");
+        System.loadLibrary("jpeg");
         System.loadLibrary("png");
         System.loadLibrary("leptonica");
     }

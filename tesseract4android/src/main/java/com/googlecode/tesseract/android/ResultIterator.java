@@ -33,7 +33,7 @@ import java.util.List;
  */
 public class ResultIterator extends PageIterator {
     static {
-        System.loadLibrary("jpg");
+        System.loadLibrary("jpeg");
         System.loadLibrary("png");
         System.loadLibrary("leptonica");
         System.loadLibrary("tesseract");

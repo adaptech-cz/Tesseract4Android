@@ -26,7 +26,7 @@ import androidx.annotation.FloatRange;
 @SuppressWarnings("WeakerAccess")
 public class Binarize {
     static {
-        System.loadLibrary("jpg");
+        System.loadLibrary("jpeg");
         System.loadLibrary("png");
         System.loadLibrary("leptonica");
     }

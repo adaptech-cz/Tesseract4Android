@@ -28,7 +28,7 @@ import static java.lang.annotation.RetentionPolicy.SOURCE;
 @SuppressWarnings("WeakerAccess")
 public class MorphApp {
     static {
-        System.loadLibrary("jpg");
+        System.loadLibrary("jpeg");
         System.loadLibrary("png");
         System.loadLibrary("leptonica");
     }

@@ -47,7 +47,7 @@ public class TessBaseAPI {
     private long mNativeData;
 
     static {
-        System.loadLibrary("jpg");
+        System.loadLibrary("jpeg");
         System.loadLibrary("png");
         System.loadLibrary("leptonica");
         System.loadLibrary("tesseract");

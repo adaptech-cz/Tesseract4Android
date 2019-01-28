@@ -29,7 +29,7 @@ import java.io.File;
  */
 public class ReadFile {
     static {
-        System.loadLibrary("jpg");
+        System.loadLibrary("jpeg");
         System.loadLibrary("png");
         System.loadLibrary("leptonica");
     }
