@@ -16,13 +16,13 @@
 
 package com.googlecode.tesseract.android;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import android.util.Log;
 import android.util.Pair;
 
 import com.googlecode.tesseract.android.TessBaseAPI.PageIteratorLevel;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Java interface for the ResultIterator. Does not implement all available JNI
