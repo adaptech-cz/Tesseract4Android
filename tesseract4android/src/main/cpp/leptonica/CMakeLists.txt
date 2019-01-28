@@ -26,6 +26,15 @@ add_library( # Sets the name of the library.
         # Provides a relative path to your source file(s).
         ${leptonica_src}
         ${leptonica_hdr}
+        box.cpp
+        boxa.cpp
+        jni.cpp
+        pix.cpp
+        pixa.cpp
+        readfile.cpp
+        utilities.cpp
+        writefile.cpp
+        common.h
         )
 
 # Specifies a path to native header files.
