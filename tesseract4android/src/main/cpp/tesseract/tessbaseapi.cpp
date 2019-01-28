@@ -24,7 +24,8 @@
 #include "allheaders.h"
 #include "renderer.h"
 
-static jmethodID method_onProgressValues;
+// FIXME: Implement this for new Tesseract 4
+//static jmethodID method_onProgressValues;
 
 struct native_data_t {
   tesseract::TessBaseAPI api;
@@ -94,7 +95,8 @@ bool cancelFunc(void* cancel_this, int words) {
 /**
  * Callback for Tesseract's monitor to update progress.
  */
-bool progressJavaCallback(void* progress_this, int progress, int left, int right,
+// FIXME: Implement this for new Tesseract 4
+/*bool progressJavaCallback(void* progress_this, int progress, int left, int right,
 		int top, int bottom) {
   native_data_t *nat = (native_data_t*)progress_this;
   if (nat->isStateValid() && nat->currentTextBox != NULL) {
@@ -108,7 +110,7 @@ bool progressJavaCallback(void* progress_this, int progress, int left, int right
     }
   }
   return true;
-}
+}*/
 
 #ifdef __cplusplus
 extern "C" {
@@ -128,7 +130,8 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 void Java_com_googlecode_tesseract_android_TessBaseAPI_nativeClassInit(JNIEnv* env, 
                                                                        jclass clazz) {
 
-  method_onProgressValues = env->GetMethodID(clazz, "onProgressValues", "(IIIIIIIII)V");
+  // FIXME: Implement this for Tesseract 4
+  //method_onProgressValues = env->GetMethodID(clazz, "onProgressValues", "(IIIIIIIII)V");
 }
 
 jlong Java_com_googlecode_tesseract_android_TessBaseAPI_nativeConstruct(JNIEnv* env,
@@ -547,10 +550,12 @@ jstring Java_com_googlecode_tesseract_android_TessBaseAPI_nativeGetHOCRText(JNIE
   nat->initStateVariables(env, &thiz);
 
   ETEXT_DESC monitor;
-  monitor.progress_callback = progressJavaCallback;
+  // FIXME: Implement this for new Tesseract 4
+  //monitor.progress_callback = progressJavaCallback;
   monitor.cancel = cancelFunc;
   monitor.cancel_this = nat;
-  monitor.progress_this = nat;
+  // FIXME: Implement this for new Tesseract 4
+  //monitor.progress_this = nat;
 
   char *text = nat->api.GetHOCRText(&monitor, page);
 
