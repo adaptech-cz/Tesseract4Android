@@ -15,14 +15,32 @@ This project uses additional libraries (with their own specific licenses):
 
 ## Prerequisites
 
- -  Android 4.1 (API 16) or higher
- -  A v4.0.0 [trained data file(s)][tessdata] for language(s) you want to use. Data files must be
+ - Android 4.1 (API 16) or higher
+ - A v4.0.0 [trained data file(s)][tessdata] for language(s) you want to use. Data files must be
 copied to the Android device to a directory named `tessdata`.
- - For working PDF Renderer must be in `tessdata` directory also [pdf.ttf][pdffile] file.
+ - If you want to use PdfRenderer, copy also [pdf.ttf][pdffile] file to the `tessdata` directory.
 
 ## Building
 
 You can use Android Studio 3.3 (or later) to open the project and build the AAR. Or you can use `gradlew` from command line.
+
+To build the release version of the library, use task `tesseract4android:assembleRelease`. After successful build, you will have resulting `AAR` file in the `<project dir>/tesseract4Android/build/outputs/aar/` directory.
+
+### Android Studio
+ 
+ - Open this project in Android Studio.
+ - Open Gradle panel, expand `Tesseract4Android / :tesseract4Android / Tasks / other` and run `assembleRelease`.
+
+### GradleW
+
+ - In project directory create `local.properties` file containing:
+ 
+       sdk.dir=c\:\\your\\path\\to\\android\\sdk
+       ndk.dir=c\:\\your\\path\\to\\android\\ndk
+   
+   Note for paths on Windows you must use `\` to escape some special characters, as in example above.
+     
+ - Call `gradlew tesseract4android:assembleRelease` from command line.
 
 ## License
 
