@@ -19,6 +19,7 @@ This project uses additional libraries (with their own specific licenses):
  - A v4.0.0 [trained data file(s)][tessdata] for language(s) you want to use. Data files must be
 copied to the Android device to a directory named `tessdata`.
  - If you want to use PdfRenderer, copy also [pdf.ttf][pdffile] file to the `tessdata` directory.
+ - Application must hold permission `READ_EXTERNAL_STORAGE` to access `tessdata` directory.
 
 ## Building
 
