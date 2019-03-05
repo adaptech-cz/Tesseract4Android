@@ -543,12 +543,15 @@ public class TessBaseAPITest  {
         assertTrue(textRect.top <= textRect.bottom);
 
         // Ensure the word rect falls within the text rect.
-        final Rect absoluteWordRect = new Rect(
-                textRect.left + wordRect.left,
-                textRect.top + wordRect.top,
-                textRect.left + wordRect.right,
-                textRect.top + wordRect.bottom);
-        assertTrue(textRect.contains(absoluteWordRect));
+        // NOTE: Word rect will be empty during recognition's second pass.
+        if (!wordRect.isEmpty()) {
+            final Rect absoluteWordRect = new Rect(
+                    textRect.left + wordRect.left,
+                    textRect.top + wordRect.top,
+                    textRect.left + wordRect.right,
+                    textRect.top + wordRect.bottom);
+            assertTrue(textRect.contains(absoluteWordRect));
+        }
     }
 
     @Test
