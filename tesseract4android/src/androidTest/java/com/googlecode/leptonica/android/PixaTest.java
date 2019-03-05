@@ -22,126 +22,126 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class PixaTest  {
-    @Test
-    public void testPixaCreate() {
-        internalTestPixaCreate(0, 0, 0);
-        internalTestPixaCreate(1, 0, 0);
-        internalTestPixaCreate(0, 640, 480);
-        internalTestPixaCreate(5, 640, 480);
-    }
+public class PixaTest {
+	@Test
+	public void testPixaCreate() {
+		internalTestPixaCreate(0, 0, 0);
+		internalTestPixaCreate(1, 0, 0);
+		internalTestPixaCreate(0, 640, 480);
+		internalTestPixaCreate(5, 640, 480);
+	}
 
-    private void internalTestPixaCreate(int initialCapacity, int width, int height) {
-        Pixa pixa = Pixa.createPixa(initialCapacity, width, height);
+	private void internalTestPixaCreate(int initialCapacity, int width, int height) {
+		Pixa pixa = Pixa.createPixa(initialCapacity, width, height);
 
-        // Make sure the dimensions were set correctly.
-        assertEquals(0, pixa.size());
-        assertEquals(width, pixa.getWidth());
-        assertEquals(height, pixa.getHeight());
+		// Make sure the dimensions were set correctly.
+		assertEquals(0, pixa.size());
+		assertEquals(width, pixa.getWidth());
+		assertEquals(height, pixa.getHeight());
 
-        // Fill the Pixa to capacity.
-        for (int i = 0; i < initialCapacity; i++) {
-            addBlockToPixa(pixa, 0, 0, 640, 480, 8);
-        }
+		// Fill the Pixa to capacity.
+		for (int i = 0; i < initialCapacity; i++) {
+			addBlockToPixa(pixa, 0, 0, 640, 480, 8);
+		}
 
-        // Make sure the size is reflected correctly.
-        assertEquals(initialCapacity, pixa.size());
+		// Make sure the size is reflected correctly.
+		assertEquals(initialCapacity, pixa.size());
 
-        // Make sure we can recycle the Pixa.
-        pixa.recycle();
-    }
+		// Make sure we can recycle the Pixa.
+		pixa.recycle();
+	}
 
-    @Test
-    public void testPixaCopy() {
-        internalTestPixaCopy(0, 0, 0);
-        internalTestPixaCopy(5, 0, 0);
-        internalTestPixaCopy(0, 640, 480);
-        internalTestPixaCopy(5, 640, 480);
-    }
+	@Test
+	public void testPixaCopy() {
+		internalTestPixaCopy(0, 0, 0);
+		internalTestPixaCopy(5, 0, 0);
+		internalTestPixaCopy(0, 640, 480);
+		internalTestPixaCopy(5, 640, 480);
+	}
 
-    private void internalTestPixaCopy(int initialCapacity, int width, int height) {
-        Pixa pixa = Pixa.createPixa(initialCapacity, width, height);
+	private void internalTestPixaCopy(int initialCapacity, int width, int height) {
+		Pixa pixa = Pixa.createPixa(initialCapacity, width, height);
 
-        // Fill the Pixa to capacity.
-        for (int i = 0; i < initialCapacity; i++) {
-            addBlockToPixa(pixa, 0, 0, 640, 640, 8);
-        }
+		// Fill the Pixa to capacity.
+		for (int i = 0; i < initialCapacity; i++) {
+			addBlockToPixa(pixa, 0, 0, 640, 640, 8);
+		}
 
-        // Create a shallow copy of the Pixa.
-        Pixa pixaCopy = pixa.copy();
+		// Create a shallow copy of the Pixa.
+		Pixa pixaCopy = pixa.copy();
 
-        // Add a new Pix to the copy.
-        addBlockToPixa(pixaCopy, 0, 0, 640, 640, 8);
+		// Add a new Pix to the copy.
+		addBlockToPixa(pixaCopy, 0, 0, 640, 640, 8);
 
-        // Ensure that both copies changed size.
-        assertEquals(initialCapacity + 1, pixaCopy.size());
-        assertEquals(pixaCopy.size(), pixa.size());
+		// Ensure that both copies changed size.
+		assertEquals(initialCapacity + 1, pixaCopy.size());
+		assertEquals(pixaCopy.size(), pixa.size());
 
-        // Finally, we should be able to recycle both Pixa.
-        pixa.recycle();
-        pixaCopy.recycle();
-    }
+		// Finally, we should be able to recycle both Pixa.
+		pixa.recycle();
+		pixaCopy.recycle();
+	}
 
-    @Test
-    public void testPixaSort() {
-        Pixa pixa = Pixa.createPixa(0);
+	@Test
+	public void testPixaSort() {
+		Pixa pixa = Pixa.createPixa(0);
 
-        // Add contained Pix in arbitrary order.
-        addBlockToPixa(pixa, 0, 0, 640, 640, 8);
-        addBlockToPixa(pixa, 160, 160, 64, 64, 8);
-        addBlockToPixa(pixa, 32, 32, 320, 320, 8);
-        addBlockToPixa(pixa, 64, 64, 160, 160, 8);
-        addBlockToPixa(pixa, 320, 320, 32, 32, 8);
+		// Add contained Pix in arbitrary order.
+		addBlockToPixa(pixa, 0, 0, 640, 640, 8);
+		addBlockToPixa(pixa, 160, 160, 64, 64, 8);
+		addBlockToPixa(pixa, 32, 32, 320, 320, 8);
+		addBlockToPixa(pixa, 64, 64, 160, 160, 8);
+		addBlockToPixa(pixa, 320, 320, 32, 32, 8);
 
-        // Sort by increasing height.
-        Pixa pixaSorted = pixa.sort(Constants.L_SORT_BY_HEIGHT, Constants.L_SORT_INCREASING);
+		// Sort by increasing height.
+		Pixa pixaSorted = pixa.sort(Constants.L_SORT_BY_HEIGHT, Constants.L_SORT_INCREASING);
 
-        // Ensure sort was successful.
-        int[] currentDimensions = new int[4];
-        int previousHeight = -1;
+		// Ensure sort was successful.
+		int[] currentDimensions = new int[4];
+		int previousHeight = -1;
 
-        for (int i = 0; i < pixa.size(); i++) {
-            assertTrue(pixaSorted.getBoxGeometry(i, currentDimensions));
-            int currentHeight = currentDimensions[Box.INDEX_H];
-            assertTrue(currentHeight > previousHeight);
-            previousHeight = currentHeight;
-        }
+		for (int i = 0; i < pixa.size(); i++) {
+			assertTrue(pixaSorted.getBoxGeometry(i, currentDimensions));
+			int currentHeight = currentDimensions[Box.INDEX_H];
+			assertTrue(currentHeight > previousHeight);
+			previousHeight = currentHeight;
+		}
 
-        pixa.recycle();
-        pixaSorted.recycle();
-    }
+		pixa.recycle();
+		pixaSorted.recycle();
+	}
 
-    @Test
-    public void testPixaJoin() {
-        internalTestPixaJoin(0, 0);
-        internalTestPixaJoin(1, 0);
-        internalTestPixaJoin(0, 1);
-        internalTestPixaJoin(1, 1);
-    }
+	@Test
+	public void testPixaJoin() {
+		internalTestPixaJoin(0, 0);
+		internalTestPixaJoin(1, 0);
+		internalTestPixaJoin(0, 1);
+		internalTestPixaJoin(1, 1);
+	}
 
-    private void internalTestPixaJoin(int sizeA, int sizeB) {
-        Pixa pixaA = Pixa.createPixa(0);
-        Pixa pixaB = Pixa.createPixa(0);
+	private void internalTestPixaJoin(int sizeA, int sizeB) {
+		Pixa pixaA = Pixa.createPixa(0);
+		Pixa pixaB = Pixa.createPixa(0);
 
-        // Populate both Pixa.
-        for (int i = 0; i < sizeA; i++) {
-            addBlockToPixa(pixaA, 0, 0, 640, 640, 8);
-        }
+		// Populate both Pixa.
+		for (int i = 0; i < sizeA; i++) {
+			addBlockToPixa(pixaA, 0, 0, 640, 640, 8);
+		}
 
-        for (int i = 0; i < sizeB; i++) {
-            addBlockToPixa(pixaB, 0, 0, 640, 640, 8);
-        }
+		for (int i = 0; i < sizeB; i++) {
+			addBlockToPixa(pixaB, 0, 0, 640, 640, 8);
+		}
 
-        // Join pixaB into pixaA.
-        pixaA.join(pixaB);
+		// Join pixaB into pixaA.
+		pixaA.join(pixaB);
 
-        // Ensure the join was successful.
-        assertEquals(pixaA.size(), sizeA + sizeB);
-        assertEquals(pixaB.size(), sizeB);
+		// Ensure the join was successful.
+		assertEquals(pixaA.size(), sizeA + sizeB);
+		assertEquals(pixaB.size(), sizeB);
 
-        pixaA.recycle();
-        pixaB.recycle();
-    }
+		pixaA.recycle();
+		pixaB.recycle();
+	}
 
 //    @Test
 //    public void testPixaReplacePix() {
@@ -176,54 +176,54 @@ public class PixaTest  {
 //        pixa.recycle();
 //    }
 
-    @Test
-    public void testPixaMergeAndReplacePix() {
-        Pixa pixa = Pixa.createPixa(0, 640, 480);
+	@Test
+	public void testPixaMergeAndReplacePix() {
+		Pixa pixa = Pixa.createPixa(0, 640, 480);
 
-        // Populate the Pixa.
-        addBlockToPixa(pixa, 0, 0, 320, 240, 8);
-        addBlockToPixa(pixa, 320, 240, 320, 240, 8);
+		// Populate the Pixa.
+		addBlockToPixa(pixa, 0, 0, 320, 240, 8);
+		addBlockToPixa(pixa, 320, 240, 320, 240, 8);
 
-        // Merge both Pix, removing the second Pix.
-        pixa.mergeAndReplacePix(0, 1);
+		// Merge both Pix, removing the second Pix.
+		pixa.mergeAndReplacePix(0, 1);
 
-        // Ensure the merge was successful.
-        Pix pix = pixa.getPix(0);
-        Box box = pixa.getBox(0);
+		// Ensure the merge was successful.
+		Pix pix = pixa.getPix(0);
+		Box box = pixa.getBox(0);
 
-        assertEquals(pixa.size(), 1);
+		assertEquals(pixa.size(), 1);
 
-        assertEquals(pix.getWidth(), 640);
-        assertEquals(pix.getHeight(), 480);
-        assertEquals(pix.getDepth(), 8);
+		assertEquals(pix.getWidth(), 640);
+		assertEquals(pix.getHeight(), 480);
+		assertEquals(pix.getDepth(), 8);
 
-        assertEquals(box.getX(), 0);
-        assertEquals(box.getY(), 0);
-        assertEquals(box.getWidth(), 640);
-        assertEquals(box.getHeight(), 480);
+		assertEquals(box.getX(), 0);
+		assertEquals(box.getY(), 0);
+		assertEquals(box.getWidth(), 640);
+		assertEquals(box.getHeight(), 480);
 
-        pix.recycle();
-        box.recycle();
-        pixa.recycle();
-    }
+		pix.recycle();
+		box.recycle();
+		pixa.recycle();
+	}
 
-    /**
-     * Adds a block to the specified Pixa.
-     *
-     * @param pixa The existing Pixa.
-     * @param x X-coordinate of the top-left corner of the block.
-     * @param y Y-coordinate of the top-left corner of the block.
-     * @param width Width of the block.
-     * @param height Height of the block.
-     * @param depth Bit-depth of the block.
-     */
-    private static void addBlockToPixa(Pixa pixa, int x, int y, int width, int height, int depth) {
-        final Pix pix = new Pix(width, height, depth);
-        final Box box = new Box(x, y, width, height);
+	/**
+	 * Adds a block to the specified Pixa.
+	 *
+	 * @param pixa   The existing Pixa.
+	 * @param x      X-coordinate of the top-left corner of the block.
+	 * @param y      Y-coordinate of the top-left corner of the block.
+	 * @param width  Width of the block.
+	 * @param height Height of the block.
+	 * @param depth  Bit-depth of the block.
+	 */
+	private static void addBlockToPixa(Pixa pixa, int x, int y, int width, int height, int depth) {
+		final Pix pix = new Pix(width, height, depth);
+		final Box box = new Box(x, y, width, height);
 
-        pixa.add(pix, box, Constants.L_COPY);
+		pixa.add(pix, box, Constants.L_COPY);
 
-        pix.recycle();
-        box.recycle();
-    }
+		pix.recycle();
+		box.recycle();
+	}
 }

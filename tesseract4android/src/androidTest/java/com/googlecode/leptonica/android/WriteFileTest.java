@@ -28,105 +28,105 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-public class WriteFileTest  {
-    @Test
-    public void testWriteBitmap_1x1() {
-        testWriteBitmap(1, 1);
-    }
+public class WriteFileTest {
+	@Test
+	public void testWriteBitmap_1x1() {
+		testWriteBitmap(1, 1);
+	}
 
-    @Test
-    public void testWriteBitmap_100x100() {
-        testWriteBitmap(100, 100);
-    }
+	@Test
+	public void testWriteBitmap_100x100() {
+		testWriteBitmap(100, 100);
+	}
 
-    @Test
-    public void testWriteBitmap_640x480() {
-        testWriteBitmap(640, 480);
-    }
+	@Test
+	public void testWriteBitmap_640x480() {
+		testWriteBitmap(640, 480);
+	}
 
-    private void testWriteBitmap(int width, int height) {
-        Pix pix = TestUtils.createTestPix(width, height);
-        Bitmap bmp = WriteFile.writeBitmap(pix);
+	private void testWriteBitmap(int width, int height) {
+		Pix pix = TestUtils.createTestPix(width, height);
+		Bitmap bmp = WriteFile.writeBitmap(pix);
 
-        assertNotNull(bmp);
-        assertEquals(pix.getWidth(), bmp.getWidth());
-        assertEquals(pix.getHeight(), bmp.getHeight());
+		assertNotNull(bmp);
+		assertEquals(pix.getWidth(), bmp.getWidth());
+		assertEquals(pix.getHeight(), bmp.getHeight());
 
-        float match = TestUtils.compareImages(pix, bmp);
-        pix.recycle();
-        bmp.recycle();
+		float match = TestUtils.compareImages(pix, bmp);
+		pix.recycle();
+		bmp.recycle();
 
-        assertTrue("Images do not match. match=" + match, (match >= 0.99f));
-    }
+		assertTrue("Images do not match. match=" + match, (match >= 0.99f));
+	}
 
-    @Test
-    public void testWriteBytes8_1x1() {
-        testWriteBytes8(1, 1);
-    }
+	@Test
+	public void testWriteBytes8_1x1() {
+		testWriteBytes8(1, 1);
+	}
 
-    @Test
-    public void testWriteBytes8_100x100() {
-        testWriteBytes8(100, 100);
-    }
+	@Test
+	public void testWriteBytes8_100x100() {
+		testWriteBytes8(100, 100);
+	}
 
-    @Test
-    public void testWriteBytes8_640x480() {
-        testWriteBytes8(640, 480);
-    }
+	@Test
+	public void testWriteBytes8_640x480() {
+		testWriteBytes8(640, 480);
+	}
 
-    private static void testWriteBytes8(int width, int height) {
-        Pix pixs = TestUtils.createTestPix(width, height);
-        byte[] data = WriteFile.writeBytes8(pixs);
-        Pix pixd = ReadFile.readBytes8(data, width, height);
+	private static void testWriteBytes8(int width, int height) {
+		Pix pixs = TestUtils.createTestPix(width, height);
+		byte[] data = WriteFile.writeBytes8(pixs);
+		Pix pixd = ReadFile.readBytes8(data, width, height);
 
-        assertEquals(pixs.getWidth(), pixd.getWidth());
-        assertEquals(pixs.getHeight(), pixd.getHeight());
+		assertEquals(pixs.getWidth(), pixd.getWidth());
+		assertEquals(pixs.getHeight(), pixd.getHeight());
 
-        float match = TestUtils.comparePix(pixs, pixd);
-        pixs.recycle();
-        pixd.recycle();
+		float match = TestUtils.comparePix(pixs, pixd);
+		pixs.recycle();
+		pixd.recycle();
 
-        assertTrue("Images do not match. match=" + match, (match >= 0.99f));
-    }
+		assertTrue("Images do not match. match=" + match, (match >= 0.99f));
+	}
 
-    @Test
-    public void testWriteImpliedFormat_bmp() throws IOException {
-        Pix pixs = TestUtils.createTestPix(100, 100);
-        File file = File.createTempFile("testWriteImpliedFormat", ".bmp");
-        testWriteImpliedFormat(pixs, file);
-        pixs.recycle();
-    }
+	@Test
+	public void testWriteImpliedFormat_bmp() throws IOException {
+		Pix pixs = TestUtils.createTestPix(100, 100);
+		File file = File.createTempFile("testWriteImpliedFormat", ".bmp");
+		testWriteImpliedFormat(pixs, file);
+		pixs.recycle();
+	}
 
-    @Test
-    public void testWriteImpliedFormat_jpg() throws IOException {
-        Pix pixs = TestUtils.createTestPix(100, 100);
-        File file = File.createTempFile("testWriteImpliedFormat", ".jpg");
-        testWriteImpliedFormat(pixs, file);
-        pixs.recycle();
-    }
+	@Test
+	public void testWriteImpliedFormat_jpg() throws IOException {
+		Pix pixs = TestUtils.createTestPix(100, 100);
+		File file = File.createTempFile("testWriteImpliedFormat", ".jpg");
+		testWriteImpliedFormat(pixs, file);
+		pixs.recycle();
+	}
 
-    @Test
-    public void testWriteImpliedFormat_png() throws IOException {
-        Pix pixs = TestUtils.createTestPix(100, 100);
-        File file = File.createTempFile("testWriteImpliedFormat", ".png");
-        testWriteImpliedFormat(pixs, file);
-        pixs.recycle();
-    }
+	@Test
+	public void testWriteImpliedFormat_png() throws IOException {
+		Pix pixs = TestUtils.createTestPix(100, 100);
+		File file = File.createTempFile("testWriteImpliedFormat", ".png");
+		testWriteImpliedFormat(pixs, file);
+		pixs.recycle();
+	}
 
-    private void testWriteImpliedFormat(Pix pixs, File file) {
-        boolean success = WriteFile.writeImpliedFormat(pixs, file);
+	private void testWriteImpliedFormat(Pix pixs, File file) {
+		boolean success = WriteFile.writeImpliedFormat(pixs, file);
 
-        assertTrue("Writing to file failed.", success);
-        assertTrue("File does not exist.", file.exists());
-        assertTrue("File does not contain data.", file.length() > 0);
+		assertTrue("Writing to file failed.", success);
+		assertTrue("File does not exist.", file.exists());
+		assertTrue("File does not contain data.", file.length() > 0);
 
-        Pix pixd = ReadFile.readFile(file);
+		Pix pixd = ReadFile.readFile(file);
 
-        assertNotNull("Pix is null", pixd);
+		assertNotNull("Pix is null", pixd);
 
-        float match = TestUtils.comparePix(pixs, pixd);
-        pixd.recycle();
+		float match = TestUtils.comparePix(pixs, pixd);
+		pixd.recycle();
 
-        assertTrue("Images do not match. match=" + match, (match >= 0.99f));
-    }
+		assertTrue("Images do not match. match=" + match, (match >= 0.99f));
+	}
 }

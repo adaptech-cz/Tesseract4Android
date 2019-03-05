@@ -31,27 +31,27 @@ import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentat
 
 public class TestUtils {
 
-    public static void grantPermissions(@NonNull String[] permissions) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            return;
-        }
-        boolean granted = false;
+	public static void grantPermissions(@NonNull String[] permissions) {
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+			return;
+		}
+		boolean granted = false;
 
-        Context context = getTargetContext();
-        for (String permission : permissions) {
-            if (context.checkSelfPermission(permission) != PackageManager.PERMISSION_GRANTED) {
-                try (ParcelFileDescriptor pfd = getInstrumentation().getUiAutomation().executeShellCommand(
-                        "pm grant " + context.getPackageName() + " " + permission)) {
-                    granted = true;
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
+		Context context = getTargetContext();
+		for (String permission : permissions) {
+			if (context.checkSelfPermission(permission) != PackageManager.PERMISSION_GRANTED) {
+				try (ParcelFileDescriptor pfd = getInstrumentation().getUiAutomation().executeShellCommand(
+						"pm grant " + context.getPackageName() + " " + permission)) {
+					granted = true;
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
 
-        if (granted) {
-            // Wait a while to make sure permission is granted
-            SystemClock.sleep(2000);
-        }
-    }
+		if (granted) {
+			// Wait a while to make sure permission is granted
+			SystemClock.sleep(2000);
+		}
+	}
 }
