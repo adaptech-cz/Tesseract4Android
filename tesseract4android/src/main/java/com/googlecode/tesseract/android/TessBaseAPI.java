@@ -226,6 +226,15 @@ public class TessBaseAPI {
         public Rect getCurrentRect() {
             return textRect;
         }
+
+        @Override
+        public String toString() {
+            return "ProgressValues{" +
+                    "percent=" + percent +
+                    ", wordRect=" + wordRect +
+                    ", textRect=" + textRect +
+                    '}';
+        }
     }
 
     /**
