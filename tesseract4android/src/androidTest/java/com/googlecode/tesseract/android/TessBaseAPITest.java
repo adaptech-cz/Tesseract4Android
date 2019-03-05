@@ -703,10 +703,10 @@ public class TessBaseAPITest  {
     public void testStop() throws InterruptedException {
 
         StringBuilder inputTextBuilder = new StringBuilder();
-        for (int i = 0; i < 200; i++){
+        for (int i = 0; i < 50; i++){
             inputTextBuilder.append("The quick brown fox jumps over the lazy dog.\n");
         }
-        final Bitmap bmp = getTextImage(inputTextBuilder.toString(), 640, 4000);
+        final Bitmap bmp = getTextImage(inputTextBuilder.toString(), 640, 1000);
 
         final Semaphore progressSem = new Semaphore(0);
         final TessBaseAPI baseApi = new TessBaseAPI(new ProgressNotifier() {
@@ -715,7 +715,7 @@ public class TessBaseAPITest  {
                 if (progressValues.getPercent() > 50){
                     fail("OCR recognition was too fast, try to increase the image size and amount of text?");
                 }
-                if (progressValues.getPercent() > 1){
+                if (progressValues.getPercent() > 0){
                     progressSem.release();
                 }
             }
