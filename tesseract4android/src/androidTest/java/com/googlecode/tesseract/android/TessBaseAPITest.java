@@ -699,8 +699,7 @@ public class TessBaseAPITest  {
         bmp.recycle();
     }
 
-    // FIXME: Re-enable this when monitor support is implemented for new Tesseract 4
-    /*@Test
+    @Test
     public void testStop() throws InterruptedException {
 
         StringBuilder inputTextBuilder = new StringBuilder();
@@ -749,7 +748,7 @@ public class TessBaseAPITest  {
 
         baseApi.end();
         bmp.recycle();
-    }*/
+    }
 
     @Test
     public void testWordConfidences() {
