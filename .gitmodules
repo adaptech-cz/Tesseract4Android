@@ -1,0 +1,3 @@
+[submodule "tesseract4android/src/main/cpp/tesseract/src"]
+	path = tesseract4android/src/main/cpp/tesseract/src
+	url = https://github.com/tesseract-ocr/tesseract.git
