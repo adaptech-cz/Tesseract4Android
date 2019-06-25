@@ -4,3 +4,6 @@
 [submodule "tesseract4android/src/main/cpp/leptonica/src"]
 	path = tesseract4android/src/main/cpp/leptonica/src
 	url = https://github.com/DanBloomberg/leptonica.git
+[submodule "tesseract4android/src/main/cpp/libpng/src"]
+	path = tesseract4android/src/main/cpp/libpng/src
+	url = git://git.code.sf.net/p/libpng/code

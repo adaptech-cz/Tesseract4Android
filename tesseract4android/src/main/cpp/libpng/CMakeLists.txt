@@ -54,6 +54,8 @@ add_library( # Sets the name of the library.
         ${SRC_PATH}arm/filter_neon_intrinsics.c
         ${SRC_PATH}arm/palette_neon_intrinsics.c)
 
+target_include_directories(png PUBLIC .)
+
 # Specifies libraries CMake should link to your target library. You
 # can link multiple libraries, such as libraries you define in this
 # build script, prebuilt third-party libraries, or system libraries.
