@@ -57,6 +57,7 @@ add_library( # Sets the name of the library.
 include_directories(${LEPT_PATH})
 include_directories(${JPEG_PATH})
 include_directories(${PNG_PATH})
+target_include_directories(leptonica PUBLIC .)
 
 # Define preprocessor constants
 add_definitions(-DANDROID_BUILD)

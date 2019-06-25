@@ -1,3 +1,6 @@
 [submodule "tesseract4android/src/main/cpp/tesseract/src"]
 	path = tesseract4android/src/main/cpp/tesseract/src
 	url = https://github.com/tesseract-ocr/tesseract.git
+[submodule "tesseract4android/src/main/cpp/leptonica/src"]
+	path = tesseract4android/src/main/cpp/leptonica/src
+	url = https://github.com/DanBloomberg/leptonica.git
