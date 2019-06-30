@@ -68,28 +68,6 @@ public class ReadFileTest {
 	}
 
 	@Test
-	public void testReadFile_bmp() throws IOException {
-		File file = File.createTempFile("testReadFile", ".bmp");
-		FileOutputStream fileStream = new FileOutputStream(file);
-		Bitmap bmp = TestUtils.createTestBitmap(100, 100, Bitmap.Config.RGB_565);
-		boolean compressed = bmp.compress(CompressFormat.PNG, 100, fileStream);
-
-		assertTrue(compressed);
-
-		Pix pix = ReadFile.readFile(file);
-		assertNotNull(pix);
-		assertEquals(bmp.getWidth(), pix.getWidth());
-		assertEquals(bmp.getHeight(), pix.getHeight());
-
-		float match = TestUtils.compareImages(pix, bmp);
-		assertTrue("Images do not match. match=" + match, (match >= 0.99f));
-
-		fileStream.close();
-		bmp.recycle();
-		pix.recycle();
-	}
-
-	@Test
 	public void testReadFile_jpg() throws IOException {
 		File file = File.createTempFile("testReadFile", ".jpg");
 		FileOutputStream fileStream = new FileOutputStream(file);
