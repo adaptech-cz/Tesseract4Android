@@ -136,3 +136,21 @@ target_link_libraries( # Specifies the target library.
         jnigraphics
         leptonica
         )
+
+add_executable(tesseract_exe
+        ${tesseract_src}
+        ${tesseract_hdr}
+        src/src/api/tesseractmain.cpp
+        )
+
+set_target_properties(tesseract_exe
+        PROPERTIES
+        OUTPUT_NAME "tesseract"
+        )
+
+target_link_libraries(tesseract_exe
+        atomic
+        dl
+        log
+        leptonica
+        )
