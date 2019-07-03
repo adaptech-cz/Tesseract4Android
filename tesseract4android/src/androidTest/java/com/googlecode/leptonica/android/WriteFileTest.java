@@ -128,6 +128,6 @@ public class WriteFileTest {
 		float match = TestUtils.comparePix(pixs, pixd);
 		pixd.recycle();
 
-		assertTrue("Images do not match. match=" + match, (match >= 0.99f));
+		assertTrue("Images do not match. match=" + match, (match >= 0.9999f));
 	}
 }
