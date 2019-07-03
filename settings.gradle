@@ -1,1 +1,1 @@
-include ':app', ':tesseract4android'
+include ':tesseract4android'

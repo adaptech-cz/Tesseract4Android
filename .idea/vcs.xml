@@ -2,5 +2,8 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/tesseract4android/src/main/cpp/leptonica/src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/tesseract4android/src/main/cpp/libpng/src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/tesseract4android/src/main/cpp/tesseract/src" vcs="Git" />
   </component>
 </project>
