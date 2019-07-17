@@ -114,7 +114,7 @@ public class WriteFileTest {
 	}
 
 	private void testWriteImpliedFormat(Pix pixs, File file) {
-		boolean success = WriteFile.writeImpliedFormat(pixs, file);
+		boolean success = WriteFile.writeImpliedFormat(pixs, file, 85, false);
 
 		assertTrue("Writing to file failed.", success);
 		assertTrue("File does not exist.", file.exists());
