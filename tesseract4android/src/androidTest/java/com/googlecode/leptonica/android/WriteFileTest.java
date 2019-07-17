@@ -101,7 +101,7 @@ public class WriteFileTest {
 	public void testWriteImpliedFormat_jpg() throws IOException {
 		Pix pixs = TestUtils.createTestPix(100, 100);
 		File file = File.createTempFile("testWriteImpliedFormat", ".jpg");
-		testWriteImpliedFormat(pixs, file);
+		testWriteImpliedFormat(pixs, file, 0.98f, 15);
 		pixs.recycle();
 	}
 
@@ -114,6 +114,10 @@ public class WriteFileTest {
 	}
 
 	private void testWriteImpliedFormat(Pix pixs, File file) {
+		testWriteImpliedFormat(pixs, file, 0.99f, 0);
+	}
+
+	private void testWriteImpliedFormat(Pix pixs, File file, float matchMinimum, int tolerance) {
 		boolean success = WriteFile.writeImpliedFormat(pixs, file, 85, false);
 
 		assertTrue("Writing to file failed.", success);
@@ -124,9 +128,9 @@ public class WriteFileTest {
 
 		assertNotNull("Pix is null", pixd);
 
-		float match = TestUtils.comparePix(pixs, pixd);
+		float match = TestUtils.comparePix(pixs, pixd, tolerance);
 		pixd.recycle();
 
-		assertTrue("Images do not match. match=" + match, (match >= 0.99f));
+		assertTrue("Images do not match. match=" + match, (match >= matchMinimum));
 	}
 }

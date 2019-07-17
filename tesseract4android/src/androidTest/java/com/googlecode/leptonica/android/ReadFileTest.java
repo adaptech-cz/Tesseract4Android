@@ -103,8 +103,8 @@ public class ReadFileTest {
 		assertEquals(bmp.getWidth(), pix.getWidth());
 		assertEquals(bmp.getHeight(), pix.getHeight());
 
-		float match = TestUtils.compareImages(pix, bmp);
-		assertTrue("Images do not match. match=" + match, (match >= 0.99f));
+		float match = TestUtils.compareImages(pix, bmp, 15);
+		assertTrue("Images do not match. match=" + match, (match >= 0.98f));
 
 		fileStream.close();
 		bmp.recycle();
@@ -147,8 +147,8 @@ public class ReadFileTest {
 		assertEquals(bmp.getWidth(), pix.getWidth());
 		assertEquals(bmp.getHeight(), pix.getHeight());
 
-		float match = TestUtils.compareImages(pix, bmp);
-		assertTrue("Images do not match. match=" + match, (match >= 0.99f));
+		float match = TestUtils.compareImages(pix, bmp, 15);
+		assertTrue("Images do not match. match=" + match, (match >= 0.98f));
 
 		byteStream.close();
 		bmp.recycle();
