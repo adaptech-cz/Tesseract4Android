@@ -77,17 +77,20 @@ public class TestUtils {
 		Bitmap bmp = Bitmap.createBitmap(width, height, format);
 		Canvas canvas = new Canvas(bmp);
 		Paint paint = new Paint();
+		paint.setStyle(Style.FILL);
 
 		if (width > 1 && height > 1) {
 			// Paint the left half white
 			paint.setColor(Color.WHITE);
-			paint.setStyle(Style.FILL);
 			canvas.drawRect(new Rect(0, 0, width / 2, height), paint);
 
 			// Paint the right half black
 			paint.setColor(Color.BLACK);
-			paint.setStyle(Style.FILL);
 			canvas.drawRect(new Rect(width / 2, 0, width, height), paint);
+		} else {
+			// Paint the image white
+			paint.setColor(Color.WHITE);
+			canvas.drawPaint(paint);
 		}
 		return bmp;
 	}
