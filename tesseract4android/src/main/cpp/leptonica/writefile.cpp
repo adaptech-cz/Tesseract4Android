@@ -106,6 +106,7 @@ jboolean Java_com_googlecode_leptonica_android_WriteFile_nativeWriteBitmap(JNIEn
     return JNI_FALSE;
   }
 
+  // FIXME: Don't swap pix bytes back and forth, fix the algorithm
   pixEndianByteSwap(pixs);
 
   l_uint8 *dst = (l_uint8 *) pixels;
@@ -143,6 +144,9 @@ jboolean Java_com_googlecode_leptonica_android_WriteFile_nativeWriteBitmap(JNIEn
     dst += dstBpl;
     src += srcBpl;
   }
+
+  // FIXME: Don't swap pix bytes back and forth, fix the algorithm
+  pixEndianByteSwap(pixs);
 
   AndroidBitmap_unlockPixels(env, bitmap);
 
