@@ -113,7 +113,6 @@ jlong Java_com_googlecode_leptonica_android_ReadFile_nativeReadFile(JNIEnv *env,
 
 jlong Java_com_googlecode_leptonica_android_ReadFile_nativeReadBitmap(JNIEnv *env, jclass clazz,
                                                                       jobject bitmap) {
-  l_int32 w, h, d;
   AndroidBitmapInfo info;
   void* pixels;
   int ret;
@@ -133,13 +132,13 @@ jlong Java_com_googlecode_leptonica_android_ReadFile_nativeReadBitmap(JNIEnv *en
     return (jlong) NULL;
   }
 
-  PIX *pixd = pixCreate(info.width, info.height, 8);
+  PIX *pixd = pixCreate(info.width, info.height, 32);
 
   l_uint32 *src = (l_uint32 *) pixels;
-  l_int32 srcWpl = (info.stride / 4);
   l_uint32 *dst = pixGetData(pixd);
+  l_int32 srcWpl = (info.stride / 4);
   l_int32 dstWpl = pixGetWpl(pixd);
-  l_uint8 a, r, g, b, pixel8;
+  l_uint8 a, r, g, b;
 
   for (int y = 0; y < info.height; y++) {
     l_uint32 *dst_line = dst + (y * dstWpl);
@@ -147,19 +146,37 @@ jlong Java_com_googlecode_leptonica_android_ReadFile_nativeReadBitmap(JNIEnv *en
 
     for (int x = 0; x < info.width; x++) {
       // Get pixel from RGBA_8888
-      r = *src_line >> SK_R32_SHIFT;
-      g = *src_line >> SK_G32_SHIFT;
-      b = *src_line >> SK_B32_SHIFT;
-      a = *src_line >> SK_A32_SHIFT;
-      pixel8 = (l_uint8)((r + g + b) / 3);
+      // NOTE: For some reason we have to swap R and B constants in order to get correct values!
+      a = (*src_line >> SK_A32_SHIFT);
+      r = (*src_line >> SK_B32_SHIFT); // intentionally use B shift, see NOTE above
+      g = (*src_line >> SK_G32_SHIFT);
+      b = (*src_line >> SK_R32_SHIFT); // intentionally use R shift, see NOTE above
 
-      // Set pixel to LUMA_8
-      SET_DATA_BYTE(dst_line, x, pixel8);
+      // Set pixel to Pix format
+      *dst_line = a << L_ALPHA_SHIFT | r << L_RED_SHIFT | g << L_GREEN_SHIFT | b << L_BLUE_SHIFT;
 
       // Move to the next pixel
       src_line++;
+      dst_line++;
     }
   }
+
+/*
+  // Alternative version from renard314
+  // Result should be the same, but it iterates over pixels twice, because of the pixEndianByteSwap()
+  PIX *pixd = pixCreate(info.width, info.height, 32);
+  l_uint8 *src = (l_uint8 *) pixels;
+  l_uint8 *dst = (l_uint8 *) pixGetData(pixd);
+  l_int32 srcBpl = (info.stride);
+  l_int32 dstBpl = pixGetWpl(pixd)*4;
+
+  for (int dy = 0; dy < info.height; dy++) {
+    memcpy(dst, src, 4 * info.width);
+    dst += dstBpl;
+    src += srcBpl;
+  }
+  pixEndianByteSwap(pixd);
+*/
 
   AndroidBitmap_unlockPixels(env, bitmap);
 
