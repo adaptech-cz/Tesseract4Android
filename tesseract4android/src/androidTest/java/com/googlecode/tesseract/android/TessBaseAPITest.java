@@ -685,8 +685,7 @@ public class TessBaseAPITest {
 
 		// Attempt to initialize the API.
 		final TessBaseAPI baseApi = new TessBaseAPI();
-		// TODO: Use default (LSTM) engine when character blacklisting/whitelisting is implemented there.
-		boolean success = baseApi.init(TESSBASE_PATH, DEFAULT_LANGUAGE, TessBaseAPI.OEM_TESSERACT_ONLY);
+		boolean success = baseApi.init(TESSBASE_PATH, DEFAULT_LANGUAGE);
 		assertTrue(success);
 
 		baseApi.setPageSegMode(TessBaseAPI.PageSegMode.PSM_SINGLE_LINE);
