@@ -26,14 +26,10 @@
 #include <vector>
 
 #include "commandlineflags.h"
-#include "host.h"
 #include "pango/pango-font.h"
 #include "pango/pango.h"
 #include "pango/pangocairo.h"
 #include "util.h"
-
-DECLARE_STRING_PARAM_FLAG(fonts_dir);
-DECLARE_STRING_PARAM_FLAG(fontconfig_tmpdir);
 
 using char32 = signed int;
 

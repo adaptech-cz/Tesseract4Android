@@ -16,9 +16,12 @@
 namespace {
 
 class LLSQTest : public testing::Test {
- public:
-  void SetUp() {}
+ protected:
+  void SetUp() {
+    std::locale::global(std::locale(""));
+  }
 
+ public:
   void TearDown() {}
 
   void ExpectCorrectLine(const LLSQ& llsq, double m, double c, double rms,
@@ -30,8 +33,8 @@ class LLSQTest : public testing::Test {
   }
   FCOORD PtsMean(const std::vector<FCOORD>& pts) {
     FCOORD total(0, 0);
-    for (int i = 0; i < pts.size(); i++) {
-      total += pts[i];
+    for (const auto& p : pts) {
+      total += p;
     }
     return (pts.size() > 0) ? total / pts.size() : total;
   }
@@ -41,9 +44,9 @@ class LLSQTest : public testing::Test {
     FCOORD nvec = !orth;
     nvec.normalise();
     double expected_answer = 0;
-    for (int i = 0; i < pts.size(); i++) {
-      llsq.add(pts[i].x(), pts[i].y());
-      double dot = nvec % (pts[i] - xavg);
+    for (const auto& p : pts) {
+      llsq.add(p.x(), p.y());
+      double dot = nvec % (p - xavg);
       expected_answer += dot * dot;
     }
     expected_answer /= pts.size();

@@ -27,6 +27,7 @@
 #include <fstream>
 #include <iostream>
 #include <locale>
+#include <memory>               // std::unique_ptr
 #include <string>
 #include "baseapi.h"
 #include "include_gunit.h"
@@ -38,8 +39,17 @@ class QuickTest : public testing::Test {
  protected:
   virtual void SetUp() { start_time_ = time(nullptr); }
   virtual void TearDown() {
+#if defined(DEBUG)
+    // Debug builds can be very slow, so allow 4 min for OCR of a test image.
+    // apitest_example including disabled tests takes about 18 min on ARMv7.
+    const time_t MAX_SECONDS_FOR_TEST = 240;
+#else
+    // Release builds typically need less than 10 s for OCR of a test image,
+    // apitest_example including disabled tests takes about 90 s on ARMv7.
+    const time_t MAX_SECONDS_FOR_TEST = 55;
+#endif
     const time_t end_time = time(nullptr);
-    EXPECT_TRUE(end_time - start_time_ <= 55)
+    EXPECT_TRUE(end_time - start_time_ <= MAX_SECONDS_FOR_TEST)
         << "The test took too long - "
         << ::testing::PrintToString(end_time - start_time_);
   }
@@ -55,7 +65,7 @@ void OCRTester(const char* imgname, const char* groundtruth,
   file.imbue(loc);  // Use it for file input
   std::string gtText((std::istreambuf_iterator<char>(file)),
                      std::istreambuf_iterator<char>());
-  tesseract::TessBaseAPI* api = new tesseract::TessBaseAPI();
+  std::unique_ptr<tesseract::TessBaseAPI> api(new tesseract::TessBaseAPI());
   ASSERT_FALSE(api->Init(tessdatadir, lang))
       << "Could not initialize tesseract.";
   Pix* image = pixRead(imgname);

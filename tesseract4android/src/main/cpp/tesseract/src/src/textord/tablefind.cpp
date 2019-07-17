@@ -2,7 +2,6 @@
 // File:        tablefind.cpp
 // Description: Helper classes to find tables from ColPartitions.
 // Author:      Faisal Shafait (faisal.shafait@dfki.de)
-// Created:     Tue Jan 06 11:13:01 PST 2009
 //
 // (C) Copyright 2009, Google Inc.
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -90,7 +89,7 @@ const double kTableColumnThreshold = 3.0;
 
 // Search for horizontal ruling lines within the vertical margin as a
 // multiple of grid size
-const int kRulingVerticalMargin = 3;
+// const int kRulingVerticalMargin = 3;
 
 // Minimum overlap that a colpartition must have with a table region
 // to become part of that table
@@ -140,13 +139,13 @@ const double kMaxXProjectionGapFactor = 2.0;
 const double kStrokeWidthFractionalTolerance = 0.25;
 const double kStrokeWidthConstantTolerance = 2.0;
 
-BOOL_VAR(textord_show_tables, false, "Show table regions");
-BOOL_VAR(textord_tablefind_show_mark, false,
-         "Debug table marking steps in detail");
-BOOL_VAR(textord_tablefind_show_stats, false,
-         "Show page stats used in table finding");
-BOOL_VAR(textord_tablefind_recognize_tables, false,
-         "Enables the table recognizer for table layout and filtering.");
+static BOOL_VAR(textord_show_tables, false, "Show table regions");
+static BOOL_VAR(textord_tablefind_show_mark, false,
+                "Debug table marking steps in detail");
+static BOOL_VAR(textord_tablefind_show_stats, false,
+                "Show page stats used in table finding");
+static BOOL_VAR(textord_tablefind_recognize_tables, false,
+                "Enables the table recognizer for table layout and filtering.");
 
 ELISTIZE(ColSegment)
 CLISTIZE(ColSegment)
@@ -1282,7 +1281,7 @@ void TableFinder::GetTableColumns(ColSegment_LIST *table_columns) {
     if (part->inside_table_column() || part->type() != PT_TABLE)
       continue;  // prevent a partition to be assigned to multiple columns
     const TBOX& box = part->bounding_box();
-    ColSegment* col = new ColSegment();
+    auto* col = new ColSegment();
     col->InsertBox(box);
     part->set_inside_table_column(true);
     // Start a search below the current cell to find bottom neighbours
@@ -1368,7 +1367,7 @@ void TableFinder::GetTableRegions(ColSegment_LIST* table_columns,
       if (table_region[i - 1] && !table_region[i]) {
         current_table_box.set_top(i + bleft().y());
         if (!current_table_box.null_box()) {
-          ColSegment* seg = new ColSegment();
+          auto* seg = new ColSegment();
           seg->InsertBox(current_table_box);
           rit.add_after_then_move(seg);
         }
@@ -1499,7 +1498,7 @@ void TableFinder::AdjustTableBoundaries() {
     // modified box back to the grid. Instead move it to a list and
     // and remove it from the grid. The list is moved later back to the grid.
     if (!grown_box.null_box()) {
-      ColSegment* col = new ColSegment();
+      auto* col = new ColSegment();
       col->InsertBox(grown_box);
       it.add_after_then_move(col);
     }

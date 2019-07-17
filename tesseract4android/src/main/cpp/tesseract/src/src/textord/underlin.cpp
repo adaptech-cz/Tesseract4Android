@@ -18,12 +18,8 @@
 
 #include "underlin.h"
 
-#define PROJECTION_MARGIN 10     //arbitrary
-#define EXTERN
-
-EXTERN double_VAR (textord_underline_offset, 0.1, "Fraction of x to ignore");
-EXTERN BOOL_VAR (textord_restore_underlines, TRUE,
-"Chop underlines & put back");
+double_VAR (textord_underline_offset, 0.1, "Fraction of x to ignore");
+BOOL_VAR (textord_restore_underlines, true, "Chop underlines & put back");
 
 /**********************************************************************
  * restore_underlined_blobs
@@ -121,7 +117,7 @@ TO_ROW *most_overlapping_row(                    //find best row
   float bestover;                //best overlap
 
   best_row = nullptr;
-  bestover = (float) -INT32_MAX;
+  bestover = static_cast<float>(-INT32_MAX);
   if (row_it.empty ())
     return nullptr;
   row = row_it.data ();
@@ -232,10 +228,10 @@ void vertical_cunderline_projection(                        //project outlines
     step = outline->step (stepindex);
     if (step.x () > 0) {
       lower_y =
-        (int16_t) floor (baseline->y (pos.x ()) + baseline_offset + 0.5);
+        static_cast<int16_t>(floor (baseline->y (pos.x ()) + baseline_offset + 0.5));
       upper_y =
-        (int16_t) floor (baseline->y (pos.x ()) + baseline_offset +
-        xheight + 0.5);
+        static_cast<int16_t>(floor (baseline->y (pos.x ()) + baseline_offset +
+        xheight + 0.5));
       if (pos.y () >= lower_y) {
         lower_proj->add (pos.x (), -lower_y);
         if (pos.y () >= upper_y) {
@@ -250,11 +246,11 @@ void vertical_cunderline_projection(                        //project outlines
     }
     else if (step.x () < 0) {
       lower_y =
-        (int16_t) floor (baseline->y (pos.x () - 1) + baseline_offset +
-        0.5);
+        static_cast<int16_t>(floor (baseline->y (pos.x () - 1) + baseline_offset +
+        0.5));
       upper_y =
-        (int16_t) floor (baseline->y (pos.x () - 1) + baseline_offset +
-        xheight + 0.5);
+        static_cast<int16_t>(floor (baseline->y (pos.x () - 1) + baseline_offset +
+        xheight + 0.5));
       if (pos.y () >= lower_y) {
         lower_proj->add (pos.x () - 1, lower_y);
         if (pos.y () >= upper_y) {

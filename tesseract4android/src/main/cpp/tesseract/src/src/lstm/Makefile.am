@@ -8,8 +8,12 @@ AM_CPPFLAGS += \
     -I$(top_srcdir)/src/dict \
     -I$(top_srcdir)/src/lstm
 
-SUBDIRS =
 AM_CXXFLAGS = $(OPENMP_CXXFLAGS)
+
+if TENSORFLOW
+AM_CPPFLAGS += -DINCLUDE_TENSORFLOW
+AM_CPPFLAGS += -I/usr/include/tensorflow
+endif
 
 if !NO_TESSDATA_PREFIX
 AM_CXXFLAGS += -DTESSDATA_PREFIX=@datadir@
@@ -38,3 +42,7 @@ libtesseract_lstm_la_SOURCES = \
         networkbuilder.cpp network.cpp networkio.cpp \
         parallel.cpp plumbing.cpp recodebeam.cpp reconfig.cpp reversed.cpp \
         series.cpp stridemap.cpp tfnetwork.cpp weightmatrix.cpp
+
+if TENSORFLOW
+libtesseract_lstm_la_SOURCES += tfnetwork.pb.cc
+endif

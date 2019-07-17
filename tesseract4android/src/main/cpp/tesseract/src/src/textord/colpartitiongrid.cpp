@@ -2,7 +2,6 @@
 // File:        colpartitiongrid.cpp
 // Description: Class collecting code that acts on a BBGrid of ColPartitions.
 // Author:      Ray Smith
-// Created:     Mon Oct 05 08:42:01 PDT 2009
 //
 // (C) Copyright 2009, Google Inc.
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,7 +28,7 @@
 
 namespace tesseract {
 
-BOOL_VAR(textord_tabfind_show_color_fit, false, "Show stroke widths");
+static BOOL_VAR(textord_tabfind_show_color_fit, false, "Show stroke widths");
 
 // Max pad factor used to search the neighbourhood of a partition to smooth
 // partition types.
@@ -702,10 +701,10 @@ void ColPartitionGrid::ExtractPartitionsAsBlocks(BLOCK_LIST* blocks,
         part->DeleteBoxes();
         continue;
       }
-      BLOCK* block = new BLOCK("", true, 0, 0, box.left(), box.bottom(),
+      auto* block = new BLOCK("", true, 0, 0, box.left(), box.bottom(),
                                box.right(), box.top());
       block->pdblk.set_poly_block(new POLY_BLOCK(box, type));
-      TO_BLOCK* to_block = new TO_BLOCK(block);
+      auto* to_block = new TO_BLOCK(block);
       TO_ROW_IT row_it(to_block->get_rows());
       row_it.add_after_then_move(row);
       // We haven't differentially rotated vertical and horizontal text at
@@ -782,7 +781,7 @@ void ColPartitionGrid::SetTabStops(TabFind* tabgrid) {
 // Makes the ColPartSets and puts them in the PartSetVector ready
 // for finding column bounds. Returns false if no partitions were found.
 bool ColPartitionGrid::MakeColPartSets(PartSetVector* part_sets) {
-  ColPartition_LIST* part_lists = new ColPartition_LIST[gridheight()];
+  auto* part_lists = new ColPartition_LIST[gridheight()];
   part_sets->reserve(gridheight());
   // Iterate the ColPartitions in the grid to get parts onto lists for the
   // y bottom of each.
@@ -1417,7 +1416,7 @@ bool ColPartitionGrid::SmoothRegionType(Pix* nontext_map,
   bool all_image = true;
   for (int d = 0; d < BND_COUNT; ++d) {
     int dist;
-    BlobNeighbourDir dir = static_cast<BlobNeighbourDir>(d);
+    auto dir = static_cast<BlobNeighbourDir>(d);
     BlobRegionType type = SmoothInOneDirection(dir, nontext_map, im_box,
                                                rerotation, debug, *part,
                                                &dist);

@@ -2,7 +2,6 @@
 // File:        colfind.h
 // Description: Class to find columns in the grid of BLOBNBOXes.
 // Author:      Ray Smith
-// Created:     Thu Feb 21 14:04:01 PST 2008
 //
 // (C) Copyright 2008, Google Inc.
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,8 +37,6 @@ class TO_BLOCK;
 
 namespace tesseract {
 
-extern BOOL_VAR_H(textord_tabfind_find_tables, false, "run table detection");
-
 class ColPartitionSet;
 class ColPartitionSet_LIST;
 class ColSegment_LIST;
@@ -65,7 +62,7 @@ class ColumnFinder : public TabFind {
                int resolution, bool cjk_script, double aligned_gap_fraction,
                TabVector_LIST* vlines, TabVector_LIST* hlines,
                int vertical_x, int vertical_y);
-  virtual ~ColumnFinder();
+  ~ColumnFinder() override;
 
   // Accessors for testing
   const DENORM* denorm() const {

@@ -2,7 +2,6 @@
  * File:        fileio.cpp
  * Description: File I/O utilities.
  * Author:      Samuel Charron
- * Created:     Tuesday, July 9, 2013
  *
  * (C) Copyright 2013, Google Inc.
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -14,6 +13,7 @@
  * language governing permissions and limitations under the License.
  *
  **********************************************************************/
+
 #ifdef _WIN32
 #ifndef unlink
 #include <io.h>
@@ -29,6 +29,7 @@
 
 #include "errcode.h"
 #include "fileio.h"
+#include "host.h"       // includes windows.h for BOOL, ...
 #include "tprintf.h"
 
 namespace tesseract {
@@ -86,7 +87,11 @@ std::string File::JoinPath(const std::string& prefix, const std::string& suffix)
 }
 
 bool File::Delete(const char* pathname) {
+#if !defined(_WIN32) || defined(__MINGW32__)
   const int status = unlink(pathname);
+#else
+  const int status = _unlink(pathname);
+#endif
   if (status != 0) {
     tprintf("ERROR: Unable to delete file %s\n", pathname);
     return false;

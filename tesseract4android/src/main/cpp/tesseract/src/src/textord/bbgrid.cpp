@@ -3,7 +3,6 @@
 // Description: Class to hold BLOBNBOXs in a grid for fast access
 //              to neighbours.
 // Author:      Ray Smith
-// Created:     Wed Jun 06 17:22:01 PDT 2007
 //
 // (C) Copyright 2007, Google Inc.
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -100,7 +99,7 @@ void IntGrid::Clear() {
 void IntGrid::Rotate(const FCOORD& rotation) {
   ASSERT_HOST(rotation.x() == 0.0f || rotation.y() == 0.0f);
   ICOORD old_bleft(bleft());
-  ICOORD old_tright(tright());
+  //ICOORD old_tright(tright());
   int old_width = gridwidth();
   int old_height = gridheight();
   TBOX box(bleft(), tright());
@@ -131,7 +130,7 @@ void IntGrid::Rotate(const FCOORD& rotation) {
 // For ease of implementation, edge cells are double counted, to make them
 // have the same range as the non-edge cells.
 IntGrid* IntGrid::NeighbourhoodSum() const {
-  IntGrid* sumgrid = new IntGrid(gridsize(), bleft(), tright());
+  auto* sumgrid = new IntGrid(gridsize(), bleft(), tright());
   for (int y = 0; y < gridheight(); ++y) {
     for (int x = 0; x < gridwidth(); ++x) {
       int cell_count = 0;

@@ -2,7 +2,6 @@
  * File:        pdblock.cpp
  * Description: PDBLK member functions and iterator functions.
  * Author:      Ray Smith
- * Created:     Fri Mar 15 09:41:28 GMT 1991
  *
  * (C) Copyright 1991, Hewlett-Packard Ltd.
  ** Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,10 +16,11 @@
  *
  **********************************************************************/
 
+#include "allheaders.h"
 #include "pdblock.h"
 #include <cstdlib>
 #include <memory>  // std::unique_ptr
-#include "allheaders.h"
+#include <cinttypes>  // for PRId32
 
 // Include automatically generated configuration file if running autoconf.
 #ifdef HAVE_CONFIG_H
@@ -29,8 +29,8 @@
 
 #define BLOCK_LABEL_HEIGHT  150  //char height of block id
 
-const ERRCODE BADBLOCKLINE = "Y coordinate in block out of bounds";
-const ERRCODE LOSTBLOCKLINE = "Can't find rectangle for line";
+constexpr ERRCODE BADBLOCKLINE("Y coordinate in block out of bounds");
+constexpr ERRCODE LOSTBLOCKLINE("Can't find rectangle for line");
 
 CLISTIZE (PDBLK)
 /**********************************************************************
@@ -83,7 +83,7 @@ void PDBLK::set_sides(                       //set vertex lists
 /**********************************************************************
  * PDBLK::contains
  *
- * Return TRUE if the given point is within the block.
+ * Return true if the given point is within the block.
  **********************************************************************/
 
 bool PDBLK::contains(           //test containment
@@ -141,7 +141,7 @@ Pix* PDBLK::render_mask(const FCOORD& rerotation, TBOX* mask_box) {
     image_block.rotate(rerotation);
     // Block outline is a polygon, so use a PB_LINE_IT to get the
     // rasterized interior. (Runs of interior pixels on a line.)
-    PB_LINE_IT *lines = new PB_LINE_IT(&image_block);
+    auto *lines = new PB_LINE_IT(&image_block);
     for (int y = box.bottom(); y < box.top(); ++y) {
       const std::unique_ptr</*non-const*/ ICOORDELT_LIST> segments(
           lines->get_line(y));
@@ -201,7 +201,7 @@ void PDBLK::plot(                //draw outline
 #if !defined(_WIN32) || defined(__MINGW32__)
     snprintf(temp_buff, sizeof(temp_buff), "%" PRId32, serial);
 #else
-    ultoa (serial, temp_buff, 10);
+    _ultoa(serial, temp_buff, 10);
 #endif
     window->Text(startpt.x (), startpt.y (), temp_buff);
 
@@ -354,7 +354,7 @@ int16_t BLOCK_LINE_IT::get_line(             //get a line
                                  //get block box
   block->bounding_box (bleft, tright);
   if (y < bleft.y () || y >= tright.y ()) {
-    //              block->print(stderr,FALSE);
+    //              block->print(stderr,false);
     BADBLOCKLINE.error ("BLOCK_LINE_IT::get_line", ABORT, "Y=%d", y);
   }
 

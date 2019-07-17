@@ -27,9 +27,9 @@
 
 #include "network.h"
 #include "static_shape.h"
-#include "tfnetwork.proto.h"
-#include "third_party/tensorflow/core/framework/graph.pb.h"
-#include "third_party/tensorflow/core/public/session.h"
+#include "tfnetwork.pb.h"
+#include "tensorflow/core/framework/graph.pb.h"
+#include "tensorflow/core/public/session.h"
 
 namespace tesseract {
 
@@ -50,7 +50,7 @@ class TFNetwork : public Network {
 
   // Deserializes *this from a serialized TFNetwork proto. Returns 0 if failed,
   // otherwise the global step of the serialized graph.
-  int InitFromProtoStr(const string& proto_str);
+  int InitFromProtoStr(const std::string& proto_str);
   // The number of classes in this network should be equal to those in the
   // recoder_ in LSTMRecognizer.
   int num_classes() const { return output_shape_.depth(); }
@@ -69,10 +69,22 @@ class TFNetwork : public Network {
                NetworkScratch* scratch, NetworkIO* output) override;
 
  private:
+  // Runs backward propagation of errors on the deltas line.
+  // See Network for a detailed discussion of the arguments.
+  bool Backward(bool debug, const NetworkIO& fwd_deltas,
+                NetworkScratch* scratch,
+                NetworkIO* back_deltas) override {
+    tprintf("Must override Network::DebugWeights for type %d\n", type_);
+  }
+
+  void DebugWeights() override {
+    tprintf("Must override Network::DebugWeights for type %d\n", type_);
+  }
+
   int InitFromProto();
 
   // The original network definition for reference.
-  string spec_;
+  std::string spec_;
   // Input tensor parameters.
   StaticShape input_shape_;
   // Output tensor parameters.

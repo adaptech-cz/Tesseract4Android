@@ -81,7 +81,10 @@ class GENERIC_2D_ARRAY {
 
   void operator=(const GENERIC_2D_ARRAY<T>& src) {
     ResizeNoInit(src.dim1(), src.dim2());
-    memcpy(array_, src.array_, num_elements() * sizeof(array_[0]));
+    int size = num_elements();
+    if (size > 0) {
+      memcpy(array_, src.array_, size * sizeof(array_[0]));
+    }
   }
 
   // Reallocates the array to the given size. Does not keep old data, but does
@@ -537,7 +540,7 @@ class BandTriMatrix : public GENERIC_2D_ARRAY<T> {
   // Expression to select a specific location in the matrix. The matrix is
   // stored COLUMN-major, so the left-most index is the most significant.
   // This allows [][] access to use indices in the same order as (,).
-  virtual int index(int column, int row) const {
+  int index(int column, int row) const override {
     ASSERT_HOST(row >= column);
     ASSERT_HOST(row - column < this->dim2_);
     return column * this->dim2_ + row - column;
@@ -577,7 +580,7 @@ class MATRIX : public BandTriMatrix<BLOB_CHOICE_LIST *> {
   MATRIX(int dimension, int bandwidth)
     : BandTriMatrix<BLOB_CHOICE_LIST *>(dimension, bandwidth, NOT_CLASSIFIED) {}
 
-  virtual ~MATRIX();
+  ~MATRIX() override;
 
   // Returns true if there are any real classification results.
   bool Classified(int col, int row, int wildcard_id) const;
@@ -604,7 +607,7 @@ class MATRIX : public BandTriMatrix<BLOB_CHOICE_LIST *> {
 
 struct MATRIX_COORD {
   static void Delete(void *arg) {
-    MATRIX_COORD *c = static_cast<MATRIX_COORD *>(arg);
+    auto *c = static_cast<MATRIX_COORD *>(arg);
     delete c;
   }
   // Default constructor required by GenericHeap.

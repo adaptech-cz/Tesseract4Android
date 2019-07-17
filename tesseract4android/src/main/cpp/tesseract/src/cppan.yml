@@ -16,6 +16,7 @@ local_settings:
 
     dependencies:
         pvt.cppan.demo.danbloomberg.leptonica: 1
+        pvt.cppan.demo.libarchive.libarchive: 3
         pvt.cppan.demo.unicode.icu.i18n: "*"
 
 root_project: pvt.cppan.demo.google.tesseract
@@ -64,8 +65,6 @@ projects:
           - src/viewer/.*\.h
           - src/wordrec/.*\.h
 
-          - src/vs2010/port/.*
-
         exclude_from_build:
           - src/api/tesseractmain.cpp
           - src/viewer/svpaint.cpp
@@ -81,7 +80,6 @@ projects:
             - src/lstm
             - src/opencl
             - src/textord
-            - src/vs2010/port
             - src/viewer
             - src/wordrec
           #public:
@@ -89,9 +87,6 @@ projects:
             - src/ccmain
             - src/ccstruct
             - src/ccutil
-
-        check_symbol_exists:
-          snprintf: stdio.h
 
         check_include_exists:
           - dlfcn.h
@@ -140,8 +135,6 @@ projects:
                         ${SDIR}/src/arch/intsimdmatrixavx2.cpp
                         PROPERTIES COMPILE_FLAGS "/arch:AVX2")
                 endif()
-            else()
-                remove_src_dir(src/vs2010/port/*)
             endif()
 
         options:
@@ -149,8 +142,8 @@ projects:
                 definitions:
                     public:
                       - HAVE_CONFIG_H
+                      - HAVE_LIBARCHIVE
                       - _SILENCE_STDEXT_HASH_DEPRECATION_WARNINGS=1
-                      - WINDLLNAME="tesseract"
             shared:
                 definitions:
                     private:
@@ -160,6 +153,7 @@ projects:
 
         dependencies:
             pvt.cppan.demo.danbloomberg.leptonica: 1
+            pvt.cppan.demo.libarchive.libarchive: 3
 
     tesseract:
         files: src/api/tesseractmain.cpp

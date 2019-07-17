@@ -2,7 +2,6 @@
  * File:        globaloc.h  (Formerly error.h)
  * Description: Header file for generic error handler class
  * Author:      Ray Smith
- * Created:     Tue May  1 16:23:36 BST 1990
  *
  * (C) Copyright 1990, Hewlett-Packard Ltd.
  ** Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,23 +16,14 @@
  *
  **********************************************************************/
 
-#ifndef           GLOBALOC_H
-#define           GLOBALOC_H
+#ifndef GLOBALOC_H
+#define GLOBALOC_H
 
-#include          "host.h"
-
-// Saves a clone of the given pix, and notes its resolution in thread-specific
-// data, so that the image can be written prior to a crash.
-struct Pix;
-void SavePixForCrash(int resolution, Pix* pix);
-
-void signal_exit(int signal_code);
-
-void err_exit();
 
 void set_global_loc_code(int loc_code);
 
 void set_global_subloc_code(int loc_code);
 
 void set_global_subsubloc_code(int loc_code);
+
 #endif

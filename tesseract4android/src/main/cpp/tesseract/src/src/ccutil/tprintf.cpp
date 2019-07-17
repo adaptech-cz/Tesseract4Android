@@ -2,7 +2,6 @@
  * File:        tprintf.cpp
  * Description: Trace version of printf - portable between UX and NT
  * Author:      Phil Cheatle
- * Created:     Wed Jun 28 15:01:15 BST 1995
  *
  * (C) Copyright 1995, Hewlett-Packard Ltd.
  ** Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,7 +28,7 @@
 #include "strngs.h"
 #include "tprintf.h"
 
-#define MAX_MSG_LEN     65536
+#define MAX_MSG_LEN 2048
 
 static STRING_VAR(debug_file, "", "File to send tprintf output to");
 
@@ -38,25 +37,26 @@ DLLSYM void tprintf(const char *format, ...)
 {
   tesseract::tprintfMutex.Lock();
   va_list args;                  // variable args
+  const char* debug_file_name = debug_file.string();
   static FILE *debugfp = nullptr;   // debug file
                                  // debug window
   int32_t offset = 0;              // into message
-  static char msg[MAX_MSG_LEN + 1];
+  char msg[MAX_MSG_LEN + 1];
 
   va_start(args, format);  // variable list
   // Format into msg
   #ifdef _WIN32
   offset += _vsnprintf(msg + offset, MAX_MSG_LEN - offset, format, args);
-  if (strcmp(debug_file.string(), "/dev/null") == 0)
+  if (debug_file_name && strcmp(debug_file_name, "/dev/null") == 0)
     debug_file.set_value("nul");
   #else
   offset += vsnprintf(msg + offset, MAX_MSG_LEN - offset, format, args);
   #endif
   va_end(args);
 
-  if (debugfp == nullptr && strlen(debug_file.string()) > 0) {
+  if (debugfp == nullptr && debug_file_name && strlen(debug_file_name) > 0) {
     debugfp = fopen(debug_file.string(), "wb");
-  } else if (debugfp != nullptr && strlen(debug_file.string()) == 0) {
+  } else if (debugfp != nullptr && debug_file_name && strlen(debug_file_name) == 0) {
     fclose(debugfp);
     debugfp = nullptr;
   }

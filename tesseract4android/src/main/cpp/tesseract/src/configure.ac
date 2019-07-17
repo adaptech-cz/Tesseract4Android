@@ -24,8 +24,8 @@ AM_INIT_AUTOMAKE([foreign subdir-objects])
 
 # Define date of package, etc. Could be useful in auto-generated
 # documentation.
-PACKAGE_YEAR=2018
-PACKAGE_DATE="10/29"
+PACKAGE_YEAR=2019
+PACKAGE_DATE="07/07"
 
 abs_top_srcdir=`AS_DIRNAME([$0])`
 
@@ -91,12 +91,15 @@ case "${host_os}" in
         AC_SUBST([NOUNDEFINED], ['-no-undefined'])
         ;;
     solaris*)
-        LIBS="-lsocket -lnsl -lrt -lxnet"
+        LIBS="$LIBS -lsocket -lnsl -lrt -lxnet"
         AM_CONDITIONAL([ADD_RT], true)
         ;;
     *darwin*)
         OPENCL_LIBS=""
         OPENCL_INC=""
+        AM_CONDITIONAL([ADD_RT], false)
+        ;;
+    *android*|openbsd*)
         AM_CONDITIONAL([ADD_RT], false)
         ;;
     powerpc-*-darwin*)
@@ -108,25 +111,26 @@ case "${host_os}" in
         ;;
 esac
 
+WERROR=-Werror
+# The test code used by AX_CHECK_COMPILE_FLAG uses an empty statement
+# and unused macros which must not raise a compiler error, but it must
+# be an error if flags like -avx are ignored on ARM and other
+# architectures because they are unsupported.
+AX_CHECK_COMPILE_FLAG([-Werror=unused-command-line-argument], [WERROR=-Werror=unused-command-line-argument])
+
 ## Checks for supported compiler options.
-AM_CONDITIONAL([AVX_OPT], false)
-AM_CONDITIONAL([AVX2_OPT], false)
-AM_CONDITIONAL([SSE41_OPT], false)
 
-AX_CHECK_COMPILE_FLAG([-mavx], [avx=true], [avx=false])
-if $avx; then
-    AM_CONDITIONAL([AVX_OPT], true)
-fi
+AX_CHECK_COMPILE_FLAG([-mavx], [avx=true], [avx=false], [$WERROR])
+AM_CONDITIONAL([AVX_OPT], ${avx})
 
-AX_CHECK_COMPILE_FLAG([-mavx2], [avx2=true], [avx2=false])
-if $avx2; then
-    AM_CONDITIONAL([AVX2_OPT], true)
-fi
+AX_CHECK_COMPILE_FLAG([-mavx2], [avx2=true], [avx2=false], [$WERROR])
+AM_CONDITIONAL([AVX2_OPT], $avx2)
 
-AX_CHECK_COMPILE_FLAG([-msse4.1], [sse41=true], [sse41=false])
-if $sse41; then
-    AM_CONDITIONAL([SSE41_OPT], true)
-fi
+AX_CHECK_COMPILE_FLAG([-msse4.1], [sse41=true], [sse41=false], [$WERROR])
+AM_CONDITIONAL([SSE41_OPT], $sse41)
+
+AX_CHECK_COMPILE_FLAG([-march=native], [arch_native=true], [arch_native=false], [$WERROR])
+AM_CONDITIONAL([MARCH_NATIVE_OPT], $arch_native)
 
 AC_ARG_WITH([extra-includes],
             [AS_HELP_STRING([--with-extra-includes=DIR],
@@ -161,16 +165,6 @@ AC_ARG_ENABLE([legacy],
 AC_MSG_RESULT([$enable_legacy])
 AM_CONDITIONAL([DISABLED_LEGACY_ENGINE], test "$enable_legacy" = "no")
 
-# check whether to build embedded version
-AC_MSG_CHECKING([--enable-embedded argument])
-AC_ARG_ENABLE([embedded],
-    AS_HELP_STRING([--enable-embedded], [enable embedded build [default=no]]))
-AC_MSG_RESULT([$enable_embedded])
-AM_CONDITIONAL([EMBEDDED], [test "$enable_embedded" = "yes"])
-if test "$enable_embedded" = "yes"; then
-  AM_CPPFLAGS="-DEMBEDDED $AM_CPPFLAGS"
-fi
-
 # check whether to build OpenMP support
 AC_OPENMP
 
@@ -190,6 +184,25 @@ if test "$enable_opencl" = "yes"; then
     AC_CHECK_HEADERS(OpenCL/cl.h, [have_opencl=true], [have_opencl=false])
   ])
 fi
+
+# Check whether to build with support for TensorFlow.
+AC_ARG_WITH([tensorflow],
+  AS_HELP_STRING([--with-tensorflow],
+                 [support TensorFlow @<:@default=check@:>@]),
+  [], [with_tensorflow=check])
+AM_CONDITIONAL([TENSORFLOW], false)
+TENSORFLOW_LIBS=
+AS_IF([test "x$with_tensorflow" != xno],
+  [AC_CHECK_HEADERS(["tensorflow/core/framework/graph.pb.h"],
+    [AC_SUBST([TENSORFLOW_LIBS], ["-lprotobuf -ltensorflow_cc"])
+      AM_CONDITIONAL([TENSORFLOW], true)
+    ],
+    [if test "x$with_tensorflow" != xcheck; then
+      AC_MSG_FAILURE(
+        [--with-tensorflow was given, but test for libtensorflow-dev failed])
+     fi
+    ])
+  ])
 
 # https://lists.apple.com/archives/unix-porting/2009/Jan/msg00026.html
 m4_define([MY_CHECK_FRAMEWORK],
@@ -322,48 +335,34 @@ AC_COMPILE_IFELSE(
 
 AC_MSG_RESULT([$CLANG])
 
-dnl ********************
-dnl turn on c++11
-dnl ********************
+dnl **********************
+dnl Turn on C++11 or newer
+dnl **********************
 
-OLD_CXXFLAGS=$CXXFLAGS
-AC_MSG_CHECKING([whether compiler supports C++11])
-CXXFLAGS="$CXXFLAGS -std=c++11"
-snprintfworks=no
-AC_COMPILE_IFELSE(
-[
-  AC_LANG_SOURCE([[
-    #if (__cplusplus < 201103L)
-    #error C++ 11 is unsupported
-    #endif
-  ]])
-], [
-     AC_MSG_RESULT(yes)
-   ],
-   [
-     AC_MSG_RESULT(no)
-     AC_MSG_ERROR([Your compiler does not have the necessary c++11 support! Cannot proceed.])
-   ])
-AC_CHECK_FUNCS([snprintf],, [snprintfworks=yes])
-CXXFLAGS="$OLD_CXXFLAGS"
+CPLUSPLUS=
+AX_CHECK_COMPILE_FLAG([-std=c++11], [CPLUSPLUS=11], [], [$WERROR])
+AX_CHECK_COMPILE_FLAG([-std=c++14], [CPLUSPLUS=14], [], [$WERROR])
+AX_CHECK_COMPILE_FLAG([-std=c++17], [CPLUSPLUS=17], [], [$WERROR])
+#AX_CHECK_COMPILE_FLAG([-std=c++20], [CPLUSPLUS=20], [], [$WERROR])
 
+if test -z "$CPLUSPLUS"; then
+  AC_MSG_ERROR([Your compiler does not have the necessary C++11 support! Cannot proceed.])
+fi
 
-# set c++11 support based on platform/compiler
+# Set C++11, C++14 or C++17 support based on platform/compiler
 case "${host_os}" in
   cygwin*)
-    CXXFLAGS="$CXXFLAGS -std=gnu++11"
+    CXXFLAGS="$CXXFLAGS -std=gnu++$CPLUSPLUS"
     ;;
   *-darwin* | *-macos10*)
-     if test "x$CLANG" = "xyes"; then
-       CXXFLAGS="$CXXFLAGS -std=c++11 "
-       LDFLAGS="$LDFLAGS -stdlib=libc++"
-     else
-       CXXFLAGS="$CXXFLAGS -std=c++11"
-     fi
+    CXXFLAGS="$CXXFLAGS -std=c++$CPLUSPLUS"
+    if test "x$CLANG" = "xyes"; then
+      LDFLAGS="$LDFLAGS -stdlib=libc++"
+    fi
     ;;
   *)
     # default
-    CXXFLAGS="$CXXFLAGS -std=c++11"
+    CXXFLAGS="$CXXFLAGS -std=c++$CPLUSPLUS"
     ;;
 esac
 
@@ -372,7 +371,7 @@ esac
 # Check for libraries
 # ----------------------------------------
 
-AC_SEARCH_LIBS([sem_init], [pthread rt])
+AC_SEARCH_LIBS([pthread_create], [pthread])
 
 
 # ----------------------------------------
@@ -392,7 +391,8 @@ AC_HEADER_STDBOOL
 # ----------------------------------------
 
 AC_CHECK_PROG([have_asciidoc], asciidoc, true, false)
-if $have_asciidoc; then
+AC_CHECK_PROG([have_xsltproc], xsltproc, true, false)
+if $have_asciidoc && $have_xsltproc; then
   AM_CONDITIONAL([ASCIIDOC], true)
 else
   AM_CONDITIONAL([ASCIIDOC], false)
@@ -418,21 +418,25 @@ else
   AC_MSG_ERROR([Leptonica 1.74 or higher is required. Try to install libleptonica-dev package.])
 fi
 
+PKG_CHECK_MODULES([libarchive], [libarchive], [have_libarchive=true], [have_libarchive=false])
+AM_CONDITIONAL([HAVE_LIBARCHIVE], [$have_libarchive])
+if $have_libarchive; then
+  AC_DEFINE([HAVE_LIBARCHIVE], [], [Enable libarchive])
+  CPPFLAGS="$CPPFLAGS $libarchive_CFLAGS"
+fi
+
 AM_CONDITIONAL([ENABLE_TRAINING], true)
 
-# Check location of icu headers
+# Check availability of ICU packages.
 PKG_CHECK_MODULES([ICU_UC], [icu-uc >= 52.1], [have_icu_uc=true], [have_icu_uc=false])
 PKG_CHECK_MODULES([ICU_I18N], [icu-i18n >= 52.1], [have_icu_i18n=true], [have_icu_i18n=false])
 if !($have_icu_uc && $have_icu_i18n); then
-  AC_CHECK_HEADERS([unicode/uchar.h], [have_icu=true], [have_icu=false])
-  if !($have_icu); then
-        AC_MSG_WARN([icu 52.1 or higher is required, but was not found.])
-        AC_MSG_WARN([Training tools WILL NOT be built.])
-        AC_MSG_WARN([Try to install libicu-devel package.])
-        AM_CONDITIONAL([ENABLE_TRAINING], false)
-  else
-    ICU_UC_LIBS="-licui18n -licuuc"
-  fi
+  AC_MSG_WARN([icu 52.1 or higher is required, but was not found.])
+  AC_MSG_WARN([Training tools WILL NOT be built.])
+  AC_MSG_WARN([Try to install libicu-devel package.])
+  AM_CONDITIONAL([ENABLE_TRAINING], false)
+else
+  CPPFLAGS="$CPPFLAGS $ICU_UC_CFLAGS $ICU_I18N_CFLAGS"
 fi
 
 # Check location of pango headers
@@ -463,7 +467,6 @@ fi
 
 # Output files
 AC_CONFIG_FILES([Makefile tesseract.pc])
-AC_CONFIG_FILES([langtests/Makefile])
 AC_CONFIG_FILES([src/api/Makefile])
 AC_CONFIG_FILES([src/api/tess_version.h])
 AC_CONFIG_FILES([src/arch/Makefile])
@@ -481,7 +484,6 @@ AC_CONFIG_FILES([src/wordrec/Makefile])
 AC_CONFIG_FILES([tessdata/Makefile])
 AC_CONFIG_FILES([tessdata/configs/Makefile])
 AC_CONFIG_FILES([tessdata/tessconfigs/Makefile])
-AC_CONFIG_FILES([unlvtests/Makefile])
 AC_CONFIG_FILES([unittest/Makefile])
 AC_CONFIG_FILES([java/Makefile])
 AC_CONFIG_FILES([java/com/Makefile])
@@ -507,7 +509,7 @@ AM_COND_IF([ASCIIDOC],
   [
    echo "This will also build the documentation."
   ], [
-   echo "Documentation will not be built because asciidoc is missing."
+   echo "Documentation will not be built because asciidoc or xsltproc is missing."
   ]
 )
 

@@ -2,7 +2,6 @@
  * File:        boxread.cpp
  * Description: Read data from a box file.
  * Author:      Ray Smith
- * Created:     Fri Aug 24 17:47:23 PDT 2007
  *
  * (C) Copyright 2007, Google Inc.
  ** Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +18,8 @@
 
 #include "boxread.h"
 #include <cstring>          // for strchr, strcmp, strrchr
+#include <locale>           // for std::locale::classic
+#include <sstream>          // for std::stringstream
 #include "errcode.h"        // for ERRCODE, TESSEXIT
 #include "fileerr.h"        // for CANTOPENFILE
 #include "genericvector.h"  // for GenericVector
@@ -141,7 +142,7 @@ bool ReadNextBox(int target_page, int *line_number, FILE* box_file,
     (*line_number)++;
 
     buffptr = buff;
-    const unsigned char *ubuf = reinterpret_cast<const unsigned char*>(buffptr);
+    const auto *ubuf = reinterpret_cast<const unsigned char*>(buffptr);
     if (ubuf[0] == 0xef && ubuf[1] == 0xbb && ubuf[2] == 0xbf)
       buffptr += 3;  // Skip unicode file designation.
     // Check for blank lines in box file
@@ -182,7 +183,7 @@ bool ParseBoxFileStr(const char* boxfile_str, int* page_number,
   // ascii space and tab.
   int uch_len = 0;
   // Skip unicode file designation, if present.
-  const unsigned char *ubuf = reinterpret_cast<const unsigned char*>(buffptr);
+  const auto *ubuf = reinterpret_cast<const unsigned char*>(buffptr);
   if (ubuf[0] == 0xef && ubuf[1] == 0xbb && ubuf[2] == 0xbf)
       buffptr += 3;
   // Allow a single blank as the UTF-8 string. Check for empty string and
@@ -194,11 +195,19 @@ bool ParseBoxFileStr(const char* boxfile_str, int* page_number,
            uch_len < kBoxReadBufSize - 1);
   uch[uch_len] = '\0';
   if (*buffptr != '\0') ++buffptr;
-  int x_min, y_min, x_max, y_max;
+  int x_min = INT_MAX;
+  int y_min = INT_MAX;
+  int x_max = INT_MIN;
+  int y_max = INT_MIN;
   *page_number = 0;
-  int count = sscanf(buffptr, "%d %d %d %d %d",
-                 &x_min, &y_min, &x_max, &y_max, page_number);
-  if (count != 5 && count != 4) {
+  std::stringstream stream(buffptr);
+  stream.imbue(std::locale::classic());
+  stream >> x_min;
+  stream >> y_min;
+  stream >> x_max;
+  stream >> y_max;
+  stream >> *page_number;
+  if (x_max < x_min || y_max < y_min) {
     tprintf("Bad box coordinates in boxfile string! %s\n", ubuf);
     return false;
   }

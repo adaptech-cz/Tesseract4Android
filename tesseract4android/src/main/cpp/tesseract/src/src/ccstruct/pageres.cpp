@@ -7,7 +7,6 @@
  *              Holds data used during word recognition.
  *              Holds information about alternative spacing paths.
  * Author:      Phil Cheatle
- * Created:     Tue Sep 22 08:42:49 BST 1992
  *
  * (C) Copyright 1992, Hewlett-Packard Ltd.
  ** Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,7 +29,6 @@
 #include "blobs.h"         // for TWERD, TBLOB
 #include "boxword.h"       // for BoxWord
 #include "errcode.h"       // for ASSERT_HOST
-#include "host.h"          // for TRUE, FALSE
 #include "ocrblock.h"      // for BLOCK_IT, BLOCK, BLOCK_LIST (ptr only)
 #include "ocrrow.h"        // for ROW, ROW_IT
 #include "pdblock.h"       // for PDBLK
@@ -137,12 +135,12 @@ ROW_RES::ROW_RES(bool merge_similar_words, ROW *the_row) {
   float line_height = the_row->x_height() + the_row->ascenders() -
       the_row->descenders();
   for (word_it.mark_cycle_pt(); !word_it.cycled_list(); word_it.forward()) {
-    WERD_RES* word_res = new WERD_RES(word_it.data());
+    auto* word_res = new WERD_RES(word_it.data());
     word_res->x_height = the_row->x_height();
     if (add_next_word) {
       ASSERT_HOST(combo != nullptr);
       // We are adding this word to the combination.
-      word_res->part_of_combo = TRUE;
+      word_res->part_of_combo = true;
       combo->copy_on(word_res);
     } else if (merge_similar_words) {
       union_box = word_res->word->bounding_box();
@@ -177,10 +175,10 @@ ROW_RES::ROW_RES(bool merge_similar_words, ROW *the_row) {
         *copy_word = *(word_it.data());  // deep copy
         combo = new WERD_RES(copy_word);
         combo->x_height = the_row->x_height();
-        combo->combination = TRUE;
+        combo->combination = true;
         word_res_it.add_to_end(combo);
       }
-      word_res->part_of_combo = TRUE;
+      word_res->part_of_combo = true;
     } else {
       combo = nullptr;
     }
@@ -313,7 +311,7 @@ bool WERD_RES::SetupForRecognition(const UNICHARSET& unicharset_in,
                                    bool use_body_size,
                                    bool allow_detailed_fx,
                                    ROW *row, const BLOCK* block) {
-  tesseract::OcrEngineMode norm_mode_hint =
+  auto norm_mode_hint =
       static_cast<tesseract::OcrEngineMode>(norm_mode);
   tesseract = tess;
   POLY_BLOCK* pb = block != nullptr ? block->pdblk.poly_block() : nullptr;
@@ -364,7 +362,7 @@ void WERD_RES::SetupFake(const UNICHARSET& unicharset_in) {
   box_word = new tesseract::BoxWord;
   int blob_count = word->cblob_list()->length();
   if (blob_count > 0) {
-    BLOB_CHOICE** fake_choices = new BLOB_CHOICE*[blob_count];
+    auto** fake_choices = new BLOB_CHOICE*[blob_count];
     // For non-text blocks, just pass any blobs through to the box_word
     // and call the word failed with a fake classification.
     C_BLOB_IT b_it(word->cblob_list());
@@ -377,7 +375,7 @@ void WERD_RES::SetupFake(const UNICHARSET& unicharset_in) {
     FakeClassifyWord(blob_count, fake_choices);
     delete [] fake_choices;
   } else {
-    WERD_CHOICE* word = new WERD_CHOICE(&unicharset_in);
+    auto* word = new WERD_CHOICE(&unicharset_in);
     word->make_bad();
     LogNewRawChoice(word);
     // Ownership of word is taken by *this WERD_RES in LogNewCookedChoice.
@@ -888,7 +886,7 @@ void WERD_RES::FakeClassifyWord(int blob_count, BLOB_CHOICE** choices) {
   ClearRatings();
   ratings = new MATRIX(blob_count, 1);
   for (int c = 0; c < blob_count; ++c) {
-    BLOB_CHOICE_LIST* choice_list = new BLOB_CHOICE_LIST;
+    auto* choice_list = new BLOB_CHOICE_LIST;
     BLOB_CHOICE_IT choice_it(choice_list);
     choice_it.add_after_then_move(choices[c]);
     ratings->put(c, c, choice_list);
@@ -903,7 +901,7 @@ void WERD_RES::FakeClassifyWord(int blob_count, BLOB_CHOICE** choices) {
 // diagonal of the ratings matrix.
 void WERD_RES::FakeWordFromRatings(PermuterType permuter) {
   int num_blobs = ratings->dimension();
-  WERD_CHOICE* word_choice = new WERD_CHOICE(uch_set, num_blobs);
+  auto* word_choice = new WERD_CHOICE(uch_set, num_blobs);
   word_choice->set_permuter(permuter);
   for (int b = 0; b < num_blobs; ++b) {
     UNICHAR_ID unichar_id = UNICHAR_SPACE;
@@ -963,7 +961,7 @@ bool WERD_RES::ConditionalBlobMerge(
       BLOB_CHOICE_LIST* blob_choices = GetBlobChoices(i);
       if (FindMatchingChoice(new_id, blob_choices) == nullptr) {
         // Insert a fake result.
-        BLOB_CHOICE* blob_choice = new BLOB_CHOICE;
+        auto* blob_choice = new BLOB_CHOICE;
         blob_choice->set_unichar_id(new_id);
         BLOB_CHOICE_IT bc_it(blob_choices);
         bc_it.add_before_then_move(blob_choice);
@@ -996,7 +994,7 @@ void WERD_RES::MergeAdjacentBlobs(int index) {
 // Return true if the next character in the string (given the UTF8 length in
 // bytes) is a quote character.
 static int is_simple_quote(const char* signed_str, int length) {
-  const unsigned char* str =
+  const auto* str =
       reinterpret_cast<const unsigned char*>(signed_str);
   // Standard 1 byte quotes.
   return (length == 1 && (*str == '\'' || *str == '`')) ||
@@ -1105,8 +1103,8 @@ void WERD_RES::InitNonPointers() {
   unlv_crunch_mode = CR_NONE;
   small_caps = false;
   odd_size = false;
-  italic = FALSE;
-  bold = FALSE;
+  italic = false;
+  bold = false;
   // The fontinfos and tesseract count as non-pointers as they point to
   // data owned elsewhere.
   fontinfo = nullptr;
@@ -1191,13 +1189,6 @@ void WERD_RES::ClearRatings() {
   }
 }
 
-
-bool PAGE_RES_IT::operator ==(const PAGE_RES_IT &other) const {
-  return word_res == other.word_res &&
-      row_res == other.row_res &&
-      block_res == other.block_res;
-}
-
 int PAGE_RES_IT::cmp(const PAGE_RES_IT &other) const {
   ASSERT_HOST(page_res == other.page_res);
   if (other.block_res == nullptr) {
@@ -1269,7 +1260,7 @@ int PAGE_RES_IT::cmp(const PAGE_RES_IT &other) const {
 WERD_RES* PAGE_RES_IT::InsertSimpleCloneWord(const WERD_RES& clone_res,
                                              WERD* new_word) {
   // Make a WERD_RES for the new_word.
-  WERD_RES* new_res = new WERD_RES(new_word);
+  auto* new_res = new WERD_RES(new_word);
   new_res->CopySimpleFields(clone_res);
   new_res->combination = true;
   // Insert into the appropriate place in the ROW_RES.
@@ -1292,7 +1283,8 @@ WERD_RES* PAGE_RES_IT::InsertSimpleCloneWord(const WERD_RES& clone_res,
 // Helper computes the boundaries between blobs in the word. The blob bounds
 // are likely very poor, if they come from LSTM, where it only outputs the
 // character at one pixel within it, so we find the midpoints between them.
-static void ComputeBlobEnds(const WERD_RES& word, C_BLOB_LIST* next_word_blobs,
+static void ComputeBlobEnds(const WERD_RES& word, const TBOX& clip_box,
+                            C_BLOB_LIST* next_word_blobs,
                             GenericVector<int>* blob_ends) {
   C_BLOB_IT blob_it(word.word->cblob_list());
   for (int i = 0; i < word.best_state.size(); ++i) {
@@ -1312,8 +1304,74 @@ static void ComputeBlobEnds(const WERD_RES& word, C_BLOB_LIST* next_word_blobs,
         blob_it.set_to_list(next_word_blobs);
       blob_end = (blob_box.right() + blob_it.data()->bounding_box().left()) / 2;
     }
+    blob_end = ClipToRange<int>(blob_end, clip_box.left(), clip_box.right());
     blob_ends->push_back(blob_end);
   }
+  blob_ends->back() = clip_box.right();
+}
+
+// Helper computes the bounds of a word by restricting it to existing words
+// that significantly overlap.
+static TBOX ComputeWordBounds(const tesseract::PointerVector<WERD_RES>& words,
+                              int w_index, TBOX prev_box, WERD_RES_IT w_it) {
+  constexpr int kSignificantOverlapFraction = 4;
+  TBOX clipped_box;
+  TBOX current_box = words[w_index]->word->bounding_box();
+  TBOX next_box;
+  if (w_index + 1 < words.size() && words[w_index + 1] != nullptr &&
+      words[w_index + 1]->word != nullptr)
+    next_box = words[w_index + 1]->word->bounding_box();
+  for (w_it.forward(); !w_it.at_first() && w_it.data()->part_of_combo;
+       w_it.forward()) {
+    if (w_it.data() == nullptr || w_it.data()->word == nullptr) continue;
+    TBOX w_box = w_it.data()->word->bounding_box();
+    int height_limit = std::min<int>(w_box.height(), w_box.width() / 2);
+    int width_limit = w_box.width() / kSignificantOverlapFraction;
+    int min_significant_overlap = std::max(height_limit, width_limit);
+    int overlap = w_box.intersection(current_box).width();
+    int prev_overlap = w_box.intersection(prev_box).width();
+    int next_overlap = w_box.intersection(next_box).width();
+    if (overlap > min_significant_overlap) {
+      if (prev_overlap > min_significant_overlap) {
+        // We have no choice but to use the LSTM word edge.
+        clipped_box.set_left(current_box.left());
+      } else if (next_overlap > min_significant_overlap) {
+        // We have no choice but to use the LSTM word edge.
+        clipped_box.set_right(current_box.right());
+      } else {
+        clipped_box += w_box;
+      }
+    }
+  }
+  if (clipped_box.height() <= 0) {
+    clipped_box.set_top(current_box.top());
+    clipped_box.set_bottom(current_box.bottom());
+  }
+  if (clipped_box.width() <= 0) clipped_box = current_box;
+  return clipped_box;
+}
+
+// Helper moves the blob from src to dest. If it isn't contained by clip_box,
+// the blob is replaced by a fake that is contained.
+static TBOX MoveAndClipBlob(C_BLOB_IT* src_it, C_BLOB_IT* dest_it,
+                            const TBOX& clip_box) {
+  C_BLOB* src_blob = src_it->extract();
+  TBOX box = src_blob->bounding_box();
+  if (!clip_box.contains(box)) {
+    int left =
+        ClipToRange<int>(box.left(), clip_box.left(), clip_box.right() - 1);
+    int right =
+        ClipToRange<int>(box.right(), clip_box.left() + 1, clip_box.right());
+    int top =
+        ClipToRange<int>(box.top(), clip_box.bottom() + 1, clip_box.top());
+    int bottom =
+        ClipToRange<int>(box.bottom(), clip_box.bottom(), clip_box.top() - 1);
+    box = TBOX(left, bottom, right, top);
+    delete src_blob;
+    src_blob = C_BLOB::FakeBlob(box);
+  }
+  dest_it->add_after_then_move(src_blob);
+  return box;
 }
 
 // Replaces the current WERD/WERD_RES with the given words. The given words
@@ -1364,65 +1422,44 @@ void PAGE_RES_IT::ReplaceCurrentWord(
   src_b_it.sort(&C_BLOB::SortByXMiddle);
   C_BLOB_IT rej_b_it(input_word->word->rej_cblob_list());
   rej_b_it.sort(&C_BLOB::SortByXMiddle);
+  TBOX clip_box;
   for (int w = 0; w < words->size(); ++w) {
     WERD_RES* word_w = (*words)[w];
+    clip_box = ComputeWordBounds(*words, w, clip_box, wr_it_of_current_word);
     // Compute blob boundaries.
     GenericVector<int> blob_ends;
     C_BLOB_LIST* next_word_blobs =
         w + 1 < words->size() ? (*words)[w + 1]->word->cblob_list() : nullptr;
-    ComputeBlobEnds(*word_w, next_word_blobs, &blob_ends);
-    // Delete the fake blobs on the current word.
+    ComputeBlobEnds(*word_w, clip_box, next_word_blobs, &blob_ends);
+    // Remove the fake blobs on the current word, but keep safe for back-up if
+    // no blob can be found.
+    C_BLOB_LIST fake_blobs;
+    C_BLOB_IT fake_b_it(&fake_blobs);
+    fake_b_it.add_list_after(word_w->word->cblob_list());
+    fake_b_it.move_to_first();
     word_w->word->cblob_list()->clear();
     C_BLOB_IT dest_it(word_w->word->cblob_list());
     // Build the box word as we move the blobs.
-    tesseract::BoxWord* box_word = new tesseract::BoxWord;
-    for (int i = 0; i < blob_ends.size(); ++i) {
+    auto* box_word = new tesseract::BoxWord;
+    for (int i = 0; i < blob_ends.size(); ++i, fake_b_it.forward()) {
       int end_x = blob_ends[i];
       TBOX blob_box;
       // Add the blobs up to end_x.
       while (!src_b_it.empty() &&
              src_b_it.data()->bounding_box().x_middle() < end_x) {
-        blob_box += src_b_it.data()->bounding_box();
-        dest_it.add_after_then_move(src_b_it.extract());
+        blob_box += MoveAndClipBlob(&src_b_it, &dest_it, clip_box);
         src_b_it.forward();
       }
       while (!rej_b_it.empty() &&
              rej_b_it.data()->bounding_box().x_middle() < end_x) {
-        blob_box += rej_b_it.data()->bounding_box();
-        dest_it.add_after_then_move(rej_b_it.extract());
+        blob_box += MoveAndClipBlob(&rej_b_it, &dest_it, clip_box);
         rej_b_it.forward();
       }
-      // Clip to the previously computed bounds. Although imperfectly accurate,
-      // it is good enough, and much more complicated to determine where else
-      // to clip.
-      if (i > 0 && blob_box.left() < blob_ends[i - 1])
-        blob_box.set_left(blob_ends[i - 1]);
-      if (blob_box.right() > end_x)
-        blob_box.set_right(end_x);
-      box_word->InsertBox(i, blob_box);
-    }
-    // Fix empty boxes. If a very joined blob sits over multiple characters,
-    // then we will have some empty boxes from using the middle, so look for
-    // overlaps.
-    for (int i = 0; i < box_word->length(); ++i) {
-      TBOX box = box_word->BlobBox(i);
-      if (box.null_box()) {
-        // Nothing has its middle in the bounds of this blob, so use anything
-        // that overlaps.
-        for (dest_it.mark_cycle_pt(); !dest_it.cycled_list();
-             dest_it.forward()) {
-          TBOX blob_box = dest_it.data()->bounding_box();
-          if (blob_box.left() < blob_ends[i] &&
-              (i == 0 || blob_box.right() >= blob_ends[i - 1])) {
-            if (i > 0 && blob_box.left() < blob_ends[i - 1])
-              blob_box.set_left(blob_ends[i - 1]);
-            if (blob_box.right() > blob_ends[i])
-              blob_box.set_right(blob_ends[i]);
-            box_word->ChangeBox(i, blob_box);
-            break;
-          }
-        }
+      if (blob_box.null_box()) {
+        // Use the original box as a back-up.
+        blob_box = MoveAndClipBlob(&fake_b_it, &dest_it, clip_box);
       }
+      box_word->InsertBox(i, blob_box);
     }
     delete word_w->box_word;
     word_w->box_word = box_word;
@@ -1544,6 +1581,7 @@ void PAGE_RES_IT::ResetWordIterator() {
       }
     }
     ASSERT_HOST(!word_res_it.cycled_list());
+    wr_it_of_next_word = word_res_it;
     word_res_it.forward();
   } else {
     // word_res_it is OK, but reset word_res and prev_word_res if needed.
@@ -1581,6 +1619,7 @@ WERD_RES *PAGE_RES_IT::internal_forward(bool new_block, bool empty_ok) {
   block_res = next_block_res;
   row_res = next_row_res;
   word_res = next_word_res;
+  wr_it_of_current_word = wr_it_of_next_word;
   next_block_res = nullptr;
   next_row_res = nullptr;
   next_word_res = nullptr;
@@ -1609,6 +1648,7 @@ WERD_RES *PAGE_RES_IT::internal_forward(bool new_block, bool empty_ok) {
         next_block_res = block_res_it.data();
         next_row_res = row_res_it.data();
         next_word_res = word_res_it.data();
+        wr_it_of_next_word = word_res_it;
         word_res_it.forward();
         goto foundword;
       }

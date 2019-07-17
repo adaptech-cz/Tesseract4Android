@@ -2,7 +2,6 @@
 // File:        svutil.h
 // Description: ScrollView Utilities
 // Author:      Joern Wanke
-// Created:     Thu Nov 29 2007
 //
 // (C) Copyright 2007, Google Inc.
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,22 +24,13 @@
 #define TESSERACT_VIEWER_SVUTIL_H_
 
 #ifdef _WIN32
-#include <windows.h>
-#include "platform.h"
+#  include "host.h"  // also includes windows.h
 #else
 #include <pthread.h>
 #include <semaphore.h>
 #endif
 
 #include <string>
-
-#ifndef MAX
-#define MAX(a, b)  ((a > b) ? a : b)
-#endif
-
-#ifndef MIN
-#define MIN(a, b)  ((a < b) ? a : b)
-#endif
 
 /// The SVSync class provides functionality for Thread & Process Creation
 class SVSync {
@@ -53,7 +43,7 @@ class SVSync {
   static void StartProcess(const char* executable, const char* args);
 };
 
-/// A semaphore class which encapsulates the main signalling
+/// A semaphore class which encapsulates the main signaling
 /// and wait abilities of semaphores for windows and unix.
 class SVSemaphore {
  public:
@@ -74,7 +64,7 @@ class SVSemaphore {
 };
 
 /// A mutex which encapsulates the main locking and unlocking
-/// abilites of mutexes for windows and unix.
+/// abilities of mutexes for windows and unix.
 class SVMutex {
  public:
   /// Sets up a new mutex.
@@ -118,7 +108,7 @@ class SVNetwork {
   void Send(const char* msg);
 
   /// Receive a message from the server.
-  /// This will always return one line of char* (denoted by \n).
+  /// This will always return one line of char* (denoted by \\n).
   char* Receive();
 
   /// Close the connection to the server.

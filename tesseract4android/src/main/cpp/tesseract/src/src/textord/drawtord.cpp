@@ -29,12 +29,10 @@
 #define TO_WIN_NAME     "Textord"
                                  //title of window
 
-#define EXTERN
-
-EXTERN BOOL_VAR (textord_show_fixed_cuts, FALSE,
+BOOL_VAR (textord_show_fixed_cuts, false,
 "Draw fixed pitch cell boundaries");
 
-EXTERN ScrollView* to_win = nullptr;
+ScrollView* to_win = nullptr;
 
 /**********************************************************************
  * create_to_win
@@ -131,7 +129,7 @@ void plot_parallel_row(                 //draw a row
   FCOORD plot_pt;                //point to plot
                                  //blobs
   BLOBNBOX_IT it = row->blob_list ();
-  float fleft = (float) left;    //floating version
+  auto fleft = static_cast<float>(left);    //floating version
   float right;                   //end of row
 
   //      left=it.data()->bounding_box().left();
@@ -171,11 +169,11 @@ int32_t thresholds[]               //for drop out
 ) {
   int32_t line_index;              //pixel coord
   ScrollView::Color colour;                 //of histogram
-  float fleft = (float) xleft;   //float version
+  auto fleft = static_cast<float>(xleft);   //float version
 
   colour = ScrollView::WHITE;
   to_win->Pen(colour);
-  to_win->SetCursor(fleft, (float) ybottom);
+  to_win->SetCursor(fleft, static_cast<float>(ybottom));
   for (line_index = min_y; line_index <= max_y; line_index++) {
     if (occupation[line_index - min_y] < thresholds[line_index - min_y]) {
       if (colour != ScrollView::BLUE) {
@@ -189,13 +187,13 @@ int32_t thresholds[]               //for drop out
         to_win->Pen(colour);
       }
     }
-  to_win->DrawTo(fleft + occupation[line_index - min_y] / 10.0,      (float) line_index);
+  to_win->DrawTo(fleft + occupation[line_index - min_y] / 10.0,      static_cast<float>(line_index));
   }
   colour=ScrollView::STEEL_BLUE;
   to_win->Pen(colour);
-  to_win->SetCursor(fleft, (float) ybottom);
+  to_win->SetCursor(fleft, static_cast<float>(ybottom));
   for (line_index = min_y; line_index <= max_y; line_index++) {
-     to_win->DrawTo(fleft + thresholds[line_index - min_y] / 10.0,      (float) line_index);
+     to_win->DrawTo(fleft + thresholds[line_index - min_y] / 10.0,      static_cast<float>(line_index));
   }
 }
 
@@ -226,12 +224,12 @@ void draw_meanlines(                  //draw a block
     blob_it.move_to_last ();
     right = blob_it.data ()->bounding_box ().right ();
     plot_pt =
-      FCOORD ((float) left,
+      FCOORD (static_cast<float>(left),
       gradient * left + row->parallel_c () + row->xheight);
     plot_pt.rotate (rotation);
   to_win->SetCursor(plot_pt.x (), plot_pt.y ());
     plot_pt =
-      FCOORD ((float) right,
+      FCOORD (right,
       gradient * right + row->parallel_c () + row->xheight);
     plot_pt.rotate (rotation);
     to_win->DrawTo (plot_pt.x (), plot_pt.y ());
@@ -283,7 +281,7 @@ void plot_word_decisions(              //draw words
       if (colour == ScrollView::MAGENTA)
         colour = ScrollView::RED;
       else
-        colour = (ScrollView::Color) (colour + 1);
+        colour = static_cast<ScrollView::Color>(colour + 1);
       if (blob_box.left () - prev_x < row->min_space) {
         if (blob_box.left () - prev_x > row->space_threshold)
           rect_colour = ScrollView::GOLDENROD;

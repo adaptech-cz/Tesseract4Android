@@ -2,7 +2,6 @@
  * File:        serialis.h  (Formerly serialmac.h)
  * Description: Inline routines and macros for serialisation functions
  * Author:      Phil Cheatle
- * Created:     Tue Oct 08 08:33:12 BST 1991
  *
  * (C) Copyright 1990, Hewlett-Packard Ltd.
  ** Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,12 +19,13 @@
 #ifndef SERIALIS_H
 #define SERIALIS_H
 
+#include <cstdint>  // uint8_t
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <cstdio>
-#include "host.h"
 
-template <typename T> class GenericVector;
+template <typename T>
+class GenericVector;
 class STRING;
 
 /***********************************************************************
@@ -46,11 +46,10 @@ constexpr size_t countof(T const (&)[N]) noexcept {
 
 // Function to read a GenericVector<char> from a whole file.
 // Returns false on failure.
-typedef bool (*FileReader)(const STRING& filename, GenericVector<char>* data);
+using FileReader = bool (*)(const STRING&, GenericVector<char>*);
 // Function to write a GenericVector<char> to a whole file.
 // Returns false on failure.
-typedef bool (*FileWriter)(const GenericVector<char>& data,
-                           const STRING& filename);
+using FileWriter = bool (*)(const GenericVector<char>&, const STRING&);
 
 // Deserialize data from file.
 bool DeSerialize(FILE* fp, char* data, size_t n = 1);
@@ -88,7 +87,9 @@ class TFile {
   // From an open file and an end offset.
   bool Open(FILE* fp, int64_t end_offset);
   // Sets the value of the swap flag, so that FReadEndian does the right thing.
-  void set_swap(bool value) { swap_ = value; }
+  void set_swap(bool value) {
+    swap_ = value;
+  }
 
   // Deserialize data.
   bool DeSerialize(char* data, size_t count = 1);
@@ -122,7 +123,6 @@ class TFile {
   // Reads a line like fgets. Returns nullptr on EOF, otherwise buffer.
   // Reads at most buffer_size bytes, including '\0' terminator, even if
   // the line is longer. Does nothing if buffer_size <= 0.
-  // To use fscanf use FGets and sscanf.
   char* FGets(char* buffer, int buffer_size);
   // Replicates fread, followed by a swap of the bytes if needed, returning the
   // number of items read. If swap_ is true then the count items will each have

@@ -2,7 +2,6 @@
  * File:        clst.cpp  (Formerly clist.c)
  * Description: CONS cell list handling code which is not in the include file.
  * Author:      Phil Cheatle
- * Created:     Mon Jan 28 08:33:13 GMT 1991
  *
  * (C) Copyright 1991, Hewlett-Packard Ltd.
  ** Licensed under the Apache License, Version 2.0 (the "License");
@@ -97,8 +96,8 @@ void CLIST::shallow_clear() {  //destroy all links
 void CLIST::assign_to_sublist(                           //to this list
                               CLIST_ITERATOR *start_it,  //from list start
                               CLIST_ITERATOR *end_it) {  //from list end
-  const ERRCODE LIST_NOT_EMPTY =
-    "Destination list must be empty before extracting a sublist";
+  constexpr ERRCODE LIST_NOT_EMPTY(
+    "Destination list must be empty before extracting a sublist");
 
   if (!empty ())
     LIST_NOT_EMPTY.error ("CLIST.assign_to_sublist", ABORT, nullptr);
@@ -139,7 +138,7 @@ const void *, const void *)) {
 
   /* Allocate an array of pointers, one per list element */
   count = length ();
-  base = (void **) malloc (count * sizeof (void *));
+  base = static_cast<void **>(malloc (count * sizeof (void *)));
 
   /* Extract all elements, putting the pointers in the array */
   current = base;
@@ -171,7 +170,7 @@ bool CLIST::add_sorted(int comparator(const void*, const void*),
                        bool unique, void* new_data) {
   // Check for adding at the end.
   if (last == nullptr || comparator(&last->data, &new_data) < 0) {
-    CLIST_LINK* new_element = new CLIST_LINK;
+    auto* new_element = new CLIST_LINK;
     new_element->data = new_data;
     if (last == nullptr) {
       new_element->next = new_element;
@@ -253,7 +252,7 @@ void *CLIST_ITERATOR::forward() {
   if (current) {                 //not removed so
                                  //set previous
     prev = current;
-    started_cycling = TRUE;
+    started_cycling = true;
     // In case next is deleted by another iterator, get next from current.
     current = current->next;
   } else {
@@ -344,8 +343,8 @@ void *CLIST_ITERATOR::move_to_last() {
 
 void CLIST_ITERATOR::exchange(                             //positions of 2 links
                               CLIST_ITERATOR *other_it) {  //other iterator
-  const ERRCODE DONT_EXCHANGE_DELETED =
-    "Can't exchange deleted elements of lists";
+  constexpr ERRCODE DONT_EXCHANGE_DELETED(
+    "Can't exchange deleted elements of lists");
 
   CLIST_LINK *old_current;
 
@@ -444,12 +443,12 @@ CLIST_LINK *CLIST_ITERATOR::extract_sublist(                             //from 
   CLIST_ITERATOR temp_it = *this;
   CLIST_LINK *end_of_new_list;
 
-  const ERRCODE BAD_SUBLIST = "Can't find sublist end point in original list";
+  constexpr ERRCODE BAD_SUBLIST("Can't find sublist end point in original list");
   #ifndef NDEBUG
-  const ERRCODE BAD_EXTRACTION_PTS =
-    "Can't extract sublist from points on different lists";
-  const ERRCODE DONT_EXTRACT_DELETED =
-    "Can't extract a sublist marked by deleted points";
+  constexpr ERRCODE BAD_EXTRACTION_PTS(
+    "Can't extract sublist from points on different lists");
+  constexpr ERRCODE DONT_EXTRACT_DELETED(
+    "Can't extract a sublist marked by deleted points");
 
   if (!other_it)
     BAD_PARAMETER.error ("CLIST_ITERATOR::extract_sublist", ABORT,

@@ -1,8 +1,7 @@
 ///////////////////////////////////////////////////////////////////////
 // File:        thresholder.h
-// Description: Base API for thresolding images in tesseract.
+// Description: Base API for thresholding images in tesseract.
 // Author:      Ray Smith
-// Created:     Mon May 12 11:00:15 PDT 2008
 //
 // (C) Copyright 2008, Google Inc.
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -171,14 +170,14 @@ class TESS_API ImageThresholder {
   /// The pix will always be PixDestroy()ed on destruction of the class.
   Pix*                 pix_;
 
-  int                  image_width_;    //< Width of source pix_.
-  int                  image_height_;   //< Height of source pix_.
-  int                  pix_channels_;   //< Number of 8-bit channels in pix_.
-  int                  pix_wpl_;        //< Words per line of pix_.
+  int                  image_width_;    ///< Width of source pix_.
+  int                  image_height_;   ///< Height of source pix_.
+  int                  pix_channels_;   ///< Number of 8-bit channels in pix_.
+  int                  pix_wpl_;        ///< Words per line of pix_.
   // Limits of image rectangle to be processed.
-  int                  scale_;          //< Scale factor from original image.
-  int                  yres_;           //< y pixels/inch in source image.
-  int                  estimated_res_;  //< Resolution estimate from text size.
+  int                  scale_;          ///< Scale factor from original image.
+  int                  yres_;           ///< y pixels/inch in source image.
+  int                  estimated_res_;  ///< Resolution estimate from text size.
   int                  rect_left_;
   int                  rect_top_;
   int                  rect_width_;

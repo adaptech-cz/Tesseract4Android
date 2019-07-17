@@ -2,7 +2,6 @@
  * File:        tordmain.cpp  (Formerly textordp.c)
  * Description: C++ top level textord code.
  * Author:      Ray Smith
- * Created:     Tue Jul 28 17:12:33 BST 1992
  *
  * (C) Copyright 1992, Hewlett-Packard Ltd.
  ** Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,6 +16,7 @@
  *
  **********************************************************************/
 
+#define _USE_MATH_DEFINES       // for M_PI
 #ifdef HAVE_CONFIG_H
 #include "config_auto.h"
 #endif
@@ -135,7 +135,7 @@ void SetBlobStrokeWidth(Pix* pix, BLOBNBOX* blob) {
   }
   pixDestroy(&dist_pix);
   // Store the horizontal and vertical width in the blob, keeping both
-  // widths if there is enough information, otherwse only the one with
+  // widths if there is enough information, otherwise only the one with
   // the most samples.
   // If there are insufficient samples, store zero, rather than using
   // 2*area/perimeter, as the numbers that gives do not match the numbers
@@ -558,7 +558,7 @@ bool Textord::clean_noise_from_row(          //remove empties
     tprintf ("Row ending at (%d,%g):",
       blob_box.right (), row->base_line (blob_box.right ()));
     tprintf (" R=%g, dc=%d, nc=%d, %s\n",
-      norm_count > 0 ? (float) dot_count / norm_count : 9999,
+      norm_count > 0 ? static_cast<float>(dot_count) / norm_count : 9999,
       dot_count, norm_count,
       dot_count > norm_count * textord_noise_normratio
       && dot_count > 2 ? "REJECTED" : "ACCEPTED");
@@ -791,7 +791,7 @@ void Textord::TransferDiacriticsToBlockGroups(BLOBNBOX_LIST* diacritic_blobs,
         WERD_IT w_it(row->word_list());
         for (w_it.mark_cycle_pt(); !w_it.cycled_list(); w_it.forward()) {
           WERD* word = w_it.data();
-          WordWithBox* box_word = new WordWithBox(word);
+          auto* box_word = new WordWithBox(word);
           word_grid.InsertBBox(true, true, box_word);
           // Save the pointer where it will be auto-deleted.
           word_ptrs.push_back(box_word);

@@ -105,6 +105,7 @@ class EquationFinderTest : public testing::Test {
   string testdata_dir_;
 
   void SetUp() {
+    std::locale::global(std::locale(""));
     string tessdata_dir = file::JoinPath(FLAGS_test_srcdir, "tessdata");
     tesseract_.reset(new Tesseract());
     tesseract_->init_tesseract(tessdata_dir.c_str(), "eng", OEM_TESSERACT_ONLY);
@@ -127,7 +128,7 @@ class EquationFinderTest : public testing::Test {
     CHECK(blocks != nullptr);
     BLOCK_IT block_it(blocks);
     BLOCK* block =
-        new BLOCK("", TRUE, 0, 0, 0, 0, pixGetWidth(pix), pixGetHeight(pix));
+        new BLOCK("", true, 0, 0, 0, 0, pixGetWidth(pix), pixGetHeight(pix));
     block_it.add_to_end(block);
   }
 

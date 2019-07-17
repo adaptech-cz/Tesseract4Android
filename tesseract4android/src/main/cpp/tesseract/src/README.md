@@ -12,10 +12,10 @@
 
 This package contains an **OCR engine** - `libtesseract` and a **command line program** - `tesseract`.
 Tesseract 4 adds a new neural net (LSTM) based OCR engine which is focused
-on line recognition, but also still supports the legacy Tesseract OCR engine of 
-Tesseract 3 which works by recognizing character patterns. Compatibility with 
-Tesseract 3 is enabled by using the Legacy OCR Engine mode (--oem 0). 
-It also needs traineddata files which support the legacy engine, for example 
+on line recognition, but also still supports the legacy Tesseract OCR engine of
+Tesseract 3 which works by recognizing character patterns. Compatibility with
+Tesseract 3 is enabled by using the Legacy OCR Engine mode (--oem 0).
+It also needs traineddata files which support the legacy engine, for example
 those from the tessdata repository.
 
 The lead developer is Ray Smith. The maintainer is Zdenko Podobny.
@@ -24,7 +24,7 @@ and GitHub's log of [contributors](https://github.com/tesseract-ocr/tesseract/gr
 
 Tesseract has **unicode (UTF-8) support**, and can **recognize more than 100 languages** "out of the box".
 
-Tesseract supports **various output formats**: plain-text, hocr(html), pdf, tsv, invisible-text-only pdf.
+Tesseract supports **various output formats**: plain text, hOCR (HTML), PDF, invisible-text-only PDF, TSV. The master branch also has experimental support for ALTO (XML) output.
 
 You should note that in many cases, in order to get better OCR results, you'll need to **[improve the quality](https://github.com/tesseract-ocr/tesseract/wiki/ImproveQuality) of the image** you are giving Tesseract.
 
@@ -39,11 +39,9 @@ at Hewlett-Packard Co, Greeley Colorado between 1985 and 1994, with some
 more changes made in 1996 to port to Windows, and some C++izing in 1998.
 In 2005 Tesseract was open sourced by HP. Since 2006 it is developed by Google.
 
-The latest stable version is **[4.0.0](https://github.com/tesseract-ocr/tesseract/releases/tag/4.0.0)**, released on October 29, 2018. Latest source code for 4.0 is available from [master branch on GitHub](https://github.com/tesseract-ocr/tesseract/tree/master). Open issues can be found in [issue tracker](https://github.com/tesseract-ocr/tesseract/issues), and [Planning wiki](https://github.com/tesseract-ocr/tesseract/wiki/Planning#400).
+The latest (LSTM based) stable version is **[4.1.0](https://github.com/tesseract-ocr/tesseract/releases/tag/4.1.0)**, released on July 7, 2019. Latest source code is available from [master branch on GitHub](https://github.com/tesseract-ocr/tesseract/tree/master). Open issues can be found in [issue tracker](https://github.com/tesseract-ocr/tesseract/issues), and [Planning wiki](https://github.com/tesseract-ocr/tesseract/wiki/Planning).
 
 The latest 3.5 version is **[3.05.02](https://github.com/tesseract-ocr/tesseract/releases/tag/3.05.02)**, released on June 19, 2018. Latest source code for 3.05 is available from [3.05 branch on GitHub](https://github.com/tesseract-ocr/tesseract/tree/3.05). There is no development for this version, but it can be used for special cases (e.g. see [Regression of features from 3.0x](https://github.com/tesseract-ocr/tesseract/wiki/Planning#regression-of-features-from-30x)).
-
-Source code for the new **[LSTM based 4.0 version](https://github.com/tesseract-ocr/tesseract)** is available from the master branch on GitHub. Please note this branch is under active development.
 
 See **[Release Notes](https://github.com/tesseract-ocr/tesseract/wiki/ReleaseNotes)** and **[Change Log](https://github.com/tesseract-ocr/tesseract/blob/master/ChangeLog)** for more details of the releases.
 
@@ -55,7 +53,7 @@ Supported Compilers are:
 
 * GCC 4.8 and above
 * Clang 3.4 and above
-* MSVC 2015, 2017
+* MSVC 2015, 2017, 2019
 
 Other compilers might work, but are not officially supported.
 
@@ -66,6 +64,8 @@ Basic **[command line usage](https://github.com/tesseract-ocr/tesseract/wiki/Com
     tesseract imagename outputbase [-l lang] [--oem ocrenginemode] [--psm pagesegmode] [configfiles...]
 
 For more information about the various command line options use `tesseract --help` or `man tesseract`.
+
+Examples can be found in the [wiki](https://github.com/tesseract-ocr/tesseract/wiki/Command-Line-Usage#simplest-invocation-to-ocr-an-image).
 
 ## For developers
 
@@ -100,6 +100,9 @@ Please report an issue only for a **bug**, not for asking questions.
     limitations under the License.
 
 **NOTE**: This software depends on other packages that may be licensed under different open source licenses.
+
+Tesseract uses [Leptonica library](http://leptonica.com/) which essentially
+uses a [BSD 2-clause license](http://leptonica.com/about-the-license.html).
 
 ## Latest Version of README
 

@@ -2,7 +2,6 @@
 // File:        tabfind.cpp
 // Description: Subclass of BBGrid to find vertically aligned blobs.
 // Author:      Ray Smith
-// Created:     Fri Mar 21 15:03:01 PST 2008
 //
 // (C) Copyright 2008, Google Inc.
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,9 +22,9 @@
 
 #include "tabfind.h"
 #include "alignedblob.h"
-#include "blobbox.h"
 #include "colpartitiongrid.h"
 #include "detlinefit.h"
+#include "host.h"              // for NearlyEqual
 #include "linefind.h"
 
 #include <algorithm>
@@ -60,8 +59,8 @@ const int kMinEvaluatedTabs = 3;
 // so that the assert there never fails.
 const double kCosMaxSkewAngle = 0.866025;
 
-BOOL_VAR(textord_tabfind_show_initialtabs, false, "Show tab candidates");
-BOOL_VAR(textord_tabfind_show_finaltabs, false, "Show tab vectors");
+static BOOL_VAR(textord_tabfind_show_initialtabs, false, "Show tab candidates");
+static BOOL_VAR(textord_tabfind_show_finaltabs, false, "Show tab vectors");
 
 TabFind::TabFind(int gridsize, const ICOORD& bleft, const ICOORD& tright,
                  TabVector_LIST* vlines, int vertical_x, int vertical_y,
@@ -1051,7 +1050,7 @@ void TabFind::MakeColumnWidths(int col_widths_size, STATS* col_widths) {
     }
     if (col_count > kMinLinesInColumn &&
         col_count > kMinFractionalLinesInColumn * total_col_count) {
-      ICOORDELT* w = new ICOORDELT(0, width);
+      auto* w = new ICOORDELT(0, width);
       w_it.add_after_then_move(w);
       if (textord_debug_tabfind)
         tprintf("Column of width %d has %d = %.2f%% lines\n",

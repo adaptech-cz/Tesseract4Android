@@ -20,20 +20,20 @@
 /*----------------------------------------------------------------------------
           Include Files and Type Defines
 ----------------------------------------------------------------------------*/
+
+#define _USE_MATH_DEFINES       // for M_PI
 #ifdef HAVE_CONFIG_H
 #include "config_auto.h"
 #endif
 
+#include <cmath>                // for M_PI
 #include <cstring>
 #include <cstdio>
-#define _USE_MATH_DEFINES
-#include <cmath>
 
 #include "classify.h"
 #include "cluster.h"
 #include "clusttool.h"
 #include "commontraining.h"
-#include "emalloc.h"
 #include "featdefs.h"
 #include "fontinfo.h"
 #include "genericvector.h"
@@ -55,12 +55,8 @@ using tesseract::MasterTrainer;
 using tesseract::Shape;
 using tesseract::ShapeTable;
 
-#define PROGRAM_FEATURE_TYPE "mf"
-
 // Max length of a fake shape label.
 const int kMaxShapeLabelLength = 10;
-
-DECLARE_STRING_PARAM_FLAG(test_ch);
 
 /*----------------------------------------------------------------------------
             Public Code

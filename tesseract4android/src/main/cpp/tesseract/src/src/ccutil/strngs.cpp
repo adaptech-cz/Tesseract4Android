@@ -2,7 +2,6 @@
  * File:        strngs.cpp  (Formerly strings.c)
  * Description: STRING class functions.
  * Author:      Ray Smith
- * Created:     Fri Feb 15 09:13:30 GMT 1991
  *
  * (C) Copyright 1991, Hewlett-Packard Ltd.
  ** Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +19,8 @@
 #include "strngs.h"
 #include <cassert>          // for assert
 #include <cstdlib>          // for malloc, free
+#include <locale>           // for std::locale::classic
+#include <sstream>          // for std::stringstream
 #include "errcode.h"        // for ASSERT_HOST
 #include "genericvector.h"  // for GenericVector
 #include "helpers.h"        // for ReverseN
@@ -30,9 +31,6 @@ using tesseract::TFile;
 // Size of buffer needed to host the decimal representation of the maximum
 // possible length of an int (in 64 bits), being -<20 digits>.
 const int kMaxIntSize = 22;
-// Size of buffer needed to host the decimal representation of the maximum
-// possible length of a %.8g being -1.2345678e+999<nul> = 16.
-const int kMaxDoubleSize = 16;
 
 /**********************************************************************
  * STRING_HEADER provides metadata about the allocated buffer,
@@ -51,7 +49,7 @@ const int kMaxDoubleSize = 16;
 const int kMinCapacity = 16;
 
 char* STRING::AllocData(int used, int capacity) {
-  data_ = (STRING_HEADER *)malloc(capacity + sizeof(STRING_HEADER));
+  data_ = static_cast<STRING_HEADER *>(malloc(capacity + sizeof(STRING_HEADER)));
 
   // header is the metadata for this memory block
   STRING_HEADER* header = GetHeader();
@@ -70,7 +68,7 @@ void STRING::DiscardData() {
 char* STRING::ensure_cstr(int32_t min_capacity) {
   STRING_HEADER* orig_header = GetHeader();
   if (min_capacity <= orig_header->capacity_)
-    return ((char *)this->data_) + sizeof(STRING_HEADER);
+    return (reinterpret_cast<char *>(this->data_)) + sizeof(STRING_HEADER);
 
   // if we are going to grow bigger, than double our existing
   // size, but if that still is not big enough then keep the
@@ -79,7 +77,7 @@ char* STRING::ensure_cstr(int32_t min_capacity) {
     min_capacity = 2 * orig_header->capacity_;
 
   int alloc = sizeof(STRING_HEADER) + min_capacity;
-  STRING_HEADER* new_header = (STRING_HEADER*)(malloc(alloc));
+  auto* new_header = static_cast<STRING_HEADER*>(malloc(alloc));
 
   memcpy(&new_header[1], GetCStr(), orig_header->used_);
   new_header->capacity_ = min_capacity;
@@ -90,7 +88,7 @@ char* STRING::ensure_cstr(int32_t min_capacity) {
   data_ = new_header;
 
   assert(InvariantOk());
-  return ((char *)data_) + sizeof(STRING_HEADER);
+  return (reinterpret_cast<char *>(data_)) + sizeof(STRING_HEADER);
 }
 
 // This is const, but is modifying a mutable field
@@ -195,7 +193,7 @@ int32_t STRING::length() const {
 
 const char* STRING::string() const {
   const STRING_HEADER* header = GetHeader();
-  if (header->used_ == 0)
+  if (!header || header->used_ == 0)
     return nullptr;
 
   // mark header length unreliable because tesseract might
@@ -277,7 +275,7 @@ char& STRING::operator[](int32_t index) const {
   // Code is casting away this const and mutating the string,
   // so mark used_ as -1 to flag it unreliable.
   GetHeader()->used_ = -1;
-  return ((char *)GetCStr())[index];
+  return (const_cast<char *>(GetCStr()))[index];
 }
 #endif
 
@@ -389,11 +387,13 @@ void STRING::add_str_int(const char* str, int number) {
 void STRING::add_str_double(const char* str, double number) {
   if (str != nullptr)
     *this += str;
-  // Allow space for the maximum possible length of %8g.
-  char num_buffer[kMaxDoubleSize];
-  snprintf(num_buffer, kMaxDoubleSize - 1, "%.8g", number);
-  num_buffer[kMaxDoubleSize - 1] = '\0';
-  *this += num_buffer;
+  std::stringstream stream;
+  // Use "C" locale (needed for double value).
+  stream.imbue(std::locale::classic());
+  // Use 8 digits for double value.
+  stream.precision(8);
+  stream << number;
+  *this += stream.str().c_str();
 }
 
 STRING & STRING::operator=(const char* cstr) {

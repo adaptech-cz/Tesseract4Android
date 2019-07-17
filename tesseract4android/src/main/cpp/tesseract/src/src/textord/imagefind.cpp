@@ -3,7 +3,6 @@
 // Description: Function to find image and drawing regions in an image
 //              and create a corresponding list of empty blobs.
 // Author:      Ray Smith
-// Created:     Thu Mar 20 09:49:01 PDT 2008
 //
 // (C) Copyright 2008, Google Inc.
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,7 +31,7 @@
 
 #include <algorithm>
 
-INT_VAR(textord_tabfind_show_images, false, "Show image blobs");
+static INT_VAR(textord_tabfind_show_images, false, "Show image blobs");
 
 namespace tesseract {
 
@@ -981,7 +980,7 @@ static void MaximalImageBoundingBox(ColPartitionGrid* part_grid, TBOX* im_box) {
     BlobNeighbourDir best_dir = BND_LEFT;
     TBOX expanded_boxes[BND_COUNT];
     for (int dir = 0; dir < BND_COUNT; ++dir) {
-      BlobNeighbourDir bnd = static_cast<BlobNeighbourDir>(dir);
+      auto bnd = static_cast<BlobNeighbourDir>(dir);
       if (!dunnit[bnd]) {
         TBOX expanded_box;
         int area_delta = ExpandImageDir(bnd, text_box, limit_box, part_grid,

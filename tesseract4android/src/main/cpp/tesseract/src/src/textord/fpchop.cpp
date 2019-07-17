@@ -2,7 +2,6 @@
  * File:        fpchop.cpp  (Formerly fp_chop.c)
  * Description: Code to chop fixed pitch text into character cells.
  * Author:      Ray Smith
- * Created:     Thu Sep 16 11:14:15 BST 1993
  *
  * (C) Copyright 1993, Hewlett-Packard Ltd.
  ** Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,11 +28,9 @@
 #include "config_auto.h"
 #endif
 
-#define EXTERN
-
-EXTERN INT_VAR (textord_fp_chop_error, 2,
+INT_VAR (textord_fp_chop_error, 2,
 "Max allowed bending of chop cells");
-EXTERN double_VAR (textord_fp_chop_snap, 0.5,
+double_VAR (textord_fp_chop_snap, 0.5,
 "Max distance of chop pt from vertex");
 
 ELISTIZE(C_OUTLINE_FRAG)
@@ -133,15 +130,15 @@ ROW *fixed_pitch_words(                 //find lines
     } else {
       if (rep_left < chop_coord) {
         if (rep_left > prev_chop_coord)
-          new_blanks = (uint8_t) floor ((rep_left - prev_chop_coord)
-            / row->fixed_pitch + 0.5);
+          new_blanks = static_cast<uint8_t>(floor ((rep_left - prev_chop_coord)
+            / row->fixed_pitch + 0.5));
         else
           new_blanks = 0;
       }
       else {
         if (chop_coord > prev_chop_coord)
-          new_blanks = (uint8_t) floor ((chop_coord - prev_chop_coord)
-            / row->fixed_pitch + 0.5);
+          new_blanks = static_cast<uint8_t>(floor ((chop_coord - prev_chop_coord)
+            / row->fixed_pitch + 0.5));
         else
           new_blanks = 0;
       }
@@ -150,10 +147,10 @@ ROW *fixed_pitch_words(                 //find lines
           blanks = 1;
         word = new WERD (&cblobs, blanks, nullptr);
         cblob_it.set_to_list (&cblobs);
-        word->set_flag (W_DONT_CHOP, TRUE);
+        word->set_flag (W_DONT_CHOP, true);
         word_it.add_after_then_move (word);
         if (bol) {
-          word->set_flag (W_BOL, TRUE);
+          word->set_flag (W_BOL, true);
           bol = false;
         }
         blanks = new_blanks;
@@ -170,10 +167,10 @@ ROW *fixed_pitch_words(                 //find lines
   }
   if (!cblob_it.empty()) {
     word = new WERD(&cblobs, blanks, nullptr);
-    word->set_flag (W_DONT_CHOP, TRUE);
+    word->set_flag (W_DONT_CHOP, true);
     word_it.add_after_then_move (word);
     if (bol)
-      word->set_flag (W_BOL, TRUE);
+      word->set_flag (W_BOL, true);
   }
   ASSERT_HOST (word != nullptr);
   while (!rep_it.empty ()) {
@@ -181,11 +178,11 @@ ROW *fixed_pitch_words(                 //find lines
       blanks, row->fixed_pitch, &word_it);
   }
                                  //at end of line
-  word_it.data ()->set_flag (W_EOL, TRUE);
+  word_it.data ()->set_flag (W_EOL, true);
   if (prev_chop_coord > prev_x)
     prev_x = prev_chop_coord;
   xstarts[1] = prev_x + 1;
-  real_row = new ROW (row, (int16_t) row->kern_size, (int16_t) row->space_size);
+  real_row = new ROW (row, static_cast<int16_t>(row->kern_size), static_cast<int16_t>(row->space_size));
   word_it.set_to_list (real_row->word_list ());
                                  //put words in row
   word_it.add_list_after (&words);
@@ -212,7 +209,7 @@ WERD *add_repeated_word(                         //move repeated word
   int16_t new_blanks;              //extra blanks
 
   if (rep_left > prev_chop_coord) {
-    new_blanks = (uint8_t) floor ((rep_left - prev_chop_coord) / pitch + 0.5);
+    new_blanks = static_cast<uint8_t>(floor ((rep_left - prev_chop_coord) / pitch + 0.5));
     blanks += new_blanks;
   }
   word = rep_it->extract ();
@@ -391,7 +388,7 @@ void fixed_split_coutline(                        //chop the outline
  *
  * Chop the given coutline (if necessary) placing the fragments which
  * fall either side of the chop line into the appropriate list.
- * If the coutline lies too heavily to one side to chop, FALSE is returned.
+ * If the coutline lies too heavily to one side to chop, false is returned.
  **********************************************************************/
 
 bool fixed_chop_coutline(                                  //chop the outline
@@ -788,7 +785,7 @@ C_OUTLINE *C_OUTLINE_FRAG::close() {  //join pieces
   new_steps = new DIR128[new_stepcount];
   memmove(new_steps, steps, stepcount);
   memset (new_steps + stepcount, fake_step.get_dir(), fake_count);
-  C_OUTLINE* result = new C_OUTLINE (start, new_steps, new_stepcount);
+  auto* result = new C_OUTLINE (start, new_steps, new_stepcount);
   delete [] new_steps;
   return result;
 }

@@ -2,13 +2,6 @@
 // All Rights Reserved.
 // Author: renn
 //
-// The fscanf, vfscanf and creat functions are implemented so that their
-// functionality is mostly like their stdio counterparts. However, currently
-// these functions do not use any buffering, making them rather slow.
-// File streams are thus processed one character at a time.
-// Although the implementations of the scanf functions do lack a few minor
-// features, they should be sufficient for their use in tesseract.
-//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -24,19 +17,16 @@
 #endif
 
 #include <cctype>
+#include <climits>      // for CHAR_BIT
 #include <cmath>
 #include <cstdarg>
 #include <cstddef>
-#include <cstring>
-#include <climits>
+#include <cstdint>
 #include <cstdio>
-#include <limits>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
+#include <cstring>
+#include <limits>       // for std::numeric_limits
 
 #include "scanutils.h"
-#include "tprintf.h"
 
 enum Flags {
   FL_SPLAT  = 0x01,   // Drop the value, do not assign
@@ -143,11 +133,11 @@ static uintmax_t streamtoumax(FILE* s, int base) {
 }
 
 static double streamtofloat(FILE* s) {
-  int minus = 0;
-  int v = 0;
-  int d, c = 0;
-  int k = 1;
-  int w = 0;
+  bool minus = false;
+  uint64_t v = 0;
+  int d, c;
+  uint64_t k = 1;
+  uint64_t w = 0;
 
   for (c = fgetc(s); isascii(c) && isspace(c); c = fgetc(s));
 
@@ -166,8 +156,7 @@ static double streamtofloat(FILE* s) {
       k *= 10;
     }
   }
-  double f  = static_cast<double>(v)
-            + static_cast<double>(w) / static_cast<double>(k);
+  double f = v + static_cast<double>(w) / k;
   if (c == 'e' || c == 'E') {
     c = fgetc(s);
     int expsign = 1;
@@ -199,31 +188,6 @@ int tfscanf(FILE* stream, const char *format, ...) {
 
   return rv;
 }
-
-#ifdef EMBEDDED
-
-int fscanf(FILE* stream, const char *format, ...) {
-  va_list ap;
-  int rv;
-
-  va_start(ap, format);
-  rv = tvfscanf(stream, format, ap);
-  va_end(ap);
-
-  return rv;
-}
-
-int vfscanf(FILE* stream, const char *format, ...) {
-  va_list ap;
-  int rv;
-
-  va_start(ap, format);
-  rv = tvfscanf(stream, format, ap);
-  va_end(ap);
-
-  return rv;
-}
-#endif
 
 static int tvfscanf(FILE* stream, const char *format, va_list ap) {
   const char *p = format;
@@ -514,7 +478,7 @@ static int tvfscanf(FILE* stream, const char *format, va_list ap) {
         char* oarg = sarg;
         while (width) {
           q = fgetc(stream);
-          unsigned char qc = static_cast<unsigned char>(q);
+          auto qc = static_cast<unsigned char>(q);
           if (q <= 0 || !(TestBit(matchmap, qc)^matchinv)) {
             ungetc(q, stream);
             break;
@@ -537,10 +501,3 @@ static int tvfscanf(FILE* stream, const char *format, va_list ap) {
 
   return converted;
 }
-
-#ifdef EMBEDDED
-int creat(const char *pathname, mode_t mode) {
-  return open(pathname, O_CREAT | O_TRUNC | O_WRONLY, mode);
-}
-
-#endif  // EMBEDDED

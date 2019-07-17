@@ -2,7 +2,6 @@
  * File:        pgedit.cpp (Formerly pgeditor.c)
  * Description: Page structure file editor
  * Author:      Phil Cheatle
- * Created:     Thu Oct 10 16:25:24 BST 1991
  *
  *(C) Copyright 1991, Hewlett-Packard Ltd.
  ** Licensed under the Apache License, Version 2.0(the "License");
@@ -22,10 +21,10 @@
 #include "config_auto.h"
 #endif
 
-#include          "pgedit.h"
+#include "pgedit.h"
 
-#include          <cctype>
-#include          <cmath>
+#include <cctype>
+#include <cmath>
 
 #include "blread.h"
 #include "control.h"
@@ -43,9 +42,6 @@
 #define X_HEIGHT       (kBlnBaselineOffset + kBlnXHeight)
 #define BL_HEIGHT     kBlnBaselineOffset
 #define DESC_HEIGHT     0
-#define MAXSPACING      128      /*max expected spacing in pix */
-
-const ERRCODE EMPTYBLOCKLIST = "No blocks to edit";
 
 enum CMD_EVENTS
 {
@@ -112,19 +108,19 @@ static bool recog_done = false; // recog_all_words was called
 
 // These variables should remain global, since they are only used for the
 // debug mode (in which only a single Tesseract thread/instance will exist).
-BITS16 word_display_mode;
+static BITS16 word_display_mode;
 static ColorationMode color_mode = CM_RAINBOW;
-BOOL8 display_image = FALSE;
-BOOL8 display_blocks = FALSE;
-BOOL8 display_baselines = FALSE;
+static bool display_image = false;
+static bool display_blocks = false;
+static bool display_baselines = false;
 
-PAGE_RES *current_page_res = nullptr;
+static PAGE_RES *current_page_res = nullptr;
 
 STRING_VAR(editor_image_win_name, "EditorImage",
            "Editor image window name");
 INT_VAR(editor_image_xpos, 590, "Editor image X Pos");
 INT_VAR(editor_image_ypos, 10, "Editor image Y Pos");
-INT_VAR(editor_image_menuheight, 50, "Add to image height for menu bar");
+static INT_VAR(editor_image_menuheight, 50, "Add to image height for menu bar");
 INT_VAR(editor_image_word_bb_color, ScrollView::BLUE,
         "Word bounding box colour");
 INT_VAR(editor_image_blob_bb_color, ScrollView::YELLOW,
@@ -145,11 +141,68 @@ INT_VAR(editor_word_ypos, 510, "Word window Y Pos");
 INT_VAR(editor_word_height, 240, "Word window height");
 INT_VAR(editor_word_width, 655, "Word window width");
 
-STRING_VAR(editor_debug_config_file, "", "Config file to apply to single words");
+static STRING_VAR(editor_debug_config_file, "", "Config file to apply to single words");
+
+/**
+ * show_point()
+ *
+ * Show coords of point, blob bounding box, word bounding box and offset from
+ * row baseline
+ */
+
+static void show_point(PAGE_RES* page_res, float x, float y) {
+  FCOORD pt(x, y);
+  PAGE_RES_IT pr_it(page_res);
+
+  const int kBufsize = 512;
+  char msg[kBufsize];
+  char *msg_ptr = msg;
+
+  msg_ptr += sprintf(msg_ptr, "Pt:(%0.3f, %0.3f) ", x, y);
+
+  for (WERD_RES* word = pr_it.word(); word != nullptr; word = pr_it.forward()) {
+    if (pr_it.row() != pr_it.prev_row() &&
+        pr_it.row()->row->bounding_box().contains(pt)) {
+      msg_ptr += sprintf(msg_ptr, "BL(x)=%0.3f ",
+                         pr_it.row()->row->base_line(x));
+    }
+    if (word->word->bounding_box().contains(pt)) {
+      TBOX box = word->word->bounding_box();
+      msg_ptr += sprintf(msg_ptr, "Wd(%d, %d)/(%d, %d) ",
+                         box.left(), box.bottom(),
+                         box.right(), box.top());
+      C_BLOB_IT cblob_it(word->word->cblob_list());
+      for (cblob_it.mark_cycle_pt();
+           !cblob_it.cycled_list();
+           cblob_it.forward()) {
+        C_BLOB* cblob = cblob_it.data();
+        box = cblob->bounding_box();
+        if (box.contains(pt)) {
+          msg_ptr += sprintf(msg_ptr,
+                             "CBlb(%d, %d)/(%d, %d) ",
+                             box.left(), box.bottom(),
+                             box.right(), box.top());
+        }
+      }
+    }
+  }
+  image_win->AddMessage(msg);
+}
+
+/**
+ * pgeditor_msg()
+ *
+ * Display a message - in the command window if there is one, or to stdout
+ */
+
+static void pgeditor_msg( // message display
+                  const char *msg) {
+    image_win->AddMessage(msg);
+}
 
 class BlnEventHandler : public SVEventHandler {
  public:
-  void Notify(const SVEvent* sv_event) {
+  void Notify(const SVEvent* sv_event) override {
     if (sv_event->type == SVET_DESTROY)
       bln_word_window = nullptr;
     else if (sv_event->type == SVET_CLICK)
@@ -162,14 +215,14 @@ class BlnEventHandler : public SVEventHandler {
  *
  *  @return a WINDOW for the word window, creating it if necessary
  */
-ScrollView* bln_word_window_handle() {  // return handle
+static ScrollView* bln_word_window_handle() {  // return handle
                                  // not opened yet
   if (bln_word_window == nullptr) {
     pgeditor_msg("Creating BLN word window...");
     bln_word_window = new ScrollView(editor_word_name.string(),
       editor_word_xpos, editor_word_ypos, editor_word_width,
       editor_word_height, 4000, 4000, true);
-    BlnEventHandler* a = new BlnEventHandler();
+    auto* a = new BlnEventHandler();
     bln_word_window->AddEventHandler(a);
     pgeditor_msg("Creating BLN word window...Done");
   }
@@ -183,7 +236,7 @@ ScrollView* bln_word_window_handle() {  // return handle
  *  new window needs to be. Create it and re-display.
  */
 
-void build_image_window(int width, int height) {
+static void build_image_window(int width, int height) {
   delete image_win;
   image_win = new ScrollView(editor_image_win_name.string(),
                              editor_image_xpos, editor_image_ypos,
@@ -246,7 +299,7 @@ void PGEventHandler::Notify(const SVEvent* event) {
 namespace tesseract {
 SVMenuNode *Tesseract::build_menu_new() {
   SVMenuNode* parent_menu;
-  SVMenuNode* root_menu_item = new SVMenuNode();
+  auto* root_menu_item = new SVMenuNode();
 
   SVMenuNode* modes_menu_item = root_menu_item->AddChild("MODES");
 
@@ -261,12 +314,12 @@ SVMenuNode *Tesseract::build_menu_new() {
 
   parent_menu = root_menu_item->AddChild("DISPLAY");
 
-  parent_menu->AddChild("Blamer", BLAMER_CMD_EVENT, FALSE);
-  parent_menu->AddChild("Bounding Boxes", BOUNDING_BOX_CMD_EVENT, FALSE);
-  parent_menu->AddChild("Correct Text", CORRECT_TEXT_CMD_EVENT, FALSE);
-  parent_menu->AddChild("Polygonal Approx", POLYGONAL_CMD_EVENT, FALSE);
-  parent_menu->AddChild("Baseline Normalized", BL_NORM_CMD_EVENT, FALSE);
-  parent_menu->AddChild("Edge Steps", BITMAP_CMD_EVENT, TRUE);
+  parent_menu->AddChild("Blamer", BLAMER_CMD_EVENT, false);
+  parent_menu->AddChild("Bounding Boxes", BOUNDING_BOX_CMD_EVENT, false);
+  parent_menu->AddChild("Correct Text", CORRECT_TEXT_CMD_EVENT, false);
+  parent_menu->AddChild("Polygonal Approx", POLYGONAL_CMD_EVENT, false);
+  parent_menu->AddChild("Baseline Normalized", BL_NORM_CMD_EVENT, false);
+  parent_menu->AddChild("Edge Steps", BITMAP_CMD_EVENT, true);
   parent_menu->AddChild("Subscripts", SHOW_SUBSCRIPT_CMD_EVENT);
   parent_menu->AddChild("Superscripts", SHOW_SUPERSCRIPT_CMD_EVENT);
   parent_menu->AddChild("Italics", SHOW_ITALIC_CMD_EVENT);
@@ -281,9 +334,9 @@ SVMenuNode *Tesseract::build_menu_new() {
   parent_menu = root_menu_item->AddChild("OTHER");
 
   parent_menu->AddChild("Quit", QUIT_CMD_EVENT);
-  parent_menu->AddChild("Show Image", IMAGE_CMD_EVENT, FALSE);
-  parent_menu->AddChild("ShowBlock Outlines", BLOCKS_CMD_EVENT, FALSE);
-  parent_menu->AddChild("Show Baselines", BASELINES_CMD_EVENT, FALSE);
+  parent_menu->AddChild("Show Image", IMAGE_CMD_EVENT, false);
+  parent_menu->AddChild("ShowBlock Outlines", BLOCKS_CMD_EVENT, false);
+  parent_menu->AddChild("Show Baselines", BASELINES_CMD_EVENT, false);
   parent_menu->AddChild("Uniform Display", UNIFORM_DISP_CMD_EVENT);
   parent_menu->AddChild("Refresh Display", REFRESH_CMD_EVENT);
 
@@ -300,7 +353,7 @@ void Tesseract::do_re_display(
   int block_count = 1;
 
   image_win->Clear();
-  if (display_image != 0) {
+  if (display_image) {
     image_win->Image(pix_binary_, 0, 0);
   }
 
@@ -353,29 +406,6 @@ void Tesseract::pgeditor_main(int width, int height, PAGE_RES *page_res) {
 }
 }  // namespace tesseract
 
-
-/**
- * pgeditor_msg()
- *
- * Display a message - in the command window if there is one, or to stdout
- */
-
-void pgeditor_msg( // message display
-                  const char *msg) {
-    image_win->AddMessage(msg);
-}
-
-/**
- * pgeditor_show_point()
- *
- * Display the coordinates of a point in the command window
- */
-
-void pgeditor_show_point( // display coords
-                         SVEvent *event) {
-  image_win->AddMessage("Pointing at(%d, %d)", event->x, event->y);
-}
-
 /**
  *  process_cmd_win_event()
  *
@@ -427,7 +457,7 @@ bool Tesseract::process_cmd_win_event(                 // UI command semantics
     case RECOG_WERDS:
     case RECOG_PSEUDO:
     case SHOW_BLOB_FEATURES:
-      mode =(CMD_EVENTS) cmd_event;
+      mode =static_cast<CMD_EVENTS>(cmd_event);
       break;
     case DEBUG_WERD_CMD_EVENT:
       mode = DEBUG_WERD_CMD_EVENT;
@@ -643,53 +673,6 @@ void Tesseract::debug_word(PAGE_RES* page_res, const TBOX &selection_box) {
 }  // namespace tesseract
 
 
-/**
- * show_point()
- *
- * Show coords of point, blob bounding box, word bounding box and offset from
- * row baseline
- */
-
-void show_point(PAGE_RES* page_res, float x, float y) {
-  FCOORD pt(x, y);
-  PAGE_RES_IT pr_it(page_res);
-
-  const int kBufsize = 512;
-  char msg[kBufsize];
-  char *msg_ptr = msg;
-
-  msg_ptr += sprintf(msg_ptr, "Pt:(%0.3f, %0.3f) ", x, y);
-
-  for (WERD_RES* word = pr_it.word(); word != nullptr; word = pr_it.forward()) {
-    if (pr_it.row() != pr_it.prev_row() &&
-        pr_it.row()->row->bounding_box().contains(pt)) {
-      msg_ptr += sprintf(msg_ptr, "BL(x)=%0.3f ",
-                         pr_it.row()->row->base_line(x));
-    }
-    if (word->word->bounding_box().contains(pt)) {
-      TBOX box = word->word->bounding_box();
-      msg_ptr += sprintf(msg_ptr, "Wd(%d, %d)/(%d, %d) ",
-                         box.left(), box.bottom(),
-                         box.right(), box.top());
-      C_BLOB_IT cblob_it(word->word->cblob_list());
-      for (cblob_it.mark_cycle_pt();
-           !cblob_it.cycled_list();
-           cblob_it.forward()) {
-        C_BLOB* cblob = cblob_it.data();
-        box = cblob->bounding_box();
-        if (box.contains(pt)) {
-          msg_ptr += sprintf(msg_ptr,
-                             "CBlb(%d, %d)/(%d, %d) ",
-                             box.left(), box.bottom(),
-                             box.right(), box.top());
-        }
-      }
-    }
-  }
-  image_win->AddMessage(msg);
-}
-
-
 /**********************************************************************
  * WERD PROCESSOR FUNCTIONS
  * ========================
@@ -823,13 +806,12 @@ bool Tesseract::word_display(PAGE_RES_IT* pr_it) {
                                  // display bounding box
   if (word->display_flag(DF_BOX)) {
     word->bounding_box().plot(image_win,
-     (ScrollView::Color)((int32_t)
+     static_cast<ScrollView::Color>((int32_t)
       editor_image_word_bb_color),
-     (ScrollView::Color)((int32_t)
+     static_cast<ScrollView::Color>((int32_t)
       editor_image_word_bb_color));
 
-    ScrollView::Color c = (ScrollView::Color)
-       ((int32_t) editor_image_blob_bb_color);
+    auto c = static_cast<ScrollView::Color>((int32_t) editor_image_blob_bb_color);
     image_win->Pen(c);
     // cblob iterator
     C_BLOB_IT c_it(word->cblob_list());
@@ -879,7 +861,7 @@ bool Tesseract::word_display(PAGE_RES_IT* pr_it) {
     text += best_choice_str;
     IncorrectResultReason reason = (blamer_bundle == nullptr) ?
         IRR_PAGE_LAYOUT : blamer_bundle->incorrect_result_reason();
-    ASSERT_HOST(reason < IRR_NUM_REASONS)
+    ASSERT_HOST(reason < IRR_NUM_REASONS);
     blame += " [";
     blame += BlamerBundle::IncorrectReasonName(reason);
     blame += "]";
@@ -905,8 +887,8 @@ bool Tesseract::word_display(PAGE_RES_IT* pr_it) {
 
   if (!displayed_something)      // display BBox anyway
     word->bounding_box().plot(image_win,
-     (ScrollView::Color)((int32_t) editor_image_word_bb_color),
-     (ScrollView::Color)((int32_t)
+     static_cast<ScrollView::Color>((int32_t) editor_image_word_bb_color),
+     static_cast<ScrollView::Color>((int32_t)
       editor_image_word_bb_color));
   return true;
 }

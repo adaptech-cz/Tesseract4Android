@@ -41,7 +41,7 @@ all languages).
 You need an Internet connection and [curl](https://curl.haxx.se/) to compile `ScrollView.jar`
 because the build will automatically download
 [piccolo2d-core-3.0.jar](http://search.maven.org/remotecontent?filepath=org/piccolo2d/piccolo2d-core/3.0/piccolo2d-core-3.0.jar > piccolo2d-core-3.0.jar) and
-[piccolo2d-extras-3.0.jar](http://search.maven.org/remotecontent?filepath=org/piccolo2d/piccolo2d-extras/3.0/piccolo2d-extras-3.0.jar) and 
+[piccolo2d-extras-3.0.jar](http://search.maven.org/remotecontent?filepath=org/piccolo2d/piccolo2d-extras/3.0/piccolo2d-extras-3.0.jar) and
 [jaxb-api-2.3.1.jar](http://search.maven.org/remotecontent?filepath=javax/xml/bind/jaxb-api/2.3.1/jaxb-api-2.3.1.jar) and place them to `tesseract/java`.
 
 Just run:
@@ -64,23 +64,4 @@ There is alternative build system based on multiplatform [cmake](https://cmake.o
 
 ## WINDOWS
 
-You need to use leptonica with cmake patch:
-
-    git clone https://github.com/DanBloomberg/leptonica.git
-    cd leptonica
-    mkdir build
-    cd build
-    cmake ..
-    cmake --build .
-    cd ..\..
-    git clone https://github.com/tesseract-ocr/tesseract.git
-    cd tesseract
-    mkdir build
-    cd build
-    cmake .. -DLeptonica_BUILD_DIR=\abs\path\to\leptonica\build
-    cmake --build .
-
-
-# WINDOWS Visual Studio
-
-Please read http://vorba.ch/2014/tesseract-3.03-vs2013.html
+See [Wiki](https://github.com/tesseract-ocr/tesseract/wiki) for more information on this.

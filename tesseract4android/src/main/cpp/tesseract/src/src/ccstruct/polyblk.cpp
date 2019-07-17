@@ -16,11 +16,12 @@
  **********************************************************************/
 
 #include "polyblk.h"
+#include "elst.h"
 #include <cctype>
+#include <cinttypes>  // PRId32
 #include <cmath>
 #include <cstdio>
-#include <memory>  // std::unique_ptr
-#include "elst.h"
+#include <memory>     // std::unique_ptr
 
 // Include automatically generated configuration file if running autoconf.
 #ifdef HAVE_CONFIG_H
@@ -253,7 +254,7 @@ void POLY_BLOCK::plot(ScrollView* window, int32_t num) {
 #if !defined(_WIN32) || defined(__MINGW32__)
     snprintf(temp_buff, sizeof(temp_buff), "%" PRId32, num);
 #else
-    ltoa (num, temp_buff, 10);
+    _ltoa(num, temp_buff, 10);
 #endif
     window->Text(v.data ()->x (), v.data ()->y (), temp_buff);
   }

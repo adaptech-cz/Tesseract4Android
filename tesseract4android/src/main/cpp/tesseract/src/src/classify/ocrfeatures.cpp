@@ -2,7 +2,6 @@
  ** Filename:    ocrfeatures.cpp
  ** Purpose:     Generic definition of a feature.
  ** Author:      Dan Johnson
- ** History:     Mon May 21 10:49:04 1990, DSJ, Created.
  **
  ** (c) Copyright Hewlett-Packard Company, 1988.
  ** Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,12 +30,12 @@
 ----------------------------------------------------------------------------*/
 /**
  * Add a feature to a feature set.  If the feature set is
- * already full, FALSE is returned to indicate that the
- * feature could not be added to the set; otherwise, TRUE is
+ * already full, false is returned to indicate that the
+ * feature could not be added to the set; otherwise, true is
  * returned.
  * @param FeatureSet set of features to add Feature to
  * @param Feature feature to be added to FeatureSet
- * @return  TRUE if feature added to set, FALSE if set is already full.
+ * @return  true if feature added to set, false if set is already full.
  */
 bool AddFeature(FEATURE_SET FeatureSet, FEATURE Feature) {
   if (FeatureSet->NumFeatures >= FeatureSet->MaxNumFeatures) {
@@ -51,7 +50,6 @@ bool AddFeature(FEATURE_SET FeatureSet, FEATURE Feature) {
 /**
  * Release the memory consumed by the specified feature.
  * @param Feature feature to be deallocated.
- * @return none
  */
 void FreeFeature(FEATURE Feature) { free(Feature); } /* FreeFeature */
 
@@ -60,7 +58,6 @@ void FreeFeature(FEATURE Feature) { free(Feature); } /* FreeFeature */
  * set.  This routine also frees the memory consumed by the
  * features contained in the set.
  * @param FeatureSet  set of features to be freed
- * @return none
  */
 void FreeFeatureSet(FEATURE_SET FeatureSet) {
   int i;
@@ -81,8 +78,8 @@ void FreeFeatureSet(FEATURE_SET FeatureSet) {
 FEATURE NewFeature(const FEATURE_DESC_STRUCT* FeatureDesc) {
   FEATURE Feature;
 
-  Feature = (FEATURE)malloc(sizeof(FEATURE_STRUCT) +
-                            (FeatureDesc->NumParams - 1) * sizeof(float));
+  Feature = static_cast<FEATURE>(malloc(sizeof(FEATURE_STRUCT) +
+                            (FeatureDesc->NumParams - 1) * sizeof(float)));
   Feature->Type = FeatureDesc;
   return (Feature);
 
@@ -97,8 +94,8 @@ FEATURE NewFeature(const FEATURE_DESC_STRUCT* FeatureDesc) {
 FEATURE_SET NewFeatureSet(int NumFeatures) {
   FEATURE_SET FeatureSet;
 
-  FeatureSet = (FEATURE_SET) Emalloc (sizeof (FEATURE_SET_STRUCT) +
-    (NumFeatures - 1) * sizeof (FEATURE));
+  FeatureSet = static_cast<FEATURE_SET>(Emalloc (sizeof (FEATURE_SET_STRUCT) +
+    (NumFeatures - 1) * sizeof (FEATURE)));
   FeatureSet->MaxNumFeatures = NumFeatures;
   FeatureSet->NumFeatures = 0;
   return (FeatureSet);
@@ -116,7 +113,7 @@ FEATURE_SET NewFeatureSet(int NumFeatures) {
  * @param FeatureDesc specifies type of feature to read from File
  * @return New #FEATURE read from File.
  */
-FEATURE ReadFeature(FILE* File, const FEATURE_DESC_STRUCT* FeatureDesc) {
+static FEATURE ReadFeature(FILE* File, const FEATURE_DESC_STRUCT* FeatureDesc) {
   FEATURE Feature;
   int i;
 
@@ -147,7 +144,7 @@ FEATURE_SET ReadFeatureSet(FILE* File, const FEATURE_DESC_STRUCT* FeatureDesc) {
 
   FEATURE_SET FeatureSet = NewFeatureSet(NumFeatures);
   for (int i = 0; i < NumFeatures; i++)
-    AddFeature(FeatureSet, ReadFeature (File, FeatureDesc));
+    AddFeature(FeatureSet, ReadFeature(File, FeatureDesc));
 
   return FeatureSet;
 }
@@ -161,9 +158,8 @@ FEATURE_SET ReadFeatureSet(FILE* File, const FEATURE_DESC_STRUCT* FeatureDesc) {
  * feature type information is specified or assumed elsewhere.
  * @param Feature feature to write out to str
  * @param str string to write Feature to
- * @return none
  */
-void WriteFeature(FEATURE Feature, STRING* str) {
+static void WriteFeature(FEATURE Feature, STRING* str) {
   for (int i = 0; i < Feature->Type->NumParams; i++) {
 #ifndef WIN32
     assert(!std::isnan(Feature->Params[i]));
@@ -180,7 +176,6 @@ void WriteFeature(FEATURE Feature, STRING* str) {
  * text representations for each feature in the set.
  * @param FeatureSet feature set to write to File
  * @param str string to write Feature to
- * @return none
  */
 void WriteFeatureSet(FEATURE_SET FeatureSet, STRING* str) {
   if (FeatureSet) {

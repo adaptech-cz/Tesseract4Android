@@ -5,7 +5,7 @@ language: cpp
 dist: trusty
 
 env:
-  - LEPT_VER=1.74.2
+  - LEPT_VER=1.77.0
 
 notifications:
   email: false
@@ -14,13 +14,15 @@ sudo: false
 
 os:
   - linux
-  #- osx
+  - osx
 
 addons:
   apt:
     sources:
     #- ubuntu-toolchain-r-test
     packages:
+      - libarchive-dev
+      - libpango1.0-dev
     #- g++-6
 
 #matrix:
@@ -51,5 +53,5 @@ install:
 script:
   - mkdir build
   - cd build
-  - cmake .. -DLeptonica_DIR=leptonica-$LEPT_VER/build
+  - cmake .. -DLeptonica_DIR=leptonica-$LEPT_VER/build -DCPPAN_BUILD=OFF
   - make

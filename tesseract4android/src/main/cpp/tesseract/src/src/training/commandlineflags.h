@@ -2,7 +2,6 @@
  * File:        commandlineflags.h
  * Description: Header file for commandline flag parsing.
  * Author:      Ranjith Unnikrishnan
- * Created:     July 2013
  *
  * (C) Copyright 2013, Google Inc.
  ** Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +21,6 @@
 #ifndef GOOGLE_TESSERACT
 
 #include <cstdlib>
-#include "tprintf.h"
 #include "params.h"
 
 #define INT_PARAM_FLAG(name, val, comment)      \
@@ -63,6 +61,19 @@
   DECLARE_string(name)
 
 #endif
+
+// Flags from commontraining.cpp
+// Command line arguments for font_properties, xheights and unicharset.
+DECLARE_INT_PARAM_FLAG(debug_level);
+DECLARE_STRING_PARAM_FLAG(D);
+DECLARE_STRING_PARAM_FLAG(F);
+DECLARE_STRING_PARAM_FLAG(O);
+DECLARE_STRING_PARAM_FLAG(U);
+DECLARE_STRING_PARAM_FLAG(X);
+DECLARE_STRING_PARAM_FLAG(fonts_dir);
+DECLARE_STRING_PARAM_FLAG(fontconfig_tmpdir);
+DECLARE_STRING_PARAM_FLAG(output_trainer);
+DECLARE_STRING_PARAM_FLAG(test_ch);
 
 namespace tesseract {
 

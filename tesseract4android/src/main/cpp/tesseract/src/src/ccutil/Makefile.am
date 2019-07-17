@@ -1,4 +1,3 @@
-SUBDIRS =
 AM_CXXFLAGS =
 AM_CPPFLAGS =
 
@@ -12,14 +11,14 @@ AM_CPPFLAGS += -DTESS_EXPORTS
 endif
 
 pkginclude_HEADERS = \
-    genericvector.h helpers.h host.h \
+    genericvector.h helpers.h \
     ocrclass.h platform.h serialis.h strngs.h \
     tesscallback.h unichar.h
 
 noinst_HEADERS = \
     ambigs.h basedir.h bits16.h bitvector.h ccutil.h clst.h doubleptr.h elst2.h \
     elst.h errcode.h fileerr.h fileio.h \
-    genericheap.h globaloc.h \
+    genericheap.h globaloc.h host.h \
     indexmapbidi.h kdpair.h lsterr.h \
     object_cache.h params.h qrsequence.h sorthelper.h \
     scanutils.h tessdatamanager.h tprintf.h \
@@ -40,6 +39,4 @@ libtesseract_ccutil_la_SOURCES = \
     unichar.cpp unicharcompress.cpp unicharmap.cpp unicharset.cpp unicodes.cpp \
     params.cpp universalambigs.cpp
 
-if T_WIN
-AM_CPPFLAGS += -DWINDLLNAME=\"lib@GENERIC_LIBRARY_NAME@\"
-endif
+AM_CPPFLAGS += $(libarchive_CFLAGS)

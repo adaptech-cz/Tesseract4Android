@@ -1,19 +1,35 @@
+// (C) Copyright 2017, Google Inc.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #include <string>
 #include <utility>
 
-#include "tesseract/ccutil/serialis.h"
-#include "tesseract/ccutil/unicharset.h"
-#include "tesseract/classify/shapetable.h"
+#include "absl/strings/str_format.h"	// for absl::StrFormat
+
+#include "include_gunit.h"
+
+#include "serialis.h"
+#include "shapetable.h"
+#include "unicharset.h"
 
 namespace {
 
-using tesseract::Shape;
+#ifndef DISABLED_LEGACY_ENGINE
+
+  using tesseract::Shape;
 using tesseract::ShapeTable;
 using tesseract::TFile;
 using tesseract::UnicharAndFonts;
 
-static string TmpNameToPath(const string& name) {
+static std::string TmpNameToPath(const std::string& name) {
   return file::JoinPath(FLAGS_test_tmpdir, name);
 }
 
@@ -38,17 +54,28 @@ static void Expect352(int font_id, const Shape& shape) {
   EXPECT_TRUE(shape.IsSubsetOf(shape));
 }
 
+#endif
+
 // The fixture for testing Shape.
-class ShapeTest : public testing::Test {};
+class ShapeTest : public testing::Test {
+ protected:
+  void SetUp() {
+    std::locale::global(std::locale(""));
+  }
+};
 
 // Tests that a Shape works as expected for all the basic functions.
 TEST_F(ShapeTest, BasicTest) {
+#ifdef DISABLED_LEGACY_ENGINE
+  // Skip test because Shape is missing.
+  GTEST_SKIP();
+#else
   Shape shape1;
   EXPECT_EQ(0, shape1.size());
   Setup352(101, &shape1);
   Expect352(101, shape1);
   // It should still work after file I/O.
-  string filename = TmpNameToPath("shapefile");
+  std::string filename = TmpNameToPath("shapefile");
   FILE* fp = fopen(filename.c_str(), "wb");
   EXPECT_TRUE(fp != nullptr);
   EXPECT_TRUE(shape1.Serialize(fp));
@@ -66,10 +93,15 @@ TEST_F(ShapeTest, BasicTest) {
   // and still pass afterwards.
   Expect352(101, shape1);
   Expect352(101, shape2);
+#endif
 }
 
 // Tests AddShape separately, as it takes quite a bit of work.
 TEST_F(ShapeTest, AddShapeTest) {
+#ifdef DISABLED_LEGACY_ENGINE
+  // Skip test because Shape is missing.
+  GTEST_SKIP();
+#else
   Shape shape1;
   Setup352(101, &shape1);
   Expect352(101, shape1);
@@ -93,6 +125,7 @@ TEST_F(ShapeTest, AddShapeTest) {
   EXPECT_FALSE(shape1.ContainsUnicharAndFont(3, 110));
   EXPECT_FALSE(shape1.ContainsUnicharAndFont(7, 110));
   EXPECT_FALSE(shape1.IsEqualUnichars(&shape2));
+#endif
 }
 
 // The fixture for testing Shape.
@@ -100,13 +133,17 @@ class ShapeTableTest : public testing::Test {};
 
 // Tests that a Shape works as expected for all the basic functions.
 TEST_F(ShapeTableTest, FullTest) {
+#ifdef DISABLED_LEGACY_ENGINE
+  // Skip test because Shape is missing.
+  GTEST_SKIP();
+#else
   Shape shape1;
   Setup352(101, &shape1);
   // Build a shape table with the same data, but in separate shapes.
   UNICHARSET unicharset;
   unicharset.unichar_insert(" ");
   for (int i = 1; i <= 10; ++i) {
-    string class_str = StringPrintf("class%d", i);
+    std::string class_str = absl::StrFormat("class%d", i);
     unicharset.unichar_insert(class_str.c_str());
   }
   ShapeTable st(unicharset);
@@ -143,6 +180,7 @@ TEST_F(ShapeTableTest, FullTest) {
   EXPECT_EQ(1, st2.NumShapes());
   EXPECT_TRUE(st2.MutableShape(0)->IsEqualUnichars(&shape1));
   EXPECT_TRUE(st2.AnyMultipleUnichars());
+#endif
 }
 
 }  // namespace

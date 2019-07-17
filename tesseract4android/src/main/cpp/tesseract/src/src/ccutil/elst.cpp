@@ -2,7 +2,6 @@
  * File:        elst.cpp  (Formerly elist.c)
  * Description: Embedded list handling code which is not in the include file.
  * Author:      Phil Cheatle
- * Created:     Fri Jan 04 13:55:49 GMT 1991
  *
  * (C) Copyright 1991, Hewlett-Packard Ltd.
  ** Licensed under the Apache License, Version 2.0 (the "License");
@@ -72,8 +71,8 @@ void (*zapper) (ELIST_LINK *)) {
 void ELIST::assign_to_sublist(                           //to this list
                               ELIST_ITERATOR *start_it,  //from list start
                               ELIST_ITERATOR *end_it) {  //from list end
-  const ERRCODE LIST_NOT_EMPTY =
-    "Destination list must be empty before extracting a sublist";
+  constexpr ERRCODE LIST_NOT_EMPTY(
+    "Destination list must be empty before extracting a sublist");
 
   if (!empty ())
     LIST_NOT_EMPTY.error ("ELIST.assign_to_sublist", ABORT, nullptr);
@@ -116,7 +115,7 @@ const void *, const void *)) {
 
   /* Allocate an array of pointers, one per list element */
   count = length ();
-  base = (ELIST_LINK **) malloc (count * sizeof (ELIST_LINK *));
+  base = static_cast<ELIST_LINK **>(malloc (count * sizeof (ELIST_LINK *)));
 
   /* Extract all elements, putting the pointers in the array */
   current = base;
@@ -202,7 +201,7 @@ ELIST_LINK *ELIST_ITERATOR::forward() {
   if (current) {                 //not removed so
                                  //set previous
     prev = current;
-    started_cycling = TRUE;
+    started_cycling = true;
     // In case next is deleted by another iterator, get next from current.
     current = current->next;
   } else {
@@ -291,8 +290,8 @@ ELIST_LINK *ELIST_ITERATOR::move_to_last() {
 
 void ELIST_ITERATOR::exchange(                             //positions of 2 links
                               ELIST_ITERATOR *other_it) {  //other iterator
-  const ERRCODE DONT_EXCHANGE_DELETED =
-    "Can't exchange deleted elements of lists";
+  constexpr ERRCODE DONT_EXCHANGE_DELETED(
+    "Can't exchange deleted elements of lists");
 
   ELIST_LINK *old_current;
 
@@ -389,12 +388,12 @@ void ELIST_ITERATOR::exchange(                             //positions of 2 link
 ELIST_LINK *ELIST_ITERATOR::extract_sublist(                             //from this current
                                             ELIST_ITERATOR *other_it) {  //to other current
   #ifndef NDEBUG
-  const ERRCODE BAD_EXTRACTION_PTS =
-    "Can't extract sublist from points on different lists";
-  const ERRCODE DONT_EXTRACT_DELETED =
-    "Can't extract a sublist marked by deleted points";
+  constexpr ERRCODE BAD_EXTRACTION_PTS(
+    "Can't extract sublist from points on different lists");
+  constexpr ERRCODE DONT_EXTRACT_DELETED(
+    "Can't extract a sublist marked by deleted points");
   #endif
-  const ERRCODE BAD_SUBLIST = "Can't find sublist end point in original list";
+  constexpr ERRCODE BAD_SUBLIST("Can't find sublist end point in original list");
 
   ELIST_ITERATOR temp_it = *this;
   ELIST_LINK *end_of_new_list;
@@ -415,9 +414,9 @@ ELIST_LINK *ELIST_ITERATOR::extract_sublist(                             //from 
       nullptr);
   #endif
 
-  ex_current_was_last = other_it->ex_current_was_last = FALSE;
-  ex_current_was_cycle_pt = FALSE;
-  other_it->ex_current_was_cycle_pt = FALSE;
+  ex_current_was_last = other_it->ex_current_was_last = false;
+  ex_current_was_cycle_pt = false;
+  other_it->ex_current_was_cycle_pt = false;
 
   temp_it.mark_cycle_pt ();
   do {                           //walk sublist
@@ -426,14 +425,14 @@ ELIST_LINK *ELIST_ITERATOR::extract_sublist(                             //from 
 
     if (temp_it.at_last ()) {
       list->last = prev;
-      ex_current_was_last = other_it->ex_current_was_last = TRUE;
+      ex_current_was_last = other_it->ex_current_was_last = true;
     }
 
     if (temp_it.current == cycle_pt)
-      ex_current_was_cycle_pt = TRUE;
+      ex_current_was_cycle_pt = true;
 
     if (temp_it.current == other_it->cycle_pt)
-      other_it->ex_current_was_cycle_pt = TRUE;
+      other_it->ex_current_was_cycle_pt = true;
 
     temp_it.forward ();
   }

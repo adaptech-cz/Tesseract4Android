@@ -4,11 +4,6 @@
  * File:         context.cpp  (Formerly context.c)
  * Description:  Context checking functions
  * Author:       Mark Seaman, OCR Technology
- * Created:      Thu Feb 15 11:18:24 1990
- * Modified:     Tue Jul  9 17:38:16 1991 (Mark Seaman) marks@hpgrlt
- * Language:     C
- * Package:      N/A
- * Status:       Experimental (Do Not Distribute)
  *
  * (c) Copyright 1990, Hewlett-Packard Company.
  ** Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +19,6 @@
  *********************************************************************************/
 
 #include "dict.h"
-#include "tprintf.h"
 #include "unicharset.h"
 
 namespace tesseract {
@@ -49,16 +43,17 @@ const int case_state_table[6][4] = {
      5, -1, 2, -1},
 };
 
-int Dict::case_ok(const WERD_CHOICE &word, const UNICHARSET &unicharset) const {
+int Dict::case_ok(const WERD_CHOICE &word) const {
   int state = 0;
   int x;
+  const UNICHARSET* unicharset = word.unicharset();
   for (x = 0; x < word.length(); ++x) {
     UNICHAR_ID ch_id = word.unichar_id(x);
-    if (unicharset.get_isupper(ch_id))
+    if (unicharset->get_isupper(ch_id))
       state = case_state_table[state][1];
-    else if (unicharset.get_islower(ch_id))
+    else if (unicharset->get_islower(ch_id))
       state = case_state_table[state][2];
-    else if (unicharset.get_isdigit(ch_id))
+    else if (unicharset->get_isdigit(ch_id))
       state = case_state_table[state][3];
     else
       state = case_state_table[state][0];

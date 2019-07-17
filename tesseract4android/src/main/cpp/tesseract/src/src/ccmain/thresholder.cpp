@@ -1,8 +1,7 @@
 ///////////////////////////////////////////////////////////////////////
 // File:        thresholder.cpp
-// Description: Base API for thresolding images in tesseract.
+// Description: Base API for thresholding images in tesseract.
 // Author:      Ray Smith
-// Created:     Mon May 12 11:28:15 PDT 2008
 //
 // (C) Copyright 2008, Google Inc.
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,8 +24,11 @@
 #include <cstring>
 
 #include "otsuthr.h"
+#include "tprintf.h"    // for tprintf
 
-#include "openclwrapper.h"
+#if defined(USE_OPENCL)
+#include "openclwrapper.h" // for OpenclDevice
+#endif
 
 namespace tesseract {
 
@@ -112,7 +114,6 @@ void ImageThresholder::SetImage(const unsigned char* imagedata,
   default:
     tprintf("Cannot convert RAW image to Pix with bpp = %d\n", bpp);
   }
-  pixSetYRes(pix, 300);
   SetImage(pix);
   pixDestroy(&pix);
 }
@@ -264,7 +265,6 @@ Pix* ImageThresholder::GetPixRectGrey() {
 // Otsu thresholds the rectangle, taking the rectangle from *this.
 void ImageThresholder::OtsuThresholdRectToPix(Pix* src_pix,
                                               Pix** out_pix) const {
-  PERF_COUNT_START("OtsuThresholdRectToPix")
   int* thresholds;
   int* hi_values;
 
@@ -287,8 +287,6 @@ void ImageThresholder::OtsuThresholdRectToPix(Pix* src_pix,
 #endif
   delete [] thresholds;
   delete [] hi_values;
-
-  PERF_COUNT_END
 }
 
 /// Threshold the rectangle, taking everything except the src_pix
@@ -300,7 +298,6 @@ void ImageThresholder::ThresholdRectToPix(Pix* src_pix,
                                           const int* thresholds,
                                           const int* hi_values,
                                           Pix** pix) const {
-  PERF_COUNT_START("ThresholdRectToPix")
   *pix = pixCreate(rect_width_, rect_height_, 1);
   uint32_t* pixdata = pixGetData(*pix);
   int wpl = pixGetWpl(*pix);
@@ -326,8 +323,6 @@ void ImageThresholder::ThresholdRectToPix(Pix* src_pix,
         SET_DATA_BIT(pixline, x);
     }
   }
-
-  PERF_COUNT_END
 }
 
 }  // namespace tesseract.

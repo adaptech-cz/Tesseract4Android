@@ -2,7 +2,6 @@
 // File:        params_model.h
 // Description: Trained feature serialization for language parameter training.
 // Author:      David Eger
-// Created:     Mon Jun 11 11:26:42 PDT 2012
 //
 // (C) Copyright 2011, Google Inc.
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -49,7 +48,7 @@ class ParamsModel {
   void Print();
   // Clears weights for all passes.
   void Clear() {
-    for (int p = 0; p < PTRAIN_NUM_PASSES; ++p) weights_vec_[p].clear();
+    for (auto & p : weights_vec_) p.clear();
   }
   // Copies the weights of the given params model.
   void Copy(const ParamsModel &other_model);
@@ -62,7 +61,6 @@ class ParamsModel {
   bool SaveToFile(const char *full_path) const;
 
   // Returns true on success.
-  bool LoadFromFile(const char *lang, const char *full_path);
   bool LoadFromFp(const char *lang, TFile *fp);
 
   const GenericVector<float>& weights() const {

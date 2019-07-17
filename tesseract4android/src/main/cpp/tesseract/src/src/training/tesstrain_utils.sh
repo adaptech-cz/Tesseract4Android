@@ -24,18 +24,8 @@ else
  fi
 
 UNAME=$(uname -s | tr 'A-Z' 'a-z')
-LANG_CODE="ENG"
-TIMESTAMP=`date +%Y-%m-%d`
 
-case $UNAME in
-  darwin | *freebsd | dragonfly | cygwin*)
-    MKTEMP_DT=$(mktemp -d -t)
-    ;;
-  * )
-    MKTEMP_DT=$(mktemp -d --tmpdir)
-    ;;
-esac
-FONT_CONFIG_CACHE=(${MKTEMP_DT} font_tmp.XXXXXXXXXX)
+FONT_CONFIG_CACHE=$(mktemp -d -t font_tmp.XXXXXXXXXX)
 
 if [[ ($UNAME == *darwin*) ]]; then
     FONTS_DIR="/Library/Fonts/"
@@ -43,25 +33,36 @@ else
     FONTS_DIR="/usr/share/fonts/"
 fi
 
+DISTORT_IMAGE=false
+EXTRACT_FONT_PROPERTIES=false
+LINEDATA=false
 MAX_PAGES=0
-SAVE_BOX_TIFF=0
+MY_BOXTIFF_DIR=""
 OUTPUT_DIR="/tmp/tesstrain/tessdata"
-OVERWRITE=0
-LINEDATA=0
-RUN_SHAPE_CLUSTERING=0
-EXTRACT_FONT_PROPERTIES=1
+OVERWRITE=false
+RUN_SHAPE_CLUSTERING=false
+SAVE_BOX_TIFF=false
 WORKSPACE_DIR=$(mktemp -d)
+X_SIZE=3600
 
 # set TESSDATA_PREFIX as empty, if not defined in environment to avoid an unbound variable
 TESSDATA_PREFIX=${TESSDATA_PREFIX:-}
 
 # Logging helper functions.
 tlog() {
-    echo -e $* 2>&1 1>&2 | tee -a ${LOG_FILE}
+    if test -z "${LOG_FILE:-}"; then
+        echo -e $*
+    else
+        echo -e $* | tee -a ${LOG_FILE}
+    fi
 }
 
 err_exit() {
-    echo -e "ERROR: "$* 2>&1 1>&2 | tee -a ${LOG_FILE}
+    if test -z "${LOG_FILE:-}"; then
+        echo -e "ERROR: "$*
+    else
+        echo -e "ERROR: "$* | tee -a ${LOG_FILE}
+    fi
     exit 1
 }
 
@@ -69,23 +70,14 @@ err_exit() {
 # if the program file is not found.
 # Usage: run_command CMD ARG1 ARG2...
 run_command() {
-    local cmd=$(which $1)
-    if [[ -z ${cmd} ]]; then
-      for d in api training; do
-        cmd=$(which $d/$1)
-        if [[ ! -z ${cmd} ]]; then
-          break
-        fi
-      done
-      if [[ -z ${cmd} ]]; then
-          err_exit "$1 not found"
-      fi
-    fi
+    local cmd
+    cmd=$(which $1 || \
+              for d in api training; do
+                  which $d/$1 && break
+              done) || err_exit "'$1' not found"
     shift
     tlog "[$(date)] ${cmd} $@"
-    "${cmd}" "$@" 2>&1 1>&2 | tee -a ${LOG_FILE}
-    # check completion status
-    if [[ $? -gt 0 ]]; then
+    if ! "${cmd}" "$@" |& tee -a ${LOG_FILE}; then
         err_exit "Program $(basename ${cmd}) failed. Abort."
     fi
 }
@@ -105,8 +97,8 @@ check_file_readable() {
 # if it looks like a flag.
 # Usage: parse_value VAR_NAME VALUE
 parse_value() {
-    local val="$2"
-    if [[ -z $val ]]; then
+    local val="${2:-}"
+    if [[ -z "$val" ]]; then
         err_exit "Missing value for variable $1"
         exit
     fi
@@ -147,58 +139,69 @@ parse_flags() {
                 parse_value "EXPOSURES" "$exp"
                 i=$((j-1)) ;;
             --fonts_dir)
-                parse_value "FONTS_DIR" ${ARGV[$j]}
+                parse_value "FONTS_DIR" ${ARGV[$j]:-}
                 i=$j ;;
+	    --tmp_dir)
+		parse_value "TMP_DIR"   ${ARGV[$j]:-}
+		i=$j ;;
             --lang)
-                parse_value "LANG_CODE" ${ARGV[$j]}
+                parse_value "LANG_CODE" ${ARGV[$j]:-}
                 i=$j ;;
             --langdata_dir)
-                parse_value "LANGDATA_ROOT" ${ARGV[$j]}
+                parse_value "LANGDATA_ROOT" ${ARGV[$j]:-}
                 i=$j ;;
             --maxpages)
-                parse_value "MAX_PAGES" ${ARGV[$j]}
+                parse_value "MAX_PAGES" ${ARGV[$j]:-}
                 i=$j ;;
+            --my_boxtiff_dir)
+                parse_value "MY_BOXTIFF_DIR" ${ARGV[$j]:-}
+                i=$j ;;
+            --distort_image)
+                DISTORT_IMAGE=true ;;
             --output_dir)
-                parse_value "OUTPUT_DIR" ${ARGV[$j]}
+                parse_value "OUTPUT_DIR" ${ARGV[$j]:-}
                 i=$j ;;
             --overwrite)
-                OVERWRITE=1 ;;
+                OVERWRITE=true ;;
             --save_box_tiff)
-                SAVE_BOX_TIFF=1 ;;
+                SAVE_BOX_TIFF=true ;;
             --linedata_only)
-                LINEDATA=1 ;;
+                LINEDATA=true ;;
             --extract_font_properties)
-                EXTRACT_FONT_PROPERTIES=1 ;;
+                EXTRACT_FONT_PROPERTIES=true ;;
             --noextract_font_properties)
-                EXTRACT_FONT_PROPERTIES=0 ;;
+                EXTRACT_FONT_PROPERTIES=false ;;
             --tessdata_dir)
-                parse_value "TESSDATA_DIR" ${ARGV[$j]}
+                parse_value "TESSDATA_DIR" ${ARGV[$j]:-}
                 i=$j ;;
             --training_text)
-                parse_value "TRAINING_TEXT" "${ARGV[$j]}"
+                parse_value "TRAINING_TEXT" "${ARGV[$j]:-}"
                 i=$j ;;
             --wordlist)
-                parse_value "WORDLIST_FILE" ${ARGV[$j]}
+                parse_value "WORDLIST_FILE" ${ARGV[$j]:-}
                 i=$j ;;
             --workspace_dir)
                 rmdir "$FONT_CONFIG_CACHE"
                 rmdir "$WORKSPACE_DIR"
-                parse_value "WORKSPACE_DIR" ${ARGV[$j]}
+                parse_value "WORKSPACE_DIR" ${ARGV[$j]:-}
                 FONT_CONFIG_CACHE=$WORKSPACE_DIR/fc-cache
                 mkdir -p $FONT_CONFIG_CACHE
+                i=$j ;;
+            --xsize)
+                parse_value "X_SIZE" ${ARGV[$j]:-}
                 i=$j ;;
             *)
                 err_exit "Unrecognized argument ${ARGV[$i]}" ;;
         esac
         i=$((i+1))
     done
-    if [[ -z ${LANG_CODE} ]]; then
+    if [[ -z ${LANG_CODE:-} ]]; then
         err_exit "Need to specify a language --lang"
     fi
-    if [[ -z ${LANGDATA_ROOT} ]]; then
+    if [[ -z ${LANGDATA_ROOT:-} ]]; then
         err_exit "Need to specify path to language files --langdata_dir"
     fi
-    if [[ -z ${TESSDATA_DIR} ]]; then
+    if [[ -z ${TESSDATA_DIR:-} ]]; then
         if [[ -z ${TESSDATA_PREFIX} ]]; then
             err_exit "Need to specify a --tessdata_dir or have a "\
         "TESSDATA_PREFIX variable defined in your environment"
@@ -206,10 +209,18 @@ parse_flags() {
             TESSDATA_DIR="${TESSDATA_PREFIX}"
         fi
     fi
+    if [[ ! -d "${OUTPUT_DIR}" ]]; then
+        tlog "Creating new directory ${OUTPUT_DIR}"
+        mkdir -p "${OUTPUT_DIR}"
+    fi
 
     # Location where intermediate files will be created.
-    TIMESTAMP=`date +%Y-%m-%d`
-    TMP_DIR=(${MKTEMP_DT} ${LANG_CODE}-${TIMESTAMP}.XXX )
+    TIMESTAMP=$(date +%Y-%m-%d)
+    if [[ -z ${TMP_DIR:-} ]]; then
+        TMP_DIR=$(mktemp -d -t ${LANG_CODE}-${TIMESTAMP}.XXX)
+    else
+        TMP_DIR=$(mktemp -d -p ${TMP_DIR} -t ${LANG_CODE}-${TIMESTAMP}.XXX)
+    fi
     TRAINING_DIR=${TMP_DIR}
     # Location of log file for the whole run.
     LOG_FILE=${TRAINING_DIR}/tesstrain.log
@@ -217,7 +228,7 @@ parse_flags() {
     # Take training text and wordlist from the langdata directory if not
     # specified in the command-line.
     TRAINING_TEXT=${TRAINING_TEXT:-${LANGDATA_ROOT}/${LANG_CODE}/${LANG_CODE}.training_text}
-    WORDLIST_FILE=${TRAINING_TEXT:-${LANGDATA_ROOT}/${LANG_CODE}/${LANG_CODE}.wordlist}
+    WORDLIST_FILE=${WORDLIST_FILE:-${LANGDATA_ROOT}/${LANG_CODE}/${LANG_CODE}.wordlist}
 
     WORD_BIGRAMS_FILE=${LANGDATA_ROOT}/${LANG_CODE}/${LANG_CODE}.word.bigrams
     NUMBERS_FILE=${LANGDATA_ROOT}/${LANG_CODE}/${LANG_CODE}.numbers
@@ -248,9 +259,12 @@ generate_font_image() {
 
     local common_args="--fontconfig_tmpdir=${FONT_CONFIG_CACHE}"
     common_args+=" --fonts_dir=${FONTS_DIR} --strip_unrenderable_words"
-    common_args+=" --leading=${LEADING}"
+    common_args+=" --leading=${LEADING} --xsize=${X_SIZE}"
     common_args+=" --char_spacing=${CHAR_SPACING} --exposure=${EXPOSURE}"
     common_args+=" --outputbase=${outbase} --max_pages=${MAX_PAGES}"
+    if $DISTORT_IMAGE; then
+        common_args+=" --distort_image --invert=false"
+    fi
 
     # add --writing_mode=vertical-upright to common_args if the font is
     # specified to be rendered vertically.
@@ -265,7 +279,7 @@ generate_font_image() {
         --text=${TRAINING_TEXT}  ${TEXT2IMAGE_EXTRA_ARGS:-}
     check_file_readable ${outbase}.box ${outbase}.tif
 
-    if ((EXTRACT_FONT_PROPERTIES)) &&
+    if $EXTRACT_FONT_PROPERTIES &&
         [[ -r ${TRAIN_NGRAMS_FILE} ]]; then
         tlog "Extracting font properties of ${font}"
         run_command text2image ${common_args} --font="${font}" \
@@ -277,18 +291,18 @@ generate_font_image() {
 
 # Phase I : Generate (I)mages from training text for each font.
 phase_I_generate_image() {
-    local par_factor=$1
-    if [[ -z ${par_factor} || ${par_factor} -le 0 ]]; then
+    local par_factor=${1:-}
+    if ! [[ "${par_factor}" -gt 0 ]]; then
         par_factor=1
     fi
     tlog "\n=== Phase I: Generating training images ==="
-    if [[ -z ${TRAINING_TEXT} ]] || [[ ! -r ${TRAINING_TEXT} ]]; then
-        err_exit "Could not find training text file ${TRAINING_TEXT}"
+    if [[ -z ${TRAINING_TEXT:-} ]] || test ! -r "${TRAINING_TEXT}"; then
+        err_exit "Could not find training text file ${TRAINING_TEXT:-}"
     fi
     CHAR_SPACING="0.0"
 
     for EXPOSURE in $EXPOSURES; do
-        if ((EXTRACT_FONT_PROPERTIES)) && [[ -r ${BIGRAM_FREQS_FILE} ]]; then
+        if $EXTRACT_FONT_PROPERTIES && [[ -r ${BIGRAM_FREQS_FILE} ]]; then
             # Parse .bigram_freqs file and compose a .train_ngrams file with text
             # for tesseract to recognize during training. Take only the ngrams whose
             # combined weight accounts for 95% of all the bigrams in the language.
@@ -300,17 +314,15 @@ phase_I_generate_image() {
             check_file_readable ${TRAIN_NGRAMS_FILE}
         fi
 
-        local counter=0
+        local jobs=
+        trap "kill $$" INT
         for font in "${FONTS[@]}"; do
             sleep 1
+            test $(jobs -r | wc -l) -ge $par_factor && wait -n
             generate_font_image "${font}" &
-            let counter=counter+1
-            let rem=counter%par_factor
-            if [[ "${rem}" -eq 0 ]]; then
-              wait
-            fi
+            jobs="$jobs $!"
         done
-        wait
+        wait $jobs
         # Check that each process was successful.
         for font in "${FONTS[@]}"; do
             local fontname=$(echo ${font} | tr ' ' '_' | sed 's/,//g')
@@ -318,6 +330,17 @@ phase_I_generate_image() {
             check_file_readable ${outbase}.box ${outbase}.tif
         done
     done
+    if $SAVE_BOX_TIFF && ( ! $LINEDATA ) ; then
+    tlog "\n=== Saving box/tiff pairs for training data ==="
+        for f in "${TRAINING_DIR}/${LANG_CODE}".*.box; do
+            tlog "Moving ${f} to ${OUTPUT_DIR}"
+            cp "${f}" "${OUTPUT_DIR}"
+        done
+        for f in "${TRAINING_DIR}/${LANG_CODE}".*.tif; do
+            tlog "Moving ${f} to ${OUTPUT_DIR}"
+            cp "${f}" "${OUTPUT_DIR}"
+        done
+    fi
 }
 
 # Phase UP : Generate (U)nicharset and (P)roperties file.
@@ -378,7 +401,7 @@ phase_D_generate_dawg() {
 
     # Punctuation DAWG
     # -r arguments to wordlist2dawg denote RTL reverse policy
-    # (see Trie::RTLReversePolicy enum in third_party/tesseract/dict/trie.h).
+    # (see Trie::RTLReversePolicy enum in tesseract/src/dict/trie.h).
     # We specify 0/RRP_DO_NO_REVERSE when generating number DAWG,
     # 1/RRP_REVERSE_IF_HAS_RTL for freq and word DAWGS,
     # 2/RRP_FORCE_REVERSE for the punctuation DAWG.
@@ -414,7 +437,7 @@ phase_E_extract_features() {
     local box_config=$1
     local par_factor=$2
     local ext=$3
-    if [[ -z ${par_factor} || ${par_factor} -le 0 ]]; then
+    if ! [[ "${par_factor}" -gt 0 ]]; then
         par_factor=1
     fi
     tlog "\n=== Phase E: Generating ${ext} files ==="
@@ -433,17 +456,15 @@ phase_E_extract_features() {
     OLD_TESSDATA_PREFIX=${TESSDATA_PREFIX}
     export TESSDATA_PREFIX=${TESSDATA_DIR}
     tlog "Using TESSDATA_PREFIX=${TESSDATA_PREFIX}"
-    local counter=0
+    local jobs=
+    trap "kill $$" INT
     for img_file in ${img_files}; do
+        test $(jobs -r | wc -l) -ge $par_factor && wait -n
         run_command tesseract ${img_file} ${img_file%.*} \
             ${box_config} ${config} &
-      let counter=counter+1
-      let rem=counter%par_factor
-      if [[ "${rem}" -eq 0 ]]; then
-        wait
-      fi
+        jobs="$jobs $!"
     done
-    wait
+    wait $jobs
     export TESSDATA_PREFIX=${OLD_TESSDATA_PREFIX}
     # Check that all the output files were produced.
     for img_file in ${img_files}; do
@@ -466,7 +487,7 @@ phase_C_cluster_prototypes() {
 
 # Phase S : (S)hape clustering
 phase_S_cluster_shapes() {
-    if ((! RUN_SHAPE_CLUSTERING)); then
+    if ! $RUN_SHAPE_CLUSTERING; then
         tlog "\n=== Shape Clustering disabled ==="
         return
     fi
@@ -533,10 +554,6 @@ phase_B_generate_ambiguities() {
 make__lstmdata() {
   tlog "\n=== Constructing LSTM training data ==="
   local lang_prefix="${LANGDATA_ROOT}/${LANG_CODE}/${LANG_CODE}"
-  if [[ ! -d "${OUTPUT_DIR}" ]]; then
-      tlog "Creating new directory ${OUTPUT_DIR}"
-      mkdir -p "${OUTPUT_DIR}"
-  fi
   local lang_is_rtl=""
   if [[ "${LANG_IS_RTL}" == "1" ]]; then
     lang_is_rtl="--lang_is_rtl"
@@ -555,8 +572,8 @@ make__lstmdata() {
     --puncs "${lang_prefix}.punc" \
     --output_dir "${OUTPUT_DIR}" --lang "${LANG_CODE}" \
     "${pass_through}" "${lang_is_rtl}"
-    
-  if ((SAVE_BOX_TIFF)); then
+
+  if $SAVE_BOX_TIFF; then
     tlog "\n=== Saving box/tiff pairs for training data ==="
   for f in "${TRAINING_DIR}/${LANG_CODE}".*.box; do
     tlog "Moving ${f} to ${OUTPUT_DIR}"
@@ -567,6 +584,7 @@ make__lstmdata() {
     mv "${f}" "${OUTPUT_DIR}"
   done
   fi
+
   tlog "\n=== Moving lstmf files for training data ==="
   for f in "${TRAINING_DIR}/${LANG_CODE}".*.lstmf; do
     tlog "Moving ${f} to ${OUTPUT_DIR}"
@@ -596,12 +614,8 @@ make__traineddata() {
   run_command combine_tessdata ${TRAINING_DIR}/${LANG_CODE}.
 
   # Copy it to the output dir, overwriting only if allowed by the cmdline flag.
-  if [[ ! -d ${OUTPUT_DIR} ]]; then
-      tlog "Creating new directory ${OUTPUT_DIR}"
-      mkdir -p ${OUTPUT_DIR}
-  fi
   local destfile=${OUTPUT_DIR}/${LANG_CODE}.traineddata;
-  if [[ -f ${destfile} ]] && ((! OVERWRITE)); then
+  if [[ -f ${destfile} ]] && ! $OVERWRITE; then
       err_exit "File ${destfile} exists and no --overwrite specified";
   fi
   tlog "Moving ${TRAINING_DIR}/${LANG_CODE}.traineddata to ${OUTPUT_DIR}"

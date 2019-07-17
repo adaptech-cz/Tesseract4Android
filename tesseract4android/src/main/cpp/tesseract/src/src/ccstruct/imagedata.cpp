@@ -3,7 +3,6 @@
 // Description: Class to hold information about a single multi-page tiff
 //              training file and its corresponding boxes or text file.
 // Author:      Ray Smith
-// Created:     Tue May 28 08:56:06 PST 2013
 //
 // (C) Copyright 2013, Google Inc.
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,6 +37,7 @@
 #include "scrollview.h"  // for ScrollView, ScrollView::CYAN, ScrollView::NONE
 #include "serialis.h"    // for TFile
 #include "tprintf.h"     // for tprintf
+#include <cinttypes>     // for PRId64
 
 // Number of documents to read ahead while training. Doesn't need to be very
 // large.
@@ -113,8 +113,8 @@ void FloatWordFeature::FromWordFeatures(
 // Sort function to sort first by x-bucket, then by y.
 /* static */
 int FloatWordFeature::SortByXBucket(const void* v1, const void* v2) {
-  const FloatWordFeature* f1 = static_cast<const FloatWordFeature*>(v1);
-  const FloatWordFeature* f2 = static_cast<const FloatWordFeature*>(v2);
+  const auto* f1 = static_cast<const FloatWordFeature*>(v1);
+  const auto* f2 = static_cast<const FloatWordFeature*>(v2);
   int x_diff = f1->x_bucket - f2->x_bucket;
   if (x_diff == 0) return f1->y - f2->y;
   return x_diff;
@@ -135,7 +135,7 @@ ImageData::~ImageData() {
 ImageData* ImageData::Build(const char* name, int page_number, const char* lang,
                             const char* imagedata, int imagedatasize,
                             const char* truth_text, const char* box_text) {
-  ImageData* image_data = new ImageData();
+  auto* image_data = new ImageData();
   image_data->imagefilename_ = name;
   image_data->page_number_ = page_number;
   image_data->language_ = lang;
@@ -208,6 +208,8 @@ bool ImageData::SkipDeSerialize(TFile* fp) {
 }
 
 // Saves the given Pix as a PNG-encoded string and destroys it.
+// In case of missing PNG support in Leptonica use PNM format,
+// which requires more memory.
 void ImageData::SetPix(Pix* pix) {
   SetPixInternal(pix, &image_data_);
 }
@@ -280,7 +282,7 @@ void ImageData::Display() const {
   if (pix == nullptr) return;
   int width = pixGetWidth(pix);
   int height = pixGetHeight(pix);
-  ScrollView* win = new ScrollView("Imagedata", 100, 100,
+  auto* win = new ScrollView("Imagedata", 100, 100,
                                    2 * (width + 2 * kTextSize),
                                    2 * (height + 4 * kTextSize),
                                    width + 10, height + 3 * kTextSize, true);
@@ -323,10 +325,16 @@ void ImageData::AddBoxes(const GenericVector<TBOX>& boxes,
 }
 
 // Saves the given Pix as a PNG-encoded string and destroys it.
+// In case of missing PNG support in Leptonica use PNM format,
+// which requires more memory.
 void ImageData::SetPixInternal(Pix* pix, GenericVector<char>* image_data) {
   l_uint8* data;
   size_t size;
-  pixWriteMem(&data, &size, pix, IFF_PNG);
+  l_int32 ret;
+  ret = pixWriteMem(&data, &size, pix, IFF_PNG);
+  if (ret) {
+    ret = pixWriteMem(&data, &size, pix, IFF_PNM);
+  }
   pixDestroy(&pix);
   image_data->resize_no_init(size);
   memcpy(&(*image_data)[0], data, size);
@@ -338,7 +346,7 @@ Pix* ImageData::GetPixInternal(const GenericVector<char>& image_data) {
   Pix* pix = nullptr;
   if (!image_data.empty()) {
     // Convert the array to an image.
-    const unsigned char* u_data =
+    const auto* u_data =
         reinterpret_cast<const unsigned char*>(&image_data[0]);
     pix = pixReadMem(u_data, image_data.size());
   }
@@ -367,7 +375,7 @@ bool ImageData::AddBoxes(const char* box_text) {
 
 // Thread function to call ReCachePages.
 void* ReCachePagesFunc(void* data) {
-  DocumentData* document_data = static_cast<DocumentData*>(data);
+  auto* document_data = static_cast<DocumentData*>(data);
   document_data->ReCachePages();
   return nullptr;
 }
@@ -550,11 +558,11 @@ bool DocumentData::ReCachePages() {
     }
   }
   if (page < loaded_pages) {
-    tprintf("Deserialize failed: %s read %d/%d pages\n",
+    tprintf("Deserialize failed: %s read %d/%d lines\n",
             document_name_.string(), page, loaded_pages);
     pages_.truncate(0);
   } else {
-    tprintf("Loaded %d/%d pages (%d-%d) of document %s\n", pages_.size(),
+    tprintf("Loaded %d/%d lines (%d-%d) of document %s\n", pages_.size(),
             loaded_pages, pages_offset_ + 1, pages_offset_ + pages_.size(),
             document_name_.string());
   }
@@ -581,7 +589,7 @@ bool DocumentCache::LoadDocuments(const GenericVector<STRING>& filenames,
     fair_share_memory = max_memory_ / filenames.size();
   for (int arg = 0; arg < filenames.size(); ++arg) {
     STRING filename = filenames[arg];
-    DocumentData* document = new DocumentData(filename);
+    auto* document = new DocumentData(filename);
     document->SetDocument(filename.string(), fair_share_memory, reader);
     AddToCache(document);
   }

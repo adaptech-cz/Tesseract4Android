@@ -3,7 +3,6 @@
 // Description: Class to hold BLOBNBOXs in a grid for fast access
 //              to neighbours.
 // Author:      Ray Smith
-// Created:     Wed Jun 06 17:22:01 PDT 2007
 //
 // (C) Copyright 2007, Google Inc.
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -54,15 +53,15 @@ const double kMinGutterWidthGrid = 0.5;
 // adding noise blobs.
 const double kMaxDistToPartSizeRatio = 1.5;
 
-BOOL_VAR(textord_tabfind_show_initial_partitions,
-         false, "Show partition bounds");
-BOOL_VAR(textord_tabfind_show_reject_blobs,
-         false, "Show blobs rejected as noise");
-INT_VAR(textord_tabfind_show_partitions, 0,
-        "Show partition bounds, waiting if >1");
-BOOL_VAR(textord_tabfind_show_columns, false, "Show column bounds");
-BOOL_VAR(textord_tabfind_show_blocks, false, "Show final block bounds");
-BOOL_VAR(textord_tabfind_find_tables, true, "run table detection");
+static BOOL_VAR(textord_tabfind_show_initial_partitions,
+                false, "Show partition bounds");
+static BOOL_VAR(textord_tabfind_show_reject_blobs,
+                false, "Show blobs rejected as noise");
+static INT_VAR(textord_tabfind_show_partitions, 0,
+              "Show partition bounds, waiting if >1");
+static BOOL_VAR(textord_tabfind_show_columns, false, "Show column bounds");
+static BOOL_VAR(textord_tabfind_show_blocks, false, "Show final block bounds");
+static BOOL_VAR(textord_tabfind_find_tables, true, "run table detection");
 
 ScrollView* ColumnFinder::blocks_win_ = nullptr;
 
@@ -359,7 +358,7 @@ int ColumnFinder::FindBlocks(PageSegMode pageseg_mode, Pix* scaled_color,
                      min_gutter_width_, tabfind_aligned_gap_fraction_,
                      &part_grid_, &deskew_, &reskew_);
       // Add the deskew to the denorm_.
-      DENORM* new_denorm = new DENORM;
+      auto* new_denorm = new DENORM;
       new_denorm->SetupNormalization(nullptr, &deskew_, denorm_,
                                      0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f);
       denorm_ = new_denorm;
@@ -926,7 +925,7 @@ void ColumnFinder::ComputeMeanColumnGap(bool any_multi_column) {
                                                     &gap_samples);
   }
   mean_column_gap_ = any_multi_column && gap_samples > 0
-      ? total_gap / gap_samples : width_samples > 0 
+      ? total_gap / gap_samples : width_samples > 0
       ? total_width / width_samples : 0;
 }
 
@@ -1476,7 +1475,7 @@ void ColumnFinder::ReflectForRtl(TO_BLOCK* input_block, BLOBNBOX_LIST* bblobs) {
   ReflectBlobList(&input_block->noise_blobs);
   ReflectBlobList(&input_block->large_blobs);
   // Update the denorm with the reflection.
-  DENORM* new_denorm = new DENORM;
+  auto* new_denorm = new DENORM;
   new_denorm->SetupNormalization(nullptr, nullptr, denorm_,
                                  0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f);
   denorm_ = new_denorm;

@@ -2,13 +2,7 @@
  ********************************************************************************
  *
  * File:         findseam.cpp  (Formerly findseam.c)
- * Description:
  * Author:       Mark Seaman, OCR Technology
- * Created:      Fri Oct 16 14:37:00 1987
- * Modified:     Tue Jul 30 15:44:59 1991 (Mark Seaman) marks@hpgrlt
- * Language:     C
- * Package:      N/A
- * Status:       Reusable Software Component
  *
  * (c) Copyright 1987, Hewlett-Packard Company.
  ** Licensed under the Apache License, Version 2.0 (the "License");
@@ -54,7 +48,6 @@
                                  /* How many to keep */
 #define MAX_NUM_SEAMS          150
                                  /* How many to keep */
-#define MAX_OLD_SEAMS          150
 #define NO_FULL_PRIORITY       -1/* Special marker for pri. */
                                  /* Evaluate right away */
 #define BAD_PRIORITY           9999.0

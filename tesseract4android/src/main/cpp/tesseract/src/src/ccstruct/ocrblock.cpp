@@ -2,7 +2,6 @@
  * File:        ocrblock.cpp  (Formerly block.c)
  * Description: BLOCK member functions and iterator functions.
  * Author:      Ray Smith
- * Created:     Fri Mar 15 09:41:28 GMT 1991
  *
  * (C) Copyright 1991, Hewlett-Packard Ltd.
  ** Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,20 +22,18 @@
 #include "stepblob.h"
 #include "tprintf.h"
 
-#define BLOCK_LABEL_HEIGHT  150  //char height of block id
-
 ELISTIZE (BLOCK)
 /**
  * BLOCK::BLOCK
  *
  * Constructor for a simple rectangular block.
  */
-BLOCK::BLOCK(const char *name,                //< filename
-             BOOL8 prop,                      //< proportional
-             int16_t kern,                      //< kerning
-             int16_t space,                     //< spacing
-             int16_t xmin,                      //< bottom left
-             int16_t ymin, int16_t xmax,          //< top right
+BLOCK::BLOCK(const char *name,                ///< filename
+             bool prop,                       ///< proportional
+             int16_t kern,                    ///< kerning
+             int16_t space,                   ///< spacing
+             int16_t xmin,                    ///< bottom left
+             int16_t ymin, int16_t xmax,      ///< top right
              int16_t ymax)
   : pdblk(xmin, ymin, xmax, ymax),
     filename(name),
@@ -192,8 +189,8 @@ void BLOCK::compress(                  // squash it up
  */
 
 void BLOCK::print(            //print list of sides
-        FILE*,     //< file to print on
-        bool dump  //< print full detail
+        FILE*,     ///< file to print on
+        bool dump  ///< print full detail
 ) {
   ICOORDELT_IT it = &pdblk.leftside;   //iterator
 

@@ -2,7 +2,6 @@
 // File:        lstmtrainer.cpp
 // Description: Top-level line trainer class for LSTM-based networks.
 // Author:      Ray Smith
-// Created:     Fir May 03 09:14:06 PST 2013
 //
 // (C) Copyright 2013, Google Inc.
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,6 +14,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 ///////////////////////////////////////////////////////////////////////
+
+#define _USE_MATH_DEFINES // needed to get definition of M_SQRT1_2
 
 // Include automatically generated configuration file if running autoconf.
 #ifdef HAVE_CONFIG_H
@@ -49,7 +50,7 @@ const int kMinStallIterations = 10000;
 // before we declare the sub_trainer_ a success and switch to it.
 const double kSubTrainerMarginFraction = 3.0 / 128;
 // Factor to reduce learning rate on divergence.
-const double kLearningRateDecay = sqrt(0.5);
+const double kLearningRateDecay = M_SQRT1_2;
 // LR adjustment iterations.
 const int kNumAdjustmentIterations = 100;
 // How often to add data to the error_graph_.
@@ -195,8 +196,8 @@ bool LSTMTrainer::InitNetwork(const STRING& network_spec, int append_index,
 
 // Initializes a trainer from a serialized TFNetworkModel proto.
 // Returns the global step of TensorFlow graph or 0 if failed.
-int LSTMTrainer::InitTensorFlowNetwork(const std::string& tf_proto) {
 #ifdef INCLUDE_TENSORFLOW
+int LSTMTrainer::InitTensorFlowNetwork(const std::string& tf_proto) {
   delete network_;
   TFNetwork* tf_net = new TFNetwork("TensorFlow");
   training_iteration_ = tf_net->InitFromProtoStr(tf_proto);
@@ -207,11 +208,8 @@ int LSTMTrainer::InitTensorFlowNetwork(const std::string& tf_proto) {
   network_ = tf_net;
   ASSERT_HOST(recoder_.code_range() == tf_net->num_classes());
   return training_iteration_;
-#else
-  tprintf("TensorFlow not compiled in! -DINCLUDE_TENSORFLOW\n");
-  return 0;
-#endif
 }
+#endif
 
 // Resets all the iteration counters for fine tuning or traininng a head,
 // where we want the error reporting to reset.
@@ -435,8 +433,8 @@ bool LSTMTrainer::Serialize(SerializeAmount serialize_amount,
   if (!fp->Serialize(&prev_sample_iteration_)) return false;
   if (!fp->Serialize(&perfect_delay_)) return false;
   if (!fp->Serialize(&last_perfect_training_iteration_)) return false;
-  for (int i = 0; i < ET_COUNT; ++i) {
-    if (!error_buffers_[i].Serialize(fp)) return false;
+  for (const auto & error_buffer : error_buffers_) {
+    if (!error_buffer.Serialize(fp)) return false;
   }
   if (!fp->Serialize(&error_rates_[0], countof(error_rates_))) return false;
   if (!fp->Serialize(&training_stage_)) return false;
@@ -479,8 +477,8 @@ bool LSTMTrainer::DeSerialize(const TessdataManager* mgr, TFile* fp) {
   if (!fp->DeSerialize(&prev_sample_iteration_)) return false;
   if (!fp->DeSerialize(&perfect_delay_)) return false;
   if (!fp->DeSerialize(&last_perfect_training_iteration_)) return false;
-  for (int i = 0; i < ET_COUNT; ++i) {
-    if (!error_buffers_[i].DeSerialize(fp)) return false;
+  for (auto & error_buffer : error_buffers_) {
+    if (!error_buffer.DeSerialize(fp)) return false;
   }
   if (!fp->DeSerialize(&error_rates_[0], countof(error_rates_))) return false;
   if (!fp->DeSerialize(&training_stage_)) return false;
@@ -878,14 +876,16 @@ Trainability LSTMTrainer::PrepareForBackward(const ImageData* trainingdata,
   STRING truth_text = DecodeLabels(truth_labels);
   targets->SubtractAllFromFloat(*fwd_outputs);
   if (debug_interval_ != 0) {
-    tprintf("Iteration %d: BEST OCR TEXT : %s\n", training_iteration(),
-            ocr_text.string());
+      if (truth_text != ocr_text) {
+         tprintf("Iteration %d: BEST OCR TEXT : %s\n",
+            training_iteration(), ocr_text.string());
+      }
   }
   double char_error = ComputeCharError(truth_labels, ocr_labels);
   double word_error = ComputeWordError(&truth_text, &ocr_text);
   double delta_error = ComputeErrorRates(*targets, char_error, word_error);
   if (debug_interval_ != 0) {
-    tprintf("File %s page %d %s:\n", trainingdata->imagefilename().string(),
+    tprintf("File %s line %d %s:\n", trainingdata->imagefilename().string(),
             trainingdata->page_number(), delta_error == 0.0 ? "(Perfect)" : "");
   }
   if (delta_error == 0.0) return PERFECT;
@@ -1042,8 +1042,12 @@ bool LSTMTrainer::DebugLSTMTraining(const NetworkIO& inputs,
     GenericVector<int> xcoords;
     LabelsFromOutputs(outputs, &labels, &xcoords);
     STRING text = DecodeLabels(labels);
-    tprintf("Iteration %d: ALIGNED TRUTH : %s\n",
+    tprintf("Iteration %d: GROUND  TRUTH : %s\n",
+        training_iteration(), truth_text.string());
+    if (truth_text != text) {
+        tprintf("Iteration %d: ALIGNED TRUTH : %s\n",
             training_iteration(), text.string());
+    }
     if (debug_interval_ > 0 && training_iteration() % debug_interval_ == 0) {
       tprintf("TRAINING activation path for truth string %s\n",
               truth_text.string());
@@ -1221,7 +1225,7 @@ double LSTMTrainer::ComputeWordError(STRING* truth_str, STRING* ocr_str) {
   StrMap word_counts;
   for (int i = 0; i < truth_words.size(); ++i) {
     std::string truth_word(truth_words[i].string());
-    StrMap::iterator it = word_counts.find(truth_word);
+    auto it = word_counts.find(truth_word);
     if (it == word_counts.end())
       word_counts.insert(std::make_pair(truth_word, 1));
     else
@@ -1229,7 +1233,7 @@ double LSTMTrainer::ComputeWordError(STRING* truth_str, STRING* ocr_str) {
   }
   for (int i = 0; i < ocr_words.size(); ++i) {
     std::string ocr_word(ocr_words[i].string());
-    StrMap::iterator it = word_counts.find(ocr_word);
+    auto it = word_counts.find(ocr_word);
     if (it == word_counts.end())
       word_counts.insert(std::make_pair(ocr_word, -1));
     else
