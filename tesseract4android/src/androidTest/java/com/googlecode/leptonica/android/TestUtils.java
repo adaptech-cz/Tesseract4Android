@@ -89,7 +89,7 @@ public class TestUtils {
 			canvas.drawRect(new Rect(width / 2, 0, width, height), paint);
 		} else {
 			// Paint the image white
-			paint.setColor(Color.WHITE);
+			paint.setColor(Color.BLACK);
 			canvas.drawPaint(paint);
 		}
 		return bmp;
