@@ -75,7 +75,12 @@ public class WriteFileTest {
 	}
 
 	private static void testWriteBytes8(int width, int height) {
-		Pix pixs = TestUtils.createTestPix(width, height);
+		// We first create normal 32-bit pix image and manually convert it into 8-bit pix.
+		// Method writeBytes8() does this conversion internally if given pix isn't 8-bit already,
+		// but in that case we would be later comparing the 32-bit pix to 8-bit pix which doesn't
+		// make sense and test would fail. So we do conversion manually.
+		Pix pix32 = TestUtils.createTestPix(width, height);
+		Pix pixs = Convert.convertTo8(pix32);
 		byte[] data = WriteFile.writeBytes8(pixs);
 		Pix pixd = ReadFile.readBytes8(data, width, height);
 
