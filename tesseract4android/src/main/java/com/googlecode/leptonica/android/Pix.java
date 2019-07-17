@@ -20,7 +20,12 @@ package com.googlecode.leptonica.android;
 import android.graphics.Rect;
 
 import androidx.annotation.ColorInt;
+import androidx.annotation.IntDef;
 import androidx.annotation.Size;
+
+import java.lang.annotation.Retention;
+
+import static java.lang.annotation.RetentionPolicy.SOURCE;
 
 /**
  * Java representation of a native Leptonica PIX object.
@@ -33,6 +38,40 @@ public class Pix {
 		System.loadLibrary("jpeg");
 		System.loadLibrary("png");
 		System.loadLibrary("leptonica");
+	}
+
+	/**
+	 * Image file format.
+	 */
+	public static final class ImageFileFormat {
+		@Retention(SOURCE)
+		@IntDef({IFF_UNKNOWN, IFF_BMP, IFF_JFIF_JPEG, IFF_PNG, IFF_TIFF, IFF_TIFF_PACKBITS, IFF_TIFF_RLE,
+				IFF_TIFF_G3, IFF_TIFF_G4, IFF_TIFF_LZW, IFF_TIFF_ZIP, IFF_PNM, IFF_PS, IFF_GIF, IFF_JP2,
+				IFF_WEBP, IFF_LPDF, IFF_TIFF_JPEG, IFF_DEFAULT, IFF_SPIX})
+
+		public @interface Format {
+		}
+
+		public static final int IFF_UNKNOWN = 0;
+		public static final int IFF_BMP = 1;
+		public static final int IFF_JFIF_JPEG = 2;
+		public static final int IFF_PNG = 3;
+		public static final int IFF_TIFF = 4;
+		public static final int IFF_TIFF_PACKBITS = 5;
+		public static final int IFF_TIFF_RLE = 6;
+		public static final int IFF_TIFF_G3 = 7;
+		public static final int IFF_TIFF_G4 = 8;
+		public static final int IFF_TIFF_LZW = 9;
+		public static final int IFF_TIFF_ZIP = 10;
+		public static final int IFF_PNM = 11;
+		public static final int IFF_PS = 12;
+		public static final int IFF_GIF = 13;
+		public static final int IFF_JP2 = 14;
+		public static final int IFF_WEBP = 15;
+		public static final int IFF_LPDF = 16;
+		public static final int IFF_TIFF_JPEG = 17;
+		public static final int IFF_DEFAULT = 18;
+		public static final int IFF_SPIX = 19;
 	}
 
 	/**
@@ -274,6 +313,31 @@ public class Pix {
 		return nativeGetDepth(mNativePix);
 	}
 
+	/**
+	 * Returns the spp of this Pix.
+	 *
+	 * @return the spp of this Pix
+	 */
+	public int getSpp() {
+		if (mRecycled)
+			throw new IllegalStateException();
+
+		return nativeGetSpp(mNativePix);
+	}
+
+	/**
+	 * Returns the imageFormat of this Pix.
+	 *
+	 * @return the imageFormat of this Pix
+	 */
+	@ImageFileFormat.Format
+	public int getImageFormat() {
+		if (mRecycled)
+			throw new IllegalStateException();
+
+		return nativeGetInputFormat(mNativePix);
+	}
+
 	public int getRefCount() {
 		return nativeGetRefCount(mNativePix);
 	}
@@ -353,4 +417,8 @@ public class Pix {
 	private static native int nativeGetPixel(long nativePix, int x, int y);
 
 	private static native void nativeSetPixel(long nativePix, int x, int y, int color);
+
+	private static native int nativeGetSpp(long nativePix);
+
+	private static native int nativeGetInputFormat(long nativePix);
 }
