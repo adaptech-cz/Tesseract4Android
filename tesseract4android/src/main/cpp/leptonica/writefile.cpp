@@ -52,7 +52,9 @@ jint Java_com_googlecode_leptonica_android_WriteFile_nativeWriteBytes8(JNIEnv *e
 jboolean Java_com_googlecode_leptonica_android_WriteFile_nativeWriteImpliedFormat(JNIEnv *env,
                                                                                   jclass clazz,
                                                                                   jlong nativePix,
-                                                                                  jstring fileName) {
+                                                                                  jstring fileName,
+                                                                                  jint quality,
+                                                                                  jboolean progressive) {
   PIX *pixs = (PIX *) nativePix;
 
   const char *c_fileName = env->GetStringUTFChars(fileName, nullptr);
@@ -63,7 +65,7 @@ jboolean Java_com_googlecode_leptonica_android_WriteFile_nativeWriteImpliedForma
 
   jboolean result = JNI_TRUE;
 
-  if (pixWriteImpliedFormat(c_fileName, pixs, 0, JNI_FALSE)) {
+  if (pixWriteImpliedFormat(c_fileName, pixs, quality, progressive)) {
     LOGE("could not write pix data to %s", c_fileName);
     result = JNI_FALSE;
   }

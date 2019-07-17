@@ -84,20 +84,37 @@ public class WriteFile {
 	 * Notes:
 	 * <ol>
 	 * <li>This determines the output format from the filename extension.
+	 * <li>The last two args are ignored except for requests for jpeg files.</li>
+	 * <li>The jpeg default quality is 75.</li>
 	 * </ol>
 	 *
-	 * @param pixs Source image.
-	 * @param file The file to write.
+	 * @param pixs        Source image.
+	 * @param file        The file to write.
+	 * @param quality     Compression quality (between 1 - 100, 0 = default). (only for JPEG files)
+	 * @param progressive Progressive format. (only for JPEG files)
 	 * @return <code>true</code> on success
 	 */
-	public static boolean writeImpliedFormat(Pix pixs, File file) {
+	public static boolean writeImpliedFormat(Pix pixs, File file, int quality, boolean progressive) {
 		if (pixs == null)
 			throw new IllegalArgumentException("Source pix must be non-null");
 		if (file == null)
 			throw new IllegalArgumentException("File must be non-null");
 
 		return nativeWriteImpliedFormat(pixs.getNativePix(),
-				file.getAbsolutePath());
+				file.getAbsolutePath(), quality, progressive);
+	}
+
+	/**
+	 * Writes a Pix to file using the file extension as the output format;
+	 * supported formats are .bmp, .jpg, and .png.
+	 * Jpeg files will have quality 75 and will be not progressive.
+	 *
+	 * @param pixs Source image.
+	 * @param file The file to write.
+	 * @return <code>true</code> on success
+	 */
+	public static boolean writeImpliedFormat(Pix pixs, File file) {
+		return writeImpliedFormat(pixs, file, 0, false);
 	}
 
 	/**
@@ -135,7 +152,7 @@ public class WriteFile {
 
 	private static native int nativeWriteBytes8(long nativePix, byte[] data);
 
-	private static native boolean nativeWriteImpliedFormat(long nativePix, String fileName);
+	private static native boolean nativeWriteImpliedFormat(long nativePix, String fileName, int quality, boolean progressive);
 
 	private static native boolean nativeWriteBitmap(long nativePix, Bitmap bitmap);
 }
