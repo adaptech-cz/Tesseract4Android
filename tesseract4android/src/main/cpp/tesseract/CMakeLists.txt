@@ -45,7 +45,9 @@ configure_file(
 
 file(GLOB tesseract_src
         ${TESS_PATH}api/*.cpp
-        ${TESS_PATH}arch/*.cpp
+        ${TESS_PATH}arch/simddetect.cpp
+        ${TESS_PATH}arch/intsimdmatrix.cpp
+        ${TESS_PATH}arch/dotproduct.cpp
         ${TESS_PATH}ccmain/*.cpp
         ${TESS_PATH}ccstruct/*.cpp
         ${TESS_PATH}ccutil/*.cpp
