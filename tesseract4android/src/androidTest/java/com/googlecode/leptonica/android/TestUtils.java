@@ -80,16 +80,24 @@ public class TestUtils {
 		paint.setStyle(Style.FILL);
 
 		if (width > 1 && height > 1) {
-			// Paint the left half white
+			// Paint the top left half white
 			paint.setColor(Color.WHITE);
-			canvas.drawRect(new Rect(0, 0, width / 2, height), paint);
+			canvas.drawRect(new Rect(0, 0, width / 2, height / 2), paint);
 
-			// Paint the right half black
+			// Paint the top right half black
 			paint.setColor(Color.BLACK);
-			canvas.drawRect(new Rect(width / 2, 0, width, height), paint);
+			canvas.drawRect(new Rect(width / 2, 0, width, height / 2), paint);
+
+			// Paint the bottom left some color
+			paint.setColor(Color.rgb(32, 64, 128));
+			canvas.drawRect(new Rect(0, width / 2, width / 2, height), paint);
+
+			// Paint the bottom right some other color
+			paint.setColor(Color.rgb(128, 64, 32));
+			canvas.drawRect(new Rect(width / 2, width / 2, width, height), paint);
 		} else {
 			// Paint the image white
-			paint.setColor(Color.BLACK);
+			paint.setColor(Color.rgb(128, 64, 16));
 			canvas.drawPaint(paint);
 		}
 		return bmp;
