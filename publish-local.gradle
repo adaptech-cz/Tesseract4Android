@@ -1,0 +1,88 @@
+/**
+ * Publish Local Helper
+ *
+ * @Author Robert Pösel
+ * @Version 1.4
+ * @Date 24.4.2019
+ */
+
+apply plugin: 'maven-publish'
+
+task androidJavadocs(type: Javadoc) {
+	source = android.sourceSets.main.java.srcDirs
+	classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+	android.libraryVariants.all { variant ->
+		if (variant.name == 'release') {
+			if (variant.hasProperty('javaCompileProvider')) {
+				// Android 3.3.0+
+				owner.classpath += variant.javaCompileProvider.get().classpath
+			} else {
+				owner.classpath += variant.javaCompile.classpath
+			}
+		}
+	}
+	exclude '**/R.html', '**/R.*.html', '**/index.html'
+}
+
+task androidJavadocsJar(type: Jar, dependsOn: androidJavadocs) {
+	classifier = 'javadoc'
+	from androidJavadocs.destinationDir
+}
+
+task androidSourcesJar(type: Jar) {
+	classifier = 'sources'
+	from android.sourceSets.main.java.srcDirs
+}
+
+project.afterEvaluate {
+	publishing {
+		publications {
+			maven(MavenPublication) {
+				//groupId 'cz.example'
+				//artifactId 'custom-artifact'
+				//version = android.defaultConfig.versionName
+
+				artifact bundleReleaseAar
+				artifact androidJavadocsJar
+				artifact androidSourcesJar
+
+				pom.withXml {
+					final dependenciesNode = asNode().appendNode('dependencies')
+
+					ext.addDependency = { dep, String scope ->
+						if (dep.group == null || dep.version == null || dep.name == null || dep.name == "unspecified")
+							return // ignore invalid dependencies
+
+						final dependencyNode = dependenciesNode.appendNode('dependency')
+						dependencyNode.appendNode('groupId', dep.group)
+						dependencyNode.appendNode('artifactId', dep.name)
+						dependencyNode.appendNode('version', dep.version)
+						dependencyNode.appendNode('scope', scope)
+
+						if (!dep.transitive) {
+							// If this dependency is not transitive, we should force exclude all its dependencies from the POM
+							final exclusionNode = dependencyNode.appendNode('exclusions').appendNode('exclusion')
+							exclusionNode.appendNode('groupId', '*')
+							exclusionNode.appendNode('artifactId', '*')
+						} else if (!dep.properties.excludeRules.empty) {
+							// Otherwise add specified exclude rules
+							final exclusionsNode = dependencyNode.appendNode('exclusions')
+							dep.properties.excludeRules.each { rule ->
+								final exclusionNode = exclusionsNode.appendNode('exclusion')
+								exclusionNode.appendNode('groupId', rule.group ?: '*')
+								exclusionNode.appendNode('artifactId', rule.module ?: '*')
+							}
+						}
+					}
+
+					// List all "compile" dependencies (for old Gradle)
+					configurations.compile.getDependencies().each { dep -> addDependency(dep, "compile") }
+					// List all "api" dependencies (for new Gradle) as "compile" dependencies
+					configurations.api.getDependencies().each { dep -> addDependency(dep, "compile") }
+					// List all "implementation" dependencies (for new Gradle) as "runtime" dependencies
+					configurations.implementation.getDependencies().each { dep -> addDependency(dep, "runtime") }
+				}
+			}
+		}
+	}
+}

@@ -46,3 +46,15 @@ dependencies {
 	androidTestImplementation 'androidx.test:runner:1.2.0'
 	androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
 }
+
+apply from: '../publish-local.gradle'
+
+publishing {
+	publications {
+		maven(MavenPublication) {
+			groupId 'cz.adaptech.android'
+			artifactId 'tesseract4android'
+			version = android.defaultConfig.versionName
+		}
+	}
+}
