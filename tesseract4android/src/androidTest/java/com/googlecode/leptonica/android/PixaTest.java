@@ -169,8 +169,6 @@ public class PixaTest {
 		assertEquals(box.getWidth(), returnedBox.getWidth());
 		assertEquals(box.getHeight(), returnedBox.getHeight());
 
-		pix.recycle();
-		box.recycle();
 		returnedPix.recycle();
 		returnedBox.recycle();
 		pixa.recycle();
