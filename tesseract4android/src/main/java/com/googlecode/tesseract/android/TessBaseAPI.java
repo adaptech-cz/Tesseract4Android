@@ -21,15 +21,15 @@ package com.googlecode.tesseract.android;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
 
+import androidx.annotation.IntDef;
+import androidx.annotation.WorkerThread;
+
 import com.googlecode.leptonica.android.Pix;
 import com.googlecode.leptonica.android.Pixa;
 import com.googlecode.leptonica.android.ReadFile;
 
 import java.io.File;
 import java.lang.annotation.Retention;
-
-import androidx.annotation.IntDef;
-import androidx.annotation.WorkerThread;
 
 import static java.lang.annotation.RetentionPolicy.SOURCE;
 
@@ -63,7 +63,7 @@ public class TessBaseAPI {
 		@Retention(SOURCE)
 		@IntDef({PSM_OSD_ONLY, PSM_AUTO_OSD, PSM_AUTO_ONLY, PSM_AUTO, PSM_SINGLE_COLUMN, PSM_SINGLE_BLOCK_VERT_TEXT,
 				PSM_SINGLE_BLOCK, PSM_SINGLE_LINE, PSM_SINGLE_WORD, PSM_CIRCLE_WORD, PSM_SINGLE_CHAR, PSM_SPARSE_TEXT,
-				PSM_SPARSE_TEXT_OSD})
+				PSM_SPARSE_TEXT_OSD, PSM_RAW_LINE})
 
 		public @interface Mode {
 		}
@@ -132,6 +132,11 @@ public class TessBaseAPI {
 		 * Sparse text with orientation and script detection.
 		 */
 		public static final int PSM_SPARSE_TEXT_OSD = 12;
+
+		/**
+		 * Treat the image as a single text line, bypassing hacks that are Tesseract-specific.
+		 */
+		public static final int PSM_RAW_LINE = 13;
 	}
 
 	/**
