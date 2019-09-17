@@ -257,7 +257,8 @@ public class Pixa implements Iterable<Pix> {
 	}
 
 	/**
-	 * Returns the Box at the specified index, or <code>null</code> on error.
+	 * Creates and returns clone of the Box at the specified index, or <code>null</code> on error.
+	 * Returned object should be recycled after use.
 	 *
 	 * @param index The index of the Box to return.
 	 * @return the Box at the specified index, or <code>null</code> on error
@@ -276,7 +277,8 @@ public class Pixa implements Iterable<Pix> {
 	}
 
 	/**
-	 * Returns the Pix at the specified index, or <code>null</code> on error.
+	 * Creates and returns clone of the Pix at the specified index, or <code>null</code> on error.
+	 * Returned object should be recycled after use.
 	 *
 	 * @param index The index of the Pix to return.
 	 * @return the Pix at the specified index, or <code>null</code> on error
@@ -420,7 +422,8 @@ public class Pixa implements Iterable<Pix> {
 
 	/**
 	 * Replaces the Pix and Box at the specified index with the specified Pix
-	 * and Box, both of which should not be recycled after calling this method.
+	 * and Box. Pixa takes ownership of the given objects, they shouldn't be
+	 * used or recycled after calling this method.
 	 *
 	 * @param index The index of the Pix to replace.
 	 * @param pix The Pix to replace the existing Pix; it becomes an alias of the one stored in Pixa.

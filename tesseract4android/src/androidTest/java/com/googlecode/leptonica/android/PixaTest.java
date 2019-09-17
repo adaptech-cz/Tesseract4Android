@@ -156,6 +156,10 @@ public class PixaTest {
 		// Replace the existing Pix.
 		pixa.replacePix(0, pix, box);
 
+		// Pixa took ownership of the given pix/box, we shouldn't touch them anymore.
+		pix = null;
+		box = null;
+
 		// Ensure the replacement was successful.
 		Pix returnedPix = pixa.getPix(0);
 		Box returnedBox = pixa.getBox(0);
@@ -169,8 +173,10 @@ public class PixaTest {
 		assertEquals(box.getWidth(), returnedBox.getWidth());
 		assertEquals(box.getHeight(), returnedBox.getHeight());
 
+		// We've got clone of the pix/box, recycle it.
 		returnedPix.recycle();
 		returnedBox.recycle();
+
 		pixa.recycle();
 	}
 
@@ -200,8 +206,10 @@ public class PixaTest {
 		assertEquals(box.getWidth(), 640);
 		assertEquals(box.getHeight(), 480);
 
+		// We've got clone of the pix/box, recycle it.
 		pix.recycle();
 		box.recycle();
+
 		pixa.recycle();
 	}
 
