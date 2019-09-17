@@ -28,6 +28,13 @@ jlong Java_com_googlecode_leptonica_android_Box_nativeCreate(JNIEnv *env, jclass
   return (jlong) box;
 }
 
+jint Java_com_googlecode_leptonica_android_Box_nativeGetRefCount(JNIEnv *env, jclass clazz,
+                                                                 jlong nativeBox) {
+  BOX *box = (BOX *) nativeBox;
+
+  return (jint) boxGetRefcount(box);
+}
+
 void Java_com_googlecode_leptonica_android_Box_nativeDestroy(JNIEnv *env, jclass clazz,
                                                              jlong nativeBox) {
   BOX *box = (BOX *) nativeBox;

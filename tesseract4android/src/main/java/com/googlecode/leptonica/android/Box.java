@@ -208,6 +208,10 @@ public class Box {
 		return nativeGetGeometry(mNativeBox, geometry);
 	}
 
+	public int getRefCount() {
+		return nativeGetRefCount(mNativeBox);
+	}
+
 	/**
 	 * Releases resources and frees any memory associated with this Box.
 	 */
@@ -216,18 +220,6 @@ public class Box {
 			nativeDestroy(mNativeBox);
 
 			mRecycled = true;
-		}
-	}
-
-	@Override
-	protected void finalize() throws Throwable {
-		try {
-			if (!mRecycled) {
-				Log.w(TAG, "Box was not terminated using recycle()");
-				recycle();
-			}
-		} finally {
-			super.finalize();
 		}
 	}
 
@@ -244,6 +236,8 @@ public class Box {
 	private static native int nativeGetWidth(long nativeBox);
 
 	private static native int nativeGetHeight(long nativeBox);
+
+	private static native int nativeGetRefCount(long nativePix);
 
 	private static native void nativeDestroy(long nativeBox);
 
