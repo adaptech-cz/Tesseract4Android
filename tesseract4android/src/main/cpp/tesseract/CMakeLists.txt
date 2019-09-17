@@ -31,7 +31,7 @@ set(LEPT_PATH "../leptonica/src/src/")
 
 # NOTE: When updating Tesseract sources, update this version number correspondingly
 set(GENERIC_MAJOR_VERSION 4)
-set(GENERIC_MINOR_VERSION 0)
+set(GENERIC_MINOR_VERSION 1)
 set(GENERIC_MICRO_VERSION 0)
 set(PACKAGE_VERSION "${GENERIC_MAJOR_VERSION}.${GENERIC_MINOR_VERSION}.${GENERIC_MICRO_VERSION}")
 
