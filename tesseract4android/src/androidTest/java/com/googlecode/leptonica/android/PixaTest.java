@@ -155,25 +155,20 @@ public class PixaTest {
 
 		// Replace the existing Pix.
 		pixa.replacePix(0, pix, box);
-
-		// Pixa took ownership of the given pix/box, we shouldn't touch them anymore.
-		pix = null;
-		box = null;
+		// Pixa took ownership of the given pix/box, we shouldn't use or recycle these anymore!
+		// Note we actually use them below, just to compare the internal native address is the same.
+		//pix = null;
+		//box = null;
 
 		// Ensure the replacement was successful.
 		Pix returnedPix = pixa.getPix(0);
 		Box returnedBox = pixa.getBox(0);
 
-		assertEquals(pix.getWidth(), returnedPix.getWidth());
-		assertEquals(pix.getHeight(), returnedPix.getHeight());
-		assertEquals(pix.getDepth(), returnedPix.getDepth());
+		// Returned instance points to the same native object
+		assertEquals(pix.getNativePix(), returnedPix.getNativePix());
+		assertEquals(box.getNativeBox(), returnedBox.getNativeBox());
 
-		assertEquals(box.getX(), returnedBox.getX());
-		assertEquals(box.getY(), returnedBox.getY());
-		assertEquals(box.getWidth(), returnedBox.getWidth());
-		assertEquals(box.getHeight(), returnedBox.getHeight());
-
-		// We've got clone of the pix/box, recycle it.
+		// We've got clone of the pix/box stored inside Pixa, we should recycle them.
 		returnedPix.recycle();
 		returnedBox.recycle();
 
