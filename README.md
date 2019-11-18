@@ -21,6 +21,14 @@ copied to the Android device to a directory named `tessdata`.
  - If you want to use PdfRenderer, copy also [pdf.ttf][pdffile] file to the `tessdata` directory.
  - Application must hold permission `READ_EXTERNAL_STORAGE` to access `tessdata` directory.
 
+## Usage
+
+To use Tesseract4Android in your project add dependency to your `build.gradle` file:
+
+    dependencies {
+        implementation 'cz.adaptech.android:tesseract4android:2.0.1'
+    }
+
 ## Building
 
 You can use Android Studio (tested on version 3.4.2) to open the project and build the AAR. Or you can use `gradlew` from command line.
