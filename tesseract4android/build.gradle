@@ -50,13 +50,3 @@ dependencies {
 }
 
 apply from: '../publish.gradle'
-
-publishing {
-	publications {
-		maven(MavenPublication) {
-			groupId 'cz.adaptech.android'
-			artifactId 'tesseract4android'
-			version = android.defaultConfig.versionName
-		}
-	}
-}
