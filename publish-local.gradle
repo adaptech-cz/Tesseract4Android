@@ -2,8 +2,8 @@
  * Publish Local Helper
  *
  * @Author Robert Pösel
- * @Version 1.4
- * @Date 24.4.2019
+ * @Version 1.4.1
+ * @Date 18.11.2019
  */
 
 apply plugin: 'maven-publish'
@@ -32,6 +32,10 @@ task androidJavadocsJar(type: Jar, dependsOn: androidJavadocs) {
 task androidSourcesJar(type: Jar) {
 	classifier = 'sources'
 	from android.sourceSets.main.java.srcDirs
+}
+
+project.artifacts {
+	archives androidJavadocsJar, androidSourcesJar
 }
 
 project.afterEvaluate {
