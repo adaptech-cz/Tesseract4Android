@@ -31,7 +31,7 @@ To use Tesseract4Android in your project add dependency to your `build.gradle` f
 
 ## Building
 
-You can use Android Studio (tested on version 3.4.2) to open the project and build the AAR. Or you can use `gradlew` from command line.
+You can use Android Studio (tested on version 3.5.2) to open the project and build the AAR. Or you can use `gradlew` from command line.
 
 To build the release version of the library, use task `tesseract4android:assembleRelease`. After successful build, you will have resulting `AAR` file in the `<project dir>/tesseract4Android/build/outputs/aar/` directory.
 
