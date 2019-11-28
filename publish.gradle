@@ -2,8 +2,8 @@
  * Maven Publish Helper
  *
  * @Author Robert Pösel
- * @Version 1.4.1
- * @Date 18.11.2019
+ * @Version 1.4.2
+ * @Date 28.11.2019
  */
 
 apply plugin: 'maven-publish'
@@ -51,8 +51,13 @@ project.afterEvaluate {
 				artifact androidSourcesJar
 
 				pom.withXml {
-					final dependenciesNode = asNode().appendNode('dependencies')
+					final root = asNode()
+					// Attribute scm (and probably also name) is required in order to be valid pom for publishing to JCenter.
+					// Maven Central requires some more attributes. Bintray itself works even withouot them.
+					root.appendNode('name', 'tesseract4android')
+					root.appendNode('scm').appendNode('url', 'https://github.com/adaptech-cz/Tesseract4Android')
 
+					final dependenciesNode = root.appendNode('dependencies')
 					ext.addDependency = { dep, String scope ->
 						if (dep.group == null || dep.version == null || dep.name == null || dep.name == "unspecified")
 							return // ignore invalid dependencies
