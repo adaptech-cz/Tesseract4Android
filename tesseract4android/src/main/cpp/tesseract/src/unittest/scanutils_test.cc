@@ -31,14 +31,12 @@ TEST_F(ScanutilsTest, DoesScanf) {
   if (fp1 == nullptr) {
     std::cout << "Failed to open file " << filename << '\n';
     GTEST_SKIP();
-    return;
   }
   FILE* fp2 = fopen(filename.c_str(), "r");
   if (fp2 == nullptr) {
     std::cout << "Failed to open file " << filename << '\n';
-    GTEST_SKIP();
     fclose(fp1);
-    return;
+    GTEST_SKIP();
   }
   // The file contains this:
   // 42.5 17 0.001000 -0.001000
@@ -84,13 +82,13 @@ TEST_F(ScanutilsTest, DoesScanf) {
   EXPECT_STREQ(s1, s2);
   EXPECT_EQ(20, strlen(s2));
   // Now read the rest of the alphabet.
-  r1 = fscanf(fp1, "%s", s1);
-  r2 = tfscanf(fp2, "%s", s2);
+  r1 = fscanf(fp1, "%1023s", s1);
+  r2 = tfscanf(fp2, "%1023s", s2);
   EXPECT_EQ(r1, r2);
   EXPECT_STREQ(s1, s2);
   EXPECT_EQ(6, strlen(s2));
-  r1 = fscanf(fp1, "%s", s1);
-  r2 = tfscanf(fp2, "%s", s2);
+  r1 = fscanf(fp1, "%1023s", s1);
+  r2 = tfscanf(fp2, "%1023s", s2);
   EXPECT_EQ(r1, r2);
   EXPECT_STREQ(s1, s2);
   EXPECT_EQ(2, strlen(s2));
@@ -104,8 +102,8 @@ TEST_F(ScanutilsTest, DoesScanf) {
   EXPECT_EQ(r1, r2);
   EXPECT_EQ(i1[0], i2[0]);
   // We should still see the next value and no phantoms.
-  r1 = fscanf(fp1, "%d %s", &i1[0], s1);
-  r2 = tfscanf(fp2, "%d %s", &i2[0], s2);
+  r1 = fscanf(fp1, "%d %1023s", &i1[0], s1);
+  r2 = tfscanf(fp2, "%d %1023s", &i2[0], s2);
   EXPECT_EQ(r1, r2);
   EXPECT_EQ(1, r2);
   EXPECT_EQ(i1[0], i2[0]);

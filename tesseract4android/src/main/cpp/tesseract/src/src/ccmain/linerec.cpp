@@ -40,16 +40,17 @@ const float kWorstDictCertainty = -25.0f;
 // Generates training data for training a line recognizer, eg LSTM.
 // Breaks the page into lines, according to the boxes, and writes them to a
 // serialized DocumentData based on output_basename.
-void Tesseract::TrainLineRecognizer(const STRING& input_imagename,
+// Return true if successful, false if an error occurred.
+bool Tesseract::TrainLineRecognizer(const STRING& input_imagename,
                                     const STRING& output_basename,
                                     BLOCK_LIST *block_list) {
   STRING lstmf_name = output_basename + ".lstmf";
   DocumentData images(lstmf_name);
   if (applybox_page > 0) {
     // Load existing document for the previous pages.
-    if (!images.LoadDocument(lstmf_name.string(), 0, 0, nullptr)) {
-      tprintf("Failed to read training data from %s!\n", lstmf_name.string());
-      return;
+    if (!images.LoadDocument(lstmf_name.c_str(), 0, 0, nullptr)) {
+      tprintf("Failed to read training data from %s!\n", lstmf_name.c_str());
+      return false;
     }
   }
   GenericVector<TBOX> boxes;
@@ -58,14 +59,20 @@ void Tesseract::TrainLineRecognizer(const STRING& input_imagename,
   if (!ReadAllBoxes(applybox_page, false, input_imagename, &boxes, &texts, nullptr,
                     nullptr) ||
       boxes.empty()) {
-    tprintf("Failed to read boxes from %s\n", input_imagename.string());
-    return;
+    tprintf("Failed to read boxes from %s\n", input_imagename.c_str());
+    return false;
   }
   TrainFromBoxes(boxes, texts, block_list, &images);
-  images.Shuffle();
-  if (!images.SaveDocument(lstmf_name.string(), nullptr)) {
-    tprintf("Failed to write training data to %s!\n", lstmf_name.string());
+  if (images.PagesSize() == 0) {
+    tprintf("Failed to read pages from %s\n", input_imagename.c_str());
+    return false;
   }
+  images.Shuffle();
+  if (!images.SaveDocument(lstmf_name.c_str(), nullptr)) {
+    tprintf("Failed to write training data to %s!\n", lstmf_name.c_str());
+    return false;
+  }
+  return true;
 }
 
 // Generates training data for training a line recognizer, eg LSTM.
@@ -237,7 +244,9 @@ void Tesseract::LSTMRecognizeWord(const BLOCK& block, ROW *row, WERD_RES *word,
   }
   ImageData* im_data = GetRectImage(word_box, block, kImagePadding, &word_box);
   if (im_data == nullptr) return;
-  lstm_recognizer_->RecognizeLine(*im_data, true, classify_debug_level > 0,
+
+  bool do_invert = tessedit_do_invert;
+  lstm_recognizer_->RecognizeLine(*im_data, do_invert, classify_debug_level > 0,
                                   kWorstDictCertainty / kCertaintyScale,
                                   word_box, words, lstm_choice_mode);
   delete im_data;

@@ -3,7 +3,6 @@
 // Description: Encapsulation of an entire tensorflow graph as a
 //              Tesseract Network.
 // Author:      Ray Smith
-// Created:     Fri Feb 26 09:35:29 PST 2016
 //
 // (C) Copyright 2016, Google Inc.
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -74,7 +73,8 @@ class TFNetwork : public Network {
   bool Backward(bool debug, const NetworkIO& fwd_deltas,
                 NetworkScratch* scratch,
                 NetworkIO* back_deltas) override {
-    tprintf("Must override Network::DebugWeights for type %d\n", type_);
+    tprintf("Must override Network::Backward for type %d\n", type_);
+    return false;
   }
 
   void DebugWeights() override {

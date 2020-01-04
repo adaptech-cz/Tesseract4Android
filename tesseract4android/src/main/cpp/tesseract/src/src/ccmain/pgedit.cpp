@@ -141,8 +141,6 @@ INT_VAR(editor_word_ypos, 510, "Word window Y Pos");
 INT_VAR(editor_word_height, 240, "Word window height");
 INT_VAR(editor_word_width, 655, "Word window width");
 
-static STRING_VAR(editor_debug_config_file, "", "Config file to apply to single words");
-
 /**
  * show_point()
  *
@@ -748,6 +746,7 @@ bool Tesseract::word_display(PAGE_RES_IT* pr_it) {
   float shift;                   // from bot left
 
   if (color_mode != CM_RAINBOW && word_res->box_word != nullptr) {
+  #ifndef DISABLED_LEGACY_ENGINE
     BoxWord* box_word = word_res->box_word;
     WERD_CHOICE* best_choice = word_res->best_choice;
     int length = box_word->length();
@@ -798,6 +797,9 @@ bool Tesseract::word_display(PAGE_RES_IT* pr_it) {
       image_win->Rectangle(box.left(), box.bottom(), box.right(), box.top());
     }
     return true;
+  #else
+    return false;
+  #endif  // ndef DISABLED_LEGACY_ENGINE
   }
   /*
     Note the double coercions of(COLOUR)((int32_t)editor_image_word_bb_color)

@@ -17,13 +17,15 @@ AM_CPPFLAGS += -DTESS_EXPORTS \
     -fvisibility=hidden -fvisibility-inlines-hidden
 endif
 
+if DISABLED_LEGACY_ENGINE
+AM_CPPFLAGS += -DDISABLED_LEGACY_ENGINE
+endif
 
 noinst_HEADERS = \
     alignedblob.h baselinedetect.h bbgrid.h blkocc.h blobgrid.h \
     ccnontextdetect.h cjkpitch.h colfind.h colpartition.h colpartitionset.h \
     colpartitiongrid.h \
-    devanagari_processing.h drawedg.h drawtord.h edgblob.h edgloop.h \
-    equationdetectbase.h \
+    devanagari_processing.h drawtord.h edgblob.h edgloop.h \
     fpchop.h gap_map.h imagefind.h linefind.h makerow.h oldbasel.h \
     pithsync.h pitsync1.h scanedg.h sortflts.h strokewidth.h \
     tabfind.h tablefind.h tabvector.h \
@@ -31,17 +33,24 @@ noinst_HEADERS = \
     topitch.h tordmain.h tovars.h \
     underlin.h wordseg.h workingpartset.h
 
+if !DISABLED_LEGACY_ENGINE
+noinst_HEADERS += equationdetectbase.h
+endif
+
 noinst_LTLIBRARIES = libtesseract_textord.la
 
 libtesseract_textord_la_SOURCES = \
     alignedblob.cpp baselinedetect.cpp bbgrid.cpp blkocc.cpp blobgrid.cpp \
     ccnontextdetect.cpp cjkpitch.cpp colfind.cpp colpartition.cpp colpartitionset.cpp \
     colpartitiongrid.cpp devanagari_processing.cpp \
-    drawedg.cpp drawtord.cpp edgblob.cpp edgloop.cpp \
-    equationdetectbase.cpp \
+    drawtord.cpp edgblob.cpp edgloop.cpp \
     fpchop.cpp gap_map.cpp imagefind.cpp linefind.cpp makerow.cpp oldbasel.cpp \
     pithsync.cpp pitsync1.cpp scanedg.cpp sortflts.cpp strokewidth.cpp \
     tabfind.cpp tablefind.cpp tabvector.cpp \
     tablerecog.cpp textlineprojection.cpp textord.cpp \
     topitch.cpp tordmain.cpp tospace.cpp tovars.cpp \
     underlin.cpp wordseg.cpp workingpartset.cpp
+
+if !DISABLED_LEGACY_ENGINE
+libtesseract_textord_la_SOURCES += equationdetectbase.cpp
+endif

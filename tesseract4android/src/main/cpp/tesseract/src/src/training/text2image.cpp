@@ -541,7 +541,7 @@ static int Main() {
   if (strncmp(src_utf8.c_str(), "\xef\xbb\xbf", 3) == 0) {
     src_utf8.erase(0, 3);
   }
-  tlog(1, "Render string of size %d\n", src_utf8.length());
+  tlog(1, "Render string of size %zu\n", src_utf8.length());
 
   if (FLAGS_render_ngrams || FLAGS_only_extract_font_properties) {
     // Try to preserve behavior of old text2image by expanding inter-word
@@ -598,7 +598,7 @@ static int Main() {
         rand_utf8.append(kSeparator);
       }
     }
-    tlog(1, "Rendered ngram string of size %d\n", rand_utf8.length());
+    tlog(1, "Rendered ngram string of size %zu\n", rand_utf8.length());
     src_utf8.swap(rand_utf8);
   }
   if (FLAGS_only_extract_font_properties) {
@@ -736,6 +736,7 @@ int main(int argc, char** argv) {
     if ((strcmp(argv[1], "-v") == 0) ||
       (strcmp(argv[1], "--version") == 0)) {
     FontUtils::PangoFontTypeInfo();
+    printf("Pango version: %s\n", pango_version_string());
     }
   }
   tesseract::ParseCommandLineFlags(argv[0], &argc, &argv, true);

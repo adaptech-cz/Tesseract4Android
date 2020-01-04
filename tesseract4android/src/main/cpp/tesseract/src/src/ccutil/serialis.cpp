@@ -21,6 +21,7 @@
 #include <cstdio>
 #include "errcode.h"
 #include "genericvector.h"
+#include "strngs.h"             // for STRING
 
 namespace tesseract {
 
@@ -202,7 +203,7 @@ bool TFile::Open(const STRING& filename, FileReader reader) {
   is_writing_ = false;
   swap_ = false;
   if (reader == nullptr)
-    return LoadDataFromFile(filename, data_);
+    return LoadDataFromFile(filename.c_str(), data_);
   else
     return (*reader)(filename, data_);
 }
@@ -222,7 +223,7 @@ bool TFile::Open(const char* data, int size) {
 
 bool TFile::Open(FILE* fp, int64_t end_offset) {
   offset_ = 0;
-  long current_pos = ftell(fp);
+  auto current_pos = std::ftell(fp);
   if (current_pos < 0) {
     // ftell failed.
     return false;
@@ -310,7 +311,7 @@ void TFile::OpenWrite(GenericVector<char>* data) {
 bool TFile::CloseWrite(const STRING& filename, FileWriter writer) {
   ASSERT_HOST(is_writing_);
   if (writer == nullptr)
-    return SaveDataToFile(*data_, filename);
+    return SaveDataToFile(*data_, filename.c_str());
   else
     return (*writer)(*data_, filename);
 }

@@ -31,12 +31,6 @@
 
 namespace tesseract {
 
-// Clipping value for certainty inside Tesseract. Reflects the minimum value
-// of certainty that will be returned by ExtractBestPathAsUnicharIds.
-// Supposedly on a uniform scale that can be compared across languages and
-// engines.
-const float RecodeBeamSearch::kMinCertainty = -20.0f;
-
 // The beam width at each code position.
 const int RecodeBeamSearch::kBeamWidths[RecodedCharID::kMaxCodeLen + 1] = {
     5, 10, 16, 16, 16, 16, 16, 16, 16, 16,
@@ -53,7 +47,7 @@ void RecodeNode::Print(int null_char, const UNICHARSET& unicharset,
     tprintf("label=%d, uid=%d=%s", code, unichar_id,
             unicharset.debug_str(unichar_id).string());
   }
-  tprintf(" score=%g, c=%g,%s%s%s perm=%d, hash=%llx", score, certainty,
+  tprintf(" score=%g, c=%g,%s%s%s perm=%d, hash=%" PRIx64, score, certainty,
           start_of_dawg ? " DawgStart" : "", start_of_word ? " Start" : "",
           end_of_word ? " End" : "", permuter, code_hash);
   if (depth > 0 && prev != nullptr) {

@@ -21,7 +21,9 @@
 #include <cmath>
 
 #include "stopper.h"
+#ifndef DISABLED_LEGACY_ENGINE
 #include "ambigs.h"
+#endif
 #include "ccutil.h"
 #include "dict.h"
 #include "helpers.h"
@@ -136,6 +138,8 @@ bool Dict::AcceptableResult(WERD_RES *word) const {
     return false;
   }
 }
+
+#if !defined(DISABLED_LEGACY_ENGINE)
 
 bool Dict::NoDangerousAmbig(WERD_CHOICE *best_choice,
                             DANGERR *fixpt,
@@ -354,6 +358,8 @@ bool Dict::NoDangerousAmbig(WERD_CHOICE *best_choice,
 }
 
 void Dict::EndDangerousAmbigs() {}
+
+#endif   // !defined(DISABLED_LEGACY_ENGINE)
 
 void Dict::SettupStopperPass1() {
   reject_offset_ = 0.0;

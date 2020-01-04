@@ -23,7 +23,6 @@
 #  include "config_auto.h"
 #endif
 
-#include "basedir.h"
 #include "control.h"
 #  include "matchdefs.h"
 #include "pageres.h"
@@ -139,8 +138,7 @@ bool Tesseract::init_tesseract_lang_data(
       if (!ParamUtils::SetParam((*vars_vec)[i].string(),
                                 (*vars_values)[i].string(),
                                 set_params_constraint, this->params())) {
-        tprintf("Error setting param %s\n", (*vars_vec)[i].string());
-        exit(1);
+        tprintf("Warning: The parameter '%s' was not found.\n", (*vars_vec)[i].string());
       }
     }
   }
@@ -176,7 +174,7 @@ bool Tesseract::init_tesseract_lang_data(
       tessedit_ocr_engine_mode == OEM_TESSERACT_LSTM_COMBINED) {
 #  endif  // ndef DISABLED_LEGACY_ENGINE
     if (mgr->IsComponentAvailable(TESSDATA_LSTM)) {
-      lstm_recognizer_ = new LSTMRecognizer;
+      lstm_recognizer_ = new LSTMRecognizer(language_data_path_prefix);
       ASSERT_HOST(lstm_recognizer_->Load(
           this->params(), lstm_use_matrix ? language : nullptr, mgr));
     } else {
@@ -196,6 +194,8 @@ bool Tesseract::init_tesseract_lang_data(
 #ifndef DISABLED_LEGACY_ENGINE
   else if (!mgr->GetComponent(TESSDATA_UNICHARSET, &fp) ||
            !unicharset.load_from_file(&fp, false)) {
+    tprintf("Error: Tesseract (legacy) engine requested, but components are "
+            "not present in %s!!\n", tessdata_path.c_str());
     return false;
   }
 #endif  // ndef DISABLED_LEGACY_ENGINE
@@ -204,6 +204,8 @@ bool Tesseract::init_tesseract_lang_data(
     return false;
   }
   right_to_left_ = unicharset.major_right_to_left();
+
+#ifndef DISABLED_LEGACY_ENGINE
 
   // Setup initial unichar ambigs table and read universal ambigs.
   UNICHARSET encoder_unicharset;
@@ -216,7 +218,7 @@ bool Tesseract::init_tesseract_lang_data(
                                      ambigs_debug_level,
                                      use_ambigs_for_adaption, &unicharset);
   }
-#ifndef DISABLED_LEGACY_ENGINE
+
   // Init ParamsModel.
   // Load pass1 and pass2 weights (for now these two sets are the same, but in
   // the future separate sets of weights can be generated).

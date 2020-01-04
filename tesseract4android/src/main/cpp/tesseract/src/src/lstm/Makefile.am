@@ -19,6 +19,10 @@ if !NO_TESSDATA_PREFIX
 AM_CXXFLAGS += -DTESSDATA_PREFIX=@datadir@
 endif
 
+if DISABLED_LEGACY_ENGINE
+AM_CPPFLAGS += -DDISABLED_LEGACY_ENGINE
+endif
+
 if VISIBILITY
 AM_CXXFLAGS += -fvisibility=hidden -fvisibility-inlines-hidden
 AM_CPPFLAGS += -DTESS_EXPORTS
@@ -39,7 +43,7 @@ noinst_LTLIBRARIES = libtesseract_lstm.la
 libtesseract_lstm_la_SOURCES = \
         convolve.cpp ctc.cpp fullyconnected.cpp functions.cpp input.cpp \
         lstm.cpp lstmrecognizer.cpp lstmtrainer.cpp maxpool.cpp \
-        networkbuilder.cpp network.cpp networkio.cpp \
+        network.cpp networkbuilder.cpp networkio.cpp \
         parallel.cpp plumbing.cpp recodebeam.cpp reconfig.cpp reversed.cpp \
         series.cpp stridemap.cpp tfnetwork.cpp weightmatrix.cpp
 

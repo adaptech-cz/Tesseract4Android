@@ -10,7 +10,11 @@ AC_INIT([tesseract],
         [m4_esyscmd_s([test -d .git && git describe --abbrev=4 || cat VERSION])],
         [https://github.com/tesseract-ocr/tesseract/issues],,
         [https://github.com/tesseract-ocr/tesseract/])
+
+# Store command like options for CXXFLAGS
+OLD_CXXFLAGS=$CXXFLAGS
 AC_PROG_CXX([g++ clang++])
+# reset compiler flags to initial flags
 AC_LANG([C++])
 AC_LANG_COMPILER_REQUIRE
 CXXFLAGS=${CXXFLAGS:-""}
@@ -25,7 +29,7 @@ AM_INIT_AUTOMAKE([foreign subdir-objects])
 # Define date of package, etc. Could be useful in auto-generated
 # documentation.
 PACKAGE_YEAR=2019
-PACKAGE_DATE="07/07"
+PACKAGE_DATE="12/27"
 
 abs_top_srcdir=`AS_DIRNAME([$0])`
 
@@ -125,6 +129,9 @@ AM_CONDITIONAL([AVX_OPT], ${avx})
 
 AX_CHECK_COMPILE_FLAG([-mavx2], [avx2=true], [avx2=false], [$WERROR])
 AM_CONDITIONAL([AVX2_OPT], $avx2)
+
+AX_CHECK_COMPILE_FLAG([-mfma], [fma=true], [fma=false], [$WERROR])
+AM_CONDITIONAL([FMA_OPT], $fma)
 
 AX_CHECK_COMPILE_FLAG([-msse4.1], [sse41=true], [sse41=false], [$WERROR])
 AM_CONDITIONAL([SSE41_OPT], $sse41)
@@ -281,17 +288,39 @@ AC_ARG_ENABLE([tessdata-prefix],
 AC_MSG_RESULT([$tessdata_prefix])
 AM_CONDITIONAL([NO_TESSDATA_PREFIX], [test "$tessdata_prefix" = "no"])
 
+
+# Detect Clang compiler
+AC_MSG_CHECKING([if compiling with clang])
+AC_COMPILE_IFELSE(
+[AC_LANG_PROGRAM([], [[
+#ifndef __clang__
+       not clang
+#endif
+]])],
+[CLANG=yes], [CLANG=no])
+AC_MSG_RESULT([$CLANG])
+
 # Check whether to enable debugging
 AC_MSG_CHECKING([whether to enable debugging])
 AC_ARG_ENABLE([debug],
   AS_HELP_STRING([--enable-debug], [turn on debugging [default=no]]))
 AC_MSG_RESULT([$enable_debug])
 if test x"$enable_debug" = x"yes"; then
-    AM_CXXFLAGS="$AM_CXXFLAGS -g -Wall -O0 -DDEBUG"
-    AM_CPPFLAGS="$AM_CPPFLAGS -g -Wall -DDEBUG"
+    CXXFLAGS=${CXXFLAGS:-"-O2"}
+    AM_CPPFLAGS="$AM_CPPFLAGS -g -Wall -DDEBUG -pedantic"
+    AM_CXXFLAGS="$AM_CXXFLAGS -g -Wall -DDEBUG -pedantic"
+    if test "x$CLANG" = "xyes"; then
+        # https://clang.llvm.org/docs/CommandGuide/clang.html
+        # clang treats -Og as -O1
+        AM_CPPFLAGS="$AM_CPPFLAGS -O0"
+        AM_CXXFLAGS="$AM_CXXFLAGS -O0"
+    else
+        AM_CPPFLAGS="$AM_CPPFLAGS -Og"
+        AM_CXXFLAGS="$AM_CXXFLAGS -Og"
+    fi
 else
     AM_CXXFLAGS="$AM_CXXFLAGS -O2 -DNDEBUG"
-    AM_CPPFLAGS="$AM_CPPFLAGS -DNDEBUG"
+    AM_CPPFLAGS="$AM_CPPFLAGS -O2 -DNDEBUG"
 fi
 
 #localedir='${prefix}/share/locale'
@@ -323,18 +352,6 @@ LT_INIT
 # ----------------------------------------
 # C++ related options
 # ----------------------------------------
-
-AC_MSG_CHECKING([if compiling with clang])
-AC_COMPILE_IFELSE(
-[AC_LANG_PROGRAM([], [[
-#ifndef __clang__
-       not clang
-#endif
-]])],
-[CLANG=yes], [CLANG=no])
-
-AC_MSG_RESULT([$CLANG])
-
 dnl **********************
 dnl Turn on C++11 or newer
 dnl **********************
@@ -410,6 +427,9 @@ AC_CHECK_TYPES([mbstate_t],,, [#include "wchar.h"])
 # ----------------------------------------
 # Test auxiliary packages
 # ----------------------------------------
+
+PKG_CHECK_MODULES([libcurl], [libcurl], [have_libcurl=true], [have_libcurl=false])
+AM_CONDITIONAL([HAVE_LIBCURL], $have_libcurl)
 
 PKG_CHECK_MODULES([LEPTONICA], [lept >= 1.74], [have_lept=true], [have_lept=false])
 if $have_lept; then

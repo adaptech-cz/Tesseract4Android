@@ -21,6 +21,8 @@
 
 #include <algorithm>
 #include <cassert>
+#include <climits>      // for LONG_MAX
+#include <cstdint>      // for uint32_t
 #include <cstdio>
 #include <cstdlib>
 
@@ -375,7 +377,7 @@ inline bool LoadDataFromFile(const char* filename, GenericVector<char>* data) {
   FILE* fp = fopen(filename, "rb");
   if (fp != nullptr) {
     fseek(fp, 0, SEEK_END);
-    long size = ftell(fp);
+    auto size = std::ftell(fp);
     fseek(fp, 0, SEEK_SET);
     // Trying to open a directory on Linux sets size to LONG_MAX. Catch it here.
     if (size > 0 && size < LONG_MAX) {
@@ -406,17 +408,6 @@ inline bool SaveDataToFile(const GenericVector<char>& data,
       static_cast<int>(fwrite(&data[0], 1, data.size(), fp)) == data.size();
   fclose(fp);
   return result;
-}
-// Reads a file as a vector of STRING.
-inline bool LoadFileLinesToStrings(const STRING& filename,
-                                   GenericVector<STRING>* lines) {
-  GenericVector<char> data;
-  if (!LoadDataFromFile(filename.string(), &data)) {
-    return false;
-  }
-  STRING lines_str(&data[0], data.size());
-  lines_str.split('\n', lines);
-  return true;
 }
 
 template <typename T>

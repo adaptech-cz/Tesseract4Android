@@ -34,6 +34,7 @@ noinst_HEADERS = \
     commontraining.h \
     degradeimage.h \
     icuerrorcode.h \
+    fileio.h \
     lang_model_helpers.h \
     ligature_table.h \
     lstmtester.h \
@@ -52,6 +53,8 @@ noinst_HEADERS = \
     validator.h
 
 if !DISABLED_LEGACY_ENGINE
+    noinst_HEADERS += errorcounter.h
+    noinst_HEADERS += mastertrainer.h
     noinst_HEADERS += mergenf.h
 endif
 
@@ -68,6 +71,7 @@ libtesseract_training_la_SOURCES = \
     commontraining.cpp \
     degradeimage.cpp \
     icuerrorcode.cpp \
+    fileio.cpp \
     lang_model_helpers.cpp \
     ligature_table.cpp \
     lstmtester.cpp \
@@ -82,6 +86,11 @@ libtesseract_training_la_SOURCES = \
     validate_khmer.cpp \
     validate_myanmar.cpp \
     validator.cpp
+
+if !DISABLED_LEGACY_ENGINE
+libtesseract_training_la_SOURCES += errorcounter.cpp
+libtesseract_training_la_SOURCES += mastertrainer.cpp
+endif
 
 libtesseract_tessopt_la_SOURCES = \
     tessopt.cpp

@@ -199,8 +199,8 @@ class Dawg {
 
  protected:
   Dawg(DawgType type, const STRING &lang, PermuterType perm, int debug_level)
-      : type_(type),
-        lang_(lang),
+      : lang_(lang),
+        type_(type),
         perm_(perm),
         unicharset_size_(0),
         debug_level_(debug_level) {}
@@ -294,20 +294,20 @@ class Dawg {
                          TessCallback1<const WERD_CHOICE *> *cb) const;
 
   // Member Variables.
-  DawgType type_;
   STRING lang_;
+  DawgType type_;
   /// Permuter code that should be used if the word is found in this Dawg.
   PermuterType perm_;
   // Variables to construct various edge masks. Formerly:
   // #define NEXT_EDGE_MASK (int64_t) 0xfffffff800000000i64
   // #define FLAGS_MASK     (int64_t) 0x0000000700000000i64
   // #define LETTER_MASK    (int64_t) 0x00000000ffffffffi64
-  int unicharset_size_;
-  int flag_start_bit_;
-  int next_node_start_bit_;
   uint64_t next_node_mask_;
   uint64_t flags_mask_;
   uint64_t letter_mask_;
+  int unicharset_size_;
+  int flag_start_bit_;
+  int next_node_start_bit_;
   // Level of debug statements to print to stdout.
   int debug_level_;
 };
@@ -348,14 +348,12 @@ class Dawg {
 //  DawgPosition(k, w, p, pe true)
 //    We're back in the punctuation dawg.  Continuing there is the only option.
 struct DawgPosition {
-  DawgPosition()
-      : dawg_index(-1), dawg_ref(NO_EDGE), punc_ref(NO_EDGE),
-        back_to_punc(false) {}
+  DawgPosition() = default;
   DawgPosition(int dawg_idx, EDGE_REF dawgref,
                int punc_idx, EDGE_REF puncref,
                bool backtopunc)
-      : dawg_index(dawg_idx), dawg_ref(dawgref),
-        punc_index(punc_idx), punc_ref(puncref),
+      : dawg_ref(dawgref), punc_ref(puncref),
+        dawg_index(dawg_idx), punc_index(punc_idx),
         back_to_punc(backtopunc) {
   }
   bool operator==(const DawgPosition &other) {
@@ -366,12 +364,12 @@ struct DawgPosition {
         back_to_punc == other.back_to_punc;
   }
 
-  int8_t dawg_index;
-  EDGE_REF dawg_ref;
-  int8_t punc_index;
-  EDGE_REF punc_ref;
+  EDGE_REF dawg_ref = NO_EDGE;
+  EDGE_REF punc_ref = NO_EDGE;
+  int8_t dawg_index = -1;
+  int8_t punc_index = -1;
   // Have we returned to the punc dawg at the end of the word?
-  bool back_to_punc;
+  bool back_to_punc = false;
 };
 
 class DawgPositionVector : public GenericVector<DawgPosition> {
@@ -553,9 +551,9 @@ class SquishedDawg : public Dawg {
   std::unique_ptr<EDGE_REF[]> build_node_map(int32_t *num_nodes) const;
 
   // Member variables.
-  EDGE_ARRAY edges_;
-  int32_t num_edges_;
-  int num_forward_edges_in_node0;
+  EDGE_ARRAY edges_ = nullptr;
+  int32_t num_edges_ = 0;
+  int num_forward_edges_in_node0 = 0;
 };
 
 }  // namespace tesseract
