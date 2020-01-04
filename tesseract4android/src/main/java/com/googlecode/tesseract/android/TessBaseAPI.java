@@ -22,6 +22,7 @@ import android.graphics.Bitmap;
 import android.graphics.Rect;
 
 import androidx.annotation.IntDef;
+import androidx.annotation.Keep;
 import androidx.annotation.WorkerThread;
 
 import com.googlecode.leptonica.android.Pix;
@@ -905,6 +906,7 @@ public class TessBaseAPI {
 	 * @param textTop    Top bound of text bounding box
 	 * @param textBottom Bottom bound of text bounding box
 	 */
+	@Keep
 	protected void onProgressValues(final int percent, final int left,
 									final int right, final int top, final int bottom,
 									final int textLeft, final int textRight, final int textTop, final int textBottom) {
