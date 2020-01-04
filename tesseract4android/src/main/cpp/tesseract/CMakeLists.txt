@@ -29,11 +29,19 @@ cmake_minimum_required(VERSION 3.4.1)
 set(TESS_PATH "src/src/")
 set(LEPT_PATH "../leptonica/src/src/")
 
-# NOTE: When updating Tesseract sources, update this version number correspondingly
-set(GENERIC_MAJOR_VERSION 4)
-set(GENERIC_MINOR_VERSION 1)
-set(GENERIC_MICRO_VERSION 1)
-set(PACKAGE_VERSION "${GENERIC_MAJOR_VERSION}.${GENERIC_MINOR_VERSION}.${GENERIC_MICRO_VERSION}")
+# Get version with components from VERSION file.
+file(STRINGS "src/VERSION" VERSION_PLAIN)
+string(REGEX REPLACE "^([^.]*)\\..*" "\\1" VERSION_MAJOR ${VERSION_PLAIN})
+string(REGEX REPLACE "^[^.]*\\.([^.]*)\\..*" "\\1" VERSION_MINOR ${VERSION_PLAIN})
+string(REGEX REPLACE "^[^.]*\\.[^.]*\\.([0-9]*).*" "\\1" VERSION_PATCH ${VERSION_PLAIN})
+if(NOT PACKAGE_VERSION)
+    set(PACKAGE_VERSION ${VERSION_PLAIN})
+endif()
+
+# Provide also same macro names as autoconf (see configure.ac).
+set(GENERIC_MAJOR_VERSION ${VERSION_MAJOR})
+set(GENERIC_MINOR_VERSION ${VERSION_MINOR})
+set(GENERIC_MICRO_VERSION ${VERSION_PATCH})
 
 configure_file(
         ${TESS_PATH}api/tess_version.h.in
