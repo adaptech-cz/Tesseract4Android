@@ -8,7 +8,7 @@ The Java/JNI wrapper files and tests for Leptonica / Tesseract are based on the 
 
 This project uses additional libraries (with their own specific licenses):
 
- - [Tesseract][tesseract-ocr] 4.1.0
+ - [Tesseract][tesseract-ocr] 4.1.1
  - [Leptonica][leptonica] 1.78.0
  - [libjpeg][jpeg] v9c
  - [libpng][png] 1.6.37
@@ -26,12 +26,12 @@ copied to the Android device to a directory named `tessdata`.
 To use Tesseract4Android in your project add dependency to your `build.gradle` file:
 
     dependencies {
-        implementation 'cz.adaptech.android:tesseract4android:2.0.1'
+        implementation 'cz.adaptech.android:tesseract4android:2.1.0'
     }
 
 ## Building
 
-You can use Android Studio (tested on version 3.5.2) to open the project and build the AAR. Or you can use `gradlew` from command line.
+You can use Android Studio (tested on version 3.5.3) to open the project and build the AAR. Or you can use `gradlew` from command line.
 
 To build the release version of the library, use task `tesseract4android:assembleRelease`. After successful build, you will have resulting `AAR` file in the `<project dir>/tesseract4Android/build/outputs/aar/` directory.
 
