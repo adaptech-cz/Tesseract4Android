@@ -52,8 +52,8 @@ project.afterEvaluate {
 
 				pom.withXml {
 					final root = asNode()
-					// Attribute scm (and probably also name) is required in order to be valid pom for publishing to JCenter.
-					// Maven Central requires some more attributes. Bintray itself works even withouot them.
+					// Attribute "scm" (and probably also "name") is required in order to be valid pom for publishing on JCenter.
+					// Bintray works without them. Maven Central requires in addition few more attributes.
 					root.appendNode('name', 'tesseract4android')
 					root.appendNode('scm').appendNode('url', 'https://github.com/adaptech-cz/Tesseract4Android')
 
