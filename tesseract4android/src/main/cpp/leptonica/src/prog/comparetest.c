@@ -52,6 +52,10 @@
  *    the change?  Answer:  75 (!)
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include "allheaders.h"
 
 int main(int    argc,
@@ -73,8 +77,11 @@ static char  mainName[] = "comparetest";
     type = atoi(argv[3]);
     pixd = NULL;
     fileout = argv[4];
-    l_pngSetReadStrip16To8(0);
     setLeptDebugOK(1);
+
+        /* If comparing image files with 16 bps and spp > 1,
+         * comment this line out to strip 16 --> 8 spp */
+    l_pngSetReadStrip16To8(0);
 
     if ((pixs1 = pixRead(filein1)) == NULL)
         return ERROR_INT("pixs1 not made", mainName, 1);
@@ -88,8 +95,7 @@ static char  mainName[] = "comparetest";
         if (same) {
             fprintf(stderr, "Images are identical\n");
             pixd = pixCreateTemplate(pixs1);  /* write empty pix for diff */
-        }
-        else {
+        } else {
             if (type == 0)
                 comptype = L_COMPARE_XOR;
             else
@@ -98,8 +104,7 @@ static char  mainName[] = "comparetest";
             fprintf(stderr, "Fraction of different pixels: %10.6f\n", fract);
         }
         pixWrite(fileout, pixd, IFF_PNG);
-    }
-    else {
+    } else {
         if (type == 0)
             comptype = L_COMPARE_ABS_DIFF;
         else
@@ -130,9 +135,6 @@ static char  mainName[] = "comparetest";
         if (d1 != 16 && !same) {
             na1 = pixCompareRankDifference(pixs1, pixs2, 1);
             if (na1) {
-                fprintf(stderr, "na1[150] = %20.10f\n", na1->array[150]);
-                fprintf(stderr, "na1[200] = %20.10f\n", na1->array[200]);
-                fprintf(stderr, "na1[250] = %20.10f\n", na1->array[250]);
                 numaGetNonzeroRange(na1, 0.00005, &first, &last);
                 fprintf(stderr, "Nonzero diff range: first = %d, last = %d\n",
                         first, last);

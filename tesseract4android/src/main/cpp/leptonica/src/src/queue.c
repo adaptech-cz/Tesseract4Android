@@ -62,6 +62,10 @@
  * </pre>
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include <string.h>
 #include "allheaders.h"
 
@@ -70,7 +74,6 @@ static const l_int32  INITIAL_BUFFER_ARRAYSIZE = 1024;  /* n'importe quoi */
 
     /* Static function */
 static l_int32 lqueueExtendArray(L_QUEUE *lq);
-
 
 /*--------------------------------------------------------------------------*
  *                         L_Queue create/destroy                           *
@@ -110,8 +113,8 @@ L_QUEUE  *lq;
 /*!
  * \brief   lqueueDestroy()
  *
- * \param[in,out]   plq to be nulled
- * \param[in]    freeflag TRUE to free each remaining struct in the array
+ * \param[in,out]   plq       will be set to null before returning
+ * \param[in]       freeflag  TRUE to free each remaining struct in the array
  * \return  void
  *
  * <pre>
@@ -169,8 +172,8 @@ L_QUEUE  *lq;
 /*!
  * \brief   lqueueAdd()
  *
- * \param[in]    lq lqueue
- * \param[in]    item to be added to the tail of the queue
+ * \param[in]    lq     lqueue
+ * \param[in]    item   to be added to the tail of the queue
  * \return  0 if OK, 1 on error
  *
  * <pre>
@@ -216,7 +219,7 @@ lqueueAdd(L_QUEUE  *lq,
 /*!
  * \brief   lqueueExtendArray()
  *
- * \param[in]    lq lqueue
+ * \param[in]    lq    lqueue
  * \return  0 if OK, 1 on error
  */
 static l_int32
@@ -240,7 +243,7 @@ lqueueExtendArray(L_QUEUE  *lq)
 /*!
  * \brief   lqueueRemove()
  *
- * \param[in]    lq lqueue
+ * \param[in]    lq   lqueue
  * \return  ptr to item popped from the head of the queue,
  *              or NULL if the queue is empty or on error
  *
@@ -276,7 +279,7 @@ void  *item;
 /*!
  * \brief   lqueueGetCount()
  *
- * \param[in]    lq lqueue
+ * \param[in]    lq   lqueue
  * \return  count, or 0 on error
  */
 l_int32
@@ -297,8 +300,8 @@ lqueueGetCount(L_QUEUE  *lq)
 /*!
  * \brief   lqueuePrint()
  *
- * \param[in]    fp file stream
- * \param[in]    lq lqueue
+ * \param[in]    fp   file stream
+ * \param[in]    lq   lqueue
  * \return  0 if OK; 1 on error
  */
 l_ok

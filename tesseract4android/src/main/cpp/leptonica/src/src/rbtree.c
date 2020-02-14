@@ -71,6 +71,10 @@
  * </pre>
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include "allheaders.h"
 
     /* The node color enum is only needed in the rbtree implementation */
@@ -117,7 +121,6 @@ static void verify_properties(L_RBTREE *t);
 #ifndef  NO_CONSOLE_IO
 #define  VERIFY_RBTREE     0   /* only for debugging */
 #endif  /* ~NO_CONSOLE_IO */
-
 
 /* ------------------------------------------------------------- *
  *                   Interface to Red-black Tree                 *
@@ -228,7 +231,7 @@ node  *n, *inserted_node;
  * \brief   l_rbtreeDelete()
  *
  * \param[in]   t     rbtree, including root node
- * \param[in]   key  (delete the node with this key
+ * \param[in]   key   delete the node with this key
  * \return      void
  */
 void
@@ -271,7 +274,7 @@ node  *n, *child;
 /*!
  * \brief   l_rbtreeDestroy()
  *
- * \param[in]   pt     ptr to rbtree
+ * \param[in]   pt     pointer to tree; will be wet to null before returning
  * \return      void
  *
  * <pre>

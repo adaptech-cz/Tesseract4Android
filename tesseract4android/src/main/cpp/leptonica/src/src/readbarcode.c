@@ -80,6 +80,10 @@
  * </pre>
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include <string.h>
 #include "allheaders.h"
 #include "readbarcode.h"
@@ -123,11 +127,11 @@ static l_int32 numaEvalSyncError(NUMA *nas, l_int32 ifirst, l_int32 ilast,
 /*!
  * \brief   pixProcessBarcodes()
  *
- * \param[in]    pixs any depth
- * \param[in]    format L_BF_ANY, L_BF_CODEI2OF5, L_BF_CODE93, ...
- * \param[in]    method L_USE_WIDTHS, L_USE_WINDOWS
- * \param[out]   psaw [optional] sarray of bar widths
- * \param[in]    debugflag use 1 to generate debug output
+ * \param[in]    pixs        any depth
+ * \param[in]    format      L_BF_ANY, L_BF_CODEI2OF5, L_BF_CODE93, ...
+ * \param[in]    method      L_USE_WIDTHS, L_USE_WINDOWS
+ * \param[out]   psaw        [optional] sarray of bar widths
+ * \param[in]    debugflag   use 1 to generate debug output
  * \return  sarray text of barcodes, or NULL if none found or on error
  */
 SARRAY *
@@ -173,10 +177,10 @@ SARRAY  *sad;
 /*!
  * \brief   pixExtractBarcodes()
  *
- * \param[in]    pixs 8 bpp, no colormap
- * \param[in]    debugflag use 1 to generate debug output
- * \return  pixa deskewed and cropped barcodes, or NULL if
- *                    none found or on error
+ * \param[in]    pixs        8 bpp, no colormap
+ * \param[in]    debugflag   use 1 to generate debug output
+ * \return  pixa  deskewed and cropped barcodes, or NULL if none found
+ *                or on error
  */
 PIXA *
 pixExtractBarcodes(PIX     *pixs,
@@ -206,7 +210,7 @@ PIXA      *pixa;
     }
 
     if (debugflag) {
-        boxaWriteStream(stderr, boxa);
+        boxaWriteStderr(boxa);
         pixDisplay(pixb, 100, 100);
         pixDisplay(pixm, 800, 100);
     }
@@ -242,13 +246,13 @@ PIXA      *pixa;
 /*!
  * \brief   pixReadBarcodes()
  *
- * \param[in]    pixa of 8 bpp deskewed and cropped barcodes
- * \param[in]    format L_BF_ANY, L_BF_CODEI2OF5, L_BF_CODE93, ...
- * \param[in]    method L_USE_WIDTHS, L_USE_WINDOWS;
- * \param[out]   psaw [optional] sarray of bar widths
- * \param[in]    debugflag use 1 to generate debug output
- * \return  sa sarray of widths, one string for each barcode found,
- *                  or NULL on error
+ * \param[in]    pixa        of 8 bpp deskewed and cropped barcodes
+ * \param[in]    format      L_BF_ANY, L_BF_CODEI2OF5, L_BF_CODE93, ...
+ * \param[in]    method      L_USE_WIDTHS, L_USE_WINDOWS;
+ * \param[out]   psaw        [optional] sarray of bar widths
+ * \param[in]    debugflag   use 1 to generate debug output
+ * \return  sa   sarray of widths, one string for each barcode found,
+ *               or NULL on error
  */
 SARRAY *
 pixReadBarcodes(PIXA     *pixa,
@@ -326,10 +330,10 @@ SARRAY    *saw, *sad;
 /*!
  * \brief   pixReadBarcodeWidths()
  *
- * \param[in]    pixs of 8 bpp deskewed and cropped barcode
- * \param[in]    method L_USE_WIDTHS, L_USE_WINDOWS;
- * \param[in]    debugflag use 1 to generate debug output
- * \return  na numa of widths (each in set {1,2,3,4}, or NULL on error
+ * \param[in]    pixs        of 8 bpp deskewed and cropped barcode
+ * \param[in]    method      L_USE_WIDTHS, L_USE_WINDOWS;
+ * \param[in]    debugflag   use 1 to generate debug output
+ * \return  na   numa of widths (each in set {1,2,3,4}, or NULL on error
  */
 NUMA *
 pixReadBarcodeWidths(PIX     *pixs,
@@ -357,8 +361,8 @@ NUMA      *na;
                                       NULL, debugflag);
 #if  DEBUG_WIDTHS
         if (method == L_USE_WINDOWS)
-            fprintf(stderr, "Window width for barcode: %7.3f\n", winwidth);
-        numaWriteStream(stderr, na);
+            lept_stderr("Window width for barcode: %7.3f\n", winwidth);
+        numaWriteStderr(na);
 #endif  /* DEBUG_WIDTHS */
 
     if (!na)
@@ -374,11 +378,11 @@ NUMA      *na;
 /*!
  * \brief   pixLocateBarcodes()
  *
- * \param[in]    pixs any depth
- * \param[in]    thresh for binarization of edge filter output; typ. 20
- * \param[out]   ppixb [optional] binarized edge filtered input image
- * \param[out]   ppixm [optional] mask over barcodes
- * \return  boxa location of barcodes, or NULL if none found or on error
+ * \param[in]    pixs     any depth
+ * \param[in]    thresh   for binarization of edge filter output; typ. 20
+ * \param[out]   ppixb    [optional] binarized edge filtered input image
+ * \param[out]   ppixm    [optional] mask over barcodes
+ * \return  boxa   location of barcodes, or NULL if none found or on error
  */
 BOXA *
 pixLocateBarcodes(PIX     *pixs,
@@ -427,11 +431,11 @@ PIX   *pix8, *pixe, *pixb, *pixm;
 /*!
  * \brief   pixGenerateBarcodeMask()
  *
- * \param[in]    pixs 1 bpp
- * \param[in]    maxspace largest space in the barcode, in pixels
- * \param[in]    nwidth opening 'width' to remove noise
- * \param[in]    nheight opening 'height' to remove noise
- * \return  pixm mask over barcodes, or NULL if none found or on error
+ * \param[in]    pixs       1 bpp
+ * \param[in]    maxspace   largest space in the barcode, in pixels
+ * \param[in]    nwidth     opening 'width' to remove noise
+ * \param[in]    nheight    opening 'height' to remove noise
+ * \return  pixm   mask over barcodes, or NULL if none found or on error
  *
  * <pre>
  * Notes:
@@ -481,14 +485,14 @@ PIX  *pixt1, *pixt2, *pixd;
 /*!
  * \brief   pixDeskewBarcode()
  *
- * \param[in]    pixs input image; 8 bpp
- * \param[in]    pixb binarized edge-filtered input image
- * \param[in]    box identified region containing barcode
- * \param[in]    margin of extra pixels around box to extract
- * \param[in]    threshold for binarization; ~20
- * \param[out]   pangle [optional] in degrees, clockwise is positive
- * \param[out]   pconf [optional] confidence
- * \return  pixd deskewed barcode, or NULL on error
+ * \param[in]    pixs        input image; 8 bpp
+ * \param[in]    pixb        binarized edge-filtered input image
+ * \param[in]    box         identified region containing barcode
+ * \param[in]    margin      of extra pixels around box to extract
+ * \param[in]    threshold   for binarization; ~20
+ * \param[out]   pangle      [optional] in degrees, clockwise is positive
+ * \param[out]   pconf       [optional] confidence
+ * \return  pixd   deskewed barcode, or NULL on error
  *
  * <pre>
  * Notes:
@@ -602,15 +606,15 @@ PIX       *pixt1, *pixt2, *pixt3, *pixt4, *pixt5, *pixt6, *pixd;
 /*!
  * \brief   pixExtractBarcodeWidths1()
  *
- * \param[in]    pixs input image; 8 bpp
- * \param[in]    thresh estimated pixel threshold for crossing
- *                      white <--> black; typ. ~120
- * \param[in]    binfract histo binsize as a fraction of minsize; e.g., 0.25
- * \param[out]   pnaehist [optional] histogram of black widths; NULL ok
- * \param[out]   pnaohist [optional] histogram of white widths; NULL ok
- * \param[in]    debugflag use 1 to generate debug output
- * \return  nad numa of barcode widths in encoded integer units,
- *                  or NULL on error
+ * \param[in]    pixs        input image; 8 bpp
+ * \param[in]    thresh      estimated pixel threshold for crossing
+ *                           white <--> black; typ. ~120
+ * \param[in]    binfract    histo binsize as a fraction of minsize; e.g., 0.25
+ * \param[out]   pnaehist    [optional] histogram of black widths; NULL ok
+ * \param[out]   pnaohist    [optional] histogram of white widths; NULL ok
+ * \param[in]    debugflag   use 1 to generate debug output
+ * \return  nad   numa of barcode widths in encoded integer units,
+ *                or NULL on error
  *
  * <pre>
  * Notes:
@@ -652,14 +656,14 @@ NUMA  *nac, *nad;
 /*!
  * \brief   pixExtractBarcodeWidths2()
  *
- * \param[in]    pixs input image; 8 bpp
- * \param[in]    thresh estimated pixel threshold for crossing
- *                      white <--> black; typ. ~120
- * \param[out]   pwidth [optional] best decoding window width, in pixels
- * \param[out]   pnac [optional] number of transitions in each window
- * \param[in]    debugflag use 1 to generate debug output
- * \return  nad numa of barcode widths in encoded integer units,
- *                  or NULL on error
+ * \param[in]    pixs        input image; 8 bpp
+ * \param[in]    thresh      estimated pixel threshold for crossing
+ *                           white <--> black; typ. ~120
+ * \param[out]   pwidth      [optional] best decoding window width, in pixels
+ * \param[out]   pnac        [optional] number of transitions in each window
+ * \param[in]    debugflag   use 1 to generate debug output
+ * \return  nad   numa of barcode widths in encoded integer units,
+ *                or NULL on error
  *
  * <pre>
  * Notes:
@@ -703,11 +707,11 @@ NUMA  *nacp, *nad;
 /*!
  * \brief   pixExtractBarcodeCrossings()
  *
- * \param[in]    pixs input image; 8 bpp
- * \param[in]    thresh estimated pixel threshold for crossing
- *                      white <--> black; typ. ~120
- * \param[in]    debugflag use 1 to generate debug output
- * \return  numa of crossings, in pixel units, or NULL on error
+ * \param[in]    pixs        input image; 8 bpp
+ * \param[in]    thresh      estimated pixel threshold for crossing
+ *                           white <--> black; typ. ~120
+ * \param[in]    debugflag   use 1 to generate debug output
+ * \return  numa   of crossings, in pixel units, or NULL on error
  */
 NUMA *
 pixExtractBarcodeCrossings(PIX       *pixs,
@@ -761,8 +765,8 @@ NUMA      *nas, *nax, *nay, *nad;
 /*!
  * \brief   pixAverageRasterScans()
  *
- * \param[in]    pixs input image; 8 bpp
- * \param[in]    nscans number of adjacent scans, about the center vertically
+ * \param[in]    pixs     input image; 8 bpp
+ * \param[in]    nscans   number of adjacent scans, about the center vertically
  * \return  numa of average pixel values across image, or NULL on error
  */
 static NUMA *
@@ -813,12 +817,12 @@ NUMA       *nad;
 /*!
  * \brief   numaQuantizeCrossingsByWidth()
  *
- * \param[in]    nas numa of crossing locations, in pixel units
- * \param[in]    binfract histo binsize as a fraction of minsize; e.g., 0.25
- * \param[out]   pnaehist [optional] histo of even (black) bar widths
- * \param[out]   pnaohist [optional] histo of odd (white) bar widths
- * \param[in]    debugflag 1 to generate plots of histograms of bar widths
- * \return  nad sequence of widths, in unit sizes, or NULL on error
+ * \param[in]    nas         numa of crossing locations, in pixel units
+ * \param[in]    binfract    histo binsize as a fraction of minsize; e.g., 0.25
+ * \param[out]   pnaehist    [optional] histo of even (black) bar widths
+ * \param[out]   pnaohist    [optional] histo of odd (white) bar widths
+ * \param[in]    debugflag   1 to generate plots of histograms of bar widths
+ * \return  nad   sequence of widths, in unit sizes, or NULL on error
  *
  * <pre>
  * Notes:
@@ -911,14 +915,14 @@ NUMA      *naerange, *naorange, *naelut, *naolut, *nad;
         width = (l_int32)(factor * val);
         numaGetIValue(naelut, width, &iw);
         numaAddNumber(nad, iw);
-/*        fprintf(stderr, "even: val = %7.3f, width = %d, iw = %d\n",
-                val, width, iw); */
+/*        lept_stderr("even: val = %7.3f, width = %d, iw = %d\n",
+                      val, width, iw); */
         numaGetFValue(naodist, i, &val);
         width = (l_int32)(factor * val);
         numaGetIValue(naolut, width, &iw);
         numaAddNumber(nad, iw);
-/*        fprintf(stderr, "odd: val = %7.3f, width = %d, iw = %d\n",
-                val, width, iw); */
+/*        lept_stderr("odd: val = %7.3f, width = %d, iw = %d\n",
+                      val, width, iw); */
     }
     numaGetFValue(naedist, ned - 1, &val);
     width = (l_int32)(factor * val);
@@ -926,26 +930,26 @@ NUMA      *naerange, *naorange, *naelut, *naolut, *nad;
     numaAddNumber(nad, iw);
 
     if (debugflag) {
-        fprintf(stderr, " ---- Black bar widths (pixels) ------ \n");
-        numaWriteStream(stderr, naedist);
-        fprintf(stderr, " ---- Histogram of black bar widths ------ \n");
-        numaWriteStream(stderr, naehist);
-        fprintf(stderr, " ---- Peak ranges in black bar histogram bins --- \n");
-        numaWriteStream(stderr, naerange);
-        fprintf(stderr, " ---- Peak black bar centroid width values ------ \n");
-        numaWriteStream(stderr, naecent);
-        fprintf(stderr, " ---- Black bar lookup table ------ \n");
-        numaWriteStream(stderr, naelut);
-        fprintf(stderr, " ---- White bar widths (pixels) ------ \n");
-        numaWriteStream(stderr, naodist);
-        fprintf(stderr, " ---- Histogram of white bar widths ------ \n");
-        numaWriteStream(stderr, naohist);
-        fprintf(stderr, " ---- Peak ranges in white bar histogram bins --- \n");
-        numaWriteStream(stderr, naorange);
-        fprintf(stderr, " ---- Peak white bar centroid width values ------ \n");
-        numaWriteStream(stderr, naocent);
-        fprintf(stderr, " ---- White bar lookup table ------ \n");
-        numaWriteStream(stderr, naolut);
+        lept_stderr(" ---- Black bar widths (pixels) ------ \n");
+        numaWriteStderr(naedist);
+        lept_stderr(" ---- Histogram of black bar widths ------ \n");
+        numaWriteStderr(naehist);
+        lept_stderr(" ---- Peak ranges in black bar histogram bins --- \n");
+        numaWriteStderr(naerange);
+        lept_stderr(" ---- Peak black bar centroid width values ------ \n");
+        numaWriteStderr(naecent);
+        lept_stderr(" ---- Black bar lookup table ------ \n");
+        numaWriteStderr(naelut);
+        lept_stderr(" ---- White bar widths (pixels) ------ \n");
+        numaWriteStderr(naodist);
+        lept_stderr(" ---- Histogram of white bar widths ------ \n");
+        numaWriteStderr(naohist);
+        lept_stderr(" ---- Peak ranges in white bar histogram bins --- \n");
+        numaWriteStderr(naorange);
+        lept_stderr(" ---- Peak white bar centroid width values ------ \n");
+        numaWriteStderr(naocent);
+        lept_stderr(" ---- White bar lookup table ------ \n");
+        numaWriteStderr(naolut);
     }
 
     numaDestroy(&naedist);
@@ -971,11 +975,11 @@ NUMA      *naerange, *naorange, *naelut, *naolut, *nad;
 /*!
  * \brief   numaGetCrossingDistances()
  *
- * \param[in]    nas numa of crossing locations
- * \param[out]   pnaedist [optional] even distances between crossings
- * \param[out]   pnaodist [optional] odd distances between crossings
- * \param[out]   pmindist [optional] min distance between crossings
- * \param[out]   pmaxdist [optional] max distance between crossings
+ * \param[in]    nas        numa of crossing locations
+ * \param[out]   pnaedist   [optional] even distances between crossings
+ * \param[out]   pnaodist   [optional] odd distances between crossings
+ * \param[out]   pmindist   [optional] min distance between crossings
+ * \param[out]   pmaxdist   [optional] max distance between crossings
  * \return  0 if OK, 1 on error
  */
 static l_int32
@@ -1042,11 +1046,11 @@ NUMA      *naedist, *naodist;
 /*!
  * \brief   numaLocatePeakRanges()
  *
- * \param[in]    nas numa of histogram of crossing widths
- * \param[in]    minfirst min location of center of first peak
- * \param[in]    minsep min separation between peak range centers
- * \param[in]    maxmin max allowed value for min histo value between peaks
- * \return  nad ranges for each peak found, in pairs, or NULL on error
+ * \param[in]    nas        numa of histogram of crossing widths
+ * \param[in]    minfirst   min location of center of first peak
+ * \param[in]    minsep     min separation between peak range centers
+ * \param[in]    maxmin     max allowed value for min histo value between peaks
+ * \return  nad   ranges for each peak found, in pairs, or NULL on error
  *
  * <pre>
  * Notes:
@@ -1115,10 +1119,10 @@ NUMA      *nad;
 /*!
  * \brief   numaGetPeakCentroids()
  *
- * \param[in]    nahist numa of histogram of crossing widths
- * \param[in]    narange numa of ranges of x-values for the peaks in %nahist
- * \return  nad centroids for each peak found; max of 4, corresponding
- *                   to 4 different barcode line widths, or NULL on error
+ * \param[in]    nahist    numa of histogram of crossing widths
+ * \param[in]    narange   numa of ranges of x-values for the peaks in %nahist
+ * \return  nad   centroids for each peak found; max of 4, corresponding
+ *                to 4 different barcode line widths, or NULL on error
  */
 static NUMA *
 numaGetPeakCentroids(NUMA  *nahist,
@@ -1157,10 +1161,10 @@ NUMA      *nad;
 /*!
  * \brief   numaGetPeakWidthLUT()
  *
- * \param[in]    narange numa of x-val ranges for the histogram width peaks
- * \param[in]    nacent numa of centroids of each peak -- up to 4
- * \return  nalut lookup table from the width of a bar to one of the four
- *                     integerized barcode units, or NULL on error
+ * \param[in]    narange   numa of x-val ranges for the histogram width peaks
+ * \param[in]    nacent    numa of centroids of each peak -- up to 4
+ * \return  nalut  lookup table from the width of a bar to one of the four
+ *                 integerized barcode units, or NULL on error
  *
  * <pre>
  * Notes:
@@ -1244,14 +1248,14 @@ NUMA       *nalut;
 /*!
  * \brief   numaQuantizeCrossingsByWindow()
  *
- * \param[in]    nas numa of crossing locations
- * \param[in]    ratio of max window size over min window size in search;
- *                     typ. 2.0
- * \param[out]   pwidth [optional] best window width
- * \param[out]   pfirstloc [optional] center of window for first xing
- * \param[out]   pnac [optional] array of window crossings (0, 1, 2)
- * \param[in]    debugflag 1 to generate various plots of intermediate results
- * \return  nad sequence of widths, in unit sizes, or NULL on error
+ * \param[in]    nas         numa of crossing locations
+ * \param[in]    ratio       of max window size over min window size in search;
+ *                           typ. 2.0
+ * \param[out]   pwidth      [optional] best window width
+ * \param[out]   pfirstloc   [optional] center of window for first xing
+ * \param[out]   pnac        [optional] array of window crossings (0, 1, 2)
+ * \param[in]    debugflag   1 to generate various plots of intermediate results
+ * \return  nad   sequence of widths, in unit sizes, or NULL on error
  *
  * <pre>
  * Notes:
@@ -1347,15 +1351,15 @@ NUMA      *nac, *nad;
 /*!
  * \brief   numaEvalBestWidthAndShift()
  *
- * \param[in]    nas numa of crossing locations
- * \param[in]    nwidth number of widths to consider
- * \param[in]    nshift number of shifts to consider for each width
- * \param[in]    minwidth smallest width to consider
- * \param[in]    maxwidth largest width to consider
- * \param[out]   pbestwidth best size of window
- * \param[out]   pbestshift best shift for the window
- * \param[out]   pbestscore [optional] average squared error of dist
- *                          of crossing signal from the center of the window
+ * \param[in]    nas          numa of crossing locations
+ * \param[in]    nwidth       number of widths to consider
+ * \param[in]    nshift       number of shifts to consider for each width
+ * \param[in]    minwidth     smallest width to consider
+ * \param[in]    maxwidth     largest width to consider
+ * \param[out]   pbestwidth   best size of window
+ * \param[out]   pbestshift   best shift for the window
+ * \param[out]   pbestscore   [optional] average squared error of dist
+ *                            of crossing signal from the center of the window
  * \return  0 if OK, 1 on error
  *
  * <pre>
@@ -1401,8 +1405,8 @@ l_float32  bestwidth, bestshift, bestscore;
                 bestwidth = width;
                 bestshift = shift;
 #if  DEBUG_FREQUENCY
-                fprintf(stderr, "width = %7.3f, shift = %7.3f, score = %7.3f\n",
-                        width, shift, score);
+                lept_stderr("width = %7.3f, shift = %7.3f, score = %7.3f\n",
+                            width, shift, score);
 #endif  /* DEBUG_FREQUENCY */
             }
         }
@@ -1419,14 +1423,14 @@ l_float32  bestwidth, bestshift, bestscore;
 /*!
  * \brief   numaEvalSyncError()
  *
- * \param[in]    nas numa of crossing locations
- * \param[in]    ifirst first crossing to use
- * \param[in]    ilast last crossing to use; use 0 for all crossings
- * \param[in]    width size of window
- * \param[in]    shift of center of window w/rt first crossing
- * \param[out]   pscore [optional] average squared error of dist
- *                      of crossing signal from the center of the window
- * \param[out]   pnad [optional] numa of 1s and 0s for crossings
+ * \param[in]    nas      numa of crossing locations
+ * \param[in]    ifirst   first crossing to use
+ * \param[in]    ilast    last crossing to use; use 0 for all crossings
+ * \param[in]    width    size of window
+ * \param[in]    shift    of center of window w/rt first crossing
+ * \param[out]   pscore   [optional] average squared error of dist
+ *                        of crossing signal from the center of the window
+ * \param[out]   pnad     [optional] numa of 1s and 0s for crossings
  * \return  0 if OK, 1 on error
  *
  * <pre>

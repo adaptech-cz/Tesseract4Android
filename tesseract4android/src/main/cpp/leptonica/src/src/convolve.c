@@ -84,6 +84,10 @@
  * </pre>
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include <math.h>
 #include "allheaders.h"
 
@@ -1242,7 +1246,7 @@ PIX        *pixb, *pixd;
         lined = datad + i * wpld;
         for (j = 0; j < wd; j++) {
             val = line2[j + wincr] - line2[j] - line1[j + wincr] + line1[j];
-            ival = (l_uint32)(norm * val);
+            ival = (l_uint32)(norm * val + 0.5);  /* to round up */
             lined[j] = ival;
         }
     }
@@ -2548,7 +2552,7 @@ PIX       *pixd;
  * </pre>
  */
 l_float32
-gaussDistribSampling()
+gaussDistribSampling(void)
 {
 static l_int32    select = 0;  /* flips between 0 and 1 on successive calls */
 static l_float32  saveval;

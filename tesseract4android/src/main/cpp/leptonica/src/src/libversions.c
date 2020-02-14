@@ -34,7 +34,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include "config_auto.h"
+#include <config_auto.h>
 #endif  /* HAVE_CONFIG_H */
 
 #include "allheaders.h"
@@ -85,20 +85,21 @@
 /*!
  * \brief   getImagelibVersions()
  *
- *      Return: string of version numbers; e.g.,
- *               libgif 5.0.3
- *               libjpeg 8b (libjpeg-turbo 1.3.0)
- *               libpng 1.4.3
- *               libtiff 3.9.5
- *               zlib 1.2.5
- *               libwebp 0.3.0
- *               libopenjp2 2.1.0
- *
- *  Notes:
- *      (1) The caller must free the memory.
+ * <pre>
+ * Notes:
+ *      (1) This returns a string of version numbers; e.g.,
+ *            libgif 5.0.3
+ *            libjpeg 8b (libjpeg-turbo 1.3.0)
+ *            libpng 1.4.3
+ *            libtiff 3.9.5
+ *            zlib 1.2.5
+ *            libwebp 0.3.0
+ *            libopenjp2 2.1.0
+ *      (2) The caller must free the memory.
+ * </pre>
  */
 char *
-getImagelibVersions()
+getImagelibVersions(void)
 {
 char     buf[128];
 l_int32  first = TRUE;

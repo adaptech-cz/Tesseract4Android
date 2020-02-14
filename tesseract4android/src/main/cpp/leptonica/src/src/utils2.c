@@ -176,12 +176,13 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include "config_auto.h"
+#include <config_auto.h>
 #endif  /* HAVE_CONFIG_H */
 
 #ifdef _MSC_VER
 #include <process.h>
 #include <direct.h>
+#define getcwd _getcwd  /* fix MSVC warning */
 #else
 #include <unistd.h>
 #endif   /* _MSC_VER */
@@ -196,13 +197,14 @@
 #include <sys/types.h>
 #endif
 
+#ifdef OS_IOS
+#include <unistd.h>
+#include <errno.h>
+#endif
+
 #include <string.h>
 #include <stddef.h>
 #include "allheaders.h"
-
-/*  This is only used to test "/tmp" --> TMPDIR rewriting on Windows,
- *  by emulating it in unix.  It should never be on in production. */
-#define DEBUG_REWRITE    0
 
 
 /*--------------------------------------------------------------------*
@@ -408,7 +410,8 @@ l_int32  i;
  *          rather than the number of bytes to copy), and does not complain
  *          if %src is null.
  *      (2) Never writes past end of dest.
- *      (3) If it can't append src (an error), it does nothing.
+ *      (3) If there is not enough room to append the src, which is an error,
+ *          it does nothing.
  *      (4) N.B. The order of 2nd and 3rd args is reversed from that in
  *          strncat, as in the Windows function strcat_s().
  * </pre>
@@ -436,7 +439,7 @@ l_int32  lendest, lensrc;
     lensrc = stringLength(src, size);
     if (lensrc == 0)
         return 0;
-    n = (lendest + lensrc > size - 1 ? size - lendest - 1 : lensrc);
+    n = (lendest + lensrc > size - 1 ? 0 : lensrc);
     if (n < 1)
         return ERROR_INT("dest too small for append", procName, -1);
 
@@ -525,9 +528,9 @@ l_int32  srclen1, srclen2, destlen;
         return (char *)ERROR_PTR("calloc fail for dest", procName, NULL);
 
     if (src1)
-        stringCopy(dest, src1, srclen1);
+        stringCat(dest, destlen, src1);
     if (src2)
-        strncat(dest, src2, srclen2);
+        stringCat(dest, destlen, src2);
     return dest;
 }
 
@@ -904,7 +907,8 @@ size_t  datalen;
  * \param[in]      src      input string; can be of zero length
  * \param[in]      sub1     substring to be replaced
  * \param[in]      sub2     substring to put in; can be ""
- * \param[in,out]  ploc     input start location; return loc after replacement
+ * \param[in,out]  ploc     [optional] input start location for search;
+ *                          returns the loc after replacement
  * \param[out]     pfound   [optional] 1 if sub1 is found; 0 otherwise
  * \return  dest string with substring replaced, or NULL on error.
  *
@@ -914,13 +918,14 @@ size_t  datalen;
  *      (2) To remove sub1 without replacement, use "" for sub2.
  *      (3) Returns a copy of %src if either no instance of %sub1 is found,
  *          or if %sub1 and %sub2 are the same.
- *      (4) %loc must be initialized.  As input, it is the byte offset
+ *      (4) If %ploc == NULL, the search will start at the beginning of %src.
+ *          If %ploc != NULL, *ploc must be initialized to the byte offset
  *          within %src from which the search starts.  To search the
- *          string from the beginning, set %loc = 0.  After finding
- *          %sub1 and replacing it with %sub2, %loc is returned as
- *          the next position in the output string.  Note that the
- *          output string also includes all the characters from the
- *          input string that occur after the single substitution.
+ *          string from the beginning, set %loc = 0 and input &loc.
+ *          After finding %sub1 and replacing it with %sub2, %loc will be
+ *          returned as the next position after %sub2 in the output string.
+ *      (5) Note that the output string also includes all the characters
+ *          from the input string that occur after the single substitution.
  * </pre>
  */
 char *
@@ -930,9 +935,9 @@ stringReplaceSubstr(const char  *src,
                     l_int32     *ploc,
                     l_int32     *pfound)
 {
-const char *ptr;
-char       *dest;
-l_int32     nsrc, nsub1, nsub2, len, npre, loc;
+const char  *ptr;
+char        *dest;
+l_int32      nsrc, nsub1, nsub2, len, npre, loc;
 
     PROCNAME("stringReplaceSubstr");
 
@@ -941,12 +946,15 @@ l_int32     nsrc, nsub1, nsub2, len, npre, loc;
         return (char *)ERROR_PTR("src, sub1, sub2 not all defined",
                                  procName, NULL);
 
-    loc = *ploc;
+    if (ploc)
+        loc = *ploc;
+    else
+        loc = 0;
+    if (!strcmp(sub1, sub2))
+        return stringNew(src);
     if ((ptr = strstr(src + loc, sub1)) == NULL)
         return stringNew(src);
     if (pfound) *pfound = 1;
-    if (!strcmp(sub1, sub2))
-        return stringNew(src);
 
     nsrc = strlen(src);
     nsub1 = strlen(sub1);
@@ -958,7 +966,7 @@ l_int32     nsrc, nsub1, nsub2, len, npre, loc;
     memcpy(dest, src, npre);
     strcpy(dest + npre, sub2);
     strcpy(dest + npre + nsub2, ptr + nsub1);
-    *ploc = npre + nsub2;
+    if (ploc) *ploc = npre + nsub2;
     return dest;
 }
 
@@ -1522,8 +1530,8 @@ size_t    bytesleft, bytestoread, nread, filebytes;
     filebytes = ftell(fp);
     fseek(fp, 0, SEEK_SET);
     if (start > filebytes) {
-        L_ERROR("start = %lu but filebytes = %lu\n", procName,
-                (unsigned long)start, (unsigned long)filebytes);
+        L_ERROR("start = %zu but filebytes = %zu\n", procName,
+                start, filebytes);
         return NULL;
     }
     if (filebytes == 0)  /* start == 0; nothing to read; return null byte */
@@ -1538,8 +1546,8 @@ size_t    bytesleft, bytestoread, nread, filebytes;
     fseek(fp, start, SEEK_SET);
     nread = fread(data, 1, bytestoread, fp);
     if (nbytes != nread)
-        L_INFO("%lu bytes requested; %lu bytes read\n", procName,
-               (unsigned long)nbytes, (unsigned long)nread);
+        L_INFO("%zu bytes requested; %zu bytes read\n", procName,
+               nbytes, nread);
     *pnread = nread;
     fseek(fp, 0, SEEK_SET);
     return data;
@@ -1581,7 +1589,7 @@ FILE  *fp;
         /* The 'b' flag to fopen() is ignored for all POSIX
          * conforming systems.  However, Windows needs the 'b' flag. */
     stringCopy(actualOperation, operation, 2);
-    strncat(actualOperation, "b", 2);
+    stringCat(actualOperation, 20, "b");
 
     if ((fp = fopenWriteStream(filename, actualOperation)) == NULL)
         return ERROR_INT("stream not opened", procName, 1);
@@ -1932,7 +1940,7 @@ FILE  *fp;
  * </pre>
  */
 FILE *
-fopenWriteWinTempfile()
+fopenWriteWinTempfile(void)
 {
 #ifdef _WIN32
 l_int32  handle;
@@ -2315,7 +2323,7 @@ SARRAY  *sa;
 
     PROCNAME("lept_rm_match");
 
-    makeTempDirname(tempdir, 256, subdir);
+    makeTempDirname(tempdir, sizeof(tempdir), subdir);
     if ((sa = getSortedPathnamesInDirectory(tempdir, substr, 0, 0)) == NULL)
         return ERROR_INT("sa not made", procName, -1);
     n = sarrayGetCount(sa);
@@ -2367,7 +2375,7 @@ l_int32  ret;
     if (!tail || strlen(tail) == 0)
         return ERROR_INT("tail undefined or empty", procName, 1);
 
-    if (makeTempDirname(newtemp, 256, subdir))
+    if (makeTempDirname(newtemp, sizeof(newtemp), subdir))
         return ERROR_INT("temp dirname not made", procName, 1);
     path = genPathname(newtemp, tail);
     ret = lept_rmfile(path);
@@ -2455,7 +2463,7 @@ lept_mv(const char  *srcfile,
         const char  *newtail,
         char       **pnewpath)
 {
-char    *srcpath, *newpath, *realpath, *dir, *srctail;
+char    *srcpath, *newpath, *dir, *srctail;
 char     newtemp[256];
 l_int32  ret;
 
@@ -2465,7 +2473,7 @@ l_int32  ret;
         return ERROR_INT("srcfile not defined", procName, 1);
 
         /* Require output pathname to be in /tmp/ or a subdirectory */
-    if (makeTempDirname(newtemp, 256, newdir) == 1)
+    if (makeTempDirname(newtemp, sizeof(newtemp), newdir) == 1)
         return ERROR_INT("newdir not NULL or a subdir of /tmp", procName, 1);
 
         /* Get canonical src pathname */
@@ -2484,8 +2492,8 @@ l_int32  ret;
 
         /* Overwrite any existing file at 'newpath' */
     ret = fileCopy(srcpath, newpath);
-    if (!ret) {
-        realpath = genPathname(srcpath, NULL);
+    if (!ret) {  /* and remove srcfile */
+        char *realpath = genPathname(srcpath, NULL);
         remove(realpath);
         LEPT_FREE(realpath);
     }
@@ -2564,7 +2572,7 @@ l_int32  ret;
         return ERROR_INT("srcfile not defined", procName, 1);
 
         /* Require output pathname to be in /tmp or a subdirectory */
-    if (makeTempDirname(newtemp, 256, newdir) == 1)
+    if (makeTempDirname(newtemp, sizeof(newtemp), newdir) == 1)
         return ERROR_INT("newdir not NULL or a subdir of /tmp", procName, 1);
 
        /* Get canonical src pathname */
@@ -2647,17 +2655,17 @@ l_int32  ret;
 
 #if defined(__APPLE__)  /* iOS 11 does not support system() */
 
-  #if !defined(TARGET_OS_IPHONE) && !defined(OS_IOS)  /* macOS */
+  #if TARGET_OS_OSX /* Mac OS X */
     ret = system(cmd);
-  #else
+  #elif TARGET_OS_IPHONE || defined(OS_IOS)  /* iOS */
     L_ERROR("iOS 11 does not support system()\n", procName);
-  #endif  /* !TARGET_OS_IPHONE ... */
+  #endif  /* TARGET_OS_OSX */
 
-#else /* ! OS_IOS */
+#else /* ! __APPLE__ */
 
    ret = system(cmd);
 
-#endif /* OS_IOS */
+#endif /* __APPLE__ */
 }
 
 
@@ -2682,11 +2690,18 @@ l_int32  ret;
  *          tail ptr.
  *      (3) This function makes decisions based only on the lexical
  *          structure of the input.  Examples:
- *            /usr/tmp/abc  -->  dir: /usr/tmp/       tail: abc
- *            /usr/tmp/     -->  dir: /usr/tmp/       tail: [empty string]
- *            /usr/tmp      -->  dir: /usr/           tail: tmp
- *            abc           -->  dir: [empty string]  tail: abc
- *      (4) The input can have either forward (unix) or backward (win)
+ *            /usr/tmp/abc.d  -->  dir: /usr/tmp/       tail: abc.d
+ *            /usr/tmp/       -->  dir: /usr/tmp/       tail: [empty string]
+ *            /usr/tmp        -->  dir: /usr/           tail: tmp
+ *            abc.d           -->  dir: [empty string]  tail: abc.d
+ *      (4  Consider the first example above: /usr/tmp/abc.d.
+ *          Suppose you want the stem of the file, abc, without either
+ *          the directory or the extension.  This can be extracted in two steps:
+ *              splitPathAtDirectory("usr/tmp/abc.d", NULL, &tail);
+ *                   [sets tail: "abc.d"]
+ *              splitPathAtExtension(tail, &basename, NULL);
+ *                   [sets basename: "abc"]
+ *      (5) The input can have either forward (unix) or backward (win)
  *          slash separators.  The output has unix separators.
  *          Note that Win32 pathname functions generally accept both
  *          slash forms, but the windows command line interpreter
@@ -2759,6 +2774,9 @@ char  *cpathname, *lastslash;
  *            ./.jpg            -->  basename: ./              ext: .jpg
  *      (4) The input can have either forward (unix) or backward (win)
  *          slash separators.  The output has unix separators.
+ *      (5) Note that basename, as used here, is different from the result
+ *          of the unix program 'basename'.  Here, basename is the entire
+ *          pathname up to a final extension and its preceding dot.
  * </pre>
  */
 l_ok
@@ -2934,16 +2952,16 @@ size_t  len1, len2, len3, len4;
 
     len1 = strlen(basedir);
     len2 = strlen(subdirs);
-    len3 = len1 + len2 + 6;
-    if ((newdir = (char *)LEPT_CALLOC(len3 + 1, 1)) == NULL)
+    len3 = len1 + len2 + 8;
+    if ((newdir = (char *)LEPT_CALLOC(len3, 1)) == NULL)
         return (char *)ERROR_PTR("newdir not made", procName, NULL);
-    strncat(newdir, basedir, len3);  /* add basedir */
+    stringCat(newdir, len3, basedir);
     if (newdir[len1 - 1] != '/')  /* add '/' if necessary */
         newdir[len1] = '/';
     if (subdirs[0] == '/')  /* add subdirs, stripping leading '/' */
-        strncat(newdir, subdirs + 1, len3);
+        stringCat(newdir, len3, subdirs + 1);
     else
-        strncat(newdir, subdirs, len3);
+        stringCat(newdir, len3, subdirs);
     len4 = strlen(newdir);
     if (newdir[len4 - 1] == '/')  /* strip trailing '/' */
         newdir[len4 - 1] = '\0';
@@ -3040,7 +3058,8 @@ genPathname(const char  *dir,
 {
 l_int32  is_win32 = FALSE;
 char    *cdir, *pathout;
-l_int32  dirlen, namelen, size;
+l_int32  dirlen, namelen;
+size_t   size;
 
     PROCNAME("genPathname");
 
@@ -3105,7 +3124,7 @@ l_int32  dirlen, namelen, size;
     if (fname && strlen(fname) > 0) {
         dirlen = strlen(pathout);
         pathout[dirlen] = '/';
-        strncat(pathout, fname, namelen);
+        stringCat(pathout, size, fname);
     }
 
     LEPT_FREE(cdir);
@@ -3128,15 +3147,17 @@ l_int32  dirlen, namelen, size;
  *      (2) Caller allocates %result, large enough to hold the path,
  *          which is:
  *            /tmp/%subdir       (unix)
- *            [Temp]/%subdir     (windows)
- *          where [Temp] is a path on windows determined by GenTempPath()
+ *            [Temp]/%subdir     (windows, mac, ios)
+ *          where [Temp] is a path determined
+ *             - on windows, mac: by GetTempPath()
+ *             - on ios: by confstr() (see man page)
  *          and %subdir is in general a set of nested subdirectories:
  *            dir1/dir2/.../dirN
  *          which in use would not typically exceed 2 levels.
  *      (3) Usage example:
  * \code
  *           char  result[256];
- *           makeTempDirname(result, 256, "lept/golden");
+ *           makeTempDirname(result, sizeof(result), "lept/golden");
  * \endcode
  * </pre>
  */
@@ -3157,7 +3178,22 @@ size_t   pathlen;
         return ERROR_INT("subdir not an actual subdirectory", procName, 1);
 
     memset(result, 0, nbytes);
+
+#ifdef OS_IOS
+    {
+        size_t n = confstr(_CS_DARWIN_USER_TEMP_DIR, result, nbytes);
+        if (n == 0) {
+            L_ERROR("failed to find tmp dir, %s\n", procName, strerror(errno));
+            return 1;
+        } else if (n > nbytes) {
+            return ERROR_INT("result array too small for path\n", procName, 1);
+        }
+        dir = pathJoin(result, subdir);
+    }
+#else
     dir = pathJoin("/tmp", subdir);
+#endif /*  ~ OS_IOS */
+
 #ifndef _WIN32
     path = stringNew(dir);
 #else
@@ -3165,7 +3201,7 @@ size_t   pathlen;
 #endif  /*  ~ _WIN32 */
     pathlen = strlen(path);
     if (pathlen < nbytes - 1) {
-        strncpy(result, path, pathlen);
+        stringCat(result, nbytes, path);
     } else {
         L_ERROR("result array too small for path\n", procName);
         ret = 1;
@@ -3241,7 +3277,7 @@ size_t  len;
  * </pre>
  */
 char *
-l_makeTempFilename()
+l_makeTempFilename(void)
 {
 char  dirname[240];
 

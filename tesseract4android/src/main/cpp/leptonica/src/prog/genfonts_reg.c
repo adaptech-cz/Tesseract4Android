@@ -45,6 +45,10 @@
  *    required to properly render them.
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include "allheaders.h"
 #include "bmfdata.h"
 
@@ -63,6 +67,11 @@ size_t        nbytes;
 PIX          *pix1, *pix2, *pixd;
 PIXA         *pixa;
 L_REGPARAMS  *rp;
+
+#if !defined(HAVE_LIBPNG)
+    L_ERROR("This test requires libpng to run.\n", "genfonts_reg");
+    exit(77);
+#endif
 
     if (regTestSetup(argc, argv, &rp))
         return 1;

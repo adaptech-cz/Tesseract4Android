@@ -94,6 +94,10 @@
  * </pre>
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include <string.h>
 #include "allheaders.h"
 
@@ -331,9 +335,9 @@ SARRAY  *sa1, *sa2, *sa3;
     str_doc1 = stringNew(bigbuf);
     sprintf(bigbuf, " *             PIX     *pixFMorphopGen_%d()", fileindex);
     str_doc2 = stringNew(bigbuf);
-    sprintf(bigbuf, " *  pixMorphDwa_%d()", fileindex);
+    sprintf(bigbuf, " * \\brief   pixMorphDwa_%d()", fileindex);
     str_doc3 = stringNew(bigbuf);
-    sprintf(bigbuf, " *  pixFMorphopGen_%d()", fileindex);
+    sprintf(bigbuf, " * \\brief   pixFMorphopGen_%d()", fileindex);
     str_doc4 = stringNew(bigbuf);
     sprintf(bigbuf, "pixMorphDwa_%d(PIX     *pixd,", fileindex);
     str_def1 = stringNew(bigbuf);

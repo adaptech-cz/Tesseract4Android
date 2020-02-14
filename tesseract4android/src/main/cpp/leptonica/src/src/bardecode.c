@@ -59,10 +59,13 @@
  * </pre>
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include <string.h>
 #include "allheaders.h"
 #include "readbarcode.h"
-
 
 static l_int32 barcodeFindFormat(char *barstr);
 static l_int32 barcodeVerifyFormat(char *barstr, l_int32 format,
@@ -75,11 +78,9 @@ static char *barcodeDecodeCodabar(char *barstr, l_int32 debugflag);
 static char *barcodeDecodeUpca(char *barstr, l_int32 debugflag);
 static char *barcodeDecodeEan13(char *barstr, l_int32 first, l_int32 debugflag);
 
-
 #ifndef  NO_CONSOLE_IO
 #define  DEBUG_CODES       0
 #endif  /* ~NO_CONSOLE_IO */
-
 
 /*------------------------------------------------------------------------*
  *                           Decoding dispatcher                          *
@@ -87,9 +88,9 @@ static char *barcodeDecodeEan13(char *barstr, l_int32 first, l_int32 debugflag);
 /*!
  * \brief   barcodeDispatchDecoder()
  *
- * \param[in]    barstr string of integers in set {1,2,3,4} of bar widths
- * \param[in]    format L_BF_ANY, L_BF_CODEI2OF5, L_BF_CODE93, ...
- * \param[in]    debugflag use 1 to generate debug output
+ * \param[in]    barstr      string of integers in set {1,2,3,4} of bar widths
+ * \param[in]    format      L_BF_ANY, L_BF_CODEI2OF5, L_BF_CODE93, ...
+ * \param[in]    debugflag   use 1 to generate debug output
  * \return  data string of decoded barcode data, or NULL on error
  */
 char *
@@ -136,7 +137,7 @@ char  *data = NULL;
 /*!
  * \brief   barcodeFindFormat()
  *
- * \param[in]    barstr of barcode widths, in set {1,2,3,4}
+ * \param[in]    barstr    of barcode widths, in set {1,2,3,4}
  * \return  format for barcode, or L_BF_UNKNOWN if not recognized
  */
 static l_int32
@@ -185,10 +186,10 @@ l_int32  i;
 /*!
  * \brief   barcodeVerifyFormat()
  *
- * \param[in]    barstr of barcode widths, in set {1,2,3,4}
- * \param[in]    format L_BF_CODEI2OF5, L_BF_CODE93, ...
- * \param[out]   pvalid 0 if not valid, 1 and 2 if valid
- * \param[out]   preverse [optional] 1 if reversed; 0 otherwise
+ * \param[in]    barstr     of barcode widths, in set {1,2,3,4}
+ * \param[in]    format     L_BF_CODEI2OF5, L_BF_CODE93, ...
+ * \param[out]   pvalid     0 if not valid, 1 and 2 if valid
+ * \param[out]   preverse   [optional] 1 if reversed; 0 otherwise
  * \return  0 if OK, 1 on error
  *
  * <pre>
@@ -336,7 +337,7 @@ l_int32  i, start, len, stop, mid;
 /*!
  * \brief   barcodeDecode2of5()
  *
- * \param[in]    barstr of widths, in set {1, 2}
+ * \param[in]    barstr     of widths, in set {1, 2}
  * \param[in]    debugflag
  * \return  data string of digits, or NULL if none found or on error
  *
@@ -400,7 +401,7 @@ l_int32  valid, reverse, i, j, len, error, ndigits, start, found;
             code[j] = vbarstr[start + j];
 
         if (debugflag)
-            fprintf(stderr, "code: %s\n", code);
+            lept_stderr("code: %s\n", code);
 
         found = FALSE;
         for (j = 0; j < 10; j++) {
@@ -429,7 +430,7 @@ l_int32  valid, reverse, i, j, len, error, ndigits, start, found;
 /*!
  * \brief   barcodeDecodeI2of5()
  *
- * \param[in]    barstr of widths, in set {1, 2}
+ * \param[in]    barstr     of widths, in set {1, 2}
  * \param[in]    debugflag
  * \return  data string of digits, or NULL if none found or on error
  *
@@ -483,7 +484,7 @@ l_int32  valid, reverse, i, j, len, error, npairs, start, found;
         }
 
         if (debugflag)
-            fprintf(stderr, "code1: %s, code2: %s\n", code1, code2);
+            lept_stderr("code1: %s, code2: %s\n", code1, code2);
 
         found = FALSE;
         for (j = 0; j < 10; j++) {
@@ -521,7 +522,7 @@ l_int32  valid, reverse, i, j, len, error, npairs, start, found;
 /*!
  * \brief   barcodeDecode93()
  *
- * \param[in]    barstr of widths, in set {1, 2, 3, 4}
+ * \param[in]    barstr     of widths, in set {1, 2, 3, 4}
  * \param[in]    debugflag
  * \return  data string of digits, or NULL if none found or on error
  *
@@ -581,7 +582,7 @@ l_int32     *index;
             code[j] = vbarstr[start + j];
 
         if (debugflag)
-            fprintf(stderr, "code: %s\n", code);
+            lept_stderr("code: %s\n", code);
 
         found = FALSE;
         for (j = 0; j < C93_START; j++) {
@@ -613,7 +614,7 @@ l_int32     *index;
 
     if (debugflag) {
         checkc = Code93[sum % 47];
-        fprintf(stderr, "checkc = %s\n", checkc);
+        lept_stderr("checkc = %s\n", checkc);
     }
 
     sum = 0;
@@ -624,7 +625,7 @@ l_int32     *index;
 
     if (debugflag) {
         checkk = Code93[sum % 47];
-        fprintf(stderr, "checkk = %s\n", checkk);
+        lept_stderr("checkk = %s\n", checkk);
     }
 
         /* Remove the two check codes from the output */
@@ -641,7 +642,7 @@ l_int32     *index;
 /*!
  * \brief   barcodeDecode39()
  *
- * \param[in]    barstr of widths, in set {1, 2}
+ * \param[in]    barstr     of widths, in set {1, 2}
  * \param[in]    debugflag
  * \return  data string of digits, or NULL if none found or on error
  *
@@ -695,7 +696,7 @@ l_int32   valid, reverse, i, j, len, error, nsymb, start, found;
             code[j] = vbarstr[start + j];
 
         if (debugflag)
-            fprintf(stderr, "code: %s\n", code);
+            lept_stderr("code: %s\n", code);
 
         found = FALSE;
         for (j = 0; j < C39_START; j++) {
@@ -724,7 +725,7 @@ l_int32   valid, reverse, i, j, len, error, nsymb, start, found;
 /*!
  * \brief   barcodeDecodeCodabar()
  *
- * \param[in]    barstr of widths, in set {1, 2}
+ * \param[in]    barstr     of widths, in set {1, 2}
  * \param[in]    debugflag
  * \return  data string of digits, or NULL if none found or on error
  *
@@ -779,7 +780,7 @@ l_int32   valid, reverse, i, j, len, error, nsymb, start, found;
             code[j] = vbarstr[start + j];
 
         if (debugflag)
-            fprintf(stderr, "code: %s\n", code);
+            lept_stderr("code: %s\n", code);
 
         found = FALSE;
         for (j = 0; j < 16; j++) {
@@ -808,7 +809,7 @@ l_int32   valid, reverse, i, j, len, error, nsymb, start, found;
 /*!
  * \brief   barcodeDecodeUpca()
  *
- * \param[in]    barstr of widths, in set {1, 2, 3, 4}
+ * \param[in]    barstr     of widths, in set {1, 2, 3, 4}
  * \param[in]    debugflag
  * \return  data string of digits, or NULL if none found or on error
  *
@@ -878,7 +879,7 @@ l_int32   valid, i, j, len, error, start, found, sum, checkdigit;
             code[j] = vbarstr[start + j];
 
         if (debugflag)
-            fprintf(stderr, "code: %s\n", code);
+            lept_stderr("code: %s\n", code);
 
         found = FALSE;
         for (j = 0; j < 10; j++) {
@@ -919,8 +920,8 @@ l_int32   valid, i, j, len, error, start, found, sum, checkdigit;
 /*!
  * \brief   barcodeDecodeEan13()
  *
- * \param[in]    barstr of widths, in set {1, 2, 3, 4}
- * \param[in]    first first digit: 0 - 9
+ * \param[in]    barstr     of widths, in set {1, 2, 3, 4}
+ * \param[in]    first      first digit: 0 - 9
  * \param[in]    debugflag
  * \return  data string of digits, or NULL if none found or on error
  *
@@ -998,7 +999,7 @@ l_int32   valid, i, j, len, error, start, found, sum, checkdigit;
             code[j] = vbarstr[start + j];
 
         if (debugflag)
-            fprintf(stderr, "code: %s\n", code);
+            lept_stderr("code: %s\n", code);
 
         found = FALSE;
         for (j = 0; j < 10; j++) {

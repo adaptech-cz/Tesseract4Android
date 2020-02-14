@@ -36,6 +36,10 @@
  *      - Flate compressed (gzip compression)
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include "allheaders.h"
 
 static const char *WeaselNames[] = {"weasel2.4c.png",
@@ -63,6 +67,13 @@ L_REGPARAMS  *rp;
 
     if (regTestSetup(argc, argv, &rp))
         return 1;
+
+#if !USE_PSIO
+    fprintf(stderr, "psio writing is not enabled\n"
+            "See environ.h: #define USE_PSIO 1\n\n");
+    regTestCleanup(rp);
+    return 0;
+#endif  /* abort */
 
     factor = 0.95;
 

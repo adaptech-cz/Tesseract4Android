@@ -128,7 +128,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include "config_auto.h"
+#include <config_auto.h>
 #endif  /* HAVE_CONFIG_H */
 
 #include <string.h>
@@ -333,6 +333,7 @@ jmp_buf                        jmpbuf;  /* must be local to the function */
     ycck = (cinfo.jpeg_color_space == JCS_YCCK && spp == 4 && cmapflag == 0);
     cmyk = (cinfo.jpeg_color_space == JCS_CMYK && spp == 4 && cmapflag == 0);
     if (spp != 1 && spp != 3 && !ycck && !cmyk) {
+        jpeg_destroy_decompress(&cinfo);
         return (PIX *)ERROR_PTR("spp must be 1 or 3, or YCCK or CMYK",
                                 procName, NULL);
     }
@@ -347,6 +348,7 @@ jmp_buf                        jmpbuf;  /* must be local to the function */
     if (!rowbuffer || !pix) {
         LEPT_FREE(rowbuffer);
         pixDestroy(&pix);
+        jpeg_destroy_decompress(&cinfo);
         return (PIX *)ERROR_PTR("rowbuffer or pix not made", procName, NULL);
     }
 
@@ -403,7 +405,6 @@ jmp_buf                        jmpbuf;  /* must be local to the function */
                     SET_DATA_BYTE(ppixel, COLOR_RED, rowbuffer[k++]);
                     SET_DATA_BYTE(ppixel, COLOR_GREEN, rowbuffer[k++]);
                     SET_DATA_BYTE(ppixel, COLOR_BLUE, rowbuffer[k++]);
-                    SET_DATA_BYTE(ppixel, L_ALPHA_CHANNEL, 255);
                     ppixel++;
                 }
             } else {
@@ -470,8 +471,8 @@ jmp_buf                        jmpbuf;  /* must be local to the function */
     }
 
     if (cinfo.output_components != spp)
-        fprintf(stderr, "output spp = %d, spp = %d\n",
-                cinfo.output_components, spp);
+        lept_stderr("output spp = %d, spp = %d\n",
+                    cinfo.output_components, spp);
 
     jpeg_finish_decompress(&cinfo);
     jpeg_destroy_decompress(&cinfo);
@@ -554,7 +555,7 @@ freadHeaderJpeg(FILE     *fp,
                 l_int32  *pycck,
                 l_int32  *pcmyk)
 {
-l_int32                        spp;
+l_int32                        spp, w, h;
 struct jpeg_decompress_struct  cinfo;
 struct jpeg_error_mgr          jerr;
 jmp_buf                        jmpbuf;  /* must be local to the function */
@@ -585,8 +586,15 @@ jmp_buf                        jmpbuf;  /* must be local to the function */
     jpeg_stdio_src(&cinfo, fp);
     jpeg_read_header(&cinfo, TRUE);
     jpeg_calc_output_dimensions(&cinfo);
-
     spp = cinfo.out_color_components;
+    w = cinfo.output_width;
+    h = cinfo.output_height;
+    if (w < 1 || h < 1 || spp < 1 || spp > 4) {
+        jpeg_destroy_decompress(&cinfo);
+        rewind(fp);
+        return ERROR_INT("bad jpeg image parameters", procName, 1);
+    }
+
     if (pspp) *pspp = spp;
     if (pw) *pw = cinfo.output_width;
     if (ph) *ph = cinfo.output_height;
@@ -915,8 +923,8 @@ jmp_buf                      jmpbuf;  /* must be local to the function */
          * Just to be safe, subtract 100 to cover the Adobe name space.  */
     if ((text = pixGetText(pix)) != NULL) {
         if (strlen(text) > 65433) {
-            L_WARNING("text is %lu bytes; clipping to 65433\n",
-                   procName, (unsigned long)strlen(text));
+            L_WARNING("text is %zu bytes; clipping to 65433\n",
+                   procName, strlen(text));
             text[65433] = '\0';
         }
         jpeg_write_marker(&cinfo, JPEG_COM, (const JOCTET *)text, strlen(text));
@@ -1283,6 +1291,10 @@ struct callback_data  *pcb_data;
 
         /* Save the comment and return */
     pcb_data = (struct callback_data *)cinfo->client_data;
+    if (pcb_data->comment) {  /* clear before overwriting previous comment */
+        LEPT_FREE(pcb_data->comment);
+        pcb_data->comment = NULL;
+    }
     pcb_data->comment = comment;
     return 1;
 }

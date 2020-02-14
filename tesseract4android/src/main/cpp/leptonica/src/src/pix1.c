@@ -50,6 +50,7 @@
  *          PIX          *pixCreateNoInit()
  *          PIX          *pixCreateTemplate()
  *          PIX          *pixCreateTemplateNoInit()
+ *          PIX          *pixCreateWithCmap()
  *          PIX          *pixCreateHeader()
  *          PIX          *pixClone()
  *
@@ -188,6 +189,10 @@
  *  the pix considers itself the owner of all its heap data.
  * </pre>
  */
+
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
 
 #include <string.h>
 #include "allheaders.h"
@@ -417,6 +422,49 @@ PIX     *pixd;
 
 
 /*!
+ * \brief   pixCreateWithCmap()
+ *
+ * \param[in]    width
+ * \param[in]    height
+ * \param[in]    depth        2, 4 or 8 bpp
+ * \param[in]    initcolor    L_SET_BLACK, L_SET_WHITE
+ * \return  pixd   with the initialization color assigned to all pixels,
+ *                 or NULL on error.
+ *
+ * <pre>
+ * Notes:
+ *      (1) Creates a pix with a cmap, initialized to value 0.
+ *      (2) Initializes the pix black or white by adding that color
+ *          to the cmap at index 0.
+ * </pre>
+ */
+PIX *
+pixCreateWithCmap(l_int32  width,
+                 l_int32  height,
+                 l_int32  depth,
+                 l_int32  initcolor)
+{
+PIX       *pix;
+PIXCMAP   *cmap;
+
+    PROCNAME("pixCreateWithCmap");
+
+    if (depth != 2 && depth != 4 && depth != 8)
+        return (PIX *)ERROR_PTR("depth not 2, 4 or 8 bpp", procName, NULL);
+
+    if ((pix = pixCreate(width, height, depth)) == NULL)
+        return (PIX *)ERROR_PTR("pix not made", procName, NULL);
+    cmap = pixcmapCreate(depth);
+    pixSetColormap(pix, cmap);
+    if (initcolor == L_SET_BLACK)
+         pixcmapAddColor(cmap, 0, 0, 0);
+    else  /* L_SET_WHITE */
+         pixcmapAddColor(cmap, 255, 255, 255);
+    return pix;
+}
+
+
+/*!
  * \brief   pixCreateHeader()
  *
  * \param[in]    width, height, depth
@@ -471,8 +519,7 @@ PIX      *pixd;
         return (PIX *)ERROR_PTR("requested bytes >= 2^31", procName, NULL);
     }
 
-    if ((pixd = (PIX *)LEPT_CALLOC(1, sizeof(PIX))) == NULL)
-        return (PIX *)ERROR_PTR("LEPT_CALLOC fail for pixd", procName, NULL);
+    pixd = (PIX *)LEPT_CALLOC(1, sizeof(PIX));
     pixSetWidth(pixd, width);
     pixSetHeight(pixd, height);
     pixSetDepth(pixd, depth);
@@ -1369,15 +1416,20 @@ pixScaleResolution(PIX       *pix,
                    l_float32  xscale,
                    l_float32  yscale)
 {
+l_float64  xres, yres;
+l_float64  maxres = 100000000.0;
+
     PROCNAME("pixScaleResolution");
 
     if (!pix)
         return ERROR_INT("pix not defined", procName, 1);
+    if (xscale <= 0 || yscale <= 0)
+        return ERROR_INT("invalid scaling ratio", procName, 1);
 
-    if (pix->xres != 0 && pix->yres != 0) {
-        pix->xres = (l_uint32)(xscale * (l_float32)(pix->xres) + 0.5);
-        pix->yres = (l_uint32)(yscale * (l_float32)(pix->yres) + 0.5);
-    }
+    xres = (l_float64)xscale * (l_float32)(pix->xres) + 0.5;
+    yres = (l_float64)yscale * (l_float32)(pix->yres) + 0.5;
+    pix->xres = (l_uint32)L_MIN(xres, maxres);
+    pix->yres = (l_uint32)L_MIN(yres, maxres);
     return 0;
 }
 

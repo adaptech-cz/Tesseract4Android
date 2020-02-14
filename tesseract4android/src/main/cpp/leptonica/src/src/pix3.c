@@ -51,6 +51,7 @@
  *           PIX        *pixSetUnderTransparency()
  *           PIX        *pixMakeAlphaFromMask()
  *           l_int32     pixGetColorNearMaskBoundary()
+ *           PIX        *pixDisplaySelectedPixels()  -- for debugging
  *
  *    One and two-image boolean operations on arbitrary depth images
  *           PIX        *pixInvert()
@@ -80,6 +81,9 @@
  *           NUMA       *pixAverageByColumn()
  *           l_int32     pixAverageInRect()
  *
+ *    Average of pixel values in RGB images
+ *           l_int32     pixAverageInRectRGB()
+ *
  *    Variance of pixel values in gray images
  *           NUMA       *pixVarianceByRow()
  *           NUMA       *pixVarianceByColumn()
@@ -105,6 +109,10 @@
  * </pre>
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include <string.h>
 #include <math.h>
 #include "allheaders.h"
@@ -116,7 +124,6 @@ static BOXA *findTileRegionsForSearch(BOX *box, l_int32 w, l_int32 h,
 #ifndef  NO_CONSOLE_IO
 #define   EQUAL_SIZE_WARNING      0
 #endif  /* ~NO_CONSOLE_IO */
-
 
 /*-------------------------------------------------------------*
  *                        Masked operations                    *
@@ -1407,7 +1414,7 @@ PIX       *pix1, *pix2, *pix3;
         pixWriteDebug("/tmp/masknear/input.png", pix1, IFF_PNG);
         pixWriteDebug("/tmp/masknear/adjusted.png", pix2, IFF_PNG);
         pixWriteDebug("/tmp/masknear/outerfive.png", pix3, IFF_PNG);
-        fprintf(stderr, "Input box; with adjusted sides; clipped\n");
+        lept_stderr("Input box; with adjusted sides; clipped\n");
         boxPrintStreamInfo(stderr, box);
         boxPrintStreamInfo(stderr, box1);
         boxPrintStreamInfo(stderr, box2);
@@ -1419,6 +1426,58 @@ PIX       *pix1, *pix2, *pix3;
     boxDestroy(&box1);
     boxDestroy(&box2);
     return 0;
+}
+
+
+/*!
+ * \brief   pixDisplaySelectedPixels()
+ *
+ * \param[in]    pixs    [optional] any depth
+ * \param[in]    pixm    1 bpp mask, aligned UL corner with %pixs
+ * \param[in]    sel     [optional] pattern to paint at each pixel in pixm
+ * \param[in]    val     rgb rendering of pattern
+ * \return  pixd, or NULL on error
+ *
+ * <pre>
+ * Notes:
+ *      (1) For every fg pixel in %pixm, this paints the pattern in %sel
+ *          in color %val on a copy of %pixs.
+ *      (2) The implementation is to dilate %pixm by %sel, and then
+ *          paint through the dilated mask onto %pixs.
+ *      (3) If %pixs == NULL, it paints on a white image.
+ *      (4) If %sel == NULL, it paints only the pixels in the input %pixm.
+ *      (5) This visualization would typically be used in debugging.
+ * </pre>
+ */
+PIX *
+pixDisplaySelectedPixels(PIX      *pixs,
+                         PIX      *pixm,
+                         SEL      *sel,
+                         l_uint32  val)
+{
+l_int32  w, h;
+PIX     *pix1, *pix2;
+
+    PROCNAME("pixDisplaySelectedPixels");
+
+    if (!pixm || pixGetDepth(pixm) != 1)
+        return (PIX *)ERROR_PTR("pixm undefined or not 1 bpp", procName, NULL);
+
+    if (pixs) {
+        pix1 = pixConvertTo32(pixs);
+    } else {
+        pixGetDimensions(pixm, &w, &h, NULL);
+        pix1 = pixCreate(w, h, 32);
+        pixSetAll(pix1);
+    }
+
+    if (sel)
+       pix2 = pixDilate(NULL, pixm, sel);
+    else
+       pix2 = pixClone(pixm);
+    pixSetMasked(pix1, pix2, val);
+    pixDestroy(&pix2);
+    return pix1;
 }
 
 
@@ -2570,55 +2629,206 @@ NUMA       *na;
 /*!
  * \brief   pixAverageInRect()
  *
- * \param[in]    pix   1, 2, 4, 8 bpp; not cmapped
- * \param[in]    box   [optional] if null, use entire image
- * \param[out]   pave  average of pixel values in region
- * \return  0 if OK; 1 on error
+ * \param[in]    pixs     1, 2, 4, 8 bpp; not cmapped
+ * \param[in]    pixm     [optional] 1 bpp mask; if null, use all pixels
+ * \param[in]    box      [optional] if null, use entire image
+ * \param[in]    minval   ignore values less than this
+ * \param[in]    maxval   ignore values greater than this
+ * \param[in]    subsamp  subsample factor: integer; use 1 for all pixels
+ * \param[out]   pave     average of pixel values under consideration
+ * \return  0 if OK; 1 on error; 2 if all pixels are filtered out
+ *
+ * <pre>
+ * Notes:
+ *      (1) The average is computed with 4 optional filters: a rectangle,
+ *          a mask, a contiguous set of range values, and subsampling.
+ *          In practice you might use only one or two of these.
+ *      (2) The mask %pixm is a blocking mask: only count pixels in the bg.
+ *          If it exists, alignment is assumed at UL corner and computation
+ *          is over the minimum intersection of %pixs and %pixm.
+ *          If you want the average of pixels under the mask fg, invert it.
+ *      (3) Set the range limits %minval = 0 and %maxval = 255 to use
+ *          all non-masked pixels (regardless of value) in the average.
+ *      (4) If no pixels are used in the averaging, the returned average
+ *          value is 0 and the function returns 2.  This is not an error,
+ *          but it says to disregard the returned average value.
+ *      (5) For example, to average all pixels in a given clipping rect %box,
+ *              pixAverageInRect(pixs, NULL, box, 0, 255, 1, &aveval);
+ * </pre>
  */
 l_ok
-pixAverageInRect(PIX        *pix,
+pixAverageInRect(PIX        *pixs,
+                 PIX        *pixm,
                  BOX        *box,
+                 l_int32     minval,
+                 l_int32     maxval,
+                 l_int32     subsamp,
                  l_float32  *pave)
 {
-l_int32    w, h, d, wpl, i, j, xstart, xend, ystart, yend, bw, bh;
-l_uint32  *data, *line;
-l_float64  ave;
+l_int32    w, h, d, wpls, wm, hm, dm, wplm, val, count;
+l_int32    i, j, xstart, xend, ystart, yend;
+l_uint32  *datas, *datam, *lines, *linem;
+l_float32  ave;
+l_float64  sum;
 
     PROCNAME("pixAverageInRect");
 
     if (!pave)
         return ERROR_INT("&ave not defined", procName, 1);
     *pave = 0;
-    if (!pix)
-        return ERROR_INT("pix not defined", procName, 1);
-    pixGetDimensions(pix, &w, &h, &d);
+    if (!pixs)
+        return ERROR_INT("pixs not defined", procName, 1);
+    if (pixGetColormap(pixs) != NULL)
+        return ERROR_INT("pixs is colormapped", procName, 1);
+    pixGetDimensions(pixs, &w, &h, &d);
     if (d != 1 && d != 2 && d != 4 && d != 8)
-        return ERROR_INT("pix not 1, 2, 4 or 8 bpp", procName, 1);
-    if (pixGetColormap(pix) != NULL)
-        return ERROR_INT("pix is colormapped", procName, 1);
+        return ERROR_INT("pixs not 1, 2, 4 or 8 bpp", procName, 1);
+    if (pixm) {
+        pixGetDimensions(pixm, &wm, &hm, &dm);
+        if (dm != 1)
+            return ERROR_INT("pixm not 1 bpp", procName, 1);
+        w = L_MIN(w, wm);
+        h = L_MIN(h, hm);
+    }
+    if (subsamp < 1)
+        return ERROR_INT("subsamp must be >= 1", procName, 1);
 
     if (boxClipToRectangleParams(box, w, h, &xstart, &ystart, &xend, &yend,
-                                 &bw, &bh) == 1)
+                                 NULL, NULL) == 1)
         return ERROR_INT("invalid clipping box", procName, 1);
 
-    wpl = pixGetWpl(pix);
-    data = pixGetData(pix);
-    ave = 0;
-    for (i = ystart; i < yend; i++) {
-        line = data + i * wpl;
-        for (j = xstart; j < xend; j++) {
+    datas = pixGetData(pixs);
+    wpls = pixGetWpl(pixs);
+    if (pixm) {
+        datam = pixGetData(pixm);
+        wplm = pixGetWpl(pixm);
+    }
+    sum = 0.0;
+    count = 0;
+    for (i = ystart; i < yend; i += subsamp) {
+        lines = datas + i * wpls;
+        if (pixm)
+            linem = datam + i * wplm;
+        for (j = xstart; j < xend; j += subsamp) {
+            if (pixm && (GET_DATA_BIT(linem, j) == 1))
+                continue;
             if (d == 1)
-                ave += GET_DATA_BIT(line, j);
+                val = GET_DATA_BIT(lines, j);
             else if (d == 2)
-                ave += GET_DATA_DIBIT(line, j);
+                val = GET_DATA_DIBIT(lines, j);
             else if (d == 4)
-                ave += GET_DATA_QBIT(line, j);
+                val = GET_DATA_QBIT(lines, j);
             else  /* d == 8 */
-                ave += GET_DATA_BYTE(line, j);
+                val = GET_DATA_BYTE(lines, j);
+            if (val >= minval && val <= maxval) {
+                sum += val;
+                count++;
+            }
         }
     }
 
-    *pave = ave / ((l_float32)(bw) * bh);
+    if (count == 0)
+        return 2;  /* not an error; don't use the average value (0.0) */
+    *pave = sum / (l_float32)count;
+    return 0;
+}
+
+
+/*-------------------------------------------------------------*
+ *             Average of pixel values in RGB images           *
+ *-------------------------------------------------------------*/
+/*!
+ * \brief   pixAverageInRectRGB()
+ *
+ * \param[in]    pixs     rgb; not cmapped
+ * \param[in]    pixm     [optional] 1 bpp mask; if null, use all pixels
+ * \param[in]    box      [optional] if null, use entire image
+ * \param[in]    subsamp  subsample factor: integer; use 1 for all pixels
+ * \param[out]   pave     average color of pixel values under consideration,
+ *                        in format 0xrrggbb00.
+ * \return  0 if OK; 1 on error; 2 if all pixels are filtered out
+ *
+ * <pre>
+ * Notes:
+ *      (1) The average is computed with 3 optional filters: a rectangle,
+ *          a mask, and subsampling.
+ *          In practice you might use only one or two of these.
+ *      (2) The mask %pixm is a blocking mask: only count pixels in the bg.
+ *          If it exists, alignment is assumed at UL corner and computation
+ *          is over the minimum intersection of %pixs and %pixm.
+ *          If you want the average of pixels under the mask fg, invert it.
+ *      (3) If no pixels are used in the averaging, the returned average
+ *          value is 0 and the function returns 2.  This is not an error,
+ *          but it says to disregard the returned average value.
+ *      (4) For example, to average all pixels in a given clipping rect %box,
+ *              pixAverageInRectRGB(pixs, NULL, box, 1, &aveval);
+ * </pre>
+ */
+l_ok
+pixAverageInRectRGB(PIX       *pixs,
+                    PIX       *pixm,
+                    BOX       *box,
+                    l_int32    subsamp,
+                    l_uint32  *pave)
+{
+l_int32    w, h, wpls, wm, hm, dm, wplm, i, j, xstart, xend, ystart, yend;
+l_int32    rval, gval, bval, rave, gave, bave, count;
+l_uint32  *datas, *datam, *lines, *linem;
+l_uint32   pixel;
+l_float64  rsum, gsum, bsum;
+
+    PROCNAME("pixAverageInRectRGB");
+
+    if (!pave)
+        return ERROR_INT("&ave not defined", procName, 1);
+    *pave = 0;
+    if (!pixs || pixGetDepth(pixs) != 32)
+        return ERROR_INT("pixs undefined or not 32 bpp", procName, 1);
+    pixGetDimensions(pixs, &w, &h, NULL);
+    if (pixm) {
+        pixGetDimensions(pixm, &wm, &hm, &dm);
+        if (dm != 1)
+            return ERROR_INT("pixm not 1 bpp", procName, 1);
+        w = L_MIN(w, wm);
+        h = L_MIN(h, hm);
+    }
+    if (subsamp < 1)
+        return ERROR_INT("subsamp must be >= 1", procName, 1);
+
+    if (boxClipToRectangleParams(box, w, h, &xstart, &ystart, &xend, &yend,
+                                 NULL, NULL) == 1)
+        return ERROR_INT("invalid clipping box", procName, 1);
+
+    datas = pixGetData(pixs);
+    wpls = pixGetWpl(pixs);
+    if (pixm) {
+        datam = pixGetData(pixm);
+        wplm = pixGetWpl(pixm);
+    }
+    rsum = gsum = bsum = 0.0;
+    count = 0;
+    for (i = ystart; i < yend; i += subsamp) {
+        lines = datas + i * wpls;
+        if (pixm)
+            linem = datam + i * wplm;
+        for (j = xstart; j < xend; j += subsamp) {
+            if (pixm && (GET_DATA_BIT(linem, j) == 1))
+                continue;
+            pixel = *(lines + j);
+            extractRGBValues(pixel, &rval, &gval, &bval);
+            rsum += rval;
+            gsum += gval;
+            bsum += bval;
+            count++;
+        }
+    }
+
+    if (count == 0)
+        return 2;  /* not an error */
+    rave = (l_uint32)(rsum / (l_float64)count);
+    gave = (l_uint32)(gsum / (l_float64)count);
+    bave = (l_uint32)(bsum / (l_float64)count);
+    composeRGBPixel(rave, gave, bave, pave);
     return 0;
 }
 
@@ -3365,9 +3575,9 @@ PIXA      *pixa;
         if (delm < 1.01) {
             if (dels < mindels) {
                 if (debug) {
-                    fprintf(stderr, "i = %d, mean = %7.3f, delm = %7.3f,"
-                            " stdev = %7.3f, dels = %7.3f\n",
-                            i, mean_val, delm, stdev_val, dels);
+                    lept_stderr("i = %d, mean = %7.3f, delm = %7.3f,"
+                                " stdev = %7.3f, dels = %7.3f\n",
+                                i, mean_val, delm, stdev_val, dels);
                 }
                 mindels = dels;
                 bestdelm = delm;

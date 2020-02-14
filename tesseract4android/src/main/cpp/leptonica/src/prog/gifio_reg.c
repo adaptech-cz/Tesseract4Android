@@ -54,13 +54,12 @@
  *             (note: no lossless mode; gif can't write out rgb)
  */
 
-#include <math.h>
-#include "allheaders.h"
-
-    /* Needed for HAVE_LIBGIF and or HAVE_LIBUNGIF */
 #ifdef HAVE_CONFIG_H
 #include <config_auto.h>
-#endif /* HAVE_CONFIG_H */
+#endif  /* HAVE_CONFIG_H */
+
+#include <math.h>
+#include "allheaders.h"
 
 #if HAVE_LIBGIF || HAVE_LIBUNGIF
 #include "gif_lib.h"
@@ -87,16 +86,17 @@ PIX          *pix;
 PIXA         *pixa;
 L_REGPARAMS  *rp;
 
+    if (regTestSetup(argc, argv, &rp))
+        return 1;
+
 #if !HAVE_LIBGIF && !HAVE_LIBUNGIF
     fprintf(stderr, "gifio is not enabled\n"
             "libgif or libungif are required for gifio_reg\n"
             "See environ.h: #define HAVE_LIBGIF or HAVE_LIBUNGIF 1\n"
             "See prog/Makefile: link in -lgif or -lungif\n\n");
-    return 1;
+    regTestCleanup(rp);
+    return 0;
 #endif  /* abort */
-
-    if (regTestSetup(argc, argv, &rp))
-        return 1;
 
         /* 5.1+ and not 5.1.2 */
     snprintf(buf, sizeof(buf), "%s_reg", rp->testname);

@@ -202,6 +202,10 @@
  *     each cluster.
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include <string.h>
 #include <math.h>
 #include "allheaders.h"
@@ -260,7 +264,6 @@ static l_int32 finalPositioningForAlignment(PIX *pixs, l_int32 x, l_int32 y,
 #ifndef NO_CONSOLE_IO
 #define  DEBUG_CORRELATION_SCORE   0
 #endif  /* ~NO_CONSOLE_IO */
-
 
 /*----------------------------------------------------------------------*
  *                            Initialization                            *
@@ -611,11 +614,15 @@ SEL        *sel;
     PROCNAME("jbClassifyRankHaus");
 
     if (!classer)
-        return ERROR_INT("classer not found", procName, 1);
+        return ERROR_INT("classer not defined", procName, 1);
     if (!boxa)
-        return ERROR_INT("boxa not found", procName, 1);
+        return ERROR_INT("boxa not defined", procName, 1);
     if (!pixas)
-        return ERROR_INT("pixas not found", procName, 1);
+        return ERROR_INT("pixas not defined", procName, 1);
+    if ((n = pixaGetCount(pixas)) == 0)
+        return ERROR_INT("pixas is empty", procName, 1);
+    if ((nafg = pixaCountPixels(pixas)) == NULL)  /* areas for this page */
+        return ERROR_INT("fg counting failed", procName, 1);
 
     npages = classer->npages;
     size = classer->sizehaus;
@@ -623,7 +630,6 @@ SEL        *sel;
 
         /* Generate the bordered pixa, with and without dilation.
          * pixa1 and pixa2 contain all the input components. */
-    n = pixaGetCount(pixas);
     pixa1 = pixaCreate(n);
     pixa2 = pixaCreate(n);
     for (i = 0; i < n; i++) {
@@ -740,8 +746,6 @@ SEL        *sel;
             }
         }
     } else {  /* rank < 1.0 */
-        if ((nafg = pixaCountPixels(pixas)) == NULL)  /* areas for this page */
-            return ERROR_INT("nafg not made", procName, 1);
         nafgt = classer->nafgt;
         tab8 = makePixelSumTab8();
         for (i = 0; i < n; i++) {   /* all instances on this page */
@@ -802,10 +806,10 @@ SEL        *sel;
             }
         }
         LEPT_FREE(tab8);
-        numaDestroy(&nafg);
     }
     classer->nclass = pixaGetCount(pixat);
 
+    numaDestroy(&nafg);
     ptaDestroy(&pta);
     pixaDestroy(&pixa1);
     pixaDestroy(&pixa2);
@@ -1221,19 +1225,19 @@ l_uint8     byte;
                 count = (l_int32)rint(sqrt(score * area1 * area2));
                 testcount = (l_int32)rint(sqrt(testscore * area1 * area2));
                 if ((score >= threshold) != (testscore >= threshold)) {
-                    fprintf(stderr, "Correlation score mismatch: "
-                            "%d(%g,%d) vs %d(%g,%d) (%g)\n",
-                            count, score, score >= threshold,
-                            testcount, testscore, testscore >= threshold,
-                            score - testscore);
+                    lept_stderr("Correlation score mismatch: "
+                                "%d(%g,%d) vs %d(%g,%d) (%g)\n",
+                                count, score, score >= threshold,
+                                testcount, testscore, testscore >= threshold,
+                                score - testscore);
                 }
 
                 if ((score >= threshold) != overthreshold) {
-                    fprintf(stderr, "Mismatch between correlation/threshold "
-                            "comparison: %g(%g,%d) >= %g(%g) vs %s\n",
-                            score, score*area1*area2, count, threshold,
-                            threshold*area1*area2,
-                            (overthreshold ? "true" : "false"));
+                    lept_stderr("Mismatch between correlation/threshold "
+                                "comparison: %g(%g,%d) >= %g(%g) vs %s\n",
+                                score, score*area1*area2, count, threshold,
+                                threshold*area1*area2,
+                                (overthreshold ? "true" : "false"));
                 }
             }
 #endif  /* DEBUG_CORRELATION_SCORE */
@@ -1534,23 +1538,17 @@ PIX      *pix1, *pix2;
          PIX   *pix3, *pix4;
             L_INFO("Best dilation: %d\n", procName, L_MAX(3, ibest + 1));
             naseq = numaMakeSequence(1, 1, numaGetCount(nacc));
-            gplot = gplotCreate("/tmp/lept/jb/numcc", GPLOT_PNG,
-                                "Number of cc vs. horizontal dilation",
-                                "Sel horiz", "Number of cc");
-            gplotAddPlot(gplot, naseq, nacc, GPLOT_LINES, "");
-            gplotMakeOutput(gplot);
-            gplotDestroy(&gplot);
-            pix3 = pixRead("/tmp/lept/jb/numcc.png");
+            pix3 = gplotGeneralPix2(naseq, nacc, GPLOT_LINES,
+                                    "/tmp/lept/jb/numcc",
+                                    "Number of cc vs. horizontal dilation",
+                                    "Sel horiz", "Number of cc");
             pixaAddPix(pixadb, pix3, L_INSERT);
             numaDestroy(&naseq);
             naseq = numaMakeSequence(1, 1, numaGetCount(nadiff));
-            gplot = gplotCreate("/tmp/lept/jb/diffcc", GPLOT_PNG,
-                                "Diff count of cc vs. horizontal dilation",
-                                "Sel horiz", "Diff in cc");
-            gplotAddPlot(gplot, naseq, nadiff, GPLOT_LINES, "");
-            gplotMakeOutput(gplot);
-            gplotDestroy(&gplot);
-            pix3 = pixRead("/tmp/lept/jb/diffcc.png");
+            pix3 = gplotGeneralPix2(naseq, nadiff, GPLOT_LINES,
+                                    "/tmp/lept/jb/diffcc",
+                                    "Diff count of cc vs. horizontal dilation",
+                                    "Sel horiz", "Diff in cc");
             pixaAddPix(pixadb, pix3, L_INSERT);
             numaDestroy(&naseq);
             pix3 = pixCloseBrick(NULL, pixs, ibest + 1, 1);
@@ -2061,11 +2059,11 @@ SARRAY   *sa;
     sscanf(linestr, "template lattice size: w = %d, h = %d\n", &cellw, &cellh);
 
 #if 1
-    fprintf(stderr, "num pages = %d\n", npages);
-    fprintf(stderr, "page size: w = %d, h = %d\n", w, h);
-    fprintf(stderr, "num components = %d\n", ncomp);
-    fprintf(stderr, "num classes = %d\n", nclass);
-    fprintf(stderr, "template lattice size: w = %d, h = %d\n", cellw, cellh);
+    lept_stderr("num pages = %d\n", npages);
+    lept_stderr("page size: w = %d, h = %d\n", w, h);
+    lept_stderr("num components = %d\n", ncomp);
+    lept_stderr("num classes = %d\n", nclass);
+    lept_stderr("template lattice size: w = %d, h = %d\n", cellw, cellh);
 #endif
 
     ninit = ncomp;
@@ -2275,7 +2273,7 @@ PTA       *ptac, *ptact, *ptaul;
         finalPositioningForAlignment(pixs, x, y, idelx, idely,
                                      pixt, sumtab, &dx, &dy);
 /*        if (i % 20 == 0)
-            fprintf(stderr, "dx = %d, dy = %d\n", dx, dy); */
+            lept_stderr("dx = %d, dy = %d\n", dx, dy); */
         ptaAddPt(ptaul, x - idelx + dx, y - idely + dy);
         boxDestroy(&box);
         pixDestroy(&pixt);

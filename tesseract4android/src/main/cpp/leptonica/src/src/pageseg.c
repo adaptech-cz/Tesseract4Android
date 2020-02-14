@@ -34,6 +34,7 @@
  *      Halftone region extraction
  *          PIX      *pixGenHalftoneMask()    **Deprecated wrapper**
  *          PIX      *pixGenerateHalftoneMask()
+
  *
  *      Textline extraction
  *          PIX      *pixGenTextlineMask()
@@ -69,8 +70,18 @@
  *      Largest white or black rectangles in an image
  *          l_int32   pixFindLargeRectangles()
  *          l_int32   pixFindLargestRectangle()
+ *
+ *      Generate rectangle inside connected component
+ *          BOX      *pixFindRectangleInCC()
+ *
+ *      Automatic photoinvert for OCR
+ *          PIX      *pixAutoPhotoinvert()
  * </pre>
  */
+
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
 
 #include "allheaders.h"
 #include "math.h"
@@ -148,32 +159,38 @@ PIX     *pixtb;    /* textblock mask */
 
         /* Remove small components from the mask, where a small
          * component is defined as one with both width and height < 60 */
-    pixtbf2 = pixSelectBySize(pixtb2, 60, 60, 4, L_SELECT_IF_EITHER,
-                              L_SELECT_IF_GTE, NULL);
-    pixDestroy(&pixtb2);
-    if (pixadb) pixaAddPix(pixadb, pixtbf2, L_COPY);
+    pixtbf2 = NULL;
+    if (pixtb2) {
+        pixtbf2 = pixSelectBySize(pixtb2, 60, 60, 4, L_SELECT_IF_EITHER,
+                                  L_SELECT_IF_GTE, NULL);
+        pixDestroy(&pixtb2);
+        if (pixadb) pixaAddPix(pixadb, pixtbf2, L_COPY);
+    }
 
         /* Expand all masks to full resolution, and do filling or
          * small dilations for better coverage. */
     pixhm = pixExpandReplicate(pixhm2, 2);
     pix1 = pixSeedfillBinary(NULL, pixhm, pixs, 8);
     pixOr(pixhm, pixhm, pix1);
+    pixDestroy(&pixhm2);
     pixDestroy(&pix1);
     if (pixadb) pixaAddPix(pixadb, pixhm, L_COPY);
 
     pix1 = pixExpandReplicate(pixtm2, 2);
     pixtm = pixDilateBrick(NULL, pix1, 3, 3);
+    pixDestroy(&pixtm2);
     pixDestroy(&pix1);
     if (pixadb) pixaAddPix(pixadb, pixtm, L_COPY);
 
-    pix1 = pixExpandReplicate(pixtbf2, 2);
-    pixtb = pixDilateBrick(NULL, pix1, 3, 3);
-    pixDestroy(&pix1);
-    if (pixadb) pixaAddPix(pixadb, pixtb, L_COPY);
-
-    pixDestroy(&pixhm2);
-    pixDestroy(&pixtm2);
-    pixDestroy(&pixtbf2);
+    if (pixtbf2) {
+        pix1 = pixExpandReplicate(pixtbf2, 2);
+        pixtb = pixDilateBrick(NULL, pix1, 3, 3);
+        pixDestroy(&pixtbf2);
+        pixDestroy(&pix1);
+        if (pixadb) pixaAddPix(pixadb, pixtb, L_COPY);
+    } else {
+        pixtb = pixCreateTemplate(pixs);  /* empty mask */
+    }
 
         /* Debug: identify objects that are neither text nor halftone image */
     if (pixadb) {
@@ -307,9 +324,9 @@ PIX     *pix1, *pix2, *pixhs, *pixhm, *pixd;
     }
 
         /* Compute seed for halftone parts at 8x reduction */
-    pix1 = pixReduceRankBinaryCascade(pixs, 4, 4, 3, 0);
+    pix1 = pixReduceRankBinaryCascade(pixs, 4, 4, 0, 0);
     pix2 = pixOpenBrick(NULL, pix1, 5, 5);
-    pixhs = pixExpandReplicate(pix2, 8);  /* back to 2x reduction */
+    pixhs = pixExpandReplicate(pix2, 4);  /* back to 2x reduction */
     pixDestroy(&pix1);
     pixDestroy(&pix2);
     if (pixadb) pixaAddPix(pixadb, pixhs, L_COPY);
@@ -320,10 +337,10 @@ PIX     *pix1, *pix2, *pixhs, *pixhm, *pixd;
 
         /* Fill seed into mask to get halftone mask */
     pixd = pixSeedfillBinary(NULL, pixhs, pixhm, 4);
+    if (pixadb) pixaAddPix(pixadb, pixd, L_COPY);
 
 #if 0
-        /* Moderate opening to remove thin lines, etc. */
-    pixOpenBrick(pixd, pixd, 10, 10);
+    pixOpenBrick(pixd, pixd, 9, 9);
 #endif
 
         /* Check if mask is empty */
@@ -418,7 +435,7 @@ PIX     *pix1, *pix2, *pixvws, *pixd;
          *   (1) close the characters and words in the textlines
          *   (2) open the vertical whitespace corridors back up
          *   (3) small opening to remove noise    */
-    pix1 = pixCloseSafeBrick(NULL, pixs, 30, 1);
+    pix1 = pixMorphSequence(pixs, "c30.1", 0);
     if (pixadb) pixaAddPix(pixadb, pix1, L_COPY);
     pixd = pixSubtract(NULL, pix1, pixvws);
     pixOpenBrick(pixd, pixd, 3, 3);
@@ -445,7 +462,7 @@ PIX     *pix1, *pix2, *pixvws, *pixd;
  * \param[in]    pixs     1 bpp, textline mask, assumed to be 150 to 200 ppi
  * \param[in]    pixvws   vertical white space mask
  * \param[in]    pixadb   input for collecting debug pix; use NULL to skip
- * \return  pixd textblock mask, or NULL on error
+ * \return  pixd textblock mask, or NULL if empty or on error
  *
  * <pre>
  * Notes:
@@ -465,7 +482,7 @@ pixGenTextblockMask(PIX   *pixs,
                     PIX   *pixvws,
                     PIXA  *pixadb)
 {
-l_int32  w, h;
+l_int32  w, h, empty;
 PIX     *pix1, *pix2, *pix3, *pixd;
 
     PROCNAME("pixGenTextblockMask");
@@ -482,6 +499,12 @@ PIX     *pix1, *pix2, *pix3, *pixd;
 
         /* Join pixels vertically to make a textblock mask */
     pix1 = pixMorphSequence(pixs, "c1.10 + o4.1", 0);
+    pixZero(pix1, &empty);
+    if (empty) {
+        pixDestroy(&pix1);
+        L_INFO("no fg pixels in textblock mask\n", procName);
+        return NULL;
+    }
     if (pixadb) pixaAddPix(pixadb, pix1, L_COPY);
 
         /* Solidify the textblock mask and remove noise:
@@ -818,7 +841,7 @@ PIX      *pix1, *pixdb;
          * side.  firstmin is the index of first possible minimum. */
     array1 = numaGetIArray(na1);
     array2 = numaGetIArray(na2);
-    if (ppixdebug) numaWriteStream(stderr, na2);
+    if (ppixdebug) numaWriteStderr(na2);
     firstmin = (array1[array2[0]] > array1[array2[1]]) ? 1 : 2;
     nasplit = numaCreate(n2);  /* will hold split locations */
     for (i = firstmin; i < n2 - 1; i+= 2) {
@@ -828,7 +851,7 @@ PIX      *pix1, *pixdb;
         nleft = array1[xmin - 2];
         nright = array1[xmin + 2];
         if (ppixdebug) {
-            fprintf(stderr,
+            lept_stderr(
                 "Splitting: xmin = %d, w = %d; nl = %d, nmin = %d, nr = %d\n",
                 xmin, w, nleft, nmin, nright);
         }
@@ -2140,4 +2163,304 @@ PIX       *pixw, *pixh;  /* keeps the width and height for the largest */
     pixDestroy(&pixw);
     pixDestroy(&pixh);
     return 0;
+}
+
+
+/*---------------------------------------------------------------------*
+ *            Generate rectangle inside connected component            *
+ *---------------------------------------------------------------------*/
+/*!
+ * \brief   pixFindRectangleInCC()
+ *
+ * \param[in]    pixs     1 bpp, with sufficient closings to make the fg be
+ *                        a single c.c. that is a convex hull
+ * \param[in]    boxs     [optional] if NULL, %pixs should be a minimum
+ *                        container of a single c.c.
+ * \param[in]    fract    first and all consecutive lines found must be at
+ *                        least this fraction of the fast scan dimension
+ * \param[in]    dir      L_SCAN_HORIZONTAL, L_SCAN_VERTICAL; direction of
+ *                        fast scan
+ * \param[in]    select   L_GEOMETRIC_UNION, L_GEOMETRIC_INTERSECTION,
+ *                        L_LARGEST_AREA, L_SMALEST_AREA
+ * \param[in]    debug    if 1, generates output pdf showing intermediate
+ *                        computation and final result
+ * \return  box  of included rectangle, or NULL on error
+ *
+ * <pre>
+ * Notes:
+ *      (1) Computation is similar to pixFindLargestRectangle(), but allows
+ *          a different set of results to choose from.
+ *      (2) Select the fast scan direction.  Then, scanning in the slow
+ *          direction, finds the longest run of ON pixels in the fast
+ *          scan direction and look for the first first run that is longer
+ *          than %fract of the dimension.  Continues until a shorter run
+ *          is found.  This generates a box of ON pixels fitting into the c.c.
+ *      (3) Do this from both slow scan directions and use %select to get
+ *          a resulting box from these two.
+ *      (4) The extracted rectangle is not necessarily the largest that
+ *          can fit in the c.c.  To get that, use pixFindLargestRectangle().
+ */
+BOX *
+pixFindRectangleInCC(PIX       *pixs,
+                     BOX       *boxs,
+                     l_float32  fract,
+                     l_int32    dir,
+                     l_int32    select,
+                     l_int32    debug)
+{
+l_int32  x, y, i, j, w, h, w1, h1, w2, h2, found, res;
+l_int32  xfirst, xlast, xstart, yfirst, ylast, length;
+BOX     *box1, *box2, *box3, *box4, *box5;
+PIX     *pix1, *pix2, *pixdb1, *pixdb2;
+PIXA    *pixadb;
+
+    PROCNAME("pixFindRectangleInCC");
+
+    if (!pixs || pixGetDepth(pixs) != 1)
+        return (BOX *)ERROR_PTR("pixs undefined or not 1 bpp", procName, NULL);
+    if (fract <= 0.0 || fract > 1.0)
+        return (BOX *)ERROR_PTR("invalid fraction", procName, NULL);
+    if (dir != L_SCAN_VERTICAL && dir != L_SCAN_HORIZONTAL)
+        return (BOX *)ERROR_PTR("invalid scan direction", procName, NULL);
+    if (select != L_GEOMETRIC_UNION && select != L_GEOMETRIC_INTERSECTION &&
+        select != L_LARGEST_AREA && select != L_SMALLEST_AREA)
+        return (BOX *)ERROR_PTR("invalid select", procName, NULL);
+
+        /* Extract the c.c. if necessary */
+    x = y = 0;
+    if (boxs) {
+        pix1 = pixClipRectangle(pixs, boxs, NULL);
+        boxGetGeometry(boxs, &x, &y, NULL, NULL);
+    } else {
+        pix1 = pixClone(pixs);
+    }
+
+        /* All fast scans are horizontal; rotate 90 deg cw if necessary */
+    if (dir == L_SCAN_VERTICAL)
+        pix2 = pixRotate90(pix1, 1);
+    else  /* L_SCAN_HORIZONTAL */
+        pix2 = pixClone(pix1);
+    pixGetDimensions(pix2, &w, &h, NULL);
+
+    pixadb = (debug) ? pixaCreate(0) : NULL;
+    pixdb1 = NULL;
+    if (pixadb) {
+        lept_mkdir("lept/rect");
+        pixaAddPix(pixadb, pix1, L_CLONE);
+        pixdb1 = pixConvertTo32(pix2);
+    }
+    pixDestroy(&pix1);
+
+        /* Scanning down, find the first scanline with a long enough run.
+         * That run goes from (xfirst, yfirst) to (xlast, yfirst).  */
+    found = FALSE;
+    for (i = 0; i < h; i++) {
+        pixFindMaxHorizontalRunOnLine(pix2, i, &xstart, &length);
+        if (length >= (l_int32)(fract * w + 0.5)) {
+            yfirst = i;
+            xfirst = xstart;
+            xlast = xfirst + length - 1;
+            found = TRUE;
+            break;
+        }
+    }
+    if (!found) {
+        L_WARNING("no run of sufficient size was found\n", procName);
+        pixDestroy(&pix2);
+        pixDestroy(&pixdb1);
+        pixaDestroy(&pixadb);
+        return NULL;
+    }
+
+         /* Continue down until the condition fails */
+    w1 = xlast - xfirst + 1;
+    h1 = h - yfirst;  /* initialize */
+    for (i = yfirst + 1; i < h; i++) {
+        pixFindMaxHorizontalRunOnLine(pix2, i, &xstart, &length);
+        if (xstart > xfirst || (xstart + length - 1 < xlast) ||
+            i == h - 1) {
+            ylast = i - 1;
+            h1 = ylast - yfirst + 1;
+            break;
+        }
+    }
+    box1 = boxCreate(xfirst, yfirst, w1, h1);
+
+        /* Scanning up, find the first scanline with a long enough run.
+         * That run goes from (xfirst, ylast) to (xlast, ylast).  */
+    for (i = h - 1; i >= 0; i--) {
+        pixFindMaxHorizontalRunOnLine(pix2, i, &xstart, &length);
+        if (length >= (l_int32)(fract * w + 0.5)) {
+            ylast = i;
+            xfirst = xstart;
+            xlast = xfirst + length - 1;
+            break;
+        }
+    }
+
+         /* Continue up until the condition fails */
+    w2 = xlast - xfirst + 1;
+    h2 = ylast + 1;  /* initialize */
+    for (i = ylast - 1; i >= 0; i--) {
+        pixFindMaxHorizontalRunOnLine(pix2, i, &xstart, &length);
+        if (xstart > xfirst || (xstart + length - 1 < xlast) ||
+            i == 0) {
+            yfirst = i + 1;
+            h2 = ylast - yfirst + 1;
+            break;
+        }
+    }
+    box2 = boxCreate(xfirst, yfirst, w2, h2);
+    pixDestroy(&pix2);
+
+    if (pixadb) {
+        pixRenderBoxArb(pixdb1, box1, 2, 255, 0, 0);
+        pixRenderBoxArb(pixdb1, box2, 2, 0, 255, 0);
+        pixaAddPix(pixadb, pixdb1, L_INSERT);
+    }
+
+        /* Select the final result from the two boxes */
+    if (select == L_GEOMETRIC_UNION)
+        box3 = boxBoundingRegion(box1, box2);
+    else if (select == L_GEOMETRIC_INTERSECTION)
+        box3 = boxOverlapRegion(box1, box2);
+    else if (select == L_LARGEST_AREA)
+        box3 = (w1 * h1 >= w2 * h2) ? boxCopy(box1) : boxCopy(box2);
+    else  /* select == L_SMALLEST_AREA) */
+        box3 = (w1 * h1 <= w2 * h2) ? boxCopy(box1) : boxCopy(box2);
+    boxDestroy(&box1);
+    boxDestroy(&box2);
+
+        /* Rotate the box 90 degrees ccw if necessary */
+    box4 = NULL;
+    if (box3) {
+        if (dir == L_SCAN_VERTICAL)
+            box4 = boxRotateOrth(box3, w, h, 3);
+        else
+            box4 = boxCopy(box3);
+    }
+
+        /* Transform back to global coordinates if %boxs exists */
+    box5 = (box4) ? boxTransform(box4, x, y, 1.0, 1.0) : NULL;
+    boxDestroy(&box3);
+    boxDestroy(&box4);
+
+        /* Debug output */
+    if (pixadb) {
+        pixdb1 = pixConvertTo8(pixs, 0);
+        pixAddConstantGray(pixdb1, 190);
+        pixdb2 = pixConvertTo32(pixdb1);
+        if (box5) pixRenderBoxArb(pixdb2, box5, 4, 0, 0, 255);
+        pixaAddPix(pixadb, pixdb2, L_INSERT);
+        res = pixGetXRes(pixs);
+        L_INFO("Writing debug files to /tmp/lept/rect/\n", procName);
+        pixaConvertToPdf(pixadb, res, 1.0, L_DEFAULT_ENCODE, 75, NULL,
+                        "/tmp/lept/rect/fitrect.pdf");
+        pix1 = pixaDisplayTiledAndScaled(pixadb, 32, 800, 1, 0, 40, 2);
+        pixWrite("/tmp/lept/rect/fitrect.png", pix1, IFF_PNG);
+        pixDestroy(&pix1);
+        pixDestroy(&pixdb1);
+        pixaDestroy(&pixadb);
+    }
+
+    return box5;
+}
+
+/*------------------------------------------------------------------*
+ *                    Automatic photoinvert for OCR                 *
+ *------------------------------------------------------------------*/
+/*!
+ * \brief   pixAutoPhotoinvert()
+ *
+ * \param[in]    pixs       any depth, colormap ok
+ * \param[in]    thresh     binarization threshold; use 0 for default
+ * \param[out]   ppixm      [optional] image regions to be inverted
+ * \param[out]   pixadb     [optional] debug; input NULL to skip
+ * \return  pixd   1 bpp image to be sent to OCR, or NULL on error
+ *
+ * <pre>
+ * Notes:
+ *      (1) A 1 bpp image is returned, where pixels in image regions are
+ *          photo-inverted.
+ *      (2) If there is light text with a dark background, this will
+ *          identify the region and photoinvert the pixels there if
+ *          there are at least 60% fg pixels in the region.
+ *      (3) For debug output, input a (typically empty) %pixadb.
+ * </pre>
+ */
+PIX *
+pixAutoPhotoinvert(PIX       *pixs,
+                   l_int32    thresh,
+                   PIX      **ppixm,
+                   PIXA      *pixadb)
+{
+l_int32    i, n, empty, x, y, w, h;
+l_float32  fgfract;
+BOX       *box1;
+BOXA      *boxa1;
+PIX       *pix1, *pix2, *pix3, *pix4, *pix5;
+PIXA      *pixa1;
+
+    PROCNAME("pixAutoPhotoinvert");
+
+    if (ppixm) *ppixm = NULL;
+    if (!pixs)
+        return (PIX *)ERROR_PTR("pixs not defined", procName, NULL);
+    if (thresh == 0) thresh = 128;
+
+    if ((pix1 = pixConvertTo1(pixs, thresh)) == NULL)
+        return (PIX *)ERROR_PTR("pix1 not made", procName, NULL);
+    if (pixadb) pixaAddPix(pixadb, pix1, L_COPY);
+
+        /* Make the halftone mask to identify region for photo-inversion */
+    pix2 = pixGenerateHalftoneMask(pix1, NULL, NULL, pixadb);
+    pix3 = pixMorphSequence(pix2, "o15.15 + c25.25", 0);  /* clean it up */
+    if (pixadb) {
+        pixaAddPix(pixadb, pix2, L_CLONE);
+        pixaAddPix(pixadb, pix3, L_COPY);
+    }
+    pixDestroy(&pix2);
+    pixZero(pix3, &empty);
+    if (empty) {
+        pixDestroy(&pix3);
+        return pix1;
+    }
+
+        /* Examine each component and validate the inversion.
+         * Require at least 60% of pixels under each component to be FG. */
+    boxa1 = pixConnCompBB(pix3, 8);
+    n = boxaGetCount(boxa1);
+    for (i = 0; i < n; i++) {
+        box1 = boxaGetBox(boxa1, i, L_COPY);
+        pix5 = pixClipRectangle(pix1, box1, NULL);
+        pixForegroundFraction(pix5, &fgfract);
+        if (pixadb) lept_stderr("fg fraction: %5.3f\n", fgfract);
+        if (fgfract < 0.6) {  /* erase from the mask */
+            boxGetGeometry(box1, &x, &y, &w, &h);
+            pixRasterop(pix3, x, y, w, h, PIX_CLR, NULL, 0, 0);
+        }
+        pixDestroy(&pix5);
+        boxDestroy(&box1);
+    }
+    boxaDestroy(&boxa1);
+    pixZero(pix3, &empty);
+    if (empty) {
+        pixDestroy(&pix3);
+        return pix1;
+    }
+
+        /* Combine pixels of the photo-inverted pix with the binarized input */
+    pix4 = pixInvert(NULL, pix1);
+    pixCombineMasked(pix1, pix4, pix3);
+
+    if (pixadb) {
+        pixaAddPix(pixadb, pix4, L_CLONE);
+        pixaAddPix(pixadb, pix1, L_COPY);
+    }
+    pixDestroy(&pix4);
+    if (ppixm)
+        *ppixm = pix3;
+    else
+        pixDestroy(&pix3);
+    return pix1;
 }

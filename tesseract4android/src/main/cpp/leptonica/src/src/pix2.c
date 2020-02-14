@@ -41,6 +41,7 @@
  *           l_int32     pixSetPixel()
  *           l_int32     pixGetRGBPixel()
  *           l_int32     pixSetRGBPixel()
+ *           l_int32     pixSetCmapPixel()
  *           l_int32     pixGetRandomPixel()
  *           l_int32     pixClearPixel()
  *           l_int32     pixFlipPixel()
@@ -103,6 +104,9 @@
  *           l_int32     extractMinMaxComponent()
  *           l_int32     pixGetRGBLine()
  *
+ *      Raster line pixel setter
+ *           l_int32     setLineDataVal()
+ *
  *      Conversion between big and little endians
  *           PIX        *pixEndianByteSwapNew()
  *           l_int32     pixEndianByteSwap()
@@ -125,6 +129,9 @@
  * </pre>
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
 
 #include <string.h>
 #include "allheaders.h"
@@ -362,7 +369,7 @@ l_uint32  *data, *ppixel;
  *
  * Notes:
  *      (1) If the point is outside the image, this returns an error (2),
- *          with 0 in %pval.  To avoid spamming output, it fails silently.
+ *          and to avoid spamming output, it fails silently.
  */
 l_ok
 pixSetRGBPixel(PIX     *pix,
@@ -391,6 +398,65 @@ l_uint32  *data, *line;
     line = data + y * wpl;
     composeRGBPixel(rval, gval, bval, &pixel);
     *(line + x) = pixel;
+    return 0;
+}
+
+
+/*!
+ * \brief   pixSetCmapPixel()
+ *
+ * \param[in]    pix    2, 4 or 8 bpp, colormapped
+ * \param[in]    x,y    pixel coords
+ * \param[in]    rval   red component
+ * \param[in]    gval   green component
+ * \param[in]    bval   blue component
+ * \return  0 if OK; 1 or 2 on error
+ *
+ * Notes:
+ *      (1) If the point is outside the image, this returns an error (2),
+ *          and to avoid spamming output, it fails silently.
+ *      (2) - If the color already exists, use it.
+ *          - If the color does not exist in the colormap, it is added
+ *            if possible.
+ *          - If there is not room in the colormap for the new color:
+ *            * if d < 8, return 2 with a warning.
+ *            * if d == 8, find and use the nearest color.
+ *      (3) Note that this operation scales with the number of colors
+ *          in the colormap, and therefore can be very expensive if an
+ *          attempt is made to set many pixels.  (In that case, it should
+ *          be implemented with a map:rgb-->index for efficiency.)
+ *          This is best used with very small images.
+ */
+l_ok
+pixSetCmapPixel(PIX     *pix,
+                l_int32  x,
+                l_int32  y,
+                l_int32  rval,
+                l_int32  gval,
+                l_int32  bval)
+{
+l_int32   w, h, d, index;
+PIXCMAP  *cmap;
+
+    PROCNAME("pixSetCmapPixel");
+
+    if (!pix)
+        return ERROR_INT("pix not defined", procName, 1);
+    if ((cmap = pixGetColormap(pix)) == NULL)
+        return ERROR_INT("pix is not colormapped", procName, 1);
+    pixGetDimensions(pix, &w, &h, &d);
+    if (d != 2 && d != 4 && d != 8)
+        return ERROR_INT("pix depth not 2, 4 or 8", procName, 1);
+    if (x < 0 || x >= w || y < 0 || y >= h)
+        return 2;
+
+    if (d == 8) {  /* always add */
+        pixcmapAddNearestColor(cmap, rval, gval, bval, &index);
+    } else {  /* d < 8 */
+        if (pixcmapAddNewColor(cmap, rval, gval, bval, &index) == 2)
+            return ERROR_INT("colormap is full", procName, 2);
+    }
+    pixSetPixel(pix, x, y, index);
     return 0;
 }
 
@@ -626,7 +692,7 @@ setPixelLow(l_uint32  *line,
         line[x] = val;
         break;
     default:
-        fprintf(stderr, "illegal depth in setPixelLow()\n");
+        lept_stderr("illegal depth in setPixelLow()\n");
     }
 
     return;
@@ -2678,8 +2744,9 @@ composeRGBPixel(l_int32    rval,
     if (!ppixel)
         return ERROR_INT("&pixel not defined", procName, 1);
 
-    *ppixel = ((l_uint32)rval << L_RED_SHIFT) | (gval << L_GREEN_SHIFT) |
-              (bval << L_BLUE_SHIFT);
+    *ppixel = ((l_uint32)rval << L_RED_SHIFT) |
+              ((l_uint32)gval << L_GREEN_SHIFT) |
+              ((l_uint32)bval << L_BLUE_SHIFT);
     return 0;
 }
 
@@ -2710,8 +2777,10 @@ composeRGBAPixel(l_int32    rval,
     if (!ppixel)
         return ERROR_INT("&pixel not defined", procName, 1);
 
-    *ppixel = ((l_uint32)rval << L_RED_SHIFT) | (gval << L_GREEN_SHIFT) |
-              (bval << L_BLUE_SHIFT) | aval;
+    *ppixel = ((l_uint32)rval << L_RED_SHIFT) |
+              ((l_uint32)gval << L_GREEN_SHIFT) |
+              ((l_uint32)bval << L_BLUE_SHIFT) |
+              aval;
     return 0;
 }
 
@@ -2844,6 +2913,56 @@ l_int32    wpls;
         bufb[j] = GET_DATA_BYTE(lines + j, COLOR_BLUE);
     }
 
+    return 0;
+}
+
+
+/*-------------------------------------------------------------*
+ *                   Raster line pixel setter                  *
+ *-------------------------------------------------------------*/
+/*!
+ * \brief   setLineDataVal()
+ *
+ * \param[in]    line    ptr to first word in raster line data
+ * \param[in]    j       index of pixels into the raster line
+ * \param[in]    d       depth of the pixel
+ * \param[in]    val     pixel value to be set
+ * \return  0 if OK, 1 on error
+ *
+ * <pre>
+ * Notes:
+ *      (1) This is a convenience function to set a pixel value in a
+ *          raster line where the depth of the image can have different
+ *          values (1, 2, 4, 8, 16 or 32).
+ * </pre>
+ */
+l_ok
+setLineDataVal(l_uint32  *line,
+               l_int32    j,
+               l_int32    d,
+               l_uint32   val)
+{
+    PROCNAME("setLineDataVal");
+
+    if (!line)
+        return ERROR_INT("line not defined", procName, 1);
+    if (j < 0)
+        return ERROR_INT("j must be >= 0", procName, 1);
+    if (d != 1 && d != 2 && d != 4 && d != 8 && d != 16 && d != 32)
+        return ERROR_INT("invalid d", procName, 1);
+
+    if (d == 1)
+        SET_DATA_BIT_VAL(line, j, val);
+    else if (d == 2)
+        SET_DATA_DIBIT(line, j, val);
+    else if (d == 4)
+        SET_DATA_QBIT(line, j, val);
+    else if (d == 8)
+        SET_DATA_BYTE(line, j, val);
+    else if (d == 16)
+        SET_DATA_TWO_BYTES(line, j, val);
+    else  /* d == 32 */
+        *(line + j) = val;
     return 0;
 }
 

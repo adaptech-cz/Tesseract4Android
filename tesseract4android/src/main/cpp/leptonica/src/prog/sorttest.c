@@ -31,6 +31,10 @@
  *   in increasing or decreasing order.
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include "allheaders.h"
 
 int main(int    argc,
@@ -38,8 +42,7 @@ int main(int    argc,
 {
 char        *filein;
 l_int32      i, n, ns;
-BOX         *box;
-BOXA        *boxa, *boxas;
+BOXA        *boxa;
 PIX         *pixs, *pixt;
 PIXA        *pixa, *pixas, *pixas2;
 static char  mainName[] = "sorttest";

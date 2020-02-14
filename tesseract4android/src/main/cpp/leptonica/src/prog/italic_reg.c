@@ -24,12 +24,17 @@
  -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
+
 /*
  *  italic_reg.c
  *
  *     This demonstrates binary reconstruction for finding italic text.
  *     It also tests debug output of word masking.
  */
+
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
 
 #include "allheaders.h"
 

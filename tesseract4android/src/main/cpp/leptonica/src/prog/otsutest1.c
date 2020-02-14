@@ -28,6 +28,10 @@
  *   otsutest1.c
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include <math.h>
 #include "allheaders.h"
 
@@ -60,16 +64,14 @@ PIXA    *pixa;
     for (i = 0; i < NTests; i++) {
         snprintf(buf, sizeof(buf), "/tmp/lept/otsu/plot.%d.png", i);
         pix = pixRead(buf);
-        pixSaveTiled(pix, pixa, 1.0, 1, 25, 32);
-        pixDestroy(&pix);
+        pixaAddPix(pixa, pix, L_INSERT);
         snprintf(buf, sizeof(buf), "/tmp/lept/otsu/plots.%d.png", i);
         pix = pixRead(buf);
-        pixSaveTiled(pix, pixa, 1.0, 0, 25, 32);
-        pixDestroy(&pix);
+        pixaAddPix(pixa, pix, L_INSERT);
     }
 
         /* ... and save into a tiled pix  */
-    pix = pixaDisplay(pixa, 0, 0);
+    pix = pixaDisplayTiledInColumns(pixa, 2, 1.0, 25, 0);
     pixWrite("/tmp/lept/otsu/plot.png", pix, IFF_PNG);
     pixDisplay(pix, 100, 100);
     pixaDestroy(&pixa);

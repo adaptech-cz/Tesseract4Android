@@ -57,6 +57,10 @@
  *   ***************************************************************
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include "allheaders.h"
 
 #define  USE_COMPRESSED    1
@@ -83,8 +87,7 @@ static char  mainName[] = "printsplitimage";
     filein = argv[1];
     nx = atoi(argv[2]);
     ny = atoi(argv[3]);
-    if (argc == 5)
-        printer = argv[4];
+    printer = (argc == 5) ? argv[4] : NULL;
 
     fprintf(stderr,
          "\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"

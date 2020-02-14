@@ -64,14 +64,17 @@
  * </pre>
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include <math.h>
 #include "allheaders.h"
 
     /* For more than this number of c.c. in a binarized image of
      * semi-perimeter (w + h) about 5000 or less, the O(n) binsort
      * is faster than the O(nlogn) shellsort.  */
-static const l_int32   MIN_COMPS_FOR_BIN_SORT = 200;
-
+static const l_int32   MinCompsForBinSort = 200;
 
 /*---------------------------------------------------------------------*
  *      Boxa/Box transform (shift, scale) and orthogonal rotation      *
@@ -662,7 +665,7 @@ NUMA      *na, *naindex;
         return (BOXA *)ERROR_PTR("invalid sort order", procName, NULL);
 
         /* Use O(n) binsort if possible */
-    if (n > MIN_COMPS_FOR_BIN_SORT &&
+    if (n > MinCompsForBinSort &&
         ((sorttype == L_SORT_BY_X) || (sorttype == L_SORT_BY_Y) ||
          (sorttype == L_SORT_BY_WIDTH) || (sorttype == L_SORT_BY_HEIGHT) ||
          (sorttype == L_SORT_BY_PERIMETER)))
@@ -867,9 +870,9 @@ BOXA    *boxad;
  * \param[in]    boxas
  * \param[out]   pnaad    [optional] numaa with sorted indices
  *                        whose values are the indices of the input array
- * \param[in]    delta1   min overlap that permits aggregation of a box
+ * \param[in]    delta1   min separation that permits aggregation of a box
  *                        onto a boxa of horizontally-aligned boxes; pass 1
- * \param[in]    delta2   min overlap that permits aggregation of a box
+ * \param[in]    delta2   min separation that permits aggregation of a box
  *                        onto a boxa of horizontally-aligned boxes; pass 2
  * \param[in]    minh1    components less than this height either join an
  *                        existing boxa or are set aside for pass 2
@@ -890,11 +893,12 @@ BOXA    *boxad;
  *          is overlapping are joined.  After that, the boxes in each
  *          boxa are sorted horizontally, and finally the boxa are
  *          sorted vertically.
- *      (3) If delta1 < 0, the first pass allows aggregation when
- *          boxes in the same boxa do not overlap vertically.
- *          The distance by which they can miss and still be aggregated
- *          is the absolute value |delta1|.   Similar for delta2 on
- *          the second pass.
+ *      (3) If %delta1 > 0, the first pass allows aggregation when
+ *          boxes in the same boxa do not overlap vertically.  In fact,
+ *          %delta1 is the max distance by which they can miss and still
+ *          be aggregated.  If %delta1 < 0, the box must have vertical
+ *          overlap of at least abs(%delta1) with the boxa before it
+ *          can be merged.  Similar for delta2 on the second pass.
  *      (4) On the first pass, any component of height less than minh1
  *          cannot start a new boxa; it's put aside for later insertion.
  *      (5) On the second pass, any small component that doesn't align
@@ -1070,7 +1074,7 @@ NUMAA   *naa, *naa1, *naad;
     }
 
 
-/*    fprintf(stderr, "box count = %d, numaa count = %d\n", nt,
+/*    lept_stderr("box count = %d, numaa count = %d\n", nt,
             numaaGetNumberCount(naad)); */
 
     boxaaDestroy(&baa);
@@ -1300,9 +1304,9 @@ l_int32  i, n, left, top, right, bot, w, h;
  * \brief   boxaExtractCorners()
  *
  * \param[in]    boxa
- * \param[in]    corner    L_UPPER_LEFT, L_UPPER_RIGHT, L_LOWER_LEFT,
- *                         L_LOWER_RIGHT
- * \return  pta of corner coordinates, or NULL on error
+ * \param[in]    loc       L_UPPER_LEFT, L_UPPER_RIGHT, L_LOWER_LEFT,
+ *                         L_LOWER_RIGHT, L_BOX_CENTER
+ * \return  pta of requested coordinates, or NULL on error
  *
  * <pre>
  * Notes:
@@ -1316,7 +1320,7 @@ l_int32  i, n, left, top, right, bot, w, h;
  */
 PTA *
 boxaExtractCorners(BOXA    *boxa,
-                   l_int32  corner)
+                   l_int32  loc)
 {
 l_int32  i, n, left, top, right, bot, w, h;
 PTA     *pta;
@@ -1325,9 +1329,9 @@ PTA     *pta;
 
     if (!boxa)
         return (PTA *)ERROR_PTR("boxa not defined", procName, NULL);
-    if (corner != L_UPPER_LEFT && corner != L_UPPER_RIGHT &&
-        corner != L_LOWER_LEFT && corner != L_LOWER_RIGHT)
-        return (PTA *)ERROR_PTR("invalid corner", procName, NULL);
+    if (loc != L_UPPER_LEFT && loc != L_UPPER_RIGHT && loc != L_LOWER_LEFT &&
+        loc != L_LOWER_RIGHT && loc != L_BOX_CENTER)
+        return (PTA *)ERROR_PTR("invalid location", procName, NULL);
 
     n = boxaGetCount(boxa);
     if ((pta = ptaCreate(n)) == NULL)
@@ -1343,14 +1347,16 @@ PTA     *pta;
             right = 0;
             bot = 0;
         }
-        if (corner == L_UPPER_LEFT)
+        if (loc == L_UPPER_LEFT)
             ptaAddPt(pta, left, top);
-        else if (corner == L_UPPER_RIGHT)
+        else if (loc == L_UPPER_RIGHT)
             ptaAddPt(pta, right, top);
-        else if (corner == L_LOWER_LEFT)
+        else if (loc == L_LOWER_LEFT)
             ptaAddPt(pta, left, bot);
-        else if (corner == L_LOWER_RIGHT)
+        else if (loc == L_LOWER_RIGHT)
             ptaAddPt(pta, right, bot);
+        else if (loc == L_BOX_CENTER)
+            ptaAddPt(pta, (left + right) / 2, (top + bot) / 2);
     }
 
     return pta;

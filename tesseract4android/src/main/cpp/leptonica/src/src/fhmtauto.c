@@ -90,6 +90,10 @@
  * </pre>
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include <string.h>
 #include "allheaders.h"
 
@@ -296,9 +300,9 @@ SARRAY  *sa1, *sa2, *sa3;
     str_doc1 = stringNew(bigbuf);
     sprintf(bigbuf, " *             PIX     *pixFHMTGen_%d()", fileindex);
     str_doc2 = stringNew(bigbuf);
-    sprintf(bigbuf, " *  pixHMTDwa_%d()", fileindex);
+    sprintf(bigbuf, " * \\brief  pixHMTDwa_%d()", fileindex);
     str_doc3 = stringNew(bigbuf);
-    sprintf(bigbuf, " *  pixFHMTGen_%d()", fileindex);
+    sprintf(bigbuf, " * \\brief  pixFHMTGen_%d()", fileindex);
     str_doc4 = stringNew(bigbuf);
     sprintf(bigbuf, "pixHMTDwa_%d(PIX         *pixd,", fileindex);
     str_def1 = stringNew(bigbuf);
@@ -585,7 +589,8 @@ SEL     *sel;
             }
         }
         if (nhits == 0) {
-            linestr = stringNew("    fprintf(stderr, \"Error in HMT: no hits in sel!\\n\");\n}\n\n");
+            linestr = stringNew("    "
+                "lept_stderr(\"Error in HMT: no hits in sel!\\n\");\n}\n\n");
             sarrayAddString(sa4, linestr, L_INSERT);
             continue;
         }

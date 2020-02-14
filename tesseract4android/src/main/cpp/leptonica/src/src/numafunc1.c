@@ -137,9 +137,12 @@
  * </pre>
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include <math.h>
 #include "allheaders.h"
-
 
 /*----------------------------------------------------------------------*
  *                Arithmetic and logical ops on Numas                   *
@@ -212,7 +215,7 @@ l_float32  val1, val2;
             numaSetValue(nad, i, val1 / val2);
             break;
         default:
-            fprintf(stderr, " Unknown arith op: %d\n", op);
+            lept_stderr(" Unknown arith op: %d\n", op);
             return nad;
         }
     }
@@ -290,7 +293,7 @@ l_int32  i, n, val1, val2, val;
             numaSetValue(nad, i, val);
             break;
         default:
-            fprintf(stderr, " Unknown logical op: %d\n", op);
+            lept_stderr(" Unknown logical op: %d\n", op);
             return nad;
         }
     }
@@ -3139,8 +3142,8 @@ numaGetMedian(NUMA       *na,
     if (!pval)
         return ERROR_INT("&val not defined", procName, 1);
     *pval = 0.0;  /* init */
-    if (!na)
-        return ERROR_INT("na not defined", procName, 1);
+    if (!na || numaGetCount(na) == 0)
+        return ERROR_INT("na not defined or empty", procName, 1);
 
     return numaGetRankValue(na, 0.5, NULL, 0, pval);
 }
@@ -3173,8 +3176,8 @@ l_float32  fval;
     if (!pval)
         return ERROR_INT("&val not defined", procName, 1);
     *pval = 0;  /* init */
-    if (!na)
-        return ERROR_INT("na not defined", procName, 1);
+    if (!na || numaGetCount(na) == 0)
+        return ERROR_INT("na not defined or empty", procName, 1);
 
     ret = numaGetRankValue(na, 0.5, NULL, 1, &fval);
     *pval = lept_roundftoi(fval);
@@ -3251,8 +3254,8 @@ NUMA      *nadev;
     if (!pdev)
         return ERROR_INT("&dev not defined", procName, 1);
     *pdev = 0.0;
-    if (!na)
-        return ERROR_INT("na not defined", procName, 1);
+    if (!na || numaGetCount(na) == 0)
+        return ERROR_INT("na not defined or empty", procName, 1);
 
     numaGetMedian(na, &med);
     if (pmed) *pmed = med;
@@ -3304,7 +3307,7 @@ NUMA       *nasort;
     if (!na)
         return ERROR_INT("na not defined", procName, 1);
     if ((n = numaGetCount(na)) == 0)
-        return 1;
+        return ERROR_INT("na is empty", procName, 1);
 
     if ((nasort = numaSort(NULL, na, L_SORT_DECREASING)) == NULL)
         return ERROR_INT("nas not made", procName, 1);

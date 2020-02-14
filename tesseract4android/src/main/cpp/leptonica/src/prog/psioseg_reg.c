@@ -44,6 +44,10 @@
  *        this program uses ps2pdf to generate the pdf output.
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include "allheaders.h"
 
 int main(int    argc,
@@ -59,6 +63,13 @@ L_REGPARAMS  *rp;
 
     if (regTestSetup(argc, argv, &rp))
         return 1;
+
+#if !USE_PSIO
+    fprintf(stderr, "psio writing is not enabled\n"
+            "See environ.h: #define USE_PSIO 1\n\n");
+    regTestCleanup(rp);
+    return 0;
+#endif  /* abort */
 
         /* Source for generating images */
     pixs = pixRead("pageseg2.tif");   /* 1 bpp */

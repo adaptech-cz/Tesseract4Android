@@ -133,6 +133,10 @@
  * </pre>
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include <string.h>
 #ifndef _WIN32
 #include <dirent.h>     /* unix only */
@@ -142,8 +146,8 @@
 #endif  /* ! _WIN32 */
 #include "allheaders.h"
 
-static const l_int32  INITIAL_PTR_ARRAYSIZE = 50;     /* n'importe quoi */
-static const l_int32  L_BUF_SIZE = 512;
+static const l_uint32  MaxPtrArraySize = 100000;
+static const l_int32   InitialPtrArraySize = 50;      /*!< n'importe quoi */
 
     /* Static functions */
 static l_int32 sarrayExtendArray(SARRAY *sa);
@@ -165,8 +169,8 @@ SARRAY  *sa;
 
     PROCNAME("sarrayCreate");
 
-    if (n <= 0)
-        n = INITIAL_PTR_ARRAYSIZE;
+    if (n <= 0 || n > MaxPtrArraySize)
+        n = InitialPtrArraySize;
 
     sa = (SARRAY *)LEPT_CALLOC(1, sizeof(SARRAY));
     if ((sa->array = (char **)LEPT_CALLOC(n, sizeof(char *))) == NULL) {
@@ -315,7 +319,7 @@ SARRAY  *sa;
                                                 procName, NULL);
                 }
                 sarrayAddString(sa, substring, L_INSERT);
-/*                fprintf(stderr, "substring = %s\n", substring); */
+/*                lept_stderr("substring = %s\n", substring); */
                 startptr = i + 1;
             }
         }
@@ -327,7 +331,7 @@ SARRAY  *sa;
                                            procName, NULL);
             }
             sarrayAddString(sa, substring, L_INSERT);
-/*            fprintf(stderr, "substring = %s\n", substring); */
+/*            lept_stderr("substring = %s\n", substring); */
         }
         LEPT_FREE(cstring);
     } else {  /* remove blank lines; use strtok */
@@ -1257,7 +1261,7 @@ SARRAY  *saout;
  *             start = 0;
  *             while (!sarrayParseRange(sa, start, &actstart, &end, &start,
  *                    "--", 0))
- *                 fprintf(stderr, "start = %d, end = %d\n", actstart, end);
+ *                 lept_stderr("start = %d, end = %d\n", actstart, end);
  * </pre>
  */
 l_int32
@@ -1406,7 +1410,7 @@ SARRAY  *sa;
     success = TRUE;
     if ((sa = sarrayCreate(n)) == NULL)
         return (SARRAY *)ERROR_PTR("sa not made", procName, NULL);
-    bufsize = L_BUF_SIZE + 1;
+    bufsize = 512 + 1;
     stringbuf = (char *)LEPT_CALLOC(bufsize, sizeof(char));
 
     for (i = 0; i < n; i++) {
@@ -1894,8 +1898,7 @@ struct stat     st;
 #else
         size = strlen(realdir) + strlen(pdirentry->d_name) + 2;
         if (size > PATH_MAX) {
-            L_ERROR("size = %lu too large; skipping\n", procName,
-                    (unsigned long)size);
+            L_ERROR("size = %zu too large; skipping\n", procName, size);
             continue;
         }
         stat_path = (char *)LEPT_CALLOC(size, 1);

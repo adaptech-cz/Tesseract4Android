@@ -53,6 +53,10 @@
  * </pre>
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include "allheaders.h"
 
 /*-----------------------------------------------------------------*
@@ -159,7 +163,7 @@ PIX        *pix1;
     pixDestroy(&pix1);
     numaGetNonzeroRange(na1, 0.1, &first, &last);
     na2 = numaClipToInterval(na1, 0, last);
-    numaWriteStream(stderr, na2);
+    numaWriteStderr(na2);
 
         /* Find the bucket with the largest distance whose contents
          * exceed the threshold. */
@@ -175,7 +179,7 @@ PIX        *pix1;
          * than the average width. */
     extra = (i < n - 1) ? fa[i + 1] / fa[1] : 0;
     width2 = 2.0 * (i - 1.0 + ratio + extra);
-    fprintf(stderr, "width1 = %5.2f, width2 = %5.2f\n", width1, width2);
+    lept_stderr("width1 = %5.2f, width2 = %5.2f\n", width1, width2);
 
         /* Average the two results */
     *pwidth = (width1 + width2) / 2.0;

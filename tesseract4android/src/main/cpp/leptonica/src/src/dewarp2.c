@@ -58,6 +58,10 @@
  * </pre>
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include <math.h>
 #include "allheaders.h"
 
@@ -68,7 +72,8 @@ static l_int32 dewarpFilterLineEndPoints(L_DEWARP  *dew, PTA *ptal1, PTA *ptar1,
                                          PTA **pptal2, PTA **pptar2);
 static PTA *dewarpRemoveBadEndPoints(l_int32 w, PTA *ptas);
 static l_int32 dewarpIsLineCoverageValid(PTAA *ptaa2, l_int32 h,
-                                         l_int32 *ptopline, l_int32 *pbotline);
+                                         l_int32 *pntop, l_int32 *pnbot,
+                                         l_int32 *pytop, l_int32 *pybot);
 static l_int32 dewarpQuadraticLSF(PTA *ptad, l_float32 *pa, l_float32 *pb,
                                   l_float32 *pc, l_float32 *pmederr);
 static l_int32 pixRenderMidYs(PIX *pixs, NUMA *namidys, l_int32 linew);
@@ -85,10 +90,10 @@ static l_int32 pixRenderHorizEndPoints(PIX *pixs, PTA *ptal, PTA *ptar,
 #endif  /* !NO_CONSOLE_IO */
 
     /* Special parameter values for reducing horizontal disparity */
-static const l_float32   L_MIN_RATIO_LINES_TO_HEIGHT = 0.45;
-static const l_int32     L_MIN_LINES_FOR_HORIZ_1 = 10; /* initially */
-static const l_int32     L_MIN_LINES_FOR_HORIZ_2 = 3;  /* after, in each half */
-static const l_float32   L_ALLOWED_W_FRACT = 0.05;  /* no bigger */
+static const l_float32   MinRatioLinesToHeight = 0.45;
+static const l_int32     MinLinesForHoriz1 = 10; /* initially */
+static const l_int32     MinLinesForHoriz2 = 3;  /* after, in each half */
+static const l_float32   AllowedWidthFract = 0.05;  /* no bigger */
 
 
 /*----------------------------------------------------------------------*
@@ -148,7 +153,7 @@ l_ok
 dewarpBuildPageModel(L_DEWARP    *dew,
                      const char  *debugfile)
 {
-l_int32  linecount, topline, botline, ret;
+l_int32  linecount, ntop, nbot, ytop, ybot, ret;
 PIX     *pixs, *pix1, *pix2, *pix3;
 PTA     *pta;
 PTAA    *ptaa1, *ptaa2;
@@ -213,12 +218,13 @@ PTAA    *ptaa1, *ptaa2;
     }
 
         /* Verify that the lines have a reasonable coverage of the
-         * vertical extent of the image foreground. */
+         * vertical extent of the page. */
     if (dewarpIsLineCoverageValid(ptaa2, pixGetHeight(pixs),
-                                  &topline, &botline) == FALSE) {
+                                  &ntop, &nbot, &ytop, &ybot) == FALSE) {
         ptaaDestroy(&ptaa2);
-        L_WARNING("invalid line coverage: [%d ... %d] in height %d\n",
-                  procName, topline, botline, pixGetHeight(pixs));
+        L_WARNING("invalid line coverage: ntop = %d, nbot = %d;"
+                  " spanning [%d ... %d] in height %d\n", procName,
+                  ntop, nbot, ytop, ybot, pixGetHeight(pixs));
         return 1;
     }
 
@@ -254,7 +260,7 @@ PTAA    *ptaa1, *ptaa2;
         }
         convertFilesToPdf("/tmp/lept/dewmod", NULL, 135, 1.0, 0, 0,
                           "Dewarp Build Model", debugfile);
-        fprintf(stderr, "pdf file: %s\n", debugfile);
+        lept_stderr("pdf file: %s\n", debugfile);
     }
 
     ptaaDestroy(&ptaa2);
@@ -509,7 +515,7 @@ FPIX       *fpix;
         convertFilesToPdf("/tmp/lept/dewmod", "004", 135, 1.0, 0, 0,
                           "Dewarp Vert Disparity",
                           "/tmp/lept/dewarp/vert_disparity.pdf");
-        fprintf(stderr, "pdf file: /tmp/lept/dewarp/vert_disparity.pdf\n");
+        lept_stderr("pdf file: /tmp/lept/dewarp/vert_disparity.pdf\n");
     }
 
         /* Save the result in a fpix at the specified subsampling  */
@@ -606,6 +612,10 @@ FPIX      *fpix;
     ret = dewarpFilterLineEndPoints(dew, ptal1, ptar1, &ptal2, &ptar2);
     ptaDestroy(&ptal1);
     ptaDestroy(&ptar1);
+    if (ret) {
+        L_INFO("Not enough filtered end points\n", procName);
+        return 1;
+    }
 
         /* Do a quadratic fit to the left and right endpoints of the
          * longest lines.  Each line is represented by 3 coefficients:
@@ -676,7 +686,7 @@ FPIX      *fpix;
         convertFilesToPdf("/tmp/lept/dewmod", "005", 135, 1.0, 0, 0,
                           "Dewarp Horiz Disparity",
                           "/tmp/lept/dewarp/horiz_disparity.pdf");
-        fprintf(stderr, "pdf file: /tmp/lept/dewarp/horiz_disparity.pdf\n");
+        lept_stderr("pdf file: /tmp/lept/dewarp/horiz_disparity.pdf\n");
         pixDestroy(&pix1);
         ptaDestroy(&pta1);
         ptaDestroy(&pta2);
@@ -1015,7 +1025,7 @@ PTA       *pta, *ptal1, *ptar1;
 
         /* Are there at least 10 lines? */
     n = ptaaGetCount(ptaa);
-    if (n < L_MIN_LINES_FOR_HORIZ_1) {
+    if (n < MinLinesForHoriz1) {
         L_INFO("only %d lines; too few\n", procName, n);
         return 1;
     }
@@ -1036,7 +1046,7 @@ PTA       *pta, *ptal1, *ptar1;
         /* Use the min and max of the y value on the left side. */
     ptaGetRange(ptal1, &miny, &maxy, NULL, NULL);
     ratio = (maxy - miny) / (l_float32)h;
-    if (ratio < L_MIN_RATIO_LINES_TO_HEIGHT) {
+    if (ratio < MinRatioLinesToHeight) {
         L_INFO("ratio lines to height, %f, too small\n", procName, ratio);
         ptaDestroy(&ptal1);
         ptaDestroy(&ptar1);
@@ -1112,7 +1122,7 @@ PTA       *ptal1, *ptar1, *ptal2, *ptar2;
     }
 
     n = L_MIN(ptaGetCount(ptal1), ptaGetCount(ptar1));
-    if (n < L_MIN_LINES_FOR_HORIZ_1 - 2) {
+    if (n < MinLinesForHoriz1 - 2) {
         ptaDestroy(&ptal1);
         ptaDestroy(&ptar1);
         L_INFO("First filter: only %d endpoints; needed 8\n", procName, n);
@@ -1173,7 +1183,7 @@ PTA       *ptau1, *ptau2, *ptad1, *ptad2;
     if (!ptas)
         return (PTA *)ERROR_PTR("ptas not defined", procName, NULL);
 
-    delta = w * L_ALLOWED_W_FRACT;
+    delta = AllowedWidthFract * w;
     n = ptaGetCount(ptas);  /* will be at least 8 */
 
         /* Check the upper half */
@@ -1187,7 +1197,7 @@ PTA       *ptau1, *ptau2, *ptad1, *ptad2;
             ptaAddPt(ptau2, xval, yval);
     }
     ptaDestroy(&ptau1);
-    if (ptaGetCount(ptau2) < L_MIN_LINES_FOR_HORIZ_2) {
+    if (ptaGetCount(ptau2) < MinLinesForHoriz2) {
         ptaDestroy(&ptau2);
         L_INFO("Second filter: upper set is too small after outliers removed\n",
                procName);
@@ -1205,7 +1215,7 @@ PTA       *ptau1, *ptau2, *ptad1, *ptad2;
             ptaAddPt(ptad2, xval, yval);
     }
     ptaDestroy(&ptad1);
-    if (ptaGetCount(ptad2) < L_MIN_LINES_FOR_HORIZ_2) {
+    if (ptaGetCount(ptad2) < MinLinesForHoriz2) {
         ptaDestroy(&ptau2);
         ptaDestroy(&ptad2);
         L_INFO("Second filter: lower set is too small after outliers removed\n",
@@ -1224,26 +1234,31 @@ PTA       *ptau1, *ptau2, *ptad1, *ptad2;
  *
  * \param[in]    ptaa       of validated lines
  * \param[in]    h          height of pix
- * \param[out]   ptopline   location of top line
- * \param[out]   pbotline   location of bottom line
+ * \param[out]   pntop      number of lines in top half
+ * \param[out]   pnbot      number of lines in bottom half
+ * \param[out]   pytop      location of top line
+ * \param[out]   pybot      location of bottom line
  * \return  1 if coverage is valid, 0 if not or on error.
  *
  * <pre>
  * Notes:
  *      (1) The criterion for valid coverage is:
- *          (a) there must be lines in both halves (top and bottom)
+ *          (a) there must be at least 4 lines in each half (top and bottom)
  *              of the image.
- *          (b) the coverage must be at least 40% of the image height
+ *          (b) the coverage must be at least 50% of the image height
  * </pre>
  */
 static l_int32
 dewarpIsLineCoverageValid(PTAA     *ptaa,
                           l_int32   h,
-                          l_int32  *ptopline,
-                          l_int32  *pbotline)
+                          l_int32  *pntop,
+                          l_int32  *pnbot,
+                          l_int32  *pytop,
+                          l_int32  *pybot)
 {
-l_int32    i, n, both_halves;
-l_float32  top, bot, y, fraction;
+l_int32    i, n, iy, both_halves, ntop, nbot, ytop, ybot, nmin;
+l_float32  y, fraction;
+NUMA      *na;
 
     PROCNAME("dewarpIsLineCoverageValid");
 
@@ -1253,21 +1268,34 @@ l_float32  top, bot, y, fraction;
         return ERROR_INT("ptaa empty", procName, 0);
     if (h <= 0)
         return ERROR_INT("invalid h", procName, 0);
-    if (!ptopline || !pbotline)
-        return ERROR_INT("&topline and &botline not defined", procName, 0);
+    if (!pntop || !pnbot)
+        return ERROR_INT("&ntop and &nbot not defined", procName, 0);
+    if (!pytop || !pybot)
+        return ERROR_INT("&ytop and &ybot not defined", procName, 0);
 
-    top = 100000.0;
-    bot = 0.0;
+    na = numaCreate(n);
     for (i = 0; i < n; i++) {
         ptaaGetPt(ptaa, i, 0, NULL, &y);
-        if (y < top) top = y;
-        if (y > bot) bot = y;
+        numaAddNumber(na, y);
     }
-    *ptopline = (l_int32)top;
-    *pbotline = (l_int32)bot;
-    both_halves = top < 0.5 * h && bot > 0.5 * h;
-    fraction = (bot - top) / h;
-    if (both_halves && fraction > 0.40)
+    numaSort(na, na, L_SORT_INCREASING);
+    for (i = 0, ntop = 0; i < n; i++) {
+        numaGetIValue(na, i, &iy);
+        if (i == 0) ytop = iy;
+        if (i == n - 1) ybot = iy;
+        if (iy < 0.5 * h)
+            ntop++;
+    }
+    numaDestroy(&na);
+    nbot = n - ntop;
+    *pntop = ntop;
+    *pnbot = nbot;
+    *pytop = ytop;
+    *pybot = ybot;
+    nmin = 4;  /* minimum number of lines required in each half */
+    both_halves = (ntop >= nmin) && (nbot >= nmin);
+    fraction = (l_float32)(ybot - ytop) / (l_float32)h;
+    if (both_halves && fraction > 0.50)
         return 1;
     return 0;
 }
@@ -1386,6 +1414,7 @@ l_float32  fract, delta, sum, aveval, fval, del, denom;
 l_float32  ca, cb, cc, cd, ce, y;
 BOX       *box;
 BOXA      *boxa1, *boxa2;
+GPLOT     *gplot;
 NUMA      *na1, *na2, *na3, *na4, *nasum;
 PIX       *pix1;
 PTA       *pta1;
@@ -1409,7 +1438,7 @@ FPIX      *fpix;
     boxa2 = boxaSelectBySize(boxa1, 0, 5, L_SELECT_HEIGHT, L_SELECT_IF_GT,
                              NULL);
     nb = boxaGetCount(boxa2);
-    fprintf(stderr, "number of components: %d\n", nb);
+    lept_stderr("number of components: %d\n", nb);
     boxaDestroy(&boxa1);
 
         /* Estimate the horizontal density of vertical strokes */
@@ -1505,8 +1534,9 @@ FPIX      *fpix;
     ptaGetQuarticLSF(pta1, &ca, &cb, &cc, &cd, &ce, &na3);
     ptaGetArrays(pta1, &na4, NULL);
     if (dew->debug) {
-        gplotSimpleXY1(na4, na3, GPLOT_LINES, GPLOT_PNG,
-                       "/tmp/lept/dew/0094", NULL);
+        gplot = gplotSimpleXY1(na4, na3, GPLOT_LINES, GPLOT_PNG,
+                              "/tmp/lept/dew/0094", NULL);
+        gplotDestroy(&gplot);
         lept_mv("/tmp/lept/dew/0094.png", "lept/dewmod", NULL, NULL);
     }
     ptaDestroy(&pta1);
@@ -1762,7 +1792,7 @@ PTAA    *ptaa1, *ptaa2;
         }
         convertFilesToPdf("/tmp/lept/dewline", NULL, 135, 1.0, 0, 0,
                           "Dewarp Build Line Model", debugfile);
-        fprintf(stderr, "pdf file: %s\n", debugfile);
+        lept_stderr("pdf file: %s\n", debugfile);
     }
 
     return 0;

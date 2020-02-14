@@ -30,7 +30,6 @@
  *
  *      Pixa display (render into a pix)
  *           PIX      *pixaDisplay()
- *           PIX      *pixaDisplayOnColor()
  *           PIX      *pixaDisplayRandomCmap()
  *           PIX      *pixaDisplayLinearly()
  *           PIX      *pixaDisplayOnLattice()
@@ -92,8 +91,6 @@
  *        can be used to reconstruct a pix that has been broken into
  *        components, if the boxes represents the positions of the
  *        components in the original image.
- *    pixaDisplayOnColor()
- *        pixaDisplay() with choice of background color.
  *    pixaDisplayRandomCmap()
  *        This also uses the boxes to lay out each pix.  However, it creates
  *        a colormapped dest, where each 1 bpp pix is given a randomly
@@ -149,13 +146,20 @@
  *        in an associated numa.  All pix with the same index value are
  *        rendered in the same column.  Text in the pix text field are
  *        rendered below the pix.
+ *
+ *  To render mosaics of images in a pixaa, display functions are
+ *  provided that handle situations where the images are all scaled to
+ *  the same size, or the number of images on each row needs to vary.
  * </pre>
  */
+
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
 
 #include <string.h>
 #include <math.h>   /* for sqrt() */
 #include "allheaders.h"
-
 
 /*---------------------------------------------------------------------*
  *                               Pixa Display                          *
@@ -236,103 +240,6 @@ PIX     *pix1, *pixd;
         pixDestroy(&pix1);
     }
 
-    return pixd;
-}
-
-
-/*!
- * \brief   pixaDisplayOnColor()
- *
- * \param[in]    pixa
- * \param[in]    w, h     if set to 0, the size is determined from the
- *                        bounding box of the components in pixa
- * \param[in]    bgcolor  background color to use
- * \return  pix, or NULL on error
- *
- * <pre>
- * Notes:
- *      (1) This uses the boxes to place each pix in the rendered composite.
- *      (2) Set w = h = 0 to use the b.b. of the components to determine
- *          the size of the returned pix.
- *      (3) If any pix in %pixa are colormapped, or if the pix have
- *          different depths, it returns a 32 bpp pix.  Otherwise,
- *          the depth of the returned pixa equals that of the pix in %pixa.
- *      (4) If the pixa is empty, return null.
- * </pre>
- */
-PIX *
-pixaDisplayOnColor(PIXA     *pixa,
-                   l_int32   w,
-                   l_int32   h,
-                   l_uint32  bgcolor)
-{
-l_int32  i, n, xb, yb, wb, hb, hascmap, maxdepth, same, res;
-BOXA    *boxa;
-PIX     *pix1, *pix2, *pixd;
-PIXA    *pixat;
-
-    PROCNAME("pixaDisplayOnColor");
-
-    if (!pixa)
-        return (PIX *)ERROR_PTR("pixa not defined", procName, NULL);
-    if ((n = pixaGetCount(pixa)) == 0)
-        return (PIX *)ERROR_PTR("no components", procName, NULL);
-
-        /* If w and h are not input, determine the minimum size
-         * required to contain the origin and all c.c. */
-    if (w == 0 || h == 0) {
-        boxa = pixaGetBoxa(pixa, L_CLONE);
-        boxaGetExtent(boxa, &w, &h, NULL);
-        boxaDestroy(&boxa);
-    }
-
-        /* If any pix have colormaps, or if they have different depths,
-         * generate rgb */
-    pixaAnyColormaps(pixa, &hascmap);
-    pixaGetDepthInfo(pixa, &maxdepth, &same);
-    if (hascmap || !same) {
-        maxdepth = 32;
-        pixat = pixaCreate(n);
-        for (i = 0; i < n; i++) {
-            pix1 = pixaGetPix(pixa, i, L_CLONE);
-            pix2 = pixConvertTo32(pix1);
-            pixaAddPix(pixat, pix2, L_INSERT);
-            pixDestroy(&pix1);
-        }
-    } else {
-        pixat = pixaCopy(pixa, L_CLONE);
-    }
-
-        /* Make the output pix and set the background color */
-    if ((pixd = pixCreate(w, h, maxdepth)) == NULL) {
-        pixaDestroy(&pixat);
-        return (PIX *)ERROR_PTR("pixd not made", procName, NULL);
-    }
-    if ((maxdepth == 1 && bgcolor > 0) ||
-        (maxdepth == 2 && bgcolor >= 0x3) ||
-        (maxdepth == 4 && bgcolor >= 0xf) ||
-        (maxdepth == 8 && bgcolor >= 0xff) ||
-        (maxdepth == 16 && bgcolor >= 0xffff) ||
-        (maxdepth == 32 && bgcolor >= 0xffffff00)) {
-        pixSetAll(pixd);
-    } else if (bgcolor > 0) {
-        pixSetAllArbitrary(pixd, bgcolor);
-    }
-
-        /* Blit each pix into its place */
-    for (i = 0; i < n; i++) {
-        if (pixaGetBoxGeometry(pixat, i, &xb, &yb, &wb, &hb)) {
-            L_WARNING("no box found!\n", procName);
-            continue;
-        }
-        pix1 = pixaGetPix(pixat, i, L_CLONE);
-        if (i == 0) res = pixGetXRes(pix1);
-        pixRasterop(pixd, xb, yb, wb, hb, PIX_SRC, pix1, 0, 0);
-        pixDestroy(&pix1);
-    }
-    pixSetResolution(pixd, res, res);
-
-    pixaDestroy(&pixat);
     return pixd;
 }
 
@@ -1568,134 +1475,69 @@ PIXA    *pixa;
 /*!
  * \brief   pixaaDisplayByPixa()
  *
- * \param[in]    paa     with pix that may have different depths
- * \param[in]    xspace  between pix in pixa
- * \param[in]    yspace  between pixa
- * \param[in]    maxw    max width of output pix
- * \return  pixd, or NULL on error
+ * \param[in]    paa
+ * \param[in]    maxnx        maximum number of columns for rendering each pixa
+ * \param[in]    scalefactor  applied to every pix; use 1.0 for no scaling
+ * \param[in]    hspacing     between images on a row (in the pixa)
+ * \param[in]    vspacing     between tiles rows, each corresponding to a pixa
+ * \param[in]    border       width of black border added to each image;
+ *                            use 0 for no border
+ * \return  pixd of images in %paa, tiled by pixa in row-major order
  *
  * <pre>
  * Notes:
- *      (1) Displays each pixa on a line (or set of lines),
- *          in order from top to bottom.  Within each pixa,
- *          the pix are displayed in order from left to right.
- *      (2) The sizes and depths of each pix can differ.  The output pix
- *          has a depth equal to the max depth of all the pix.
- *      (3) This ignores the boxa of the paa.
+ *      (1) This renders a pixaa into a single image.  The pix from each pixa
+ *          are rendered on a row.  If the number of pix in the pixa is
+ *          larger than %maxnx, the pix will be rendered into more than 1 row.
+ *          To insure that each pixa is rendered into one row, use %maxnx
+ *          at least as large as the max number of pix in the pixa.
+ *      (2) Each row is tiled such that the top of each pix is aligned and
+ *          each pix is separated by %hspacing from the next one.
+ *          A black border can be added to each pix.
+ *      (3) The resulting pix from each row are then rendered vertically,
+ *          separated by %vspacing from each other.
+ *      (4) The output depth is determined by the largest depth of all
+ *          the pix in %paa. Colormaps are removed.
  * </pre>
  */
 PIX *
-pixaaDisplayByPixa(PIXAA   *paa,
-                   l_int32  xspace,
-                   l_int32  yspace,
-                   l_int32  maxw)
+pixaaDisplayByPixa(PIXAA     *paa,
+                   l_int32    maxnx,
+                   l_float32  scalefactor,
+                   l_int32    hspacing,
+                   l_int32    vspacing,
+                   l_int32    border)
 {
-l_int32   i, j, npixa, npix, same, use_maxw, x, y, w, h, hindex;
-l_int32   maxwidth, maxd, width, lmaxh, lmaxw;
-l_int32  *harray;
-NUMA     *nah;
-PIX      *pix, *pix1, *pixd;
-PIXA     *pixa;
+l_int32  i, n, vs;
+PIX     *pix1, *pix2;
+PIXA    *pixa1, *pixa2;
 
     PROCNAME("pixaaDisplayByPixa");
 
     if (!paa)
         return (PIX *)ERROR_PTR("paa not defined", procName, NULL);
+    if (scalefactor <= 0.0) scalefactor = 1.0;
+    if (hspacing < 0) hspacing = 0;
+    if (vspacing < 0) vspacing = 0;
+    if (border < 0) border = 0;
 
-    if ((npixa = pixaaGetCount(paa, NULL)) == 0)
+    if ((n = pixaaGetCount(paa, NULL)) == 0)
         return (PIX *)ERROR_PTR("no components", procName, NULL);
-    pixaaVerifyDepth(paa, &same, &maxd);
-    if (!same && maxd < 8)
-        return (PIX *)ERROR_PTR("depths differ; max < 8", procName, NULL);
 
-        /* Be sure the widest box fits in the output pix */
-    pixaaSizeRange(paa, NULL, NULL, &maxwidth, NULL);
-    if (maxwidth > maxw) {
-        L_WARNING("maxwidth > maxw; using maxwidth\n", procName);
-        maxw = maxwidth;
+        /* Vertical spacing of amount %hspacing is also added at this step */
+    pixa2 = pixaCreate(0);
+    for (i = 0; i < n; i++) {
+        pixa1 = pixaaGetPixa(paa, i, L_CLONE);
+        pix1 = pixaDisplayTiledInColumns(pixa1, maxnx, scalefactor,
+                                         hspacing, border);
+        pixaAddPix(pixa2, pix1, L_INSERT);
+        pixaDestroy(&pixa1);
     }
 
-        /* Get size of output pix.  The width is the minimum of the
-         * maxw and the largest pixa line width.  The height is whatever
-         * it needs to be to accommodate all pixa. */
-    lmaxw = 0;  /* widest line found */
-    use_maxw = FALSE;
-    nah = numaCreate(0);  /* store height of each line */
-    y = yspace;
-    for (i = 0; i < npixa; i++) {
-        pixa = pixaaGetPixa(paa, i, L_CLONE);
-        npix = pixaGetCount(pixa);
-        if (npix == 0) {
-            pixaDestroy(&pixa);
-            continue;
-        }
-        x = xspace;
-        lmaxh = 0;  /* max height found in the line */
-        for (j = 0; j < npix; j++) {
-            pix = pixaGetPix(pixa, j, L_CLONE);
-            pixGetDimensions(pix, &w, &h, NULL);
-            if (x + w >= maxw) {  /* start new line */
-                x = xspace;
-                y += lmaxh + yspace;
-                numaAddNumber(nah, lmaxh);
-                lmaxh = 0;
-                use_maxw = TRUE;
-            }
-            x += w + xspace;
-            lmaxh = L_MAX(h, lmaxh);
-            lmaxw = L_MAX(lmaxw, x);
-            pixDestroy(&pix);
-        }
-        y += lmaxh + yspace;
-        numaAddNumber(nah, lmaxh);
-        pixaDestroy(&pixa);
-    }
-    width = (use_maxw) ? maxw : lmaxw;
-
-    if ((pixd = pixCreate(width, y, maxd)) == NULL) {
-        numaDestroy(&nah);
-        return (PIX *)ERROR_PTR("pixd not made", procName, NULL);
-    }
-
-        /* Now layout the pix by pixa */
-    y = yspace;
-    harray = numaGetIArray(nah);
-    hindex = 0;
-    for (i = 0; i < npixa; i++) {
-        x = xspace;
-        pixa = pixaaGetPixa(paa, i, L_CLONE);
-        npix = pixaGetCount(pixa);
-        if (npix == 0) {
-            pixaDestroy(&pixa);
-            continue;
-        }
-        for (j = 0; j < npix; j++) {
-            pix = pixaGetPix(pixa, j, L_CLONE);
-            if (pixGetDepth(pix) != maxd) {
-                if (maxd == 8)
-                     pix1 = pixConvertTo8(pix, 0);
-                else  /* 32 bpp */
-                     pix1 = pixConvertTo32(pix);
-            } else {
-                pix1 = pixClone(pix);
-            }
-            pixGetDimensions(pix1, &w, &h, NULL);
-            if (x + w >= maxw) {  /* start new line */
-                x = xspace;
-                y += harray[hindex++] + yspace;
-            }
-            pixRasterop(pixd, x, y, w, h, PIX_PAINT, pix1, 0, 0);
-            pixDestroy(&pix);
-            pixDestroy(&pix1);
-            x += w + xspace;
-        }
-        y += harray[hindex++] + yspace;
-        pixaDestroy(&pixa);
-    }
-    LEPT_FREE(harray);
-
-    numaDestroy(&nah);
-    return pixd;
+    vs = vspacing - 2 * hspacing;
+    pix2 = pixaDisplayTiledInColumns(pixa2, 1, scalefactor, vs, 0);
+    pixaDestroy(&pixa2);
+    return pix2;
 }
 
 
@@ -2404,7 +2246,7 @@ PIXA    *pixa1;
 
     lept_mkdir("lept/split");
     n = (nt + nsplit - 1) / nsplit;
-    fprintf(stderr, "nt = %d, n = %d, nsplit = %d\n", nt, n, nsplit);
+    lept_stderr("nt = %d, n = %d, nsplit = %d\n", nt, n, nsplit);
     for (i = 0, index = 0; i < nsplit; i++) {
         pixa1 = pixaCreate(n);
         for (j = 0; j < n && index < nt; j++, index++) {

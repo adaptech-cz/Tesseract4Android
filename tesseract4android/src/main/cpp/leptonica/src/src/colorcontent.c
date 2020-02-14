@@ -41,6 +41,10 @@
  *      are not too close to gray pixels.
  *         PIX       *pixMaskOverColorPixels()
  *
+ *      Generates a mask over pixels that have little color and
+ *      are not too bright.
+ *         PIX       *pixMaskOverGrayPixels()
+ *
  *      Generates mask over pixels within a prescribed cube in RGB space
  *         PIX       *pixMaskOverColorRange()
  *
@@ -61,6 +65,9 @@
  *
  *      Finds the number of unique colors in an image
  *         l_int32    pixNumColors()
+ *
+ *      Lossless conversion of RGB image to colormapped
+ *         PIX       *pixConvertRGBToCmap()
  *
  *      Find the most "populated" colors in the image (and quantize)
  *         l_int32    pixGetMostPopulatedColors()
@@ -136,6 +143,10 @@
  * </pre>
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include "allheaders.h"
 
 /* ----------------------------------------------------------------------- *
@@ -147,7 +158,9 @@
  * \brief   pixColorContent()
  *
  * \param[in]    pixs      32 bpp rgb or 8 bpp colormapped
- * \param[in]    rwhite, gwhite, bwhite  color value associated with white point
+ * \param[in]    rref, gref, bref   reference color values (e.g. median
+ *                                  or mean, to compare with the pixel
+ *                                  component values.
  * \param[in]    mingray   min gray value for which color is measured
  * \param[out]   ppixr     [optional] 8 bpp red 'content'
  * \param[out]   ppixg     [optional] 8 bpp green 'content'
@@ -161,11 +174,16 @@
  *          as the difference between the component and the average of
  *          the other two components.  See the discussion at the
  *          top of this file.
- *      (2) The three numbers (rwhite, gwhite and bwhite) can be thought
- *          of as the values in the image corresponding to white.
- *          They are used to compensate for an unbalanced color white point.
- *          They must either be all 0 or all non-zero.  To turn this
- *          off, set them all to 0.
+ *      (2) The three numbers (rref, gref and bref) can be thought
+ *          of in two ways:
+ *            (a) as the values in the image corresponding to white,
+ *                to compensate for an unbalanced color white point.
+ *            (b) the median or mean values of the background color of
+ *                a scan.
+ *          The gamma TRC transformation is used to modify all colors so that
+ *          these reference values become white.
+ *          These three numbers must either be all 0 or all non-zero.
+ *          To skip the TRC transform, set them all to 0.
  *      (3) If the maximum component after white point correction,
  *          max(r,g,b), is less than mingray, all color components
  *          for that pixel are set to zero.
@@ -177,9 +195,9 @@
  */
 l_ok
 pixColorContent(PIX     *pixs,
-                l_int32  rwhite,
-                l_int32  gwhite,
-                l_int32  bwhite,
+                l_int32  rref,
+                l_int32  gref,
+                l_int32  bref,
                 l_int32  mingray,
                 PIX    **ppixr,
                 PIX    **ppixg,
@@ -208,10 +226,11 @@ PIXCMAP   *cmap;
     pixGetDimensions(pixs, &w, &h, &d);
     if (mingray > 255)
         return ERROR_INT("mingray > 255", procName, 1);
-    if (rwhite < 0 || gwhite < 0 || bwhite < 0)
-        return ERROR_INT("some white vals are negative", procName, 1);
-    if ((rwhite || gwhite || bwhite) && (rwhite * gwhite * bwhite == 0))
-        return ERROR_INT("white vals not all zero or all nonzero", procName, 1);
+    if (rref < 0 || gref < 0 || bref < 0)
+        return ERROR_INT("some reference vals are negative", procName, 1);
+    if ((rref || gref || bref) && (rref * gref * bref == 0))
+        return ERROR_INT("reference vals not all zero or all nonzero",
+                         procName, 1);
 
     cmap = pixGetColormap(pixs);
     if (!cmap && d != 32)
@@ -244,12 +263,12 @@ PIXCMAP   *cmap;
 
     datac = pixGetData(pixc);
     wplc = pixGetWpl(pixc);
-    if (rwhite) {  /* all white pt vals are nonzero */
-        nar = numaGammaTRC(1.0, 0, rwhite);
+    if (rref) {  /* all reference vals are nonzero */
+        nar = numaGammaTRC(1.0, 0, rref);
         rtab = numaGetIArray(nar);
-        nag = numaGammaTRC(1.0, 0, gwhite);
+        nag = numaGammaTRC(1.0, 0, gref);
         gtab = numaGetIArray(nag);
-        nab = numaGammaTRC(1.0, 0, bwhite);
+        nab = numaGammaTRC(1.0, 0, bref);
         btab = numaGetIArray(nab);
     }
     for (i = 0; i < h; i++) {
@@ -263,7 +282,7 @@ PIXCMAP   *cmap;
         for (j = 0; j < w; j++) {
             pixel = linec[j];
             extractRGBValues(pixel, &rval, &gval, &bval);
-            if (rwhite) {  /* color correct for white point */
+            if (rref) {  /* color correct for reference values */
                 rval = rtab[rval];
                 gval = gtab[gval];
                 bval = btab[bval];
@@ -292,7 +311,7 @@ PIXCMAP   *cmap;
         }
     }
 
-    if (rwhite) {
+    if (rref) {
         numaDestroy(&nar);
         numaDestroy(&nag);
         numaDestroy(&nab);
@@ -313,7 +332,9 @@ PIXCMAP   *cmap;
  * \brief   pixColorMagnitude()
  *
  * \param[in]    pixs    32 bpp rgb or 8 bpp colormapped
- * \param[in]    rwhite, gwhite, bwhite  color value associated with white point
+ * \param[in]    rref, gref, bref   reference color values (e.g. median
+ *                                  or mean, to compare with the pixel
+ *                                  component values.
  * \param[in]    type    chooses the method for calculating the color magnitude:
  *                       L_MAX_DIFF_FROM_AVERAGE_2, L_MAX_MIN_DIFF_FROM_2,
  *                       L_MAX_DIFF
@@ -352,18 +373,23 @@ PIXCMAP   *cmap;
  *            (a) L_MAX_DIFF_FROM_AVERAGE_2
  *            (b) L_MAX_MIN_DIFF_FROM_2
  *            (c) L_MAX_DIFF
- *      (4) The three numbers (rwhite, gwhite and bwhite) can be thought
- *          of as the values in the image corresponding to white.
- *          They are used to compensate for an unbalanced color white point.
- *          They must either be all 0 or all non-zero.  To turn this
- *          off, set them all to 0.
+ *      (4) The three numbers (rref, gref and bref) can be thought
+ *          of in two ways:
+ *            (a) as the values in the image corresponding to white,
+ *                to compensate for an unbalanced color white point.
+ *            (b) the median or mean values of the background color of
+ *                a scan.
+ *          The gamma TRC transformation is used to modify all colors so that
+ *          these reference values become white.
+ *          These three numbers must either be all 0 or all non-zero.
+ *          To skip the TRC transform, set them all to 0.
  * </pre>
  */
 PIX *
 pixColorMagnitude(PIX     *pixs,
-                  l_int32  rwhite,
-                  l_int32  gwhite,
-                  l_int32  bwhite,
+                  l_int32  rref,
+                  l_int32  gref,
+                  l_int32  bref,
                   l_int32  type)
 {
 l_int32    w, h, d, i, j, wplc, wpld;
@@ -384,10 +410,11 @@ PIXCMAP   *cmap;
     if (type != L_MAX_DIFF_FROM_AVERAGE_2 && type != L_MAX_MIN_DIFF_FROM_2 &&
         type != L_MAX_DIFF)
         return (PIX *)ERROR_PTR("invalid type", procName, NULL);
-    if (rwhite < 0 || gwhite < 0 || bwhite < 0)
-        return (PIX *)ERROR_PTR("some white vals are negative", procName, NULL);
-    if ((rwhite || gwhite || bwhite) && (rwhite * gwhite * bwhite == 0))
-        return (PIX *)ERROR_PTR("white vals not all zero or all nonzero",
+    if (rref < 0 || gref < 0 || bref < 0)
+        return (PIX *)ERROR_PTR("some reference vals are negative",
+                procName, NULL);
+    if ((rref || gref || bref) && (rref * gref * bref == 0))
+        return (PIX *)ERROR_PTR("reference vals not all zero or all nonzero",
                                 procName, NULL);
 
     cmap = pixGetColormap(pixs);
@@ -403,12 +430,12 @@ PIXCMAP   *cmap;
     wpld = pixGetWpl(pixd);
     datac = pixGetData(pixc);
     wplc = pixGetWpl(pixc);
-    if (rwhite) {  /* all white pt vals are nonzero */
-        nar = numaGammaTRC(1.0, 0, rwhite);
+    if (rref) {  /* all ref vals are nonzero */
+        nar = numaGammaTRC(1.0, 0, rref);
         rtab = numaGetIArray(nar);
-        nag = numaGammaTRC(1.0, 0, gwhite);
+        nag = numaGammaTRC(1.0, 0, gref);
         gtab = numaGetIArray(nag);
-        nab = numaGammaTRC(1.0, 0, bwhite);
+        nab = numaGammaTRC(1.0, 0, bref);
         btab = numaGetIArray(nab);
     }
     for (i = 0; i < h; i++) {
@@ -417,7 +444,7 @@ PIXCMAP   *cmap;
         for (j = 0; j < w; j++) {
             pixel = linec[j];
             extractRGBValues(pixel, &rval, &gval, &bval);
-            if (rwhite) {  /* color correct for white point */
+            if (rref) {  /* color correct for reference values */
                 rval = rtab[rval];
                 gval = gtab[gval];
                 bval = btab[bval];
@@ -453,7 +480,7 @@ PIXCMAP   *cmap;
         }
     }
 
-    if (rwhite) {
+    if (rref) {
         numaDestroy(&nar);
         numaDestroy(&nag);
         numaDestroy(&nab);
@@ -548,6 +575,76 @@ PIXCMAP   *cmap;
     }
 
     pixDestroy(&pixc);
+    return pixd;
+}
+
+
+/* ----------------------------------------------------------------------- *
+ *      Generates a mask over pixels that have little color and            *
+ *      are not too bright                                                 *
+ * ----------------------------------------------------------------------- */
+/*!
+ * \brief   pixMaskOverGrayPixels()
+ *
+ * \param[in]    pixs      32 bpp rgb
+ * \param[in]    maxlimit  only consider pixels with max component <= %maxlimit
+ * \param[in]    satlimit  only consider pixels with saturation <= %satlimit
+ * \return  pixd (1 bpp), or NULL on error
+ *
+ * <pre>
+ * Notes:
+ *      (1) This generates a mask over rgb pixels that are gray (i.e.,
+ *          have low saturation) and are not too bright.  For example, if
+ *          we know that the gray pixels in %pixs have saturation
+ *          (max - min) less than 10, and brightness (max) less than 200,
+ *             pixMaskOverGrayPixels(pixs, 220, 10)
+ *          will generate a mask over the gray pixels.  Other pixels that
+ *          are not too dark and have a relatively large saturation will
+ *          be little affected.
+ *      (2) The algorithm is related to pixDarkenGray().
+ * </pre>
+ */
+PIX *
+pixMaskOverGrayPixels(PIX     *pixs,
+                      l_int32  maxlimit,
+                      l_int32  satlimit)
+{
+l_int32    w, h, i, j, wpls, wpld;
+l_int32    rval, gval, bval, minrg, min, maxrg, max, sat;
+l_uint32  *datas, *datad, *lines, *lined;
+PIX       *pixd;
+
+    PROCNAME("pixMaskOverGrayPixels");
+
+    if (!pixs || pixGetDepth(pixs) != 32)
+        return (PIX *)ERROR_PTR("pixs undefined or not 32 bpp", procName, NULL);
+    if (maxlimit < 0 || maxlimit > 255)
+        return (PIX *)ERROR_PTR("invalid maxlimit", procName, NULL);
+    if (satlimit < 1)
+        return (PIX *)ERROR_PTR("invalid satlimit", procName, NULL);
+
+    pixGetDimensions(pixs, &w, &h, NULL);
+    datas = pixGetData(pixs);
+    wpls = pixGetWpl(pixs);
+    if ((pixd = pixCreate(w, h, 1)) == NULL)
+        return (PIX *)ERROR_PTR("pixd not made", procName, NULL);
+    datad = pixGetData(pixd);
+    wpld = pixGetWpl(pixd);
+
+    for (i = 0; i < h; i++) {
+        lines = datas + i * wpls;
+        lined = datad + i * wpld;
+        for (j = 0; j < w; j++) {
+            extractRGBValues(lines[j], &rval, &gval, &bval);
+            minrg = L_MIN(rval, gval);
+            min = L_MIN(minrg, bval);
+            maxrg = L_MAX(rval, gval);
+            max = L_MAX(maxrg, bval);
+            sat = max - min;
+            if (max <= maxlimit && sat <= satlimit)
+                SET_DATA_BIT(lined, j);
+        }
+    }
     return pixd;
 }
 
@@ -851,7 +948,7 @@ PIX       *pix1, *pix2, *pix3, *pix4, *pix5, *pixm1, *pixm2, *pixm3;
         /* Get the light background color.  Use the average component value
          * and select the lightest of 10 buckets.  Require that it is
          * reddish and, using lightthresh, not too dark. */
-    pixGetRankColorArray(pixs, 10, L_SELECT_AVERAGE, factor, &carray, 0, 0);
+    pixGetRankColorArray(pixs, 10, L_SELECT_AVERAGE, factor, &carray, NULL, 0);
     if (!carray)
         return ERROR_INT("rank color array not made", procName, 1);
     extractRGBValues(carray[9], &rval, &gval, &bval);
@@ -1271,16 +1368,17 @@ PIXCMAP   *cmap;
  *
  * <pre>
  * Notes:
- *      (1) This returns the actual number of colors found in the image,
+ *      (1) This returns the number of colors found in the image,
  *          even if there is a colormap.  If %factor == 1 and the
  *          number of colors differs from the number of entries
  *          in the colormap, a warning is issued.
  *      (2) Use %factor == 1 to find the actual number of colors.
- *          Use %factor > 1 to quickly find the approximate number of colors.
+ *          Use %factor > 1 to more efficiently find an approximate
+ *          number of colors.
  *      (3) For d = 2, 4 or 8 bpp grayscale, this returns the number
  *          of colors found in the image in 'ncolors'.
- *      (4) For d = 32 bpp (rgb), if the number of colors is
- *          greater than 256, this returns 0 in 'ncolors'.
+ *      (4) For d = 32 bpp (rgb), if the number of colors is greater
+ *          than 256, this uses an ordered set.
  * </pre>
  */
 l_ok
@@ -1288,7 +1386,7 @@ pixNumColors(PIX      *pixs,
              l_int32   factor,
              l_int32  *pncolors)
 {
-l_int32    w, h, d, i, j, wpl, hashsize, sum, count;
+l_int32    w, h, d, i, j, wpl, hashsize, sum, count, manycolors;
 l_int32    rval, gval, bval, val;
 l_int32   *inta;
 l_uint32   pixel;
@@ -1311,8 +1409,7 @@ PIXCMAP   *cmap;
     wpl = pixGetWpl(pixs);
     sum = 0;
     if (d != 32) {  /* grayscale */
-        if ((inta = (l_int32 *)LEPT_CALLOC(256, sizeof(l_int32))) == NULL)
-            return ERROR_INT("calloc failure for inta", procName, 1);
+        inta = (l_int32 *)LEPT_CALLOC(256, sizeof(l_int32));
         for (i = 0; i < h; i += factor) {
             line = data + i * wpl;
             for (j = 0; j < w; j += factor) {
@@ -1342,9 +1439,9 @@ PIXCMAP   *cmap;
 
         /* 32 bpp rgb; quit if we get above 256 colors */
     hashsize = 5507;  /* big and prime; collisions are not likely */
-    if ((inta = (l_int32 *)LEPT_CALLOC(hashsize, sizeof(l_int32))) == NULL)
-        return ERROR_INT("calloc failure with hashsize", procName, 1);
-    for (i = 0; i < h; i += factor) {
+    inta = (l_int32 *)LEPT_CALLOC(hashsize, sizeof(l_int32));
+    manycolors = 0;
+    for (i = 0; i < h && manycolors == 0; i += factor) {
         line = data + i * wpl;
         for (j = 0; j < w; j += factor) {
             pixel = line[j];
@@ -1354,16 +1451,109 @@ PIXCMAP   *cmap;
                 inta[val] = 1;
                 sum++;
                 if (sum > 256) {
-                    LEPT_FREE(inta);
-                    return 0;
+                    manycolors = 1;
+                    break;
                 }
             }
         }
     }
-
-    *pncolors = sum;
     LEPT_FREE(inta);
-    return 0;
+
+    if (manycolors == 0) {
+        *pncolors = sum;
+        return 0;
+    }
+
+        /* More than 256 colors in RGB image */
+    return pixCountRGBColors(pixs, factor, pncolors);
+}
+
+
+/* ----------------------------------------------------------------------- *
+ *             Lossless conversion of RGB image to colormapped             *
+ * ----------------------------------------------------------------------- */
+/*!
+ * \brief   pixConvertRGBToCmap()
+ * \param[in]    pixs     32 bpp RGB
+ * \return  pixd   if num colors <= 256; null otherwise or on error
+ *
+ * <pre>
+ * Notes:
+ *      (1) If there are not more than 256 colors, this losslessly
+ *          converts and RGB image to a colormapped one, with the
+ *          smallest pixel depth required to hold all the colors.
+ * </pre>
+ */
+PIX *
+pixConvertRGBToCmap(PIX  *pixs)
+{
+l_int32    w, h, d, i, j, wpls, wpld, hashsize, hashval, ncolors, index;
+l_int32    rval, gval, bval, val;
+l_int32   *hasha1, *hasha2;
+l_uint32   pixel;
+l_uint32  *datas, *lines, *datad, *lined;
+PIX       *pixd;
+PIXCMAP   *cmap;
+
+    PROCNAME("pixConvertRGBToCmap");
+
+    if (!pixs || pixGetDepth(pixs) != 32)
+        return (PIX *)ERROR_PTR("pixs not defined", procName, NULL);
+
+    pixNumColors(pixs, 1, &ncolors);
+    if (ncolors > 256) {
+        L_ERROR("too many colors found: %d\n", procName, ncolors);
+        return NULL;
+    }
+
+    pixGetDimensions(pixs, &w, &h, NULL);
+    if (ncolors <= 2)
+        d = 1;
+    else if (ncolors <= 4)
+        d = 2;
+    else if (ncolors <= 16)
+        d = 4;
+    else  /* ncolors <= 256 */
+        d = 8;
+
+    if ((pixd = pixCreate(w, h, d)) == NULL)
+        return (PIX *)ERROR_PTR("pixd not made", procName, NULL);
+    cmap = pixcmapCreate(d);
+    datas = pixGetData(pixs);
+    wpls = pixGetWpl(pixs);
+    datad = pixGetData(pixd);
+    wpld = pixGetWpl(pixd);
+
+        /* hasha1 is a 1/0 indicator array for colors seen.
+           hasha2 holds the index into the colormap that will be
+           generated from the colors in the order seen. This is
+           the value inserted into pixd.  */
+    hashsize = 5507;  /* big and prime; collisions are not likely */
+    hasha1 = (l_int32 *)LEPT_CALLOC(hashsize, sizeof(l_int32));
+    hasha2 = (l_int32 *)LEPT_CALLOC(hashsize, sizeof(l_int32));
+    index = -1;
+    for (i = 0; i < h; i++) {
+        lines = datas + i * wpls;
+        lined = datad + i * wpld;
+        for (j = 0; j < w; j++) {
+            pixel = lines[j];
+            extractRGBValues(pixel, &rval, &gval, &bval);
+            hashval = (137 * rval + 269 * gval + 353 * bval) % hashsize;
+            if (hasha1[hashval] == 0) {  /* new color */
+                hasha1[hashval] = 1;
+                index++;
+                hasha2[hashval] = index;
+                pixcmapAddColor(cmap, rval, gval, bval);
+            }
+            val = hasha2[hashval];
+            setLineDataVal(lined, j, d, val);
+        }
+    }
+    pixSetColormap(pixd, cmap);
+
+    LEPT_FREE(hasha1);
+    LEPT_FREE(hasha2);
+    return pixd;
 }
 
 
@@ -1464,6 +1654,8 @@ NUMA    *nahisto, *naindex;
  *          are generally found for %sigbits = 3 and ncolors ~ 20.
  *      (4) See also pixColorSegment() for a method of quantizing the
  *          colors to generate regions of similar color.
+ *      (5) See also pixConvertRGBToCmap() to losslessly convert an
+ *          RGB image with not more than 256 colors.
  * </pre>
  */
 PIX *

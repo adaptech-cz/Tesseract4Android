@@ -30,6 +30,10 @@
  *   Regression test for subpixel scaling.
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include "allheaders.h"
 
 void AddTextAndSave(PIXA *pixa, PIX *pixs, l_int32 newrow,
@@ -54,6 +58,11 @@ PIX          *pix1, *pix2, *pix3, *pix4, *pix5, *pix6, *pix7, *pix8;
 PIXA         *pixa;
 L_REGPARAMS  *rp;
 
+#if !defined(HAVE_LIBPNG)
+    L_ERROR("This test requires libpng to run.\n", "subpixel_reg");
+    exit(77);
+#endif
+
     if (regTestSetup(argc, argv, &rp))
         return 1;
 
@@ -74,7 +83,7 @@ L_REGPARAMS  *rp;
     pix5 = pixConvertGrayToSubpixelRGB(pixs, 0.4, 0.4, L_SUBPIXEL_ORDER_VBGR);
     AddTextAndSave(pixa, pix5, 0, bmf, textstr[4], L_ADD_BELOW, 0x0000ff00);
 
-    pixt = pixaDisplay(pixa, 0, 0);
+    pixt = pixaDisplayTiledInColumns(pixa, 5, 1.0, 30, 2);
     pixd = pixAddSingleTextblock(pixt, bmftop,
                                  "Regression test for subpixel scaling: gray",
                                  0xff00ff00, L_ADD_ABOVE, NULL);
@@ -106,7 +115,7 @@ L_REGPARAMS  *rp;
     pix5 = pixConvertToSubpixelRGB(pixs, 0.4, 0.4, L_SUBPIXEL_ORDER_VBGR);
     AddTextAndSave(pixa, pix5, 0, bmf, textstr[4], L_ADD_BELOW, 0x0000ff00);
 
-    pixt = pixaDisplay(pixa, 0, 0);
+    pixt = pixaDisplayTiledInColumns(pixa, 5, 1.0, 30, 2);
     pixd = pixAddSingleTextblock(pixt, bmftop,
                                  "Regression test for subpixel scaling: color",
                                  0xff00ff00, L_ADD_ABOVE, NULL);
@@ -195,8 +204,7 @@ PIX     *pixt;
 
     pixt = pixAddSingleTextblock(pixs, bmf, textstr, val, location, &ovf);
     n = pixaGetCount(pixa);
-    pixSaveTiledOutline(pixt, pixa, 1.0, newrow, 30, 2, 32);
+    pixaAddPix(pixa, pixt, L_INSERT);
     if (ovf) fprintf(stderr, "Overflow writing text in image %d\n", n + 1);
-    pixDestroy(&pixt);
     return;
 }

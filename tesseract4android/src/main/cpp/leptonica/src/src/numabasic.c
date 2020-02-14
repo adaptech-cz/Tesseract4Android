@@ -70,6 +70,7 @@
  *          l_int32      numaWriteDebug()
  *          l_int32      numaWrite()
  *          l_int32      numaWriteStream()
+ *          l_int32      numaWriteStderr()
  *          l_int32      numaWriteMem()
  *
  *      Numaa creation, destruction, truncation
@@ -163,16 +164,22 @@
  * </pre>
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include <string.h>
 #include <math.h>
 #include "allheaders.h"
 
-static const l_int32 INITIAL_PTR_ARRAYSIZE = 50;      /* n'importe quoi */
+    /* Bounds on initial array size */
+static const l_uint32  MaxArraySize = 100000000;  /* for numa */
+static const l_uint32  MaxPtrArraySize = 10000;  /* for numaa */
+static const l_int32 InitialArraySize = 50;      /*!< n'importe quoi */
 
     /* Static functions */
 static l_int32 numaExtendArray(NUMA  *na);
 static l_int32 numaaExtendArray(NUMAA  *naa);
-
 
 /*--------------------------------------------------------------------------*
  *               Numa creation, destruction, copy, clone, etc.              *
@@ -190,11 +197,10 @@ NUMA  *na;
 
     PROCNAME("numaCreate");
 
-    if (n <= 0)
-        n = INITIAL_PTR_ARRAYSIZE;
+    if (n <= 0 || n > MaxArraySize)
+        n = InitialArraySize;
 
-    if ((na = (NUMA *)LEPT_CALLOC(1, sizeof(NUMA))) == NULL)
-        return (NUMA *)ERROR_PTR("na not made", procName, NULL);
+    na = (NUMA *)LEPT_CALLOC(1, sizeof(NUMA));
     if ((na->array = (l_float32 *)LEPT_CALLOC(n, sizeof(l_float32))) == NULL) {
         numaDestroy(&na);
         return (NUMA *)ERROR_PTR("number array not made", procName, NULL);
@@ -1126,6 +1132,10 @@ NUMA      *na;
     if (fscanf(fp, "Number of numbers = %d\n", &n) != 1)
         return (NUMA *)ERROR_PTR("invalid number of numbers", procName, NULL);
 
+    if (n > MaxArraySize) {
+        L_ERROR("n = %d > %d\n", procName, n, MaxArraySize);
+        return NULL;
+    }
     if ((na = numaCreate(n)) == NULL)
         return (NUMA *)ERROR_PTR("na not made", procName, NULL);
 
@@ -1238,7 +1248,7 @@ FILE    *fp;
 /*!
  * \brief   numaWriteStream()
  *
- * \param[in]    fp file stream
+ * \param[in]    fp    file stream; use NULL to write to stderr
  * \param[in]    na
  * \return  0 if OK, 1 on error
  */
@@ -1251,10 +1261,10 @@ l_float32  startx, delx;
 
     PROCNAME("numaWriteStream");
 
-    if (!fp)
-        return ERROR_INT("stream not defined", procName, 1);
     if (!na)
         return ERROR_INT("na not defined", procName, 1);
+    if (!fp)
+        return numaWriteStderr(na);
 
     n = numaGetCount(na);
     fprintf(fp, "\nNuma Version %d\n", NUMA_VERSION_NUMBER);
@@ -1267,6 +1277,39 @@ l_float32  startx, delx;
     numaGetParameters(na, &startx, &delx);
     if (startx != 0.0 || delx != 1.0)
         fprintf(fp, "startx = %f, delx = %f\n", startx, delx);
+
+    return 0;
+}
+
+
+/*!
+ * \brief   numaWriteStderr()
+ *
+ * \param[in]    na
+ * \return  0 if OK, 1 on error
+ */
+l_ok
+numaWriteStderr(NUMA  *na)
+{
+l_int32    i, n;
+l_float32  startx, delx;
+
+    PROCNAME("numaWriteStderr");
+
+    if (!na)
+        return ERROR_INT("na not defined", procName, 1);
+
+    n = numaGetCount(na);
+    lept_stderr("\nNuma Version %d\n", NUMA_VERSION_NUMBER);
+    lept_stderr("Number of numbers = %d\n", n);
+    for (i = 0; i < n; i++)
+        lept_stderr("  [%d] = %f\n", i, na->array[i]);
+    lept_stderr("\n");
+
+        /* Optional data */
+    numaGetParameters(na, &startx, &delx);
+    if (startx != 0.0 || delx != 1.0)
+        lept_stderr("startx = %f, delx = %f\n", startx, delx);
 
     return 0;
 }
@@ -1343,11 +1386,10 @@ NUMAA  *naa;
 
     PROCNAME("numaaCreate");
 
-    if (n <= 0)
-        n = INITIAL_PTR_ARRAYSIZE;
+    if (n <= 0 || n > MaxPtrArraySize)
+        n = InitialArraySize;
 
-    if ((naa = (NUMAA *)LEPT_CALLOC(1, sizeof(NUMAA))) == NULL)
-        return (NUMAA *)ERROR_PTR("naa not made", procName, NULL);
+    naa = (NUMAA *)LEPT_CALLOC(1, sizeof(NUMAA));
     if ((naa->numa = (NUMA **)LEPT_CALLOC(n, sizeof(NUMA *))) == NULL) {
         numaaDestroy(&naa);
         return (NUMAA *)ERROR_PTR("numa ptr array not made", procName, NULL);
@@ -1845,6 +1887,11 @@ NUMAA     *naa;
         return (NUMAA *)ERROR_PTR("invalid numaa version", procName, NULL);
     if (fscanf(fp, "Number of numa = %d\n\n", &n) != 1)
         return (NUMAA *)ERROR_PTR("invalid number of numa", procName, NULL);
+
+    if (n > MaxPtrArraySize) {
+        L_ERROR("n = %d > %d\n", procName, n, MaxPtrArraySize);
+        return NULL;
+    }
     if ((naa = numaaCreate(n)) == NULL)
         return (NUMAA *)ERROR_PTR("naa not made", procName, NULL);
 

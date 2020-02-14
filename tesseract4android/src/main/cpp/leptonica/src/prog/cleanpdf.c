@@ -64,6 +64,10 @@
  *              poppler-0.26.5-1
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #ifdef _WIN32
 # if defined(_MSC_VER) || defined(__MINGW32__)
 #  include <direct.h>
@@ -170,6 +174,7 @@ static char  mainName[] = "cleanpdf";
 
 #if 1
         /* Generate the pdf */
+    fprintf(stderr, "Write output to /tmp/output.pdf\n");
     convertFilesToPdf(imagedir, "tif", res, 1.0, L_G4_ENCODE, 0, NULL,
                       "/tmp/output.pdf");
 #endif

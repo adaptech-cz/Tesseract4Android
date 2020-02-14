@@ -31,6 +31,7 @@
  *       ------------------------------------------
  *       This file has these utilities:
  *         - error, warning and info messages
+ *         - redirection of stderr
  *         - low-level endian conversions
  *         - file corruption operations
  *         - random and prime number operations
@@ -47,6 +48,10 @@
  *           l_float32  returnErrorFloat()
  *           void      *returnErrorPtr()
  *
+ *       Runtime redirection of stderr
+ *           void leptSetStderrHandler()
+ *           void lept_stderr()
+ *
  *       Test files for equivalence
  *           l_int32    filesAreIdentical()
  *
@@ -56,9 +61,10 @@
  *           l_uint16   convertOnLittleEnd16()
  *           l_uint32   convertOnLittleEnd32()
  *
- *       File corruption operation
+ *       File corruption and byte replacement operations
  *           l_int32    fileCorruptByDeletion()
  *           l_int32    fileCorruptByMutation()
+ *           l_int32    fileReplaceBytes()
  *
  *       Generate random integer in given range
  *           l_int32    genRandomIntegerInRange()
@@ -97,7 +103,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include "config_auto.h"
+#include <config_auto.h>
 #endif  /* HAVE_CONFIG_H */
 
 #ifdef _WIN32
@@ -138,26 +144,24 @@ setMsgSeverity(l_int32  newsev)
 l_int32  oldsev;
 char    *envsev;
 
-    PROCNAME("setMsgSeverity");
-
     oldsev = LeptMsgSeverity;
     if (newsev == L_SEVERITY_EXTERNAL) {
         envsev = getenv("LEPT_MSG_SEVERITY");
         if (envsev) {
             LeptMsgSeverity = atoi(envsev);
 #if DEBUG_SEV
-            L_INFO("message severity set to external\n", procName);
+            L_INFO("message severity set to external\n", "setMsgSeverity");
 #endif  /* DEBUG_SEV */
         } else {
 #if DEBUG_SEV
             L_WARNING("environment var LEPT_MSG_SEVERITY not defined\n",
-                      procName);
+                      "setMsgSeverity");
 #endif  /* DEBUG_SEV */
         }
     } else {
         LeptMsgSeverity = newsev;
 #if DEBUG_SEV
-        L_INFO("message severity set to %d\n", procName, newsev);
+        L_INFO("message severity set to %d\n", "setMsgSeverity", newsev);
 #endif  /* DEBUG_SEV */
     }
 
@@ -167,6 +171,7 @@ char    *envsev;
 
 /*----------------------------------------------------------------------*
  *                Error return functions, invoked by macros             *
+ *----------------------------------------------------------------------*
  *                                                                      *
  *    (1) These error functions print messages to stderr and allow      *
  *        exit from the function that called them.                      *
@@ -188,7 +193,7 @@ returnErrorInt(const char  *msg,
                const char  *procname,
                l_int32      ival)
 {
-    fprintf(stderr, "Error in %s: %s\n", procname, msg);
+    lept_stderr("Error in %s: %s\n", procname, msg);
     return ival;
 }
 
@@ -206,7 +211,7 @@ returnErrorFloat(const char  *msg,
                  const char  *procname,
                  l_float32    fval)
 {
-    fprintf(stderr, "Error in %s: %s\n", procname, msg);
+    lept_stderr("Error in %s: %s\n", procname, msg);
     return fval;
 }
 
@@ -224,13 +229,96 @@ returnErrorPtr(const char  *msg,
                const char  *procname,
                void        *pval)
 {
-    fprintf(stderr, "Error in %s: %s\n", procname, msg);
+    lept_stderr("Error in %s: %s\n", procname, msg);
     return pval;
 }
 
 
+/*------------------------------------------------------------------------*
+ *                   Runtime redirection of stderr                        *
+ *------------------------------------------------------------------------*
+ *                                                                        *
+ *  The user can provide a callback function to redirect messages         *
+ *  that would otherwise go to stderr.  Here are two examples:            *
+ *  (1) to stop all messages:                                             *
+ *      void send_to_devnull(const char *msg) {}                          *
+ *  (2) to write to the system logger:                                    *
+ *      void send_to_syslog(const char *msg) {                            *
+ *           syslog(1, msg);                                              *
+ *      }                                                                 *
+ *  These would then be registered using
+ *      leptSetStderrHandler(send_to_devnull();
+ *  and
+ *      leptSetStderrHandler(send_to_syslog();
+ *------------------------------------------------------------------------*/
+    /* By default, all messages go to stderr */
+static void lept_default_stderr_handler(const char *formatted_msg)
+{
+    if (formatted_msg)
+        fputs(formatted_msg, stderr);
+}
+
+    /* The stderr callback handler is private to leptonica.
+     * By default it writes to stderr.  */
+void (*stderr_handler)(const char *) = lept_default_stderr_handler;
+
+
+/*!
+ * \brief   leptSetStderrHandler()
+ *
+ * \param[in]    handler   callback function for lept_stderr output
+ * \return  void
+ *
+ * <pre>
+ * Notes:
+ *      (1) This registers a handler for redirection of output to stderr
+ *          at runtime.
+ *      (2) If called with NULL, the output goes to stderr.
+ * </pre>
+ */
+void leptSetStderrHandler(void (*handler)(const char *))
+{
+    if (handler)
+        stderr_handler = handler;
+    else
+        stderr_handler = lept_default_stderr_handler;
+}
+
+
+#define MAX_DEBUG_MESSAGE   2000
+/*!
+ * \brief   lept_stderr()
+ *
+ * \param[in]    fmt      format string
+ * \param[in]    ...      varargs
+ * \return  void
+ *
+ * <pre>
+ * Notes:
+ *      (1) This is a replacement for fprintf(), to allow redirection
+ *          of output.  All calls to fprintf(stderr, ...) are replaced
+ *          with calls to lept_stderr(...).
+ *      (2) The message size is limited to 2K bytes.
+        (3) This utility was provided by jbarlow83.
+ * </pre>
+ */
+void lept_stderr(const char *fmt, ...)
+{
+va_list  args;
+char     msg[MAX_DEBUG_MESSAGE];
+l_int32  n;
+
+    va_start(args, fmt);
+    n = vsnprintf(msg, sizeof(msg), fmt, args);
+    va_end(args);
+    if (n < 0)
+        return;
+    (*stderr_handler)(msg);
+}
+
+
 /*--------------------------------------------------------------------*
- *                      Test files for equivalence                    *
+ *                    Test files for equivalence                      *
  *--------------------------------------------------------------------*/
 /*!
  * \brief   filesAreIdentical()
@@ -285,6 +373,7 @@ l_uint8  *array1, *array2;
 
 /*--------------------------------------------------------------------------*
  *   16 and 32 bit byte-swapping on big endian and little  endian machines  *
+ *--------------------------------------------------------------------------*
  *                                                                          *
  *   These are typically used for I/O conversions:                          *
  *      (1) endian conversion for data that was read from a file            *
@@ -362,7 +451,7 @@ convertOnBigEnd32(l_uint32  wordin)
 
 
 /*---------------------------------------------------------------------*
- *                       File corruption operations                    *
+ *           File corruption and byte replacement operations           *
  *---------------------------------------------------------------------*/
 /*!
  * \brief   fileCorruptByDeletion()
@@ -485,6 +574,70 @@ l_uint8  *data;
 
     l_binaryWrite(fileout, "w", data, bytes);
     LEPT_FREE(data);
+    return 0;
+}
+
+
+/*!
+ * \brief   fileReplaceBytes()
+ *
+ * \param[in]    filein      input file
+ * \param[in]    start       start location for replacement
+ * \param[in]    nbytes      number of bytes to be removed
+ * \param[in]    newdata     replacement bytes
+ * \param[in]    newsize     size of replacement bytes
+ * \param[in]    fileout     output file
+ * \return  0 if OK, 1 on error
+ *
+ * <pre>
+ * Notes:
+ *      (1) To remove %nbytes without replacement, set %newdata == NULL.
+ *      (2) One use is for replacing the date/time in a pdf file by a
+ *          string of 12 '0's, effectively removing the date without
+ *          invalidating the byte counters in the pdf file:
+ *              fileReplaceBytes(filein 86 12 (char *)"000000000000" 12 fileout
+ * </pre>
+ */
+l_ok
+fileReplaceBytes(const char  *filein,
+                 l_int32      start,
+                 l_int32      nbytes,
+                 l_uint8     *newdata,
+                 size_t       newsize,
+                 const char  *fileout)
+{
+l_int32   i, index;
+size_t    inbytes, outbytes;
+l_uint8  *datain, *dataout;
+
+    PROCNAME("fileReplaceBytes");
+
+    if (!filein || !fileout)
+        return ERROR_INT("filein and fileout not both specified", procName, 1);
+
+    datain = l_binaryRead(filein, &inbytes);
+    if (start + nbytes > inbytes)
+        L_WARNING("start + nbytes > length(filein) = %zu\n", procName, inbytes);
+
+    if (!newdata) newsize = 0;
+    outbytes = inbytes - nbytes + newsize;
+    if ((dataout = (l_uint8 *)LEPT_CALLOC(outbytes, 1)) == NULL) {
+        LEPT_FREE(datain);
+        return ERROR_INT("calloc fail for dataout", procName, 1);
+    }
+
+    for (i = 0; i < start; i++)
+        dataout[i] = datain[i];
+    for (i = start; i < start + newsize; i++)
+        dataout[i] = newdata[i - start];
+    index = start + nbytes;  /* for datain */
+    start += newsize;  /* for dataout */
+    for (i = start; i < outbytes; i++, index++)
+        dataout[i] = datain[index];
+    l_binaryWrite(fileout, "w", dataout, outbytes);
+
+    LEPT_FREE(datain);
+    LEPT_FREE(dataout);
     return 0;
 }
 
@@ -807,7 +960,7 @@ l_uint32  shift;
  *      (1) The caller has responsibility to free the memory.
  */
 char *
-getLeptonicaVersion()
+getLeptonicaVersion(void)
 {
 size_t  bufsize = 100;
 
@@ -848,7 +1001,7 @@ size_t  bufsize = 100;
 /*---------------------------------------------------------------------*
  *                           Timing procs                              *
  *---------------------------------------------------------------------*/
-#ifndef _WIN32
+#if !defined(_WIN32) && !defined(__Fuchsia__)
 
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -863,7 +1016,7 @@ static struct rusage rusage_after;
  *      (1) These measure the cpu time elapsed between the two calls:
  *            startTimer();
  *            ....
- *            fprintf(stderr, "Elapsed time = %7.3f sec\n", stopTimer());
+ *            lept_stderr( "Elapsed time = %7.3f sec\n", stopTimer());
  */
 void
 startTimer(void)
@@ -893,9 +1046,9 @@ l_int32  tsec, tusec;
  *      ....
  *      L_TIMER  t2 = startTimerNested();
  *      ....
- *      fprintf(stderr, "Elapsed time 2 = %7.3f sec\n", stopTimerNested(t2));
+ *      lept_stderr( "Elapsed time 2 = %7.3f sec\n", stopTimerNested(t2));
  *      ....
- *      fprintf(stderr, "Elapsed time 1 = %7.3f sec\n", stopTimerNested(t1));
+ *      lept_stderr( "Elapsed time 1 = %7.3f sec\n", stopTimerNested(t1));
  */
 L_TIMER
 startTimerNested(void)
@@ -943,6 +1096,41 @@ struct timeval tv;
     return;
 }
 
+#elif defined(__Fuchsia__) /* resource.h not implemented on Fuchsia. */
+
+    /* Timer functions are used for testing and debugging, and
+     * are stubbed out.  If they are needed in the future, they
+     * can be implemented in Fuchsia using the zircon syscall
+     * zx_object_get_info() in ZX_INFOR_THREAD_STATS mode.  */
+
+void
+startTimer(void)
+{
+}
+
+l_float32
+stopTimer(void)
+{
+    return 0.0;
+}
+
+L_TIMER
+startTimerNested(void)
+{
+    return NULL;
+}
+
+l_float32
+stopTimerNested(L_TIMER  rusage_start)
+{
+    return 0.0;
+}
+
+void
+l_getCurrentTime(l_int32  *sec,
+                 l_int32  *usec)
+{
+}
 
 #else   /* _WIN32 : resource.h not implemented under Windows */
 
@@ -1056,7 +1244,7 @@ LONGLONG        usecs;
  *      (1) These measure the wall clock time  elapsed between the two calls:
  *            L_WALLTIMER *timer = startWallTimer();
  *            ....
- *            fprintf(stderr, "Elapsed time = %f sec\n", stopWallTimer(&timer);
+ *            lept_stderr( "Elapsed time = %f sec\n", stopWallTimer(&timer);
  *      (2) Note that the timer object is destroyed by stopWallTimer().
  * </pre>
  */
@@ -1112,7 +1300,7 @@ L_WALLTIMER  *timer;
  * </pre>
  */
 char *
-l_getFormattedDate()
+l_getFormattedDate(void)
 {
 char        buf[128] = "", sep = 'Z';
 l_int32     gmt_offset, relh, relm;
@@ -1146,16 +1334,23 @@ struct tm  *tptr = &Tm;
         /* Calls "difftime" to obtain the resulting difference in seconds,
          * because "time_t" is an opaque type, per the C standard. */
     gmt_offset = (l_int32) difftime(ut, lt);
-
     if (gmt_offset > 0)
         sep = '+';
     else if (gmt_offset < 0)
         sep = '-';
-
     relh = L_ABS(gmt_offset) / 3600;
     relm = (L_ABS(gmt_offset) % 3600) / 60;
 
-    strftime(buf, sizeof(buf), "%Y%m%d%H%M%S", localtime(&ut));
+#ifdef _WIN32
+  #ifdef _MSC_VER
+    localtime_s(tptr, &ut);
+  #else  /* mingw */
+    tptr = localtime(&ut);
+  #endif
+#else
+    localtime_r(&ut, tptr);
+#endif
+    strftime(buf, sizeof(buf), "%Y%m%d%H%M%S", tptr);
     sprintf(buf + 14, "%c%02d'%02d'", sep, relh, relm);
     return stringNew(buf);
 }

@@ -123,15 +123,20 @@
  * </pre>
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include <string.h>
 #include "allheaders.h"
 
-static const l_int32  INITIAL_PTR_ARRAYSIZE = 20;   /* must be > 0 */
+    /* Bounds on initial array size */
+static const l_uint32  MaxPtrArraySize = 100000;
+static const l_int32 InitialPtrArraySize = 20;      /*!< n'importe quoi */
 
     /* Static functions */
 static l_int32 fpixaExtendArray(FPIXA *fpixa);
 static l_int32 fpixaExtendArrayToSize(FPIXA *fpixa, l_int32 size);
-
 
 /*--------------------------------------------------------------------*
  *                     FPix Create/copy/destroy                       *
@@ -717,15 +722,13 @@ FPIXA  *fpixa;
 
     PROCNAME("fpixaCreate");
 
-    if (n <= 0)
-        n = INITIAL_PTR_ARRAYSIZE;
+    if (n <= 0 || n > MaxPtrArraySize)
+        n = InitialPtrArraySize;
 
-    if ((fpixa = (FPIXA *)LEPT_CALLOC(1, sizeof(FPIXA))) == NULL)
-        return (FPIXA *)ERROR_PTR("fpixa not made", procName, NULL);
+    fpixa = (FPIXA *)LEPT_CALLOC(1, sizeof(FPIXA));
     fpixa->n = 0;
     fpixa->nalloc = n;
     fpixa->refcount = 1;
-
     if ((fpixa->fpix = (FPIX **)LEPT_CALLOC(n, sizeof(FPIX *))) == NULL) {
         fpixaDestroy(&fpixa);
         return (FPIXA *)ERROR_PTR("fpixa ptrs not made", procName, NULL);

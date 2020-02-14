@@ -72,7 +72,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include "config_auto.h"
+#include <config_auto.h>
 #endif  /* HAVE_CONFIG_H */
 
 #include <string.h>
@@ -935,6 +935,7 @@ PIXCMAP  *cmap;
                 return (PIX *)ERROR_PTR("invalid colormap", procName, NULL);
             }
         }
+        pixSetPadBits(pix, 0);
     }
     return pix;
 }
@@ -961,7 +962,7 @@ PIXCMAP  *cmap;
  *          png, it requires less than 30 bytes, but for jpeg it can
  *          require most of the compressed file.  In practice, the data
  *          is typically the entire compressed file in memory.
- *      (3) findFileFormatBuffer() requires up to 8 bytes to decide on
+ *      (3) findFileFormatBuffer() requires up to 12 bytes to decide on
  *          the format, which we require.
  * </pre>
  */
@@ -990,8 +991,8 @@ PIX     *pix;
     iscmap = 0;  /* init to false */
     if (!data)
         return ERROR_INT("data not defined", procName, 1);
-    if (size < 8)
-        return ERROR_INT("size < 8", procName, 1);
+    if (size < 12)
+        return ERROR_INT("size < 12", procName, 1);
 
     findFileFormatBuffer(data, &format);
 
@@ -1607,7 +1608,7 @@ PIXCMAP   *cmap;
         pixCompareRGB(pix1, pix2, L_COMPARE_ABS_DIFF, 0, NULL, &diff,
                       NULL, NULL);
     }
-    fprintf(stderr, "diff = %7.3f\n", diff);
+    lept_stderr("diff = %7.3f\n", diff);
     if (diff > 7.0) {
         L_INFO("   **** bad jp2k image: d = %d, diff = %5.2f ****\n",
                procName, depth, diff);

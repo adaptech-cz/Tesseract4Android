@@ -33,13 +33,13 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include "config_auto.h"
+#include <config_auto.h>
 #endif  /* HAVE_CONFIG_H */
 
 #include "allheaders.h"
 
 /* --------------------------------------------*/
-#if  !HAVE_LIBWEBP   /* defined in environ.h */
+#if  !HAVE_LIBWEBP   /* defined in environ.h   */
 /* --------------------------------------------*/
 
 PIX * pixReadStreamWebP(FILE *fp)

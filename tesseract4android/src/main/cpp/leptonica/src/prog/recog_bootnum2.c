@@ -33,10 +33,13 @@
  *   generate the recog/digits/digit*.comp.tif image mosaics.
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include "string.h"
 #include "allheaders.h"
 
-static const l_int32  n = 25;
 static const char *removeset = "4,7,9,21";
 
 void ProcessDigits(l_int32 i);
@@ -45,8 +48,6 @@ void PixaDisplayNumbered(PIXA *pixa, const char *rootname);
 l_int32 main(int    argc,
              char **argv)
 {
-l_int32  i;
-
     setLeptDebugOK(1);
     lept_mkdir("lept/digit");
     ProcessDigits(5);

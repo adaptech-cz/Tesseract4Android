@@ -29,6 +29,7 @@
  * <pre>
  *
  *      Top-level deskew interfaces
+ *          PIX       *pixDeskewBoth()
  *          PIX       *pixDeskew()
  *          PIX       *pixFindSkewAndDeskew()
  *          PIX       *pixDeskewGeneral()
@@ -94,39 +95,43 @@
  * </pre>
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include <math.h>
 #include "allheaders.h"
 
     /* Default sweep angle parameters for pixFindSkew() */
-static const l_float32  DEFAULT_SWEEP_RANGE = 7.;    /* degrees */
-static const l_float32  DEFAULT_SWEEP_DELTA = 1.;    /* degrees */
+static const l_float32  DefaultSweepRange = 7.0;   /* degrees */
+static const l_float32  DefaultSweepDelta = 1.0;   /* degrees */
 
     /* Default final angle difference parameter for binary
      * search in pixFindSkew().  The expected accuracy is
      * not better than the inverse image width in pixels,
      * say, 1/2000 radians, or about 0.03 degrees. */
-static const l_float32  DEFAULT_MINBS_DELTA = 0.01;  /* degrees */
+static const l_float32  DefaultMinbsDelta = 0.01;  /* degrees */
 
     /* Default scale factors for pixFindSkew() */
-static const l_int32  DEFAULT_SWEEP_REDUCTION = 4;  /* sweep part; 4 is good */
-static const l_int32  DEFAULT_BS_REDUCTION = 2;  /* binary search part */
+static const l_int32  DefaultSweepReduction = 4;  /* sweep part; 4 is good */
+static const l_int32  DefaultBsReduction = 2;  /* binary search part */
 
     /* Minimum angle for deskewing in pixDeskew() */
-static const l_float32  MIN_DESKEW_ANGLE = 0.1;  /* degree */
+static const l_float32  MinDeskewAngle = 0.1;  /* degree */
 
     /* Minimum allowed confidence (ratio) for deskewing in pixDeskew() */
-static const l_float32  MIN_ALLOWED_CONFIDENCE = 3.0;
+static const l_float32  MinAllowedConfidence = 3.0;
 
     /* Minimum allowed maxscore to give nonzero confidence */
-static const l_int32  MIN_VALID_MAXSCORE = 10000;
+static const l_int32  MinValidMaxscore = 10000;
 
     /* Constant setting threshold for minimum allowed minscore
      * to give nonzero confidence; multiply this constant by
      *  (height * width^2) */
-static const l_float32  MINSCORE_THRESHOLD_CONSTANT = 0.000002;
+static const l_float32  MinscoreThreshFactor = 0.000002;
 
     /* Default binarization threshold value */
-static const l_int32  DEFAULT_BINARY_THRESHOLD = 130;
+static const l_int32  DefaultBinaryThreshold = 130;
 
 #ifndef  NO_CONSOLE_IO
 #define  DEBUG_PRINT_SCORES     0
@@ -169,7 +174,7 @@ PIX  *pix1, *pix2, *pix3, *pix4;
     if (!pixs)
         return (PIX *)ERROR_PTR("pixs not defined", procName, NULL);
     if (redsearch == 0)
-        redsearch = DEFAULT_BS_REDUCTION;
+        redsearch = DefaultBsReduction;
     else if (redsearch != 1 && redsearch != 2 && redsearch != 4)
         return (PIX *)ERROR_PTR("redsearch not in {1,2,4}", procName, NULL);
 
@@ -210,7 +215,7 @@ pixDeskew(PIX     *pixs,
     if (!pixs)
         return (PIX *)ERROR_PTR("pixs not defined", procName, NULL);
     if (redsearch == 0)
-        redsearch = DEFAULT_BS_REDUCTION;
+        redsearch = DefaultBsReduction;
     else if (redsearch != 1 && redsearch != 2 && redsearch != 4)
         return (PIX *)ERROR_PTR("redsearch not in {1,2,4}", procName, NULL);
 
@@ -248,7 +253,7 @@ pixFindSkewAndDeskew(PIX        *pixs,
     if (!pixs)
         return (PIX *)ERROR_PTR("pixs not defined", procName, NULL);
     if (redsearch == 0)
-        redsearch = DEFAULT_BS_REDUCTION;
+        redsearch = DefaultBsReduction;
     else if (redsearch != 1 && redsearch != 2 && redsearch != 4)
         return (PIX *)ERROR_PTR("redsearch not in {1,2,4}", procName, NULL);
 
@@ -302,19 +307,19 @@ PIX       *pixb, *pixd;
     if (!pixs)
         return (PIX *)ERROR_PTR("pixs not defined", procName, NULL);
     if (redsweep == 0)
-        redsweep = DEFAULT_SWEEP_REDUCTION;
+        redsweep = DefaultSweepReduction;
     else if (redsweep != 1 && redsweep != 2 && redsweep != 4)
         return (PIX *)ERROR_PTR("redsweep not in {1,2,4}", procName, NULL);
     if (sweeprange == 0.0)
-        sweeprange = DEFAULT_SWEEP_RANGE;
+        sweeprange = DefaultSweepRange;
     if (sweepdelta == 0.0)
-        sweepdelta = DEFAULT_SWEEP_DELTA;
+        sweepdelta = DefaultSweepDelta;
     if (redsearch == 0)
-        redsearch = DEFAULT_BS_REDUCTION;
+        redsearch = DefaultBsReduction;
     else if (redsearch != 1 && redsearch != 2 && redsearch != 4)
         return (PIX *)ERROR_PTR("redsearch not in {1,2,4}", procName, NULL);
     if (thresh == 0)
-        thresh = DEFAULT_BINARY_THRESHOLD;
+        thresh = DefaultBinaryThreshold;
 
     deg2rad = 3.1415926535 / 180.;
 
@@ -328,14 +333,14 @@ PIX       *pixb, *pixd;
         /* Use the 1 bpp image to find the skew */
     ret = pixFindSkewSweepAndSearch(pixb, &angle, &conf, redsweep, redsearch,
                                     sweeprange, sweepdelta,
-                                    DEFAULT_MINBS_DELTA);
+                                    DefaultMinbsDelta);
     pixDestroy(&pixb);
     if (pangle) *pangle = angle;
     if (pconf) *pconf = conf;
     if (ret)
         return pixClone(pixs);
 
-    if (L_ABS(angle) < MIN_DESKEW_ANGLE || conf < MIN_ALLOWED_CONFIDENCE)
+    if (L_ABS(angle) < MinDeskewAngle || conf < MinAllowedConfidence)
         return pixClone(pixs);
 
     if ((pixd = pixRotate(pixs, deg2rad * angle, L_ROTATE_AREA_MAP,
@@ -383,11 +388,11 @@ pixFindSkew(PIX        *pixs,
         return ERROR_INT("pixs not 1 bpp", procName, 1);
 
     return pixFindSkewSweepAndSearch(pixs, pangle, pconf,
-                                     DEFAULT_SWEEP_REDUCTION,
-                                     DEFAULT_BS_REDUCTION,
-                                     DEFAULT_SWEEP_RANGE,
-                                     DEFAULT_SWEEP_DELTA,
-                                     DEFAULT_MINBS_DELTA);
+                                     DefaultSweepReduction,
+                                     DefaultBsReduction,
+                                     DefaultSweepRange,
+                                     DefaultSweepDelta,
+                                     DefaultMinbsDelta);
 }
 
 
@@ -593,8 +598,8 @@ pixFindSkewSweepAndSearch(PIX        *pixs,
  *          of equal angles, and then doing a binary search until convergence.
  *      (2) There are two built-in constants that determine if the
  *          returned confidence is nonzero:
- *            ~ MIN_VALID_MAXSCORE (minimum allowed maxscore)
- *            ~ MINSCORE_THRESHOLD_CONSTANT (determines minimum allowed
+ *            ~ MinValidMaxscore (minimum allowed maxscore)
+ *            ~ MinscoreThreshFactor (determines minimum allowed
  *                 minscore, by multiplying by (height * width^2)
  *          If either of these conditions is not satisfied, the returned
  *          confidence value will be zero.  The maxscore is optionally
@@ -916,7 +921,7 @@ PIX       *pixsw, *pixsch, *pixt1, *pixt2;
     numaGetMin(nascore, &minscore, &minloc);
     width = pixGetWidth(pixsch);
     height = pixGetHeight(pixsch);
-    minthresh = MINSCORE_THRESHOLD_CONSTANT * width * width * height;
+    minthresh = MinscoreThreshFactor * width * width * height;
 
 #if  DEBUG_THRESHOLD
     L_INFO(" minthresh = %10.2f, minscore = %10.2f\n", procName,
@@ -933,13 +938,13 @@ PIX       *pixsw, *pixsch, *pixt1, *pixt2;
          * range or if maxscore is small */
     if ((centerangle > rangeleft + 2 * sweeprange - sweepdelta) ||
         (centerangle < rangeleft + sweepdelta) ||
-        (maxscore < MIN_VALID_MAXSCORE))
+        (maxscore < MinValidMaxscore))
         *pconf = 0.0;
 
 #if  DEBUG_PRINT_BINARY
-    fprintf(stderr, "Binary search: angle = %7.3f, score ratio = %6.2f\n",
+    lept_stderr("Binary search: angle = %7.3f, score ratio = %6.2f\n",
             *pangle, *pconf);
-    fprintf(stderr, "               max score = %8.0f\n", maxscore);
+    lept_stderr("               max score = %8.0f\n", maxscore);
 #endif  /* DEBUG_PRINT_BINARY */
 
 #if  DEBUG_PLOT_SCORES
@@ -1073,11 +1078,11 @@ PIX       *pixr;
     }
 
 #if  DEBUG_PRINT_ORTH
-    fprintf(stderr, " About 0:  angle1 = %7.3f, conf1 = %7.3f, score1 = %f\n",
+    lept_stderr(" About 0:  angle1 = %7.3f, conf1 = %7.3f, score1 = %f\n",
             angle1, conf1, score1);
-    fprintf(stderr, " About 90: angle2 = %7.3f, conf2 = %7.3f, score2 = %f\n",
+    lept_stderr(" About 90: angle2 = %7.3f, conf2 = %7.3f, score2 = %f\n",
             angle2, conf2, score2);
-    fprintf(stderr, " Final:    angle = %7.3f, conf = %7.3f\n", *pangle, *pconf);
+    lept_stderr(" Final:    angle = %7.3f, conf = %7.3f\n", *pangle, *pconf);
 #endif  /* DEBUG_PRINT_ORTH */
 
     return 0;

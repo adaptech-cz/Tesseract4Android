@@ -79,6 +79,10 @@
  * </pre>
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include <string.h>
 #include <math.h>
 #include "allheaders.h"
@@ -92,14 +96,13 @@
 static l_float32 lab_forward(l_float32 v);
 static l_float32 lab_reverse(l_float32 v);
 
-
 /*---------------------------------------------------------------------------*
  *                  Colorspace conversion between RGB and HSB                *
  *---------------------------------------------------------------------------*/
 /*!
  * \brief   pixConvertRGBToHSV()
  *
- * \param[in]    pixd can be NULL; if not NULL, must == pixs
+ * \param[in]    pixd    can be NULL; if not NULL, must == pixs
  * \param[in]    pixs
  * \return  pixd always
  *
@@ -128,6 +131,8 @@ static l_float32 lab_reverse(l_float32 v);
  *                v = 1
  *                s = 1
  *                h = 1/2 (if r = 0), 5/6 (if g = 0), 1/6 (if b = 0)
+ *      (6) Dividing each component by a constant c > 1 reduces the
+ *          brightness v, but leaves the saturation and hue invariant.
  * </pre>
  */
 PIX *
@@ -179,7 +184,7 @@ PIXCMAP   *cmap;
 /*!
  * \brief   pixConvertHSVToRGB()
  *
- * \param[in]    pixd can be NULL; if not NULL, must == pixs
+ * \param[in]    pixd    can be NULL; if not NULL, must == pixs
  * \param[in]    pixs
  * \return  pixd always
  *
@@ -247,8 +252,8 @@ PIXCMAP   *cmap;
 /*!
  * \brief   convertRGBToHSV()
  *
- * \param[in]    rval, gval, bval RGB input
- * \param[out]   phval, psval, pvval HSV values
+ * \param[in]    rval, gval, bval      RGB input
+ * \param[out]   phval, psval, pvval   comparable HSV values
  * \return  0 if OK, 1 on error
  *
  * <pre>
@@ -321,8 +326,8 @@ l_float32  h;
 /*!
  * \brief   convertHSVToRGB()
  *
- * \param[in]    hval, sval, vval
- * \param[out]   prval, pgval, pbval RGB values
+ * \param[in]    hval, sval, vval      HSV input
+ * \param[out]   prval, pgval, pbval   comparable RGB values
  * \return  0 if OK, 1 on error
  *
  * <pre>
@@ -410,7 +415,7 @@ l_float32 h, f, s;
 /*!
  * \brief   pixcmapConvertRGBToHSV()
  *
- * \param[in]    cmap colormap
+ * \param[in]    cmap
  * \return  0 if OK; 1 on error
  *
  * <pre>
@@ -443,7 +448,7 @@ l_int32   i, ncolors, rval, gval, bval, hval, sval, vval;
 /*!
  * \brief   pixcmapConvertHSVToRGB()
  *
- * \param[in]    cmap colormap
+ * \param[in]    cmap
  * \return  0 if OK; 1 on error
  *
  * <pre>
@@ -476,8 +481,8 @@ l_int32   i, ncolors, rval, gval, bval, hval, sval, vval;
 /*!
  * \brief   pixConvertRGBToHue()
  *
- * \param[in]    pixs 32 bpp RGB or 8 bpp with colormap
- * \return  pixd 8 bpp hue of HSV, or NULL on error
+ * \param[in]    pixs    32 bpp RGB, or 8 bpp with colormap
+ * \return  pixd   8 bpp hue of HSV, or NULL on error
  *
  * <pre>
  * Notes:
@@ -553,8 +558,8 @@ PIX       *pixt, *pixd;
 /*!
  * \brief   pixConvertRGBToSaturation()
  *
- * \param[in]    pixs 32 bpp RGB or 8 bpp with colormap
- * \return  pixd 8 bpp sat of HSV, or NULL on error
+ * \param[in]    pixs   32 bpp RGB, or 8 bpp with colormap
+ * \return  pixd   8 bpp sat of HSV, or NULL on error
  *
  * <pre>
  * Notes:
@@ -618,8 +623,8 @@ PIX       *pixt, *pixd;
 /*!
  * \brief   pixConvertRGBToValue()
  *
- * \param[in]    pixs 32 bpp RGB or 8 bpp with colormap
- * \return  pixd 8 bpp max component intensity of HSV, or NULL on error
+ * \param[in]    pixs    32 bpp RGB,or 8 bpp with colormap
+ * \return  pixd   8 bpp max component intensity of HSV, or NULL on error
  *
  * <pre>
  * Notes:
@@ -678,13 +683,13 @@ PIX       *pixt, *pixd;
 /*!
  * \brief   pixMakeRangeMaskHS()
  *
- * \param[in]    pixs  32 bpp rgb
- * \param[in]    huecenter center value of hue range
- * \param[in]    huehw half-width of hue range
- * \param[in]    satcenter center value of saturation range
- * \param[in]    sathw half-width of saturation range
- * \param[in]    regionflag L_INCLUDE_REGION, L_EXCLUDE_REGION
- * \return  pixd 1 bpp mask over selected pixels, or NULL on error
+ * \param[in]    pixs         32 bpp rgb
+ * \param[in]    huecenter    center value of hue range
+ * \param[in]    huehw        half-width of hue range
+ * \param[in]    satcenter    center value of saturation range
+ * \param[in]    sathw        half-width of saturation range
+ * \param[in]    regionflag   L_INCLUDE_REGION, L_EXCLUDE_REGION
+ * \return  pixd   1 bpp mask over selected pixels, or NULL on error
  *
  * <pre>
  * Notes:
@@ -777,13 +782,13 @@ PIX       *pixt, *pixd;
 /*!
  * \brief   pixMakeRangeMaskHV()
  *
- * \param[in]    pixs  32 bpp rgb
- * \param[in]    huecenter center value of hue range
- * \param[in]    huehw half-width of hue range
- * \param[in]    valcenter center value of max intensity range
- * \param[in]    valhw half-width of max intensity range
- * \param[in]    regionflag L_INCLUDE_REGION, L_EXCLUDE_REGION
- * \return  pixd 1 bpp mask over selected pixels, or NULL on error
+ * \param[in]    pixs         32 bpp rgb
+ * \param[in]    huecenter    center value of hue range
+ * \param[in]    huehw        half-width of hue range
+ * \param[in]    valcenter    center value of max intensity range
+ * \param[in]    valhw        half-width of max intensity range
+ * \param[in]    regionflag   L_INCLUDE_REGION, L_EXCLUDE_REGION
+ * \return  pixd   1 bpp mask over selected pixels, or NULL on error
  *
  * <pre>
  * Notes:
@@ -876,13 +881,13 @@ PIX       *pixt, *pixd;
 /*!
  * \brief   pixMakeRangeMaskSV()
  *
- * \param[in]    pixs  32 bpp rgb
- * \param[in]    satcenter center value of saturation range
- * \param[in]    sathw half-width of saturation range
- * \param[in]    valcenter center value of max intensity range
- * \param[in]    valhw half-width of max intensity range
- * \param[in]    regionflag L_INCLUDE_REGION, L_EXCLUDE_REGION
- * \return  pixd 1 bpp mask over selected pixels, or NULL on error
+ * \param[in]    pixs         32 bpp rgb
+ * \param[in]    satcenter    center value of saturation range
+ * \param[in]    sathw        half-width of saturation range
+ * \param[in]    valcenter    center value of max intensity range
+ * \param[in]    valhw        half-width of max intensity range
+ * \param[in]    regionflag   L_INCLUDE_REGION, L_EXCLUDE_REGION
+ * \return  pixd   1 bpp mask over selected pixels, or NULL on error
  *
  * <pre>
  * Notes:
@@ -968,11 +973,11 @@ PIX       *pixt, *pixd;
 /*!
  * \brief   pixMakeHistoHS()
  *
- * \param[in]    pixs  HSV colorspace
- * \param[in]    factor subsampling factor; integer
- * \param[out]   pnahue [optional] hue histogram
- * \param[out]   pnasat [optional] saturation histogram
- * \return  pixd 32 bpp histogram in hue and saturation, or NULL on error
+ * \param[in]    pixs     HSV colorspace
+ * \param[in]    factor   subsampling factor; integer
+ * \param[out]   pnahue   [optional] hue histogram
+ * \param[out]   pnasat   [optional] saturation histogram
+ * \return  pixd   32 bpp histogram in hue and saturation, or NULL on error
  *
  * <pre>
  * Notes:
@@ -1035,7 +1040,7 @@ PIX       *pixt, *pixd;
 
 #if  DEBUG_HISTO
             if (hval > 239) {
-                fprintf(stderr, "hval = %d for (%d,%d)\n", hval, i, j);
+                lept_stderr("hval = %d for (%d,%d)\n", hval, i, j);
                 continue;
             }
 #endif  /* DEBUG_HISTO */
@@ -1059,18 +1064,18 @@ PIX       *pixt, *pixd;
 /*!
  * \brief   pixMakeHistoHV()
  *
- * \param[in]    pixs  HSV colorspace
- * \param[in]    factor subsampling factor; integer
- * \param[out]   pnahue [optional] hue histogram
- * \param[out]   pnaval [optional] max intensity (value) histogram
- * \return  pixd 32 bpp histogram in hue and value, or NULL on error
+ * \param[in]    pixs     HSV colorspace
+ * \param[in]    factor   subsampling factor; integer
+ * \param[out]   pnahue   [optional] hue histogram
+ * \param[out]   pnaval   [optional] max intensity (value) histogram
+ * \return  pixd   32 bpp histogram in hue and value, or NULL on error
  *
  * <pre>
  * Notes:
- *      (1) pixs is a 32 bpp image in HSV colorspace; hue is in the "red"
+ *      (1) %pixs is a 32 bpp image in HSV colorspace; hue is in the "red"
  *          byte, max intensity ("value") is in the "blue" byte.
- *      (2) In pixd, hue is displayed vertically; intensity horizontally.
- *          The dimensions of pixd are w = 256, h = 240, and the depth
+ *      (2) In %pixd, hue is displayed vertically; intensity horizontally.
+ *          The dimensions of %pixd are w = 256, h = 240, and the depth
  *          is 32 bpp.  The value at each point is simply the number
  *          of pixels found at that value of hue and intensity.
  * </pre>
@@ -1142,18 +1147,18 @@ PIX       *pixt, *pixd;
 /*!
  * \brief   pixMakeHistoSV()
  *
- * \param[in]    pixs  HSV colorspace
- * \param[in]    factor subsampling factor; integer
- * \param[out]   pnasat [optional] sat histogram
- * \param[out]   pnaval [optional] max intensity (value) histogram
- * \return  pixd 32 bpp histogram in sat and value, or NULL on error
+ * \param[in]    pixs     HSV colorspace
+ * \param[in]    factor   subsampling factor; integer
+ * \param[out]   pnasat   [optional] sat histogram
+ * \param[out]   pnaval   [optional] max intensity (value) histogram
+ * \return  pixd   32 bpp histogram in sat and value, or NULL on error
  *
  * <pre>
  * Notes:
- *      (1) pixs is a 32 bpp image in HSV colorspace; sat is in the "green"
+ *      (1) %pixs is a 32 bpp image in HSV colorspace; sat is in the "green"
  *          byte, max intensity ("value") is in the "blue" byte.
- *      (2) In pixd, sat is displayed vertically; intensity horizontally.
- *          The dimensions of pixd are w = 256, h = 256, and the depth
+ *      (2) In %pixd, sat is displayed vertically; intensity horizontally.
+ *          The dimensions of %pixd are w = 256, h = 256, and the depth
  *          is 32 bpp.  The value at each point is simply the number
  *          of pixels found at that value of saturation and intensity.
  * </pre>
@@ -1225,20 +1230,20 @@ PIX       *pixt, *pixd;
 /*!
  * \brief   pixFindHistoPeaksHSV()
  *
- * \param[in]    pixs 32 bpp; HS, HV or SV histogram; not changed
- * \param[in]    type L_HS_HISTO, L_HV_HISTO or L_SV_HISTO
- * \param[in]    width half width of sliding window
- * \param[in]    height half height of sliding window
- * \param[in]    npeaks number of peaks to look for
- * \param[in]    erasefactor ratio of erase window size to sliding window size
- * \param[out]   ppta locations of max for each integrated peak area
- * \param[out]   pnatot integrated peak areas
- * \param[out]   ppixa [optional] pixa for debugging; NULL to skip
+ * \param[in]    pixs          32 bpp; HS, HV or SV histogram; not changed
+ * \param[in]    type          L_HS_HISTO, L_HV_HISTO or L_SV_HISTO
+ * \param[in]    width         half width of sliding window
+ * \param[in]    height        half height of sliding window
+ * \param[in]    npeaks        number of peaks to look for
+ * \param[in]    erasefactor   ratio of erase window size to sliding window size
+ * \param[out]   ppta          locations of max for each integrated peak area
+ * \param[out]   pnatot        integrated peak areas
+ * \param[out]   ppixa         [optional] pixa for debugging; NULL to skip
  * \return  0 if OK, 1 on error
  *
  * <pre>
  * Notes:
- *      (1) pixs is a 32 bpp histogram in a pair of HSV colorspace.  It
+ *      (1) %pixs is a 32 bpp histogram in a pair of HSV colorspace.  It
  *          should be thought of as a single sample with 32 bps (bits/sample).
  *      (2) After each peak is found, the peak is erased with a window
  *          that is centered on the peak and scaled from the sliding
@@ -1358,15 +1363,14 @@ PTA      *pta;
 /*!
  * \brief   displayHSVColorRange()
  *
- * \param[in]    hval hue center value; in range [0 ... 240]
- * \param[in]    sval saturation center value; in range [0 ... 255]
- * \param[in]    vval max intensity value; in range [0 ... 255]
- * \param[in]    huehw half-width of hue range; > 0
- * \param[in]    sathw half-width of saturation range; > 0
- * \param[in]    nsamp number of samplings in each half-width in hue and sat
- * \param[in]    factor linear size of each color square, in pixels; > 3
- * \return  pixd 32 bpp set of color squares over input range,
- *                     or NULL on error
+ * \param[in]    hval     hue center value; in range [0 ... 240]
+ * \param[in]    sval     saturation center value; in range [0 ... 255]
+ * \param[in]    vval     max intensity value; in range [0 ... 255]
+ * \param[in]    huehw    half-width of hue range; > 0
+ * \param[in]    sathw    half-width of saturation range; > 0
+ * \param[in]    nsamp    number of samplings in each half-width in hue and sat
+ * \param[in]    factor   linear size of each color square, in pixels; > 3
+ * \return  pixd   32 bpp set of color squares over input range; NULL on error
  *
  * <pre>
  * Notes:
@@ -1426,7 +1430,7 @@ PIX     *pixt, *pixd;
 /*!
  * \brief   pixConvertRGBToYUV()
  *
- * \param[in]    pixd can be NULL; if not NULL, must == pixs
+ * \param[in]    pixd   can be NULL; if not NULL, must == pixs
  * \param[in]    pixs
  * \return  pixd always
  *
@@ -1499,7 +1503,7 @@ PIXCMAP   *cmap;
 /*!
  * \brief   pixConvertYUVToRGB()
  *
- * \param[in]    pixd can be NULL; if not NULL, must == pixs
+ * \param[in]    pixd   can be NULL; if not NULL, must == pixs
  * \param[in]    pixs
  * \return  pixd always
  *
@@ -1566,8 +1570,8 @@ PIXCMAP   *cmap;
 /*!
  * \brief   convertRGBToYUV()
  *
- * \param[in]    rval, gval, bval RGB input
- * \param[out]   pyval, puval, pvval YUV values
+ * \param[in]    rval, gval, bval      RGB input
+ * \param[out]   pyval, puval, pvval   equivalent YUV values
  * \return  0 if OK, 1 on error
  *
  * <pre>
@@ -1610,8 +1614,8 @@ l_float32  norm;
 /*!
  * \brief   convertYUVToRGB()
  *
- * \param[in]    yval, uval, vval
- * \param[out]   prval, pgval, pbval RGB values
+ * \param[in]    yval, uval, vval      YUV input
+ * \param[out]   prval, pgval, pbval   equivalent RGB values
  * \return  0 if OK, 1 on error
  *
  * <pre>
@@ -1664,7 +1668,7 @@ l_float32  norm, ym, um, vm;
 /*!
  * \brief   pixcmapConvertRGBToYUV()
  *
- * \param[in]    cmap colormap
+ * \param[in]    cmap
  * \return  0 if OK; 1 on error
  *
  * <pre>
@@ -1697,7 +1701,7 @@ l_int32   i, ncolors, rval, gval, bval, yval, uval, vval;
 /*!
  * \brief   pixcmapConvertYUVToRGB()
  *
- * \param[in]    cmap colormap
+ * \param[in]    cmap
  * \return  0 if OK; 1 on error
  *
  * <pre>
@@ -1733,7 +1737,7 @@ l_int32   i, ncolors, rval, gval, bval, yval, uval, vval;
 /*!
  * \brief   pixConvertRGBToXYZ()
  *
- * \param[in]    pixs rgb
+ * \param[in]    pixs    32 bpp rgb
  * \return  fpixa xyz
  *
  * <pre>
@@ -1807,8 +1811,8 @@ FPIXA      *fpixa;
 /*!
  * \brief   fpixaConvertXYZToRGB()
  *
- * \param[in]    fpixa three fpix: x,y,z
- * \return  pixd rgb
+ * \param[in]    fpixa    three fpix: x,y,z
+ * \return  pixd   32 bpp rgb
  *
  * <pre>
  * Notes:
@@ -1865,8 +1869,8 @@ FPIX       *fpix;
 /*!
  * \brief   convertRGBToXYZ()
  *
- * \param[in]    rval, gval, bval rgb input
- * \param[out]   pfxval, pfyval, pfzval xyz values
+ * \param[in]    rval, gval, bval         rgb input
+ * \param[out]   pfxval, pfyval, pfzval   equivalent xyz values
  * \return  0 if OK, 1 on error
  *
  * <pre>
@@ -1902,9 +1906,9 @@ convertRGBToXYZ(l_int32     rval,
  * \brief   convertXYZToRGB()
  *
  * \param[in]    fxval, fyval, fzval
- * \param[in]    blackout 0 to output nearest color if out of gamut;
- *                        1 to output black
- * \param[out]   prval, pgval, pbval rgb values
+ * \param[in]    blackout    0 to output nearest color if out of gamut;
+ *                           1 to output black
+ * \param[out]   prval, pgval, pbval   32 bpp rgb values
  * \return  0 if OK, 1 on error
  *
  * <pre>
@@ -1912,9 +1916,9 @@ convertRGBToXYZ(l_int32     rval,
  *      (1) For values of xyz that are out of gamut for rgb, at least
  *          one of the r, g or b components will be either less than 0
  *          or greater than 255.  For that situation:
- *            * if blackout == 0, the individual component(s) that are out
+ *            * if %blackout == 0, the individual component(s) that are out
  *              of gamut will be set to 0 or 255, respectively.
- *            * if blackout == 1, the output color will be set to black
+ *            * if %blackout == 1, the output color will be set to black
  * </pre>
  */
 l_ok
@@ -1962,7 +1966,7 @@ l_int32  rval, gval, bval;
 /*!
  * \brief   fpixaConvertXYZToLAB()
  *
- * \param[in]    fpixas xyz
+ * \param[in]    fpixas    xyz
  * \return  fpixa lab
  *
  * <pre>
@@ -2035,8 +2039,8 @@ FPIXA      *fpixad;
 /*!
  * \brief   fpixaConvertLABToXYZ()
  *
- * \param[in]    fpixas lab
- * \return  fpixa xyz
+ * \param[in]    fpixas    lab
+ * \return  fpixa    xyz
  *
  * <pre>
  * Notes:
@@ -2101,8 +2105,8 @@ FPIXA      *fpixad;
 /*!
  * \brief   convertXYZToLAB()
  *
- * \param[in]    xval, yval, zval xyz input
- * \param[out]   plval, paval, pbval lab values
+ * \param[in]    xval, yval, zval      input xyz
+ * \param[out]   plval, paval, pbval   equivalent lab values
  * \return  0 if OK, 1 on error
  */
 l_ok
@@ -2141,8 +2145,8 @@ l_float32  xn, yn, zn, fx, fy, fz;
 /*!
  * \brief   convertLABToXYZ()
  *
- * \param[in]    lval, aval, bval
- * \param[out]   pxval, pyval, pzval xyz values
+ * \param[in]    lval, aval, bval      input lab
+ * \param[out]   pxval, pyval, pzval   equivalent xyz values
  * \return  0 if OK, 1 on error
  */
 l_ok
@@ -2230,7 +2234,7 @@ const l_float32  r_offset = 0.13793;  /* 4/29 */
 /*!
  * \brief   pixConvertRGBToLAB()
  *
- * \param[in]    pixs rgb
+ * \param[in]    pixs   32 bpp rgb
  * \return  fpixa lab
  *
  * <pre>
@@ -2288,8 +2292,8 @@ FPIXA      *fpixa;
 /*!
  * \brief   fpixaConvertLABToRGB()
  *
- * \param[in]    fpixa three fpix: l,a,b
- * \return  pixd rgb
+ * \param[in]    fpixa    three fpix: l,a,b
+ * \return  pixd  32 bpp rgb
  *
  * <pre>
  * Notes:
@@ -2344,8 +2348,8 @@ FPIX       *fpix;
 /*!
  * \brief   convertRGBToLAB()
  *
- * \param[in]    rval, gval, bval rgb input
- * \param[out]   pflval, pfaval, pfbval lab values
+ * \param[in]    rval, gval, bval        rgb input
+ * \param[out]   pflval, pfaval, pfbval  equivalent lab values
  * \return  0 if OK, 1 on error
  *
  * <pre>
@@ -2381,8 +2385,8 @@ l_float32  fxval, fyval, fzval;
 /*!
  * \brief   convertLABToRGB()
  *
- * \param[in]    flval, faval, fbval
- * \param[out]   prval, pgval, pbval rgb values
+ * \param[in]    flval, faval, fbval   input lab
+ * \param[out]   prval, pgval, pbval   equivalent rgb values
  * \return  0 if OK, 1 on error
  *
  * <pre>

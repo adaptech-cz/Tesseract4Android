@@ -131,6 +131,10 @@
  * </pre>
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include "allheaders.h"
 
     /* Default input parameters for pixBackgroundNormSimple()
@@ -141,20 +145,19 @@
      *        shrinking the dynamic range
      *    (3) results should otherwise not be sensitive to these values
      */
-static const l_int32  DEFAULT_TILE_WIDTH = 10;    /*!< default tile width    */
-static const l_int32  DEFAULT_TILE_HEIGHT = 15;   /*!< default tile height   */
-static const l_int32  DEFAULT_FG_THRESHOLD = 60;  /*!< default fg threshold  */
-static const l_int32  DEFAULT_MIN_COUNT = 40;     /*!< default minimum count */
-static const l_int32  DEFAULT_BG_VAL = 200;       /*!< default bg value      */
-static const l_int32  DEFAULT_X_SMOOTH_SIZE = 2;  /*!< default x smooth size */
-static const l_int32  DEFAULT_Y_SMOOTH_SIZE = 1;  /*!< default y smooth size */
+static const l_int32  DefaultTileWidth = 10;    /*!< default tile width    */
+static const l_int32  DefaultTileHeight = 15;   /*!< default tile height   */
+static const l_int32  DefaultFgThreshold = 60;  /*!< default fg threshold  */
+static const l_int32  DefaultMinCount = 40;     /*!< default minimum count */
+static const l_int32  DefaultBgVal = 200;       /*!< default bg value      */
+static const l_int32  DefaultXSmoothSize = 2;  /*!< default x smooth size */
+static const l_int32  DefaultYSmoothSize = 1;  /*!< default y smooth size */
 
 static l_int32 *iaaGetLinearTRC(l_int32 **iaa, l_int32 diff);
 
 #ifndef  NO_CONSOLE_IO
 #define  DEBUG_GLOBAL    0    /*!< set to 1 to debug pixGlobalNormNoSatRGB() */
 #endif  /* ~NO_CONSOLE_IO */
-
 
 /*------------------------------------------------------------------*
  *      Clean background to white using background normalization    *
@@ -233,10 +236,10 @@ pixBackgroundNormSimple(PIX  *pixs,
                         PIX  *pixg)
 {
     return pixBackgroundNorm(pixs, pixim, pixg,
-                             DEFAULT_TILE_WIDTH, DEFAULT_TILE_HEIGHT,
-                             DEFAULT_FG_THRESHOLD, DEFAULT_MIN_COUNT,
-                             DEFAULT_BG_VAL, DEFAULT_X_SMOOTH_SIZE,
-                             DEFAULT_Y_SMOOTH_SIZE);
+                             DefaultTileWidth, DefaultTileHeight,
+                             DefaultFgThreshold, DefaultMinCount,
+                             DefaultBgVal, DefaultXSmoothSize,
+                             DefaultYSmoothSize);
 }
 
 
@@ -2332,10 +2335,10 @@ l_float32  rfract, gfract, bfract, maxfract;
     maxfract = L_MAX(rfract, gfract);
     maxfract = L_MAX(maxfract, bfract);
 #if  DEBUG_GLOBAL
-    fprintf(stderr, "rankrval = %7.2f, rankgval = %7.2f, rankbval = %7.2f\n",
-            rankrval, rankgval, rankbval);
-    fprintf(stderr, "rfract = %7.4f, gfract = %7.4f, bfract = %7.4f\n",
-            rfract, gfract, bfract);
+    lept_stderr("rankrval = %7.2f, rankgval = %7.2f, rankbval = %7.2f\n",
+                rankrval, rankgval, rankbval);
+    lept_stderr("rfract = %7.4f, gfract = %7.4f, bfract = %7.4f\n",
+                rfract, gfract, bfract);
 #endif  /* DEBUG_GLOBAL */
 
     mapval = (l_int32)(255. / maxfract);

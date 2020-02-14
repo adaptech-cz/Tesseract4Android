@@ -164,6 +164,10 @@
  * </pre>
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include <math.h>
 #include "allheaders.h"
 
@@ -202,7 +206,7 @@ static l_int32 pixQualifyLocalMinima(PIX *pixs, PIX *pixm, l_int32 maxval);
 #endif  /* ~NO_CONSOLE_IO */
 
   /* Two-way (UL --> LR, LR --> UL) sweep iterations; typically need only 4 */
-static const l_int32  MAX_ITERS = 40;
+static const l_int32  MaxIters = 40;
 
 
 /*-----------------------------------------------------------------------*
@@ -211,10 +215,10 @@ static const l_int32  MAX_ITERS = 40;
 /*!
  * \brief   pixSeedfillBinary()
  *
- * \param[in]    pixd  [optional]; can be null, equal to pixs,
- *                     or different from pixs; 1 bpp
- * \param[in]    pixs  1 bpp seed
- * \param[in]    pixm  1 bpp filling mask
+ * \param[in]    pixd          [optional]; can be null, equal to pixs,
+ *                             or different from pixs; 1 bpp
+ * \param[in]    pixs          1 bpp seed
+ * \param[in]    pixm          1 bpp filling mask
  * \param[in]    connectivity  4 or 8
  * \return  pixd always
  *
@@ -276,13 +280,13 @@ PIX       *pixt;
 
     pixSetPadBits(pixm, 0);
 
-    for (i = 0; i < MAX_ITERS; i++) {
+    for (i = 0; i < MaxIters; i++) {
         pixCopy(pixt, pixd);
         seedfillBinaryLow(datad, hd, wpld, datam, hm, wplm, connectivity);
         pixEqual(pixd, pixt, &boolval);
         if (boolval == 1) {
 #if DEBUG_PRINT_ITERS
-            fprintf(stderr, "Binary seed fill converged: %d iters\n", i + 1);
+            lept_stderr("Binary seed fill converged: %d iters\n", i + 1);
 #endif  /* DEBUG_PRINT_ITERS */
             break;
         }
@@ -1995,7 +1999,7 @@ PIX       *pixt;
     wpls = pixGetWpl(pixs);
     wplm = pixGetWpl(pixm);
     pixGetDimensions(pixs, &w, &h, NULL);
-    for (i = 0; i < MAX_ITERS; i++) {
+    for (i = 0; i < MaxIters; i++) {
         pixCopy(pixt, pixs);
         seedfillGrayLowSimple(datas, w, h, wpls, datam, wplm, connectivity);
         pixEqual(pixs, pixt, &boolval);
@@ -2066,7 +2070,7 @@ PIX       *pixt;
     wpls = pixGetWpl(pixs);
     wplm = pixGetWpl(pixm);
     pixGetDimensions(pixs, &w, &h, NULL);
-    for (i = 0; i < MAX_ITERS; i++) {
+    for (i = 0; i < MaxIters; i++) {
         pixCopy(pixt, pixs);
         seedfillGrayInvLowSimple(datas, w, h, wpls, datam, wplm, connectivity);
         pixEqual(pixs, pixt, &boolval);

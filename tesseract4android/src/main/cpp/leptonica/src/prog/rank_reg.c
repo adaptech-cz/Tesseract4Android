@@ -35,6 +35,10 @@
  *      (3) pixScaleGrayRankCascade()
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include "allheaders.h"
 
 int main(int    argc,
@@ -48,6 +52,11 @@ NUMA         *nax, *nay1, *nay2;
 PIX          *pixs, *pix0, *pix1, *pix2, *pix3, *pix4;
 PIXA         *pixa;
 L_REGPARAMS  *rp;
+
+#if !defined(HAVE_LIBPNG)
+    L_ERROR("This test requires libpng to run.\n", "rank_reg");
+    exit(77);
+#endif
 
     if (regTestSetup(argc, argv, &rp))
         return 1;

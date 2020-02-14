@@ -35,7 +35,14 @@
  *  Also tests these pta functions:
  *     -  pixRenderPtaArb()
  *     -  ptaRotate()
+ *     -  ptaSort()
+ *     -  ptaSort2d()
+ *     -  ptaEqual()
  */
+
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
 
 #include "allheaders.h"
 
@@ -44,12 +51,12 @@ static PIX *PtaDisplayRotate(PIX *pixs, l_float32 xc, l_float32 yc);
 int main(int    argc,
          char **argv)
 {
-l_int32       i, nbox, npta, fgcount, bgcount, count;
+l_int32       i, nbox, npta, fgcount, bgcount, count, w, h, x, y, same;
 BOXA         *boxa;
 PIX          *pixs, *pixfg, *pixbg, *pixc, *pixb, *pixd;
 PIX          *pix1, *pix2, *pix3, *pix4;
 PIXA         *pixa;
-PTA          *pta;
+PTA          *pta, *pta1, *pta2, *pta3;
 PTAA         *ptaafg, *ptaabg;
 L_REGPARAMS  *rp;
 
@@ -103,42 +110,37 @@ L_REGPARAMS  *rp;
     pixa = pixaCreate(4);
     pixc = pixRenderRandomCmapPtaa(pixs, ptaafg, 0, 0, 0);
     regTestWritePixAndCheck(rp, pixc, IFF_PNG);  /* 7 */
-    pixSaveTiledOutline(pixc, pixa, 1.0, 1, 30, 2, 32);
-    pixDestroy(&pixc);
+    pixaAddPix(pixa, pixc, L_INSERT);
 
         /* Render the bg boundary pixels on top of pixs. */
     pixc = pixRenderRandomCmapPtaa(pixs, ptaabg, 0, 0, 0);
     regTestWritePixAndCheck(rp, pixc, IFF_PNG);  /* 8 */
-    pixSaveTiledOutline(pixc, pixa, 1.0, 0, 30, 2, 32);
-    pixDestroy(&pixc);
-
+    pixaAddPix(pixa, pixc, L_INSERT);
     pixClearAll(pixs);
 
         /* Render the fg boundary pixels alone. */
     pixc = pixRenderRandomCmapPtaa(pixs, ptaafg, 0, 0, 0);
     regTestWritePixAndCheck(rp, pixc, IFF_PNG);  /* 9 */
-    pixSaveTiledOutline(pixc, pixa, 1.0, 1, 30, 2, 32);
+    pixaAddPix(pixa, pixc, L_INSERT);
 
         /* Verify that the fg pixels are the same set as we
          * originally started with. */
     pixb = pixConvertTo1(pixc, 255);
     regTestComparePix(rp, pixb, pixfg);  /* 10 */
-    pixDestroy(&pixc);
     pixDestroy(&pixb);
 
         /* Render the bg boundary pixels alone. */
     pixc = pixRenderRandomCmapPtaa(pixs, ptaabg, 0, 0, 0);
     regTestWritePixAndCheck(rp, pixc, IFF_PNG);  /* 11 */
-    pixSaveTiledOutline(pixc, pixa, 1.0, 0, 30, 2, 32);
+    pixaAddPix(pixa, pixc, L_INSERT);
 
         /* Verify that the bg pixels are the same set as we
          * originally started with. */
     pixb = pixConvertTo1(pixc, 255);
     regTestComparePix(rp, pixb, pixbg);  /* 12 */
-    pixDestroy(&pixc);
     pixDestroy(&pixb);
 
-    pixd = pixaDisplay(pixa, 0, 0);
+    pixd = pixaDisplayTiledInColumns(pixa, 1, 1.0, 30, 2);
     pixDisplayWithTitle(pixd, 0, 0, NULL, rp->display);
     ptaaDestroy(&ptaafg);
     ptaaDestroy(&ptaabg);
@@ -168,6 +170,23 @@ L_REGPARAMS  *rp;
     pixDestroy(&pix2);
     pixDestroy(&pix4);
     pixaDestroy(&pixa);
+
+        /* Test pta sort and pta equality */
+    pix1 = pixRead("feyn-word.tif");
+    pixGetDimensions(pix1, &w, &h, NULL);
+    pta1 = ptaGetPixelsFromPix(pix1, NULL);
+    ptaGetIPt(pta1, 0, &x, &y);  /* add copy of first point */
+    ptaAddPt(pta1, x, y);
+    pta2 = ptaCyclicPerm(pta1, x, y);  /* first/last points must be the same */
+    ptaEqual(pta1, pta2, &same);
+    regTestCompareValues(rp, same, 1, 0.0);  /* 14 */
+    pta3 = ptaReverse(pta2, 1);
+    ptaEqual(pta1, pta3, &same);
+    regTestCompareValues(rp, same, 1, 0.0);  /* 15 */
+    pixDestroy(&pix1);
+    ptaDestroy(&pta1);
+    ptaDestroy(&pta2);
+    ptaDestroy(&pta3);
 
     return regTestCleanup(rp);
 }

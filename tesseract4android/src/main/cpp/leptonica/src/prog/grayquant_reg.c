@@ -30,6 +30,10 @@
  *     Tests gray thresholding to 1, 2 and 4 bpp, with and without colormaps
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include "allheaders.h"
 
 static const l_int32  THRESHOLD = 130;
@@ -41,7 +45,7 @@ int main(int    argc,
          char **argv)
 {
 const char   *str;
-l_int32       equal, index, w, h;
+l_int32       index, w, h;
 BOX          *box;
 PIX          *pixs, *pix1, *pix2, *pix3, *pix4, *pix5, *pix6;
 PIXA         *pixa;

@@ -33,12 +33,17 @@
  *    use "/tmp" for string compares.
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include "allheaders.h"
 #include <string.h>
 #ifndef _MSC_VER
 #include <unistd.h>
 #else
 #include <direct.h>
+#define getcwd _getcwd  /* fix MSVC warning */
 #endif  /* !_MSC_VER */
 
 void TestPathJoin(L_REGPARAMS *rp, const char *first, const char *second,

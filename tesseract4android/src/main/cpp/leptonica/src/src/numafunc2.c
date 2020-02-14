@@ -81,6 +81,7 @@
  *      Extrema finding
  *          NUMA        *numaFindPeaks()
  *          NUMA        *numaFindExtrema()
+ *          NUMA        *numaFindLocForThreshold()
  *          l_int32     *numaCountReversals()
  *
  *      Threshold crossings and frequency analysis
@@ -131,6 +132,10 @@
  * </pre>
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include <math.h>
 #include "allheaders.h"
 
@@ -147,7 +152,6 @@ static const l_int32 NBinSizes = 24;
 #define  DEBUG_CROSSINGS    0
 #define  DEBUG_FREQUENCY    0
 #endif  /* ~NO_CONSOLE_IO */
-
 
 /*----------------------------------------------------------------------*
  *                     Morphological operations                         *
@@ -934,8 +938,8 @@ NUMA      *nai, *nahist;
         *pbinstart = iminval;
 
 #if  DEBUG_HISTO
-    fprintf(stderr, " imaxval = %d, range = %d, nbins = %d\n",
-            imaxval, range, nbins);
+    lept_stderr(" imaxval = %d, range = %d, nbins = %d\n",
+                imaxval, range, nbins);
 #endif  /* DEBUG_HISTO */
 
         /* Use integerized data for input */
@@ -1094,7 +1098,7 @@ NUMA      *nad;
     maxsize = L_MIN(maxsize, maxval);
     nbins = (l_int32)(maxsize / binsize) + 1;
 
-/*    fprintf(stderr, "maxsize = %7.3f, nbins = %d\n", maxsize, nbins); */
+/*    lept_stderr("maxsize = %7.3f, nbins = %d\n", maxsize, nbins); */
 
     if ((nad = numaCreate(nbins)) == NULL)
         return (NUMA *)ERROR_PTR("nad not made", procName, NULL);
@@ -1595,7 +1599,7 @@ l_float32  startval, binsize, binval, maxval, fractval, total, sum, val;
     numaGetSum(na, &total);
     *prank = sum / total;
 
-/*    fprintf(stderr, "binval = %7.3f, rank = %7.3f\n", binval, *prank); */
+/*    lept_stderr("binval = %7.3f, rank = %7.3f\n", binval, *prank); */
 
     return 0;
 }
@@ -1667,7 +1671,7 @@ l_float32  startval, binsize, rankcount, total, sum, fract, val;
      * for the histogram value at the given rank. */
     *prval = startval + binsize * ((l_float32)i + fract);
 
-/*    fprintf(stderr, "rank = %7.3f, val = %7.3f\n", rank, *prval); */
+/*    lept_stderr("rank = %7.3f, val = %7.3f\n", rank, *prval); */
 
     return 0;
 }
@@ -2064,8 +2068,8 @@ NUMA      *nascore, *naave1, *naave2, *nanum1, *nanum2;
     if (pnum2) numaGetFValue(nanum2, bestsplit, pnum2);
 
     if (pnascore) {  /* debug mode */
-        fprintf(stderr, "minrange = %d, maxrange = %d\n", minrange, maxrange);
-        fprintf(stderr, "minval = %10.0f\n", minval);
+        lept_stderr("minrange = %d, maxrange = %d\n", minrange, maxrange);
+        lept_stderr("minval = %10.0f\n", minval);
         gplotSimple1(nascore, GPLOT_PNG, "/tmp/lept/nascore",
                      "Score for split distribution");
         *pnascore = nascore;
@@ -2461,13 +2465,16 @@ NUMA      *na, *napeak;
  *          those 'bumps' to be actual peaks?  The answer: if the
  *          bump is separated from the peak by a saddle that is at
  *          least 500 feet below the bump.
- *      (3) Operationally, suppose we are looking for a peak.
- *          We are keeping the largest value we've seen since the
- *          last valley, and are looking for a value that is delta
- *          BELOW our current peak.  When we find such a value,
- *          we label the peak, use the current value to label the
- *          valley, and then do the same operation in reverse (looking
- *          for a valley).
+ *      (3) Operationally, suppose we are trying to identify a peak.
+ *          We have a previous valley, and also the largest value that
+ *          we have seen since that valley.  We can identify this as
+ *          a peak if we find a value that is delta BELOW it.  When
+ *          we find such a value, label the peak, use the current
+ *          value to label the starting point for the search for
+ *          a valley, and do the same operation in reverse.  Namely,
+ *          keep track of the lowest point seen, and look for a value
+ *          that is delta ABOVE it.  Once found, the lowest point is
+ *          labeled the valley, and continue, looking for the next peak.
  * </pre>
  */
 NUMA *
@@ -2549,6 +2556,107 @@ NUMA      *nav, *nad;
         /* Save the final extremum */
 /*    numaAddNumber(nad, loc); */
     return nad;
+}
+
+
+/*!
+ * \brief   numaFindLocForThreshold()
+ *
+ * \param[in]    nas      input histogram
+ * \param[in]    skip     distance to skip to check for false min; 0 for default
+ * \param[out]   pthresh  threshold value
+ * \param[out]   pfract   [optional] fraction below or at threshold
+ * \return  0 if OK, 1 on error
+ *
+ * <pre>
+ * Notes:
+ *      (1) This finds a good place to set a threshold for a histogram
+ *          of values that has two peaks.  The peaks can differ greatly
+ *          in area underneath them.  The number of buckets in the
+ *          histogram is expected to be 256 (e.g, from an 8 bpp gray image).
+ *      (2) The input histogram should have been smoothed with a window
+ *          to avoid false peak and valley detection due to noise.  For
+ *          example, see pixThresholdByHisto().
+ *      (3) A skip value can be input to determine the look-ahead distance
+ *          to ignore a false peak on the descent from the first peak.
+ *          Input 0 to use the default value (it assumes a histo size of 256).
+ *      (4) Optionally, the fractional area under the first peak can
+ *          be returned.
+ * </pre>
+ */
+l_ok
+numaFindLocForThreshold(NUMA       *na,
+                        l_int32     skip,
+                        l_int32    *pthresh,
+                        l_float32  *pfract)
+{
+l_int32     i, n, start, found, index, minloc;
+l_float32   val, pval, startval, jval, minval, sum, partsum;
+l_float32  *fa;
+
+    PROCNAME("numaFindLocForThreshold");
+
+    if (pfract) *pfract = 0.0;
+    if (!pthresh)
+        return ERROR_INT("&thresh not defined", procName, 1);
+    *pthresh = 0;
+    if (!na)
+        return ERROR_INT("na not defined", procName, 1);
+    if (skip <= 0) skip = 20;
+
+        /* Look for the top of the first peak */
+    n = numaGetCount(na);
+    fa = numaGetFArray(na, L_NOCOPY);
+    pval = fa[0];
+    for (i = 1; i < n; i++) {
+        val = fa[i];
+        index = L_MIN(i + skip, n - 1);
+        jval = fa[index];
+        if (val < pval && jval < pval)  /* near the top if not there */
+            break;
+        pval = val;
+    }
+
+        /* Look for the low point in the valley */
+    start = i;
+    pval = fa[start];
+    found = FALSE;  /* signal for passing the min between peaks */
+    for (i = start + 1; i < n; i++) {
+        val = fa[i];
+        if (val <= pval) {  /* going down */
+            pval = val;
+        } else {  /* going up */
+            index = L_MIN(i + skip, n - 1);
+            jval = fa[index];  /* junp ahead 20 */
+            if (val > jval) {  /* still going down; jump ahead */
+                pval = jval;
+                i = index;
+            } else {  /* really going up; passed the min */
+                found = TRUE;
+                break;
+            }
+        }
+    }
+
+        /* Find the location of the minimum in the interval */
+    minloc = index;  /* likely passed the min; look backward */
+    minval = fa[index];
+    for (i = index - 1; i > index - skip; i--) {
+        if (fa[i] < minval) {
+            minval = fa[i];
+            minloc = i;
+        }
+    }
+    *pthresh = minloc;
+
+        /* Find the fraction under the first peak */
+    if (pfract) {
+        numaGetSumOnInterval(na, 0, minloc, &partsum);
+        numaGetSum(na, &sum);
+        if (sum > 0.0)
+           *pfract = partsum / sum;
+    }
+    return 0;
 }
 
 
@@ -2747,13 +2855,13 @@ NUMA      *nat, *nac;
     *pbestthresh = estthresh - 80.0 + 2.0 * (l_float32)(maxstart + maxend);
 
 #if  DEBUG_CROSSINGS
-    fprintf(stderr, "\nCrossings attain a maximum at %d thresholds, between:\n"
-                    "  thresh[%d] = %5.1f and thresh[%d] = %5.1f\n",
-                    nmax, maxstart, estthresh - 80.0 + 4.0 * maxstart,
-                    maxend, estthresh - 80.0 + 4.0 * maxend);
-    fprintf(stderr, "The best choice: %5.1f\n", *pbestthresh);
-    fprintf(stderr, "Number of crossings at the 41 thresholds:");
-    numaWriteStream(stderr, nat);
+    lept_stderr("\nCrossings attain a maximum at %d thresholds, between:\n"
+                "  thresh[%d] = %5.1f and thresh[%d] = %5.1f\n",
+                nmax, maxstart, estthresh - 80.0 + 4.0 * maxstart,
+                maxend, estthresh - 80.0 + 4.0 * maxend);
+    lept_stderr("The best choice: %5.1f\n", *pbestthresh);
+    lept_stderr("Number of crossings at the 41 thresholds:");
+    numaWriteStderr(nat);
 #endif  /* DEBUG_CROSSINGS */
 
     numaDestroy(&nat);
@@ -2989,8 +3097,8 @@ l_float32  bestwidth, bestshift, bestscore;
                 bestwidth = width;
                 bestshift = shift;
 #if  DEBUG_FREQUENCY
-                fprintf(stderr, "width = %7.3f, shift = %7.3f, score = %7.3f\n",
-                        width, shift, score);
+                lept_stderr("width = %7.3f, shift = %7.3f, score = %7.3f\n",
+                            width, shift, score);
 #endif  /* DEBUG_FREQUENCY */
             }
         }

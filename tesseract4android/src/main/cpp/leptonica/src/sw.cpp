@@ -1,7 +1,27 @@
+#pragma optimize("", off)
 void build(Solution &s)
 {
-    auto &leptonica = s.addTarget<LibraryTarget>("danbloomberg.leptonica", "1.78.0");
-    leptonica += Git("https://github.com/DanBloomberg/leptonica", "{v}");
+    auto add_deps = [](auto &t)
+    {
+        t += "HAVE_LIBGIF"_d;
+        t += "HAVE_LIBJP2K"_d;
+        t += "HAVE_LIBJPEG"_d;
+        t += "HAVE_LIBPNG"_d;
+        t += "HAVE_LIBTIFF"_d;
+        t += "HAVE_LIBWEBP"_d;
+        t += "HAVE_LIBWEBP_ANIM"_d;
+        t += "HAVE_LIBZ"_d;
+
+        t += "org.sw.demo.gif-5"_dep;
+        t += "org.sw.demo.jpeg-9"_dep;
+        t += "org.sw.demo.uclouvain.openjpeg.openjp2-2"_dep;
+        t += "org.sw.demo.glennrp.png-1"_dep;
+        t += "org.sw.demo.tiff-4"_dep;
+        t += "org.sw.demo.webmproject.webp"_dep;
+    };
+
+    auto &leptonica = s.addTarget<LibraryTarget>("danbloomberg.leptonica", "1.79.0");
+    leptonica += Git("https://github.com/DanBloomberg/leptonica");
 
     {
         leptonica.setChecks("leptonica");
@@ -14,24 +34,12 @@ void build(Solution &s)
         leptonica.Public +=
             "src"_id;
 
-        leptonica.Private += "HAVE_LIBGIF"_d;
-        leptonica.Private += "HAVE_LIBJP2K"_d;
-        leptonica.Private += "HAVE_LIBJPEG"_d;
-        leptonica.Private += "HAVE_LIBPNG"_d;
-        leptonica.Private += "HAVE_LIBTIFF"_d;
-        leptonica.Private += "HAVE_LIBWEBP"_d;
-        leptonica.Private += "HAVE_LIBZ"_d;
-        leptonica.Private += "LIBJP2K_HEADER=\"openjpeg.h\""_d;
-        leptonica.Public += "HAVE_CONFIG_H"_d;
-        leptonica.Private += sw::Shared, "LIBLEPT_EXPORTS"_d;
-        leptonica.Interface += sw::Shared, "LIBLEPT_IMPORTS"_d;
+        add_deps(leptonica);
 
-        leptonica += "org.sw.demo.gif-5"_dep;
-        leptonica += "org.sw.demo.jpeg-9"_dep;
-        leptonica += "org.sw.demo.uclouvain.openjpeg.openjp2-2"_dep;
-        leptonica += "org.sw.demo.glennrp.png-1"_dep;
-        leptonica += "org.sw.demo.tiff-4"_dep;
-        leptonica += "org.sw.demo.webmproject.webp-*"_dep;
+        leptonica += "LIBJP2K_HEADER=\"openjpeg.h\""_d;
+        leptonica.Public += "HAVE_CONFIG_H"_d;
+        leptonica += sw::Shared, "LIBLEPT_EXPORTS"_d;
+        leptonica.Interface += sw::Shared, "LIBLEPT_IMPORTS"_d;
 
         if (leptonica.Variables["WORDS_BIGENDIAN"] == 1)
             leptonica.Variables["ENDIANNESS"] = "L_BIG_ENDIAN";
@@ -43,14 +51,14 @@ void build(Solution &s)
         leptonica.configureFile("src/endianness.h.in", "endianness.h");
         leptonica.writeFileOnce("config_auto.h");
 
-        if (s.Settings.Native.CompilerType == CompilerType::MSVC)
+        if (leptonica.getCompilerType() == CompilerType::MSVC)
         {
             for (auto *f : leptonica.gatherSourceFiles())
                 f->BuildAs = NativeSourceFile::CPP;
         }
 
-        if (s.Settings.TargetOS.Type == OSType::Windows)
-            leptonica += "User32.lib"_l, "Gdi32.lib"_l;
+        if (leptonica.getBuildSettings().TargetOS.Type == OSType::Windows)
+            leptonica += "User32.lib"_slib, "Gdi32.lib"_slib;
     }
 
     auto &progs = leptonica.addDirectory("progs");
@@ -58,17 +66,18 @@ void build(Solution &s)
         progs.Scope = TargetScope::Test;
 
     {
-        auto add_prog = [&s, &progs, &leptonica](const String &name, const Files &files) -> decltype(auto)
+        auto add_prog = [&s, &progs, &leptonica, &add_deps](const String &name, const Files &files) -> decltype(auto)
         {
             auto &t = progs.addExecutable(name);
             t.setRootDirectory("prog");
             t += files;
             t += leptonica;
-            if (s.Settings.Native.CompilerType == CompilerType::MSVC)
+            if (leptonica.getCompilerType() == CompilerType::MSVC)
             {
                 for (auto *f : t.gatherSourceFiles())
                     f->BuildAs = NativeSourceFile::CPP;
             }
+            add_deps(t);
             return t;
         };
 
@@ -102,6 +111,7 @@ void build(Solution &s)
             {"bytea_reg", {"bytea_reg.c"}},
             {"ccthin1_reg", {"ccthin1_reg.c"}},
             {"ccthin2_reg", {"ccthin2_reg.c"}},
+            {"checkerboard_reg", {"checkerboard_reg.c"}},
             {"cmapquant_reg", {"cmapquant_reg.c"}},
             {"colorcontent_reg", {"colorcontent_reg.c"}},
             {"coloring_reg", {"coloring_reg.c"}},
@@ -157,6 +167,7 @@ void build(Solution &s)
             {"locminmax_reg", {"locminmax_reg.c"}},
             {"logicops_reg", {"logicops_reg.c"}},
             {"lowaccess_reg", {"lowaccess_reg.c"}},
+            {"lowsat_reg", {"lowsat_reg.c"}},
             {"maze_reg", {"maze_reg.c"}},
             {"mtiff_reg", {"mtiff_reg.c"}},
             {"multitype_reg", {"multitype_reg.c"}},
@@ -168,6 +179,8 @@ void build(Solution &s)
             {"pageseg_reg", {"pageseg_reg.c"}},
             {"paintmask_reg", {"paintmask_reg.c"}},
             {"paint_reg", {"paint_reg.c"}},
+            {"pdfio1_reg", {"pdfio1_reg.c"}},
+            {"pdfio2_reg", {"pdfio2_reg.c"}},
             {"pdfseg_reg", {"pdfseg_reg.c"}},
             {"pixa1_reg", {"pixa1_reg.c"}},
             {"pixa2_reg", {"pixa2_reg.c"}},
@@ -192,6 +205,7 @@ void build(Solution &s)
             {"rank_reg", {"rank_reg.c"}},
             {"rasteropip_reg", {"rasteropip_reg.c"}},
             {"rasterop_reg", {"rasterop_reg.c"}},
+            {"rectangle_reg", {"rectangle_reg.c"}},
             {"rotate1_reg", {"rotate1_reg.c"}},
             {"rotate2_reg", {"rotate2_reg.c"}},
             {"scale_reg", {"scale_reg.c"}},
@@ -211,6 +225,7 @@ void build(Solution &s)
             {"warper_reg", {"warper_reg.c"}},
             {"watershed_reg", {"watershed_reg.c"}},
             {"webpio_reg", {"webpio_reg.c"}},
+            {"webpanimio_reg", {"webpanimio_reg.c"}},
             {"wordboxes_reg", {"wordboxes_reg.c"}},
             {"writetext_reg", {"writetext_reg.c"}},
             {"xformbox_reg", {"xformbox_reg.c"}},
@@ -246,6 +261,7 @@ void build(Solution &s)
             {"corrupttest", {"corrupttest.c"}},
             {"croptest", {"croptest.c"}},
             {"croptext", {"croptext.c"}},
+            {"deskew_it", {"deskew_it.c"}},
             {"dewarprules", {"dewarprules.c"}},
             {"dewarptest1", {"dewarptest1.c"}},
             {"dewarptest2", {"dewarptest2.c"}},
@@ -290,6 +306,7 @@ void build(Solution &s)
             {"livre_tophat", {"livre_tophat.c"}},
             {"maketile", {"maketile.c"}},
             {"maptest", {"maptest.c"}},
+            {"messagetest", {"messagetest.c"}},
             {"misctest1", {"misctest1.c"}},
             {"modifyhuesat", {"modifyhuesat.c"}},
             {"morphseq_reg", {"morphseq_reg.c"}},
@@ -299,8 +316,8 @@ void build(Solution &s)
             {"otsutest2", {"otsutest2.c"}},
             {"pagesegtest1", {"pagesegtest1.c"}},
             {"pagesegtest2", {"pagesegtest2.c"}},
+            {"partifytest", {"partifytest.c"}},
             {"partitiontest", {"partitiontest.c"}},
-            {"pdfiotest", {"pdfiotest.c"}},
             {"percolatetest", {"percolatetest.c"}},
             {"pixaatest", {"pixaatest.c"}},
             {"pixafileinfo", {"pixafileinfo.c"}},
@@ -323,12 +340,15 @@ void build(Solution &s)
             {"reducetest", {"reducetest.c"}},
             {"removecmap", {"removecmap.c"}},
             {"renderfonts", {"renderfonts.c"}},
+            {"replacebytes", {"replacebytes.c"}},
             {"rotatefastalt", {"rotatefastalt.c"}},
+            {"rotate_it", {"rotate_it.c"}},
             {"rotateorthtest1", {"rotateorthtest1.c"}},
             {"rotateorth_reg", {"rotateorth_reg.c"}},
             {"rotatetest1", {"rotatetest1.c"}},
             {"runlengthtest", {"runlengthtest.c"}},
             {"scaleandtile", {"scaleandtile.c"}},
+            {"scale_it", {"scale_it.c"}},
             {"scaletest1", {"scaletest1.c"}},
             {"scaletest2", {"scaletest2.c"}},
             {"seedfilltest", {"seedfilltest.c"}},
@@ -343,6 +363,7 @@ void build(Solution &s)
             {"sudokutest", {"sudokutest.c"}},
             {"textorient", {"textorient.c"}},
             {"trctest", {"trctest.c"}},
+            {"underlinetest", {"underlinetest.c"}},
             {"warpertest", {"warpertest.c"}},
             {"wordsinorder", {"wordsinorder.c"}},
             {"writemtiff", {"writemtiff.c"}},
@@ -354,6 +375,7 @@ void build(Solution &s)
             add_prog(p, files);
     }
 }
+#pragma optimize("", on)
 
 void check(Checker &c)
 {

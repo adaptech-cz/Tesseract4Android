@@ -119,9 +119,13 @@ typedef uintptr_t l_uintptr_t;
   #if !defined(HAVE_LIBWEBP)
   #define  HAVE_LIBWEBP       0
   #endif
+  #if !defined(HAVE_LIBWEBP_ANIM)
+  #define  HAVE_LIBWEBP_ANIM  0
+  #endif
   #if !defined(HAVE_LIBJP2K)
   #define  HAVE_LIBJP2K       0
   #endif
+
 
   /*-----------------------------------------------------------------------*
    * Leptonica supports OpenJPEG 2.0+.  If you have a version of openjpeg  *
@@ -330,6 +334,11 @@ typedef struct L_WallTimer  L_WALLTIMER;
 /*------------------------------------------------------------------------*
  *         Control printing of error, warning, and info messages          *
  *                                                                        *
+ *  Leptonica never sends output to stdout.  By default, all messages     *
+ *  go to stderr.  However, we provide a mechanism for runtime            *
+ *  redirection of output, using a custom stderr handler defined          *
+ *  by the user.  See utils1.c for details and examples.                  *
+ *                                                                        *
  *  To omit all messages to stderr, simply define NO_CONSOLE_IO on the    *
  *  command line.  For finer grained control, we have a mechanism         *
  *  based on the message severity level.  The following assumes that      *
@@ -428,7 +437,7 @@ enum {
 #endif
 
 
-/*!  The run-time message severity threshold is defined in utils.c.  */
+/*!  The run-time message severity threshold is defined in utils1.c.  */
 LEPT_DLL extern l_int32  LeptMsgSeverity;
 
 /*
@@ -508,32 +517,32 @@ LEPT_DLL extern l_int32  LeptMsgSeverity;
 
   #define L_ERROR(a, ...) \
       IF_SEV(L_SEVERITY_ERROR, \
-             (void)fprintf(stderr, "Error in %s: " a, __VA_ARGS__), \
+             (void)lept_stderr("Error in %s: " a, __VA_ARGS__), \
              (void)0)
   #define L_WARNING(a, ...) \
       IF_SEV(L_SEVERITY_WARNING, \
-             (void)fprintf(stderr, "Warning in %s: " a, __VA_ARGS__), \
+             (void)lept_stderr("Warning in %s: " a, __VA_ARGS__), \
              (void)0)
   #define L_INFO(a, ...) \
       IF_SEV(L_SEVERITY_INFO, \
-             (void)fprintf(stderr, "Info in %s: " a, __VA_ARGS__), \
+             (void)lept_stderr("Info in %s: " a, __VA_ARGS__), \
              (void)0)
 
 #if 0  /* Alternative method for controlling L_* message output */
   #define L_ERROR(a, ...) \
     { if (L_SEVERITY_ERROR >= MINIMUM_SEVERITY && \
           L_SEVERITY_ERROR >= LeptMsgSeverity) \
-          fprintf(stderr, "Error in %s: " a, __VA_ARGS__) \
+          lept_stderr("Error in %s: " a, __VA_ARGS__) \
     }
   #define L_WARNING(a, ...) \
     { if (L_SEVERITY_WARNING >= MINIMUM_SEVERITY && \
           L_SEVERITY_WARNING >= LeptMsgSeverity) \
-          fprintf(stderr, "Warning in %s: " a, __VA_ARGS__) \
+          lept_stderr("Warning in %s: " a, __VA_ARGS__) \
     }
   #define L_INFO(a, ...) \
     { if (L_SEVERITY_INFO >= MINIMUM_SEVERITY && \
           L_SEVERITY_INFO >= LeptMsgSeverity) \
-             fprintf(stderr, "Info in %s: " a, __VA_ARGS__) \
+          lept_stderr("Info in %s: " a, __VA_ARGS__) \
     }
 #endif
 

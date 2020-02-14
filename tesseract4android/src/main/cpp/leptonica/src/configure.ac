@@ -1,5 +1,5 @@
 AC_PREREQ([2.50])
-AC_INIT([leptonica], [1.78.0])
+AC_INIT([leptonica], [1.79.0])
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_HEADERS([config_auto.h:config/config.h.in])
 AC_CONFIG_SRCDIR([src/adaptmap.c])
@@ -27,6 +27,7 @@ AC_ARG_WITH([jpeg], AS_HELP_STRING([--without-jpeg], [do not include jpeg suppor
 AC_ARG_WITH([giflib], AS_HELP_STRING([--without-giflib], [do not include giflib support]))
 AC_ARG_WITH([libtiff], AS_HELP_STRING([--without-libtiff], [do not include libtiff support]))
 AC_ARG_WITH([libwebp], AS_HELP_STRING([--without-libwebp], [do not include libwebp support]))
+AC_ARG_WITH([libwebpmux], AS_HELP_STRING([--without-libwebpmux], [do not include libwebpmux support]))
 AC_ARG_WITH([libopenjpeg], AS_HELP_STRING([--without-libopenjpeg], [do not include libopenjpeg support]))
 
 AC_ARG_ENABLE([programs], AS_HELP_STRING([--disable-programs], [do not build additional programs]))
@@ -166,6 +167,26 @@ AS_IF([test "x$with_libwebp" = xno], [
 
 AM_CONDITIONAL([HAVE_LIBWEBP], [test "x$libwebp_missing" = x])
 
+AS_IF([test "x$with_libwebpmux" = xno], [
+  libwebpmux_missing=untried
+], [
+  libwebpmux_missing=
+
+  PKG_CHECK_MODULES([LIBWEBPMUX], [libwebpmux >= 0.5.0], [
+    AC_DEFINE([HAVE_LIBWEBP_ANIM], 1, [Define to 1 if you have libwebpmux.])
+  ], [
+    AC_CHECK_LIB([webpmux], [WebPAnimEncoderOptionsInit], [:], [libwebpmux_missing=library], [$LIBM])
+
+    AS_IF([test "x$libwebpmux_missing" = x], [
+      AC_DEFINE([HAVE_LIBWEBP_ANIM], 1, [Define to 1 if you have libwebpmux.]) AC_SUBST([LIBWEBPMUX_LIBS], [-lwebpmux])
+    ], [
+      AS_IF([test "x$with_libwebpmux" = xyes], AC_MSG_ERROR([libwebpmux support requested but $libwebpmux_missing not found]))
+    ])
+  ])
+])
+
+AM_CONDITIONAL([HAVE_LIBWEBP_ANIM], [test "x$libwebpmux_missing" = x])
+
 AS_IF([test "x$with_libopenjpeg" = xno], [
   libopenjpeg_missing=untried
 ], [
@@ -189,6 +210,15 @@ AS_IF([test "x$with_libopenjpeg" = xno], [
 ])
 
 AM_CONDITIONAL([HAVE_LIBJP2K], [test "x$libopenjpeg_missing" = x])
+
+# Check whether to enable debugging
+AC_MSG_CHECKING([whether to enable debugging])
+AC_ARG_ENABLE([debug],
+  AS_HELP_STRING([--enable-debug], [turn on debugging [default=no]]))
+AC_MSG_RESULT([$enable_debug])
+if test x"$enable_debug" = x"yes"; then
+    CFLAGS="-g -Wall -DDEBUG -pedantic -Og -g3"
+fi
 
 case "$host_os" in
   mingw32*)
@@ -225,5 +255,22 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM()],
 AC_CHECK_FUNCS([fmemopen])
 AC_CHECK_FUNC([fstatat])
 
+# Configuration files
 AC_CONFIG_FILES([Makefile src/endianness.h src/Makefile prog/Makefile lept.pc])
+
+# cmake configuration. Get versions from PACKAGE_VERSION.
+AX_SPLIT_VERSION
+AC_SUBST([VERSION_PLAIN], ["${PACKAGE_VERSION}"])
+AC_SUBST([VERSION_MAJOR], [$(echo "$AX_MAJOR_VERSION" | $SED 's/^[[^0-9]]*//')])
+AC_SUBST([VERSION_MINOR], [$AX_MINOR_VERSION])
+AC_SUBST([VERSION_PATCH], [$(echo "$AX_POINT_VERSION" | $SED 's/^\([[0-9]][[0-9]]*\).*/\1/')])
+INCLUDE_PATH=`eval echo $includedir`
+AC_SUBST([INCLUDE_DIR], ["${INCLUDE_PATH}/leptonica"])
+AC_SUBST([leptonica_OUTPUT_NAME], ["lept"])
+AC_CONFIG_FILES(cmake/templates/LeptonicaConfig.cmake)
+AC_CONFIG_FILES(cmake/templates/LeptonicaConfig-version.cmake)
+
+# Create symlink
+AC_PROG_LN_S
+
 AC_OUTPUT

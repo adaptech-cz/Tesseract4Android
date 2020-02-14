@@ -41,6 +41,10 @@
  * </pre>
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include <string.h>
 #include "allheaders.h"
 
@@ -50,7 +54,6 @@ static l_uint32 * makeExpandTab4x(void);
 static l_uint32 * makeExpandTab8x(void);
 static  l_uint32 expandtab16[] = {
               0x00000000, 0x0000ffff, 0xffff0000, 0xffffffff};
-
 
 /*------------------------------------------------------------------*
  *              Replicated expansion (integer scaling)              *
@@ -230,11 +233,7 @@ makeExpandTab2x(void)
 l_uint16  *tab;
 l_int32    i;
 
-    PROCNAME("makeExpandTab2x");
-
-    if ((tab = (l_uint16 *) LEPT_CALLOC(256, sizeof(l_uint16))) == NULL)
-        return (l_uint16 *)ERROR_PTR("tab not made", procName, NULL);
-
+    tab = (l_uint16 *) LEPT_CALLOC(256, sizeof(l_uint16));
     for (i = 0; i < 256; i++) {
         if (i & 0x01)
             tab[i] = 0x3;
@@ -253,7 +252,6 @@ l_int32    i;
         if (i & 0x80)
             tab[i] |= 0xc000;
     }
-
     return tab;
 }
 
@@ -264,11 +262,7 @@ makeExpandTab4x(void)
 l_uint32  *tab;
 l_int32    i;
 
-    PROCNAME("makeExpandTab4x");
-
-    if ((tab = (l_uint32 *) LEPT_CALLOC(256, sizeof(l_uint32))) == NULL)
-        return (l_uint32 *)ERROR_PTR("tab not made", procName, NULL);
-
+    tab = (l_uint32 *) LEPT_CALLOC(256, sizeof(l_uint32));
     for (i = 0; i < 256; i++) {
         if (i & 0x01)
             tab[i] = 0xf;
@@ -287,7 +281,6 @@ l_int32    i;
         if (i & 0x80)
             tab[i] |= 0xf0000000;
     }
-
     return tab;
 }
 
@@ -298,11 +291,7 @@ makeExpandTab8x(void)
 l_uint32  *tab;
 l_int32    i;
 
-    PROCNAME("makeExpandTab8x");
-
-    if ((tab = (l_uint32 *) LEPT_CALLOC(16, sizeof(l_uint32))) == NULL)
-        return (l_uint32 *)ERROR_PTR("tab not made", procName, NULL);
-
+    tab = (l_uint32 *) LEPT_CALLOC(16, sizeof(l_uint32));
     for (i = 0; i < 16; i++) {
         if (i & 0x01)
             tab[i] = 0xff;
@@ -313,6 +302,5 @@ l_int32    i;
         if (i & 0x08)
             tab[i] |= 0xff000000;
     }
-
     return tab;
 }

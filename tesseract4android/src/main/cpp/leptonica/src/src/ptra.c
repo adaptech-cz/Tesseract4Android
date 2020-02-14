@@ -118,13 +118,18 @@
  * </pre>
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include "allheaders.h"
 
-static const l_int32 INITIAL_PTR_ARRAYSIZE = 20;      /* n'importe quoi */
+    /* Bounds on initial array size */
+static const l_uint32  MaxPtrArraySize = 100000;
+static const l_int32 InitialPtrArraySize = 20;      /*!< n'importe quoi */
 
     /* Static function */
 static l_int32 ptraExtendArray(L_PTRA *pa);
-
 
 /*--------------------------------------------------------------------------*
  *                       Ptra creation and destruction                      *
@@ -132,7 +137,7 @@ static l_int32 ptraExtendArray(L_PTRA *pa);
 /*!
  * \brief   ptraCreate()
  *
- * \param[in]    n     size of ptr array to be alloc'd 0 for default
+ * \param[in]    n     size of ptr array to be alloc'd; use 0 for default
  * \return  pa, or NULL on error
  */
 L_PTRA *
@@ -142,8 +147,8 @@ L_PTRA  *pa;
 
     PROCNAME("ptraCreate");
 
-    if (n <= 0)
-        n = INITIAL_PTR_ARRAYSIZE;
+    if (n <= 0 || n > MaxPtrArraySize)
+        n = InitialPtrArraySize;
 
     pa = (L_PTRA *)LEPT_CALLOC(1, sizeof(L_PTRA));
     if ((pa->array = (void **)LEPT_CALLOC(n, sizeof(void *))) == NULL) {
@@ -797,8 +802,7 @@ L_PTRAA  *paa;
     if (n <= 0)
         return (L_PTRAA *)ERROR_PTR("n must be > 0", procName, NULL);
 
-    if ((paa = (L_PTRAA *)LEPT_CALLOC(1, sizeof(L_PTRAA))) == NULL)
-        return (L_PTRAA *)ERROR_PTR("paa not made", procName, NULL);
+    paa = (L_PTRAA *)LEPT_CALLOC(1, sizeof(L_PTRAA));
     if ((paa->ptra = (L_PTRA **)LEPT_CALLOC(n, sizeof(L_PTRA *))) == NULL) {
         ptraaDestroy(&paa, 0, 0);
         return (L_PTRAA *)ERROR_PTR("ptr array not made", procName, NULL);

@@ -31,8 +31,8 @@ TEST_NAME="${TEST##*/}"
 TEST_NAME="${TEST_NAME%_reg*}"
 
 case "${TEST_NAME}" in
-    baseline|boxa[12]|colormask|colorspace|dna|enhance|extrema|fpix1|italic|kernel|nearline|numa[12]|projection|rankbin|rankhisto|wordboxes)
-        GNUPLOT=$(type -P gnuplot || type -P wgnuplot)
+    baseline|boxa[1234]|colormask|colorspace|dna|enhance|extrema|fpix1|italic|kernel|nearline|numa[12]|projection|rankbin|rankhisto|wordboxes)
+        GNUPLOT=$(which gnuplot || which wgnuplot)
 
         if [ -z "${GNUPLOT}" ] || ! "${GNUPLOT}" -e "set terminal png" 2>/dev/null ; then
             exec ${@%${TEST}} /bin/sh -c "exit 77"

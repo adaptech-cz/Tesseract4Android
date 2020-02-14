@@ -32,6 +32,10 @@
  *   - Use of thinning and thickening in stroke width normalization
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include "allheaders.h"
 
 int main(int    argc,
@@ -44,6 +48,11 @@ PIXA         *pixa1, *pixa2, *pixa3, *pixa4, *pixa5;
 PIXAA        *paa;
 L_REGPARAMS  *rp;
 SELA         *sela;
+
+#if !defined(HAVE_LIBPNG)
+    L_ERROR("This test requires libpng to run.\n", "ccthin_reg");
+    exit(77);
+#endif
 
     if (regTestSetup(argc, argv, &rp))
         return 1;

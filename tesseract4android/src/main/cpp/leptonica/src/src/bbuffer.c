@@ -97,10 +97,16 @@
  * </pre>
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include <string.h>
 #include "allheaders.h"
 
-static const l_int32  INITIAL_BUFFER_ARRAYSIZE = 1024;   /*!< n'importe quoi */
+   /* Bounds on array size */
+static const l_uint32  MaxArraySize = 1000000000;   /* 10^9 bytes */
+static const l_int32   InitialArraySize = 1024;     /*!< n'importe quoi */
 
 /*--------------------------------------------------------------------------*
  *                         BBuffer create/destroy                           *
@@ -128,11 +134,10 @@ L_BBUFFER  *bb;
 
     PROCNAME("bbufferCreate");
 
-    if (nalloc <= 0)
-        nalloc = INITIAL_BUFFER_ARRAYSIZE;
+    if (nalloc <= 0 || nalloc > MaxArraySize)
+        nalloc = InitialArraySize;
 
-    if ((bb = (L_BBUFFER *)LEPT_CALLOC(1, sizeof(L_BBUFFER))) == NULL)
-        return (L_BBUFFER *)ERROR_PTR("bb not made", procName, NULL);
+    bb = (L_BBUFFER *)LEPT_CALLOC(1, sizeof(L_BBUFFER));
     if ((bb->array = (l_uint8 *)LEPT_CALLOC(nalloc, sizeof(l_uint8))) == NULL) {
         LEPT_FREE(bb);
         return (L_BBUFFER *)ERROR_PTR("byte array not made", procName, NULL);

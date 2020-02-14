@@ -34,6 +34,10 @@
  *    the colormap to either RGB or grayscale.
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include "allheaders.h"
 
     /* use this set */
@@ -47,7 +51,6 @@
 int main(int    argc,
          char **argv)
 {
-l_int32       errorfound, same;
 PIX          *pixs, *pix1, *pix2, *pix3, *pix4;
 L_REGPARAMS  *rp;
 

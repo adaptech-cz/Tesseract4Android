@@ -158,6 +158,10 @@
  * </pre>
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include <string.h>
 #include "allheaders.h"
 
@@ -174,15 +178,15 @@ static PIX *recogDisplayOutlier(L_RECOG *recog, l_int32 iclass, l_int32 jsamp,
      * in outlier removal functions, and that use template set size
      * to decide if the set of templates (before outliers are removed)
      * is valid.  Values are set to accept most sets of sample templates. */
-static const l_int32    DEFAULT_MIN_SET_SIZE = 1;  /* minimum number of
+static const l_int32    DefaultMinSetSize = 1;  /* minimum number of
                                        samples for a valid class */
-static const l_float32  DEFAULT_MIN_SET_FRACT = 0.4;  /* minimum fraction
+static const l_float32  DefaultMinSetFract = 0.4;  /* minimum fraction
                                of classes required for a valid recog */
 
     /* Defaults in pixaRemoveOutliers1() and pixaRemoveOutliers2() */
-static const l_float32  DEFAULT_MIN_SCORE = 0.75; /* keep everything above */
-static const l_int32    DEFAULT_MIN_TARGET = 3;  /* to be kept if possible */
-static const l_float32  LOWER_SCORE_THRESHOLD = 0.5;  /* templates can be
+static const l_float32  DefaultMinScore = 0.75; /* keep everything above */
+static const l_int32    DefaultMinTarget = 3;  /* to be kept if possible */
+static const l_float32  LowerScoreThreshold = 0.5;  /* templates can be
                  * kept down to this score to if needed to retain the
                  * desired minimum number of templates */
 
@@ -922,8 +926,8 @@ NUMA      *na;
     if (!recog)
         return ERROR_INT("recog not defined", procName, 1);
 
-    minsize = (minsize < 0) ? DEFAULT_MIN_SET_SIZE : minsize;
-    minfract = (minfract < 0) ? DEFAULT_MIN_SET_FRACT : minfract;
+    minsize = (minsize < 0) ? DefaultMinSetSize : minsize;
+    minfract = (minfract < 0) ? DefaultMinSetFract : minfract;
     n = pixaaGetCount(recog->pixaa_u, &na);
     validsets = 0;
     for (i = 0, validsets = 0; i < n; i++) {
@@ -1142,9 +1146,9 @@ L_RECOG  *recog;
  *          we supplement a minimum score for retention with a score
  *          necessary to acquire the minimum target number of templates.
  *          To do this we are willing to use a lower threshold,
- *          LOWER_SCORE_THRESHOLD, on the score.  Consequently, with
+ *          LowerScoreThreshold, on the score.  Consequently, with
  *          poor quality templates, we may keep samples with a score
- *          less than %minscore, but never less than LOWER_SCORE_THRESHOLD.
+ *          less than %minscore, but never less than LowerScoreThreshold.
  *          And if the number of samples is less than %minsize, we do
  *          not use any.
  *      (3) This is meant to be used on a BAR, where the templates all
@@ -1179,12 +1183,12 @@ L_RECOG   *recog;
         return (PIXA *)ERROR_PTR("pixas not defined", procName, NULL);
     minscore = L_MIN(minscore, 1.0);
     if (minscore <= 0.0)
-        minscore = DEFAULT_MIN_SCORE;
+        minscore = DefaultMinScore;
     mintarget = L_MIN(mintarget, 3);
     if (mintarget <= 0)
-        mintarget = DEFAULT_MIN_TARGET;
+        mintarget = DefaultMinTarget;
     if (minsize < 0)
-        minsize = DEFAULT_MIN_SET_SIZE;
+        minsize = DefaultMinSetSize;
 
         /* Make a special height-scaled recognizer with average templates */
     debug = (ppixsave || ppixrem) ? 1 : 0;
@@ -1222,7 +1226,7 @@ L_RECOG   *recog;
                                       recog->sumtab, &score);
             numaAddNumber(nascore, score);
             if (debug && score == 0.0)  /* typ. large size difference */
-                fprintf(stderr, "Got 0 score for i = %d, j = %d\n", i, j);
+                lept_stderr("Got 0 score for i = %d, j = %d\n", i, j);
             pixDestroy(&pix2);
         }
         pixDestroy(&pix1);
@@ -1234,7 +1238,7 @@ L_RECOG   *recog;
              * that at least one template is kept. */
         minfract = (l_float32)mintarget / (l_float32)n;
         numaGetRankValue(nascore, 1.0 - minfract, NULL, 0, &rankscore);
-        threshscore = L_MAX(LOWER_SCORE_THRESHOLD,
+        threshscore = L_MAX(LowerScoreThreshold,
                             L_MIN(minscore, rankscore));
         if (debug) {
             L_INFO("minscore = %4.2f, rankscore = %4.2f, threshscore = %4.2f\n",
@@ -1381,9 +1385,9 @@ L_RECOG   *recog;
         return (PIXA *)ERROR_PTR("pixas not defined", procName, NULL);
     minscore = L_MIN(minscore, 1.0);
     if (minscore <= 0.0)
-        minscore = DEFAULT_MIN_SCORE;
+        minscore = DefaultMinScore;
     if (minsize < 0)
-        minsize = DEFAULT_MIN_SET_SIZE;
+        minsize = DefaultMinSetSize;
 
         /* Make a special height-scaled recognizer with average templates */
     debug = (ppixsave || ppixrem) ? 1 : 0;
@@ -2025,13 +2029,13 @@ NUMA    *na;
 
     if (display) {
         lept_mkdir("lept/recog");
-        pix = pixaaDisplayByPixa(recog->pixaa_u, 20, 20, 1000);
+        pix = pixaaDisplayByPixa(recog->pixaa_u, 50, 1.0, 20, 20, 0);
         snprintf(buf, sizeof(buf), "/tmp/lept/recog/templates_u.%d.png", index);
         pixWriteDebug(buf, pix, IFF_PNG);
         pixDisplay(pix, 0, 200 * index);
         pixDestroy(&pix);
         if (recog->train_done) {
-            pix = pixaaDisplayByPixa(recog->pixaa, 20, 20, 1000);
+            pix = pixaaDisplayByPixa(recog->pixaa, 50, 1.0, 20, 20, 0);
             snprintf(buf, sizeof(buf),
                      "/tmp/lept/recog/templates.%d.png", index);
             pixWriteDebug(buf, pix, IFF_PNG);
@@ -2104,7 +2108,7 @@ L_RECOG   *recog;
             rchExtract(recog->rch, &index, &score, NULL, NULL, NULL,
                        NULL, NULL);
             if (debug >= 2)
-                fprintf(stderr, "index = %d, score = %7.3f\n", index, score);
+                lept_stderr("index = %d, score = %7.3f\n", index, score);
             pix3 = pixAddBorder(pix2, 2, 1);
             pixaAddPix(pixa, pix3, L_INSERT);
             pixDestroy(&pix1);
@@ -2113,7 +2117,7 @@ L_RECOG   *recog;
         pixaaAddPixa(paa2, pixa, L_INSERT);
         pixaDestroy(&pixat);
     }
-    recog->pixdb_ave = pixaaDisplayByPixa(paa2, 20, 20, 2500);
+    recog->pixdb_ave = pixaaDisplayByPixa(paa2, 50, 1.0, 20, 20, 0);
     if (debug % 2) {
         lept_mkdir("lept/recog");
         pixWriteDebug("/tmp/lept/recog/templ_match.png", recog->pixdb_ave,
@@ -2151,11 +2155,11 @@ PIXA      *pixat, *pixadb;
     if (!recog)
         return ERROR_INT("recog not defined", procName, 1);
 
-    fprintf(stderr, "min/max width_u = (%d,%d); min/max height_u = (%d,%d)\n",
-            recog->minwidth_u, recog->maxwidth_u,
-            recog->minheight_u, recog->maxheight_u);
-    fprintf(stderr, "min splitw = %d, max splith = %d\n",
-            recog->min_splitw, recog->max_splith);
+    lept_stderr("min/max width_u = (%d,%d); min/max height_u = (%d,%d)\n",
+                recog->minwidth_u, recog->maxwidth_u,
+                recog->minheight_u, recog->maxheight_u);
+    lept_stderr("min splitw = %d, max splith = %d\n",
+                recog->min_splitw, recog->max_splith);
 
     pixaDestroy(&recog->pixadb_ave);
 

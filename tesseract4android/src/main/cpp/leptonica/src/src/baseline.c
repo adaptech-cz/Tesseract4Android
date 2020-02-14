@@ -47,29 +47,33 @@
  * </pre>
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include <math.h>
 #include "allheaders.h"
 
     /* Min to travel after finding max before abandoning peak */
-static const l_int32  MIN_DIST_IN_PEAK = 35;
+static const l_int32  MinDistInPeak = 35;
 
     /* Thresholds for peaks and zeros, relative to the max peak */
-static const l_int32  PEAK_THRESHOLD_RATIO = 20;
-static const l_int32  ZERO_THRESHOLD_RATIO = 100;
+static const l_int32  PeakThresholdRatio = 20;
+static const l_int32  ZeroThresholdRatio = 100;
 
     /* Default values for determining local skew */
-static const l_int32  DEFAULT_SLICES = 10;
-static const l_int32  DEFAULT_SWEEP_REDUCTION = 2;
-static const l_int32  DEFAULT_BS_REDUCTION = 1;
-static const l_float32  DEFAULT_SWEEP_RANGE = 5.;   /* degrees */
-static const l_float32  DEFAULT_SWEEP_DELTA = 1.;   /* degrees */
-static const l_float32  DEFAULT_MINBS_DELTA = 0.01;   /* degrees */
+static const l_int32  DefaultSlices = 10;
+static const l_int32  DefaultSweepReduction = 2;
+static const l_int32  DefaultBsReduction = 1;
+static const l_float32  DefaultSweepRange = 5.;   /* degrees */
+static const l_float32  DefaultSweepDelta = 1.;   /* degrees */
+static const l_float32  DefaultMinbsDelta = 0.01;   /* degrees */
 
     /* Overlap slice fraction added to top and bottom of each slice */
-static const l_float32  OVERLAP_FRACTION = 0.5;
+static const l_float32  OverlapFraction = 0.5;
 
     /* Minimum allowed confidence (ratio) for accepting a value */
-static const l_float32  MIN_ALLOWED_CONFIDENCE = 3.0;
+static const l_float32  MinAllowedConfidence = 3.0;
 
 
 /*---------------------------------------------------------------------*
@@ -167,9 +171,9 @@ PTA       *pta;
     numaDestroy(&nadiff);
 
         /* Use this to begin locating a new peak: */
-    peakthresh = (l_int32)maxval / PEAK_THRESHOLD_RATIO;
+    peakthresh = (l_int32)maxval / PeakThresholdRatio;
         /* Use this to begin a region between peaks: */
-    zerothresh = (l_int32)maxval / ZERO_THRESHOLD_RATIO;
+    zerothresh = (l_int32)maxval / ZeroThresholdRatio;
 
     naloc = numaCreate(0);
     naval = numaCreate(0);
@@ -178,7 +182,7 @@ PTA       *pta;
         if (inpeak == FALSE) {
             if (array[i] > peakthresh) {  /* transition to in-peak */
                 inpeak = TRUE;
-                mintosearch = i + MIN_DIST_IN_PEAK; /* accept no zeros
+                mintosearch = i + MinDistInPeak; /* accept no zeros
                                                * between i and mintosearch */
                 max = array[i];
                 maxloc = i;
@@ -187,7 +191,7 @@ PTA       *pta;
             if (array[i] > max) {
                 max = array[i];
                 maxloc = i;
-                mintosearch = i + MIN_DIST_IN_PEAK;
+                mintosearch = i + MinDistInPeak;
             } else if (i > mintosearch && array[i] <= zerothresh) {  /* leave */
                 inpeak = FALSE;
                 numaAddNumber(naval, max);
@@ -358,20 +362,21 @@ PTA       *ptas, *ptad;
  * \brief   pixGetLocalSkewTransform()
  *
  * \param[in]    pixs
- * \param[in]    nslices  the number of horizontal overlapping slices; must
- *                  be larger than 1 and not exceed 20; use 0 for default
- * \param[in]    redsweep sweep reduction factor: 1, 2, 4 or 8;
- *                        use 0 for default value
- * \param[in]    redsearch search reduction factor: 1, 2, 4 or 8, and
- *                         not larger than redsweep; use 0 for default value
- * \param[in]    sweeprange half the full range, assumed about 0; in degrees;
- *                          use 0.0 for default value
- * \param[in]    sweepdelta angle increment of sweep; in degrees;
- *                          use 0.0 for default value
- * \param[in]    minbsdelta min binary search increment angle; in degrees;
- *                          use 0.0 for default value
- * \param[out]   pptas  4 points in the source
- * \param[out]   pptad  the corresponding 4 pts in the dest
+ * \param[in]    nslices      the number of horizontal overlapping slices;
+ *                            must be larger than 1 and not exceed 20;
+ *                            use 0 for default
+ * \param[in]    redsweep     sweep reduction factor: 1, 2, 4 or 8;
+ *                            use 0 for default value
+ * \param[in]    redsearch    search reduction factor: 1, 2, 4 or 8, and not
+ *                            larger than redsweep; use 0 for default value
+ * \param[in]    sweeprange   half the full range, assumed about 0;
+ *                            in degrees; use 0.0 for default value
+ * \param[in]    sweepdelta   angle increment of sweep; in degrees;
+ *                            use 0.0 for default value
+ * \param[in]    minbsdelta   min binary search increment angle; in degrees;
+ *                            use 0.0 for default value
+ * \param[out]   pptas        4 points in the source
+ * \param[out]   pptad        the corresponding 4 pts in the dest
  * \return  0 if OK, 1 on error
  *
  * <pre>
@@ -408,17 +413,17 @@ PTA       *ptas, *ptad;
     if (!pixs || pixGetDepth(pixs) != 1)
         return ERROR_INT("pixs not defined or not 1 bpp", procName, 1);
     if (nslices < 2 || nslices > 20)
-        nslices = DEFAULT_SLICES;
+        nslices = DefaultSlices;
     if (redsweep < 1 || redsweep > 8)
-        redsweep = DEFAULT_SWEEP_REDUCTION;
+        redsweep = DefaultSweepReduction;
     if (redsearch < 1 || redsearch > redsweep)
-        redsearch = DEFAULT_BS_REDUCTION;
+        redsearch = DefaultBsReduction;
     if (sweeprange == 0.0)
-        sweeprange = DEFAULT_SWEEP_RANGE;
+        sweeprange = DefaultSweepRange;
     if (sweepdelta == 0.0)
-        sweepdelta = DEFAULT_SWEEP_DELTA;
+        sweepdelta = DefaultSweepDelta;
     if (minbsdelta == 0.0)
-        minbsdelta = DEFAULT_MINBS_DELTA;
+        minbsdelta = DefaultMinbsDelta;
 
     naskew = pixGetLocalSkewAngles(pixs, nslices, redsweep, redsearch,
                                    sweeprange, sweepdelta, minbsdelta,
@@ -468,22 +473,25 @@ PTA       *ptas, *ptad;
 /*!
  * \brief   pixGetLocalSkewAngles()
  *
- * \param[in]    pixs         1 bpp
- * \param[in]    nslices      the number of horizontal overlapping slices; must
- *                            be larger than 1 and not exceed 20; 0 for default
- * \param[in]    redsweep     sweep reduction factor: 1, 2, 4 or 8;
- *                            use 0 for default value
- * \param[in]    redsearch    search reduction factor: 1, 2, 4 or 8, and not
- *                            larger than redsweep; use 0 for default value
- * \param[in]    sweeprange   half the full range, assumed about 0; in degrees;
- *                            use 0.0 for default value
- * \param[in]    sweepdelta   angle increment of sweep; in degrees;
- *                            use 0.0 for default value
- * \param[in]    minbsdelta   min binary search increment angle; in degrees;
- *                            use 0.0 for default value
- * \param[out]   pa [optional] slope of skew as fctn of y
- * \param[out]   pb [optional] intercept at y=0 of skew as fctn of y
- * \param[in]    debug   1 for generating plot of skew angle vs. y; 0 otherwise
+ * \param[in]    pixs          1 bpp
+ * \param[in]    nslices       the number of horizontal overlapping slices;
+ *                             must be larger than 1 and not exceed 20;
+ *                             use 0 for default
+ * \param[in]    redsweep      sweep reduction factor: 1, 2, 4 or 8;
+ *                             use 0 for default value
+ * \param[in]    redsearch     search reduction factor: 1, 2, 4 or 8, and not
+ *                             larger than redsweep; use 0 for default value
+ * \param[in]    sweeprange    half the full range, assumed about 0;
+ *                             in degrees; use 0.0 for default value
+ * \param[in]    sweepdelta    angle increment of sweep; in degrees;
+ *                             use 0.0 for default value
+ * \param[in]    minbsdelta    min binary search increment angle; in degrees;
+ *                             use 0.0 for default value
+ * \param[out]   pa            [optional] slope of skew as fctn of y
+ * \param[out]   pb            [optional] intercept at y = 0 of skew,
+ 8                             as a function of y
+ * \param[in]    debug         1 for generating plot of skew angle vs. y;
+ *                             0 otherwise
  * \return  naskew, or NULL on error
  *
  * <pre>
@@ -527,21 +535,21 @@ PTA       *pta;
     if (!pixs || pixGetDepth(pixs) != 1)
         return (NUMA *)ERROR_PTR("pixs undefined or not 1 bpp", procName, NULL);
     if (nslices < 2 || nslices > 20)
-        nslices = DEFAULT_SLICES;
+        nslices = DefaultSlices;
     if (redsweep < 1 || redsweep > 8)
-        redsweep = DEFAULT_SWEEP_REDUCTION;
+        redsweep = DefaultSweepReduction;
     if (redsearch < 1 || redsearch > redsweep)
-        redsearch = DEFAULT_BS_REDUCTION;
+        redsearch = DefaultBsReduction;
     if (sweeprange == 0.0)
-        sweeprange = DEFAULT_SWEEP_RANGE;
+        sweeprange = DefaultSweepRange;
     if (sweepdelta == 0.0)
-        sweepdelta = DEFAULT_SWEEP_DELTA;
+        sweepdelta = DefaultSweepDelta;
     if (minbsdelta == 0.0)
-        minbsdelta = DEFAULT_MINBS_DELTA;
+        minbsdelta = DefaultMinbsDelta;
 
     pixGetDimensions(pixs, &w, &h, NULL);
     hs = h / nslices;
-    ovlap = (l_int32)(OVERLAP_FRACTION * hs);
+    ovlap = (l_int32)(OverlapFraction * hs);
     pta = ptaCreate(nslices);
     for (i = 0; i < nslices; i++) {
         ystart = L_MAX(0, hs * i - ovlap);
@@ -551,7 +559,7 @@ PTA       *pta;
         pix = pixClipRectangle(pixs, box, NULL);
         pixFindSkewSweepAndSearch(pix, &angle, &conf, redsweep, redsearch,
                                   sweeprange, sweepdelta, minbsdelta);
-        if (conf > MIN_ALLOWED_CONFIDENCE)
+        if (conf > MinAllowedConfidence)
             ptaAddPt(pta, ycenter, angle);
         pixDestroy(&pix);
         boxDestroy(&box);

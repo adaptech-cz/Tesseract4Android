@@ -52,6 +52,10 @@
  * </pre>
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include <string.h>
 #ifdef _WIN32
 #include <stdlib.h>
@@ -59,11 +63,11 @@
 #endif  /* _WIN32 */
 #include "allheaders.h"
 
-static const l_int32  MIN_MAZE_WIDTH = 50;
-static const l_int32  MIN_MAZE_HEIGHT = 50;
+static const l_int32  MinMazeWidth = 50;
+static const l_int32  MinMazeHeight = 50;
 
-static const l_float32  DEFAULT_WALL_PROBABILITY = 0.65;
-static const l_float32  DEFAULT_ANISOTROPY_RATIO = 0.25;
+static const l_float32  DefaultWallProbability = 0.65;
+static const l_float32  DefaultAnisotropyRatio = 0.25;
 
 enum {  /* direction from parent to newly created element */
     START_LOC = 0,
@@ -91,7 +95,6 @@ static l_int32 localSearchForBackground(PIX  *pix, l_int32  *px,
 #define  DEBUG_PATH    0
 #define  DEBUG_MAZE    0
 #endif  /* ~NO_CONSOLE_IO */
-
 
 /*---------------------------------------------------------------------*
  *             Binary maze generation as cellular automaton            *
@@ -162,24 +165,24 @@ L_QUEUE   *lq;
     srand(28*333);
 #endif /* _WIN32 */
 
-    if (w < MIN_MAZE_WIDTH)
-        w = MIN_MAZE_WIDTH;
-    if (h < MIN_MAZE_HEIGHT)
-        h = MIN_MAZE_HEIGHT;
+    if (w < MinMazeWidth)
+        w = MinMazeWidth;
+    if (h < MinMazeHeight)
+        h = MinMazeHeight;
     if (xi <= 0 || xi >= w)
         xi = w / 6;
     if (yi <= 0 || yi >= h)
         yi = h / 5;
     if (wallps < 0.05 || wallps > 0.95)
-        wallps = DEFAULT_WALL_PROBABILITY;
+        wallps = DefaultWallProbability;
     if (ranis < 0.05 || ranis > 1.0)
-        ranis = DEFAULT_ANISOTROPY_RATIO;
+        ranis = DefaultAnisotropyRatio;
     wallpf = wallps * ranis;
 
 #if  DEBUG_MAZE
-    fprintf(stderr, "(w, h) = (%d, %d), (xi, yi) = (%d, %d)\n", w, h, xi, yi);
-    fprintf(stderr, "Using: prob(wall) = %7.4f, anisotropy factor = %7.4f\n",
-            wallps, ranis);
+    lept_stderr("(w, h) = (%d, %d), (xi, yi) = (%d, %d)\n", w, h, xi, yi);
+    lept_stderr("Using: prob(wall) = %7.4f, anisotropy factor = %7.4f\n",
+                wallps, ranis);
 #endif  /* DEBUG_MAZE */
 
         /* These are initialized to OFF */
@@ -375,8 +378,8 @@ PTA       *pta;
     localSearchForBackground(pixs, &xf, &yf, 5);
 
 #if  DEBUG_MAZE
-    fprintf(stderr, "(xi, yi) = (%d, %d), (xf, yf) = (%d, %d)\n",
-            xi, yi, xf, yf);
+    lept_stderr("(xi, yi) = (%d, %d), (xf, yf) = (%d, %d)\n",
+                xi, yi, xf, yf);
 #endif  /* DEBUG_MAZE */
 
     pixm = pixCreate(w, h, 1);  /* initialized to OFF */
@@ -886,7 +889,7 @@ PTA      *pta;
         pixGetPixel(pixr, x, y, &val);
 
 #if  DEBUG_PATH
-        fprintf(stderr, "(x,y) = (%d, %d); dist = %d\n", x, y, val);
+        lept_stderr("(x,y) = (%d, %d); dist = %d\n", x, y, val);
 #endif  /* DEBUG_PATH */
 
     }

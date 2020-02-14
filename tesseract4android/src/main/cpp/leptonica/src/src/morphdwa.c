@@ -129,12 +129,15 @@
  * </pre>
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include "allheaders.h"
 
 #ifndef  NO_CONSOLE_IO
 #define  DEBUG_SEL_LOOKUP   0
 #endif  /* ~NO_CONSOLE_IO */
-
 
 /*-----------------------------------------------------------------*
  *           Binary morphological (dwa) ops with brick Sels        *
@@ -142,11 +145,11 @@
 /*!
  * \brief   pixDilateBrickDwa()
  *
- * \param[in]    pixd  [optional]; this can be null, equal to pixs,
- *                     or different from pixs
- * \param[in]    pixs 1 bpp
- * \param[in]    hsize width of brick Sel
- * \param[in]    vsize height of brick Sel
+ * \param[in]    pixd    [optional]; this can be null, equal to pixs,
+ *                       or different from pixs
+ * \param[in]    pixs    1 bpp
+ * \param[in]    hsize   width of brick Sel
+ * \param[in]    vsize   height of brick Sel
  * \return  pixd
  *
  * <pre>
@@ -241,11 +244,11 @@ PIX     *pixt1, *pixt2, *pixt3;
 /*!
  * \brief   pixErodeBrickDwa()
  *
- * \param[in]    pixd  [optional]; this can be null, equal to pixs,
- *                     or different from pixs
- * \param[in]    pixs 1 bpp
- * \param[in]    hsize width of brick Sel
- * \param[in]    vsize height of brick Sel
+ * \param[in]    pixd     [optional]; this can be null, equal to pixs,
+ *                        or different from pixs
+ * \param[in]    pixs     1 bpp
+ * \param[in]    hsize    width of brick Sel
+ * \param[in]    vsize    height of brick Sel
  * \return  pixd
  *
  * <pre>
@@ -343,11 +346,11 @@ PIX     *pixt1, *pixt2, *pixt3;
 /*!
  * \brief   pixOpenBrickDwa()
  *
- * \param[in]    pixd  [optional]; this can be null, equal to pixs,
- *                     or different from pixs
- * \param[in]    pixs 1 bpp
- * \param[in]    hsize width of brick Sel
- * \param[in]    vsize height of brick Sel
+ * \param[in]    pixd     [optional]; this can be null, equal to pixs,
+ *                        or different from pixs
+ * \param[in]    pixs     1 bpp
+ * \param[in]    hsize    width of brick Sel
+ * \param[in]    vsize    height of brick Sel
  * \return  pixd
  *
  * <pre>
@@ -448,11 +451,11 @@ PIX     *pixt1, *pixt2, *pixt3;
 /*!
  * \brief   pixCloseBrickDwa()
  *
- * \param[in]    pixd  [optional]; this can be null, equal to pixs,
- *                     or different from pixs
- * \param[in]    pixs 1 bpp
- * \param[in]    hsize width of brick Sel
- * \param[in]    vsize height of brick Sel
+ * \param[in]    pixd     [optional]; this can be null, equal to pixs,
+ *                        or different from pixs
+ * \param[in]    pixs     1 bpp
+ * \param[in]    hsize    width of brick Sel
+ * \param[in]    vsize    height of brick Sel
  * \return  pixd
  *
  * <pre>
@@ -568,11 +571,11 @@ PIX     *pixt1, *pixt2, *pixt3;
 /*!
  * \brief   pixDilateCompBrickDwa()
  *
- * \param[in]    pixd  [optional]; this can be null, equal to pixs,
- *                     or different from pixs
- * \param[in]    pixs 1 bpp
- * \param[in]    hsize width of brick Sel
- * \param[in]    vsize height of brick Sel
+ * \param[in]    pixd     [optional]; this can be null, equal to pixs,
+ *                        or different from pixs
+ * \param[in]    pixs     1 bpp
+ * \param[in]    hsize    width of brick Sel
+ * \param[in]    vsize    height of brick Sel
  * \return  pixd
  *
  * <pre>
@@ -643,10 +646,10 @@ PIX     *pixt1, *pixt2, *pixt3;
                                &selnamev1, &selnamev2);
 
 #if DEBUG_SEL_LOOKUP
-    fprintf(stderr, "nameh1=%s, nameh2=%s, namev1=%s, namev2=%s\n",
-            selnameh1, selnameh2, selnamev1, selnamev2);
-    fprintf(stderr, "hsize1=%d, hsize2=%d, vsize1=%d, vsize2=%d\n",
-            hsize1, hsize2, vsize1, vsize2);
+    lept_stderr("nameh1=%s, nameh2=%s, namev1=%s, namev2=%s\n",
+                selnameh1, selnameh2, selnamev1, selnamev2);
+    lept_stderr("hsize1=%d, hsize2=%d, vsize1=%d, vsize2=%d\n",
+                hsize1, hsize2, vsize1, vsize2);
 #endif  /* DEBUG_SEL_LOOKUP */
 
     pixt1 = pixAddBorder(pixs, 64, 0);
@@ -701,11 +704,11 @@ PIX     *pixt1, *pixt2, *pixt3;
 /*!
  * \brief   pixErodeCompBrickDwa()
  *
- * \param[in]    pixd  [optional]; this can be null, equal to pixs,
- *                     or different from pixs
- * \param[in]    pixs 1 bpp
- * \param[in]    hsize width of brick Sel
- * \param[in]    vsize height of brick Sel
+ * \param[in]    pixd     [optional]; this can be null, equal to pixs,
+ *                        or different from pixs
+ * \param[in]    pixs     1 bpp
+ * \param[in]    hsize    width of brick Sel
+ * \param[in]    vsize    height of brick Sel
  * \return  pixd
  *
  * <pre>
@@ -830,11 +833,11 @@ PIX     *pixt1, *pixt2, *pixt3;
 /*!
  * \brief   pixOpenCompBrickDwa()
  *
- * \param[in]    pixd  [optional]; this can be null, equal to pixs,
- *                     or different from pixs
- * \param[in]    pixs 1 bpp
- * \param[in]    hsize width of brick Sel
- * \param[in]    vsize height of brick Sel
+ * \param[in]    pixd     [optional]; this can be null, equal to pixs,
+ *                        or different from pixs
+ * \param[in]    pixs     1 bpp
+ * \param[in]    hsize    width of brick Sel
+ * \param[in]    vsize    height of brick Sel
  * \return  pixd
  *
  * <pre>
@@ -996,11 +999,11 @@ PIX     *pixt1, *pixt2, *pixt3;
 /*!
  * \brief   pixCloseCompBrickDwa()
  *
- * \param[in]    pixd  [optional]; this can be null, equal to pixs,
- *                     or different from pixs
- * \param[in]    pixs 1 bpp
- * \param[in]    hsize width of brick Sel
- * \param[in]    vsize height of brick Sel
+ * \param[in]    pixd     [optional]; this can be null, equal to pixs,
+ *                        or different from pixs
+ * \param[in]    pixs     1 bpp
+ * \param[in]    hsize    width of brick Sel
+ * \param[in]    vsize    height of brick Sel
  * \return  pixd
  *
  * <pre>
@@ -1161,11 +1164,11 @@ PIX     *pixt1, *pixt2, *pixt3;
 /*!
  * \brief   pixDilateCompBrickExtendDwa()
  *
- * \param[in]    pixd  [optional]; this can be null, equal to pixs,
- *                     or different from pixs
- * \param[in]    pixs 1 bpp
- * \param[in]    hsize width of brick Sel
- * \param[in]    vsize height of brick Sel
+ * \param[in]    pixd     [optional]; this can be null, equal to pixs,
+ *                        or different from pixs
+ * \param[in]    pixs     1 bpp
+ * \param[in]    hsize    width of brick Sel
+ * \param[in]    vsize    height of brick Sel
  * \return  pixd
  *
  * <pre>
@@ -1294,11 +1297,11 @@ PIX     *pixt1, *pixt2, *pixt3;
 /*!
  * \brief   pixErodeCompBrickExtendDwa()
  *
- * \param[in]    pixd  [optional]; this can be null, equal to pixs,
- *                     or different from pixs
- * \param[in]    pixs 1 bpp
- * \param[in]    hsize width of brick Sel
- * \param[in]    vsize height of brick Sel
+ * \param[in]    pixd     [optional]; this can be null, equal to pixs,
+ *                        or different from pixs
+ * \param[in]    pixs     1 bpp
+ * \param[in]    hsize    width of brick Sel
+ * \param[in]    vsize    height of brick Sel
  * \return  pixd
  *
  * <pre>
@@ -1414,19 +1417,22 @@ PIX     *pixt1, *pixt2, *pixt3;
 /*!
  * \brief   pixOpenCompBrickExtendDwa()
  *
- * \param[in]    pixd  [optional]; this can be null, equal to pixs,
- *                     or different from pixs
- * \param[in]    pixs 1 bpp
- * \param[in]    hsize width of brick Sel
- * \param[in]    vsize height of brick Sel
+ * \param[in]    pixd     [optional]; this can be null, equal to pixs,
+ *                        or different from pixs
+ * \param[in]    pixs     1 bpp
+ * \param[in]    hsize    width of brick Sel
+ * \param[in]    vsize    height of brick Sel
  * \return  pixd
  *
- *      1 There are three cases:
+ * <pre>
+ * Notes:
+ *      1) There are three cases:
  *          a) pixd == null   (result into new pixd
  *          b) pixd == pixs   (in-place; writes result back to pixs
  *          c) pixd != pixs   (puts result into existing pixd
  *      2) There is no need to call this directly:  pixOpenCompBrickDwa(
  *          calls this function if either brick dimension exceeds 63.
+ * </pre>
  */
 PIX *
 pixOpenCompBrickExtendDwa(PIX     *pixd,
@@ -1455,19 +1461,22 @@ PIX     *pixt;
 /*!
  * \brief   pixCloseCompBrickExtendDwa()
  *
- * \param[in]    pixd  [optional]; this can be null, equal to pixs,
- *                     or different from pixs
- * \param[in]    pixs 1 bpp
- * \param[in]    hsize width of brick Sel
- * \param[in]    vsize height of brick Sel
+ * \param[in]    pixd     [optional]; this can be null, equal to pixs,
+ *                        or different from pixs
+ * \param[in]    pixs     1 bpp
+ * \param[in]    hsize    width of brick Sel
+ * \param[in]    vsize    height of brick Sel
  * \return  pixd
  *
- *      1 There are three cases:
+ * <pre>
+ * Notes:
+ *      1) There are three cases:
  *          a) pixd == null   (result into new pixd
  *          b) pixd == pixs   (in-place; writes result back to pixs
  *          c) pixd != pixs   (puts result into existing pixd
  *      2) There is no need to call this directly:  pixCloseCompBrickDwa(
  *          calls this function if either brick dimension exceeds 63.
+ * </pre>
  */
 PIX *
 pixCloseCompBrickExtendDwa(PIX     *pixd,
@@ -1518,10 +1527,10 @@ PIX     *pixt1, *pixt2, *pixt3;
 /*!
  * \brief   getExtendedCompositeParameters()
  *
- * \param[in]    size of linear Sel
- * \param[out]   pn number of 63 wide convolutions
- * \param[out]   pextra size of extra Sel
- * \param[out]   pactualsize [optional] actual size used in operation
+ * \param[in]    size          of linear Sel
+ * \param[out]   pn            number of 63 wide convolutions
+ * \param[out]   pextra        size of extra Sel
+ * \param[out]   pactualsize   [optional] actual size used in operation
  * \return  0 if OK, 1 on error
  *
  * <pre>

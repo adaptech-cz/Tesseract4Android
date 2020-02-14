@@ -1,10 +1,9 @@
-AM_CFLAGS = $(DEBUG_FLAGS)
-AM_CPPFLAGS = $(ZLIB_CFLAGS) $(LIBPNG_CFLAGS) $(JPEG_CFLAGS) $(LIBTIFF_CFLAGS) $(LIBWEBP_CFLAGS) $(LIBJP2K_CFLAGS)
+AM_CPPFLAGS = $(ZLIB_CFLAGS) $(LIBPNG_CFLAGS) $(JPEG_CFLAGS) $(LIBTIFF_CFLAGS) $(LIBWEBP_CFLAGS) $(LIBWEBPMUX_CFLAGS) $(LIBJP2K_CFLAGS)
 
 lib_LTLIBRARIES = liblept.la
-liblept_la_LIBADD = $(LIBPNG_LIBS) $(JPEG_LIBS) $(GIFLIB_LIBS) $(LIBTIFF_LIBS) $(LIBWEBP_LIBS) $(LIBJP2K_LIBS) $(GDI_LIBS) $(LIBM) $(ZLIB_LIBS)
+liblept_la_LIBADD = $(LIBPNG_LIBS) $(JPEG_LIBS) $(GIFLIB_LIBS) $(LIBTIFF_LIBS) $(LIBWEBP_LIBS) $(LIBWEBPMUX_LIBS) $(LIBJP2K_LIBS) $(GDI_LIBS) $(LIBM) $(ZLIB_LIBS)
 
-liblept_la_LDFLAGS = -no-undefined -version-info 5:3:0
+liblept_la_LDFLAGS = -no-undefined -version-info 5:4:0
 
 liblept_la_SOURCES = adaptmap.c affine.c                        \
  affinecompose.c arrayaccess.c                                  \
@@ -16,8 +15,8 @@ liblept_la_SOURCES = adaptmap.c affine.c                        \
  bootnumgen3.c bootnumgen4.c                                    \
  boxbasic.c boxfunc1.c boxfunc2.c boxfunc3.c                    \
  boxfunc4.c boxfunc5.c bytearray.c                              \
- ccbord.c ccthin.c classapp.c                                   \
- colorcontent.c coloring.c                                      \
+ ccbord.c ccthin.c checkerboard.c                               \
+ classapp.c colorcontent.c coloring.c                           \
  colormap.c colormorph.c	                                \
  colorquant1.c colorquant2.c                                    \
  colorseg.c colorspace.c                                        \
@@ -39,7 +38,7 @@ liblept_la_SOURCES = adaptmap.c affine.c                        \
  morph.c morphapp.c morphdwa.c morphseq.c                       \
  numabasic.c numafunc1.c numafunc2.c                            \
  pageseg.c paintcmap.c                                          \
- parseprotos.c partition.c                                      \
+ parseprotos.c partify.c partition.c                            \
  pdfio1.c pdfio1stub.c pdfio2.c pdfio2stub.c                    \
  pix1.c pix2.c pix3.c pix4.c pix5.c                             \
  pixabasic.c pixacc.c pixafunc1.c pixafunc2.c                   \
@@ -62,7 +61,7 @@ liblept_la_SOURCES = adaptmap.c affine.c                        \
  strokes.c sudoku.c textops.c                                   \
  tiffio.c tiffiostub.c 		                                \
  utils1.c utils2.c warper.c watershed.c                         \
- webpio.c webpiostub.c		                                \
+ webpio.c webpiostub.c webpanimio.c webpanimiostub.c            \
  writefile.c zlibmem.c zlibmemstub.c
 
 pkginclude_HEADERS = allheaders.h alltypes.h                    \
@@ -87,3 +86,17 @@ $(top_builddir)/prog/xtractprotos$(EXEEXT): liblept.la
 
 allheaders: $(top_builddir)/prog/xtractprotos$(EXEEXT) $(liblept_la_SOURCES)
 	cd $(srcdir) && $(abs_top_builddir)/prog/xtractprotos$(EXEEXT) -prestring=LEPT_DLL -protos=inline $(liblept_la_SOURCES)
+
+install-data-hook:
+	cd $(DESTDIR)$(libdir);\
+	for ext in a la so sl dylib; do\
+		if test -f liblept.$$ext; then\
+			$(LN_S) liblept.$$ext libleptonica.$$ext;\
+		fi;\
+	done
+
+uninstall-hook:
+	cd $(DESTDIR)$(libdir);\
+	for ext in a la so sl dylib; do\
+		rm -f libleptonica.$$ext;\
+	done

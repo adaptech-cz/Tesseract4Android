@@ -31,6 +31,10 @@
  *    region comparison, transforms and display.
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include "allheaders.h"
 
 static PIX *DisplayBoxa(BOXA  *boxa);
@@ -39,13 +43,12 @@ int main(int    argc,
          char **argv)
 {
 l_uint8      *data1, *data2;
-l_int32       i, same;
+l_int32       same;
 size_t        size1, size2;
 l_float32     diffarea, diffxor;
 BOX          *box;
 BOXA         *boxa1, *boxa2, *boxa3;
 PIX          *pix1;
-PIXA         *pixa1, *pixa2;
 PTA          *pta;
 L_REGPARAMS  *rp;
 

@@ -31,6 +31,10 @@
  *   color quantization method.
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include "string.h"
 #include "allheaders.h"
 
@@ -44,13 +48,18 @@ PIX          *pix1, *pix2, *pix3;
 PIXA         *pixadb;
 L_REGPARAMS  *rp;
 
+#if !defined(HAVE_LIBPNG)
+    L_ERROR("This test requires libpng to run.\n", "colorcontent_reg");
+    exit(77);
+#endif
+
     if (regTestSetup(argc, argv, &rp))
         return 1;
 
         /* Find the most populated colors */
     pix1 = pixRead("fish24.jpg");
     pixGetMostPopulatedColors(pix1, 2, 3, 10, &colors, NULL);
-    pix2 = pixDisplayColorArray(colors, 10, 190, 5, 6);
+    pix2 = pixDisplayColorArray(colors, 10, 200, 5, 6);
     pixDisplayWithTitle(pix2, 0, 0, NULL, rp->display);
     regTestWritePixAndCheck(rp, pix2, IFF_PNG);  /* 0 */
     lept_free(colors);
@@ -71,7 +80,7 @@ L_REGPARAMS  *rp;
         /* Do a simple color quantization with sigbits = 3 */
     pix1 = pixRead("wyom.jpg");
     pixNumColors(pix1, 1, &ncolors);  /* >255, so should give 0 */
-    regTestCompareValues(rp, ncolors, 0, 0.0);  /* 4 */
+    regTestCompareValues(rp, ncolors, 132165, 0.0);  /* 4 */
     pix2 = pixSimpleColorQuantize(pix1, 3, 3, 20);
     pixDisplayWithTitle(pix2, 1000, 0, NULL, rp->display);
     regTestWritePixAndCheck(rp, pix2, IFF_PNG);  /* 5 */

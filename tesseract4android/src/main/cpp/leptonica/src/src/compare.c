@@ -102,6 +102,10 @@
  * </pre>
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include <string.h>
 #include <math.h>
 #include "allheaders.h"
@@ -114,7 +118,6 @@ static l_ok findHistoGridDimensions(l_int32 n, l_int32 w, l_int32 h,
 static l_ok pixCompareTilesByHisto(PIX *pix1, PIX *pix2, l_int32 maxgray,
                                    l_int32 factor, l_int32 n,
                                    l_float32 *pscore, PIXA *pixadebug);
-
 
 /*------------------------------------------------------------------*
  *                        Test for pix equality                     *
@@ -709,6 +712,7 @@ PIXCMAP  *cmap;
  *          need to be the same size.
  *      (2) If using L_COMPARE_SUBTRACT, pix2 is subtracted from pix1.
  *      (3) The total number of pixels is determined by pix1.
+ *      (4) On error, the returned fraction is 1.0.
  * </pre>
  */
 l_ok
@@ -726,7 +730,7 @@ PIX      *pixt;
     if (ppixdiff) *ppixdiff = NULL;
     if (!pfract)
         return ERROR_INT("&pfract not defined", procName, 1);
-    *pfract = 0.0;
+    *pfract = 1.0;  /* initialize to max difference */
     if (!pix1 || pixGetDepth(pix1) != 1)
         return ERROR_INT("pix1 not defined or not 1 bpp", procName, 1);
     if (!pix2 || pixGetDepth(pix2) != 1)
@@ -753,8 +757,8 @@ PIX      *pixt;
 /*!
  * \brief   pixCompareGrayOrRGB()
  *
- * \param[in]    pix1      8 or 16 bpp gray, 32 bpp rgb, or colormapped
- * \param[in]    pix2      8 or 16 bpp gray, 32 bpp rgb, or colormapped
+ * \param[in]    pix1      2,4,8,16 bpp gray, 32 bpp rgb, or colormapped
+ * \param[in]    pix2      2,4,8,16 bpp gray, 32 bpp rgb, or colormapped
  * \param[in]    comptype  L_COMPARE_SUBTRACT, L_COMPARE_ABS_DIFF
  * \param[in]    plottype  gplot plot output type, or 0 for no plot
  * \param[out]   psame     [optional] 1 if pixel values are identical
@@ -785,6 +789,10 @@ PIX      *pixt;
  *      (9) The RMS difference is optionally returned in the
  *          parameter 'rmsdiff'.  For RGB, we return the average of
  *          the RMS differences for each of the components.
+ *     (10) Because pixel values are compared, pix1 and pix2 can be equal when:
+ *          * they are both gray with different depth
+ *          * one is colormapped and the other is not
+ *          * they are both colormapped and have different size colormaps
  * </pre>
  */
 l_ok
@@ -797,20 +805,19 @@ pixCompareGrayOrRGB(PIX        *pix1,
                     l_float32  *prmsdiff,
                     PIX       **ppixdiff)
 {
-l_int32  retval, d;
-PIX     *pixt1, *pixt2;
+l_int32  retval, d1, d2;
+PIX     *pixt1, *pixt2, *pixs1, *pixs2;
 
     PROCNAME("pixCompareGrayOrRGB");
 
+    if (psame) *psame = 0;
+    if (pdiff) *pdiff = 255.0;
+    if (prmsdiff) *prmsdiff = 255.0;
     if (ppixdiff) *ppixdiff = NULL;
-    if (!pix1)
-        return ERROR_INT("pix1 not defined", procName, 1);
-    if (!pix2)
-        return ERROR_INT("pix2 not defined", procName, 1);
-    if (pixGetDepth(pix1) < 8 && !pixGetColormap(pix1))
-        return ERROR_INT("pix1 depth < 8 bpp and not cmapped", procName, 1);
-    if (pixGetDepth(pix2) < 8 && !pixGetColormap(pix2))
-        return ERROR_INT("pix2 depth < 8 bpp and not cmapped", procName, 1);
+    if (!pix1 || pixGetDepth(pix1) == 1)
+        return ERROR_INT("pix1 not defined or 1 bpp", procName, 1);
+    if (!pix2 || pixGetDepth(pix2) == 1)
+        return ERROR_INT("pix2 not defined or 1 bpp", procName, 1);
     if (comptype != L_COMPARE_SUBTRACT && comptype != L_COMPARE_ABS_DIFF)
         return ERROR_INT("invalid comptype", procName, 1);
     if (plottype < 0 || plottype >= NUM_GPLOT_OUTPUTS)
@@ -818,21 +825,34 @@ PIX     *pixt1, *pixt2;
 
     pixt1 = pixRemoveColormap(pix1, REMOVE_CMAP_BASED_ON_SRC);
     pixt2 = pixRemoveColormap(pix2, REMOVE_CMAP_BASED_ON_SRC);
-    d = pixGetDepth(pixt1);
-    if (d != pixGetDepth(pixt2)) {
-        pixDestroy(&pixt1);
-        pixDestroy(&pixt2);
+    d1 = pixGetDepth(pixt1);
+    d2 = pixGetDepth(pixt2);
+    if (d1 < 8)
+        pixs1 = pixConvertTo8(pixt1, FALSE);
+    else
+        pixs1 = pixClone(pixt1);
+    if (d2 < 8)
+        pixs2 = pixConvertTo8(pixt2, FALSE);
+    else
+        pixs2 = pixClone(pixt2);
+    pixDestroy(&pixt1);
+    pixDestroy(&pixt2);
+    d1 = pixGetDepth(pixs1);
+    d2 = pixGetDepth(pixs2);
+    if (d1 != d2) {
+        pixDestroy(&pixs1);
+        pixDestroy(&pixs2);
         return ERROR_INT("intrinsic depths are not equal", procName, 1);
     }
 
-    if (d == 8 || d == 16)
-        retval = pixCompareGray(pixt1, pixt2, comptype, plottype, psame,
+    if (d1 == 8 || d1 == 16)
+        retval = pixCompareGray(pixs1, pixs2, comptype, plottype, psame,
                                 pdiff, prmsdiff, ppixdiff);
-    else  /* d == 32 */
-        retval = pixCompareRGB(pixt1, pixt2, comptype, plottype, psame,
+    else  /* d1 == 32 */
+        retval = pixCompareRGB(pixs1, pixs2, comptype, plottype, psame,
                                pdiff, prmsdiff, ppixdiff);
-    pixDestroy(&pixt1);
-    pixDestroy(&pixt2);
+    pixDestroy(&pixs1);
+    pixDestroy(&pixs2);
     return retval;
 }
 
@@ -878,8 +898,8 @@ PIX            *pixt;
     PROCNAME("pixCompareGray");
 
     if (psame) *psame = 0;
-    if (pdiff) *pdiff = 0.0;
-    if (prmsdiff) *prmsdiff = 0.0;
+    if (pdiff) *pdiff = 255.0;
+    if (prmsdiff) *prmsdiff = 255.0;
     if (ppixdiff) *ppixdiff = NULL;
     if (!pix1)
         return ERROR_INT("pix1 not defined", procName, 1);
@@ -1426,11 +1446,11 @@ NUMA       *nah, *nan, *nac;
         gplotSimple1(nac, GPLOT_PNG, "/tmp/lept/comp/histo",
                      "Difference histogram");
         l_fileDisplay("/tmp/lept/comp/histo.png", 500, 0, 1.0);
-        fprintf(stderr, "\nNonzero values in normalized histogram:");
-        numaWriteStream(stderr, nac);
+        lept_stderr("\nNonzero values in normalized histogram:");
+        numaWriteStderr(nac);
         numaDestroy(&nac);
-        fprintf(stderr, " Mindiff      fractdiff      avediff\n");
-        fprintf(stderr, " -----------------------------------\n");
+        lept_stderr(" Mindiff      fractdiff      avediff\n");
+        lept_stderr(" -----------------------------------\n");
         for (diff = 1; diff < L_MIN(2 * mindiff, last); diff++) {
             fract = 0.0;
             ave = 0.0;
@@ -1440,10 +1460,10 @@ NUMA       *nah, *nan, *nac;
             }
             ave = (fract == 0.0) ? 0.0 : ave / fract;
             ave -= diff;
-            fprintf(stderr, "%5d         %7.4f        %7.4f\n",
-                    diff, fract, ave);
+            lept_stderr("%5d         %7.4f        %7.4f\n",
+                        diff, fract, ave);
         }
-        fprintf(stderr, " -----------------------------------\n");
+        lept_stderr(" -----------------------------------\n");
     }
 
     fract = 0.0;
@@ -1962,9 +1982,9 @@ PIX        *pix;
         numaAddNumber(naw, w);
         numaAddNumber(nah, h);
         if (naa)
-            fprintf(stderr, "Image %s is photo\n", text);
+            lept_stderr("Image %s is photo\n", text);
         else
-            fprintf(stderr, "Image %s is NOT photo\n", text);
+            lept_stderr("Image %s is NOT photo\n", text);
         pixDestroy(&pix);
     }
 
@@ -2005,10 +2025,10 @@ PIX        *pix;
                                 &score, NULL);
             scores[nim * i + j] = score;
             scores[nim * j + i] = score;  /* the score array is symmetric */
-/*            fprintf(stderr, "score = %5.3f\n", score); */
+/*            lept_stderr("score = %5.3f\n", score); */
             if (score > simthresh) {
                 numaSetValue(nai, j, classid);
-                fprintf(stderr,
+                lept_stderr(
                         "Setting %d similar to %d, in class %d; score %5.3f\n",
                         j, i, classid, score);
             }
@@ -2039,7 +2059,7 @@ PIX        *pix;
         }
         fact = L_MAX(2, 1000 / nim);
         pix3 = pixExpandReplicate(pix2, fact);
-        fprintf(stderr, "Writing to /tmp/lept/comp/scorearray.png\n");
+        lept_stderr("Writing to /tmp/lept/comp/scorearray.png\n");
         lept_mkdir("lept/comp");
         pixWrite("/tmp/lept/comp/scorearray.png", pix3, IFF_PNG);
         pixDestroy(&pix2);
@@ -2329,7 +2349,7 @@ PIXA   *pixa;
     if (pixa) {
         snprintf(buf, sizeof(buf), "/tmp/lept/comp/tiledhistos.%d.pdf",
                  debugindex);
-        fprintf(stderr, "Writing to %s\n", buf);
+        lept_stderr("Writing to %s\n", buf);
         pixaConvertToPdf(pixa, 300, 1.0, L_FLATE_ENCODE, 0, NULL, buf);
         pixaDestroy(&pixa);
     }
@@ -2658,18 +2678,18 @@ l_float32  ratio;
             ny--;
             nx = max / ny;
             if (debug)
-                fprintf(stderr, "nx = %d, ny = %d, ratio w/h = %4.2f\n",
-                        nx, ny, ratio);
+                lept_stderr("nx = %d, ny = %d, ratio w/h = %4.2f\n",
+                            nx, ny, ratio);
         } else if (ratio < 0.5) {  /* reduce nx */
             nx--;
             ny = max / nx;
             if (debug)
-                fprintf(stderr, "nx = %d, ny = %d, ratio w/h = %4.2f\n",
-                        nx, ny, ratio);
+                lept_stderr("nx = %d, ny = %d, ratio w/h = %4.2f\n",
+                            nx, ny, ratio);
         } else {  /* we're ok */
             if (debug)
-                fprintf(stderr, "nx = %d, ny = %d, ratio w/h = %4.2f\n",
-                        nx, ny, ratio);
+                lept_stderr("nx = %d, ny = %d, ratio w/h = %4.2f\n",
+                            nx, ny, ratio);
             break;
         }
         ratio = (l_float32)(ny * w) / (l_float32)(nx * h);
@@ -2795,7 +2815,7 @@ NUMA      *na1, *na2, *nadist, *nascore;
             pixaAddPix(pixadebug, pix2, L_INSERT);
             pixDestroy(&pix1);
         }
-        fprintf(stderr, "Writing to /tmp/lept/comptile/comparegray.pdf\n");
+        lept_stderr("Writing to /tmp/lept/comptile/comparegray.pdf\n");
         pixaConvertToPdf(pixadebug, 300, 1.0, L_FLATE_ENCODE, 0, NULL,
                          "/tmp/lept/comptile/comparegray.pdf");
         numaWriteDebug("/tmp/lept/comptile/scores.na", nascore);
@@ -3430,8 +3450,8 @@ PIXA      *pixa1, *pixa2, *pixadb;
         pixBestCorrelation(pixt1, pixt2, area1, area2, etransx, etransy,
                            maxshift, stab, &delx, &dely, &score, dbint);
         if (debugflag) {
-            fprintf(stderr, "Level %d: delx = %d, dely = %d, score = %7.4f\n",
-                    level, delx, dely, score);
+            lept_stderr("Level %d: delx = %d, dely = %d, score = %7.4f\n",
+                        level, delx, dely, score);
             pixRasteropIP(pixt2, delx, dely, L_BRING_IN_WHITE);
             pixt3 = pixDisplayDiffBinary(pixt1, pixt2);
             pixt4 = pixExpandReplicate(pixt3, 8 / (1 << (3 - level)));
@@ -3555,8 +3575,8 @@ PIX       *pix3, *pix4;
             if (debugflag > 0) {
                 fpixSetPixel(fpix, maxshift + shiftx, maxshift + shifty,
                              1000.0 * score);
-/*                fprintf(stderr, "(sx, sy) = (%d, %d): score = %6.4f\n",
-                        shiftx, shifty, score); */
+/*                lept_stderr("(sx, sy) = (%d, %d): score = %6.4f\n",
+                              shiftx, shifty, score); */
             }
             if (score > maxscore) {
                 maxscore = score;

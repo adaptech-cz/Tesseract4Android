@@ -33,6 +33,10 @@
  *        direction = 1 for cw; -1 for ccw
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include "allheaders.h"
 
 #define  NTIMES   10
@@ -41,7 +45,7 @@
 int main(int    argc,
          char **argv)
 {
-l_int32      i, w, h, dir;
+l_int32      dir;
 PIX         *pixs, *pixd, *pixt;
 l_float32    pops;
 char        *filein, *fileout;

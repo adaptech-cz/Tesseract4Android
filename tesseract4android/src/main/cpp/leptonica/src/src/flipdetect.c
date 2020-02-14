@@ -167,8 +167,45 @@
  *
  *  A high-level interface, pixOrientCorrect() combines the detection
  *  of the orientation with the rotation decision and the rotation itself.
+ *
+ *  Finally, use can be made of programs such as exiftool and convert to
+ *  read exif camera orientation data in jpeg files and conditionally rotate.
+ *  Here is an example shell script, made by Dan9er:
+ *  ==================================================================
+ *  #!/bin/sh
+ *  #   orientByExif.sh
+ *  #   Dependencies: exiftool (exiflib) and convert (ImageMagick)
+ *  #   Note: if there is no exif orientation data in the jpeg file,
+ *  #         this simply copies the input file.
+ *  #
+ *  if [[ -z $(command -v exiftool) || -z $(command -v convert) ]]; then
+ *      echo "You need to install dependencies; e.g.:"
+ *      echo "   sudo apt install libimage-exiftool-perl"
+ *      echo "   sudo apt install imagemagick"
+ *      exit 1
+ *  fi
+ *  if [[ $# != 2 ]]; then
+ *      echo "Syntax: orientByExif infile outfile"
+ *      exit 2
+ *  fi
+ *  if [[ ${1: -4} != ".jpg" ]]; then
+ *      echo "File is not a jpeg"
+ *      exit 3
+ *  fi
+ *  if [[ $(exiftool -s3 -n -Orientation "$1") = 1 ]]; then
+ *      echo "Image is already upright"
+ *      exit 0
+ *  fi
+ *  convert "$1" -auto-orient "$2"
+ *  echo "Done"
+ *  exit 0
+ *  ==================================================================
  * </pre>
  */
+
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
 
 #include <math.h>
 #include "allheaders.h"
@@ -199,13 +236,13 @@ static const char *textsel4 = "xxxxxx"
                               " oo  x";
 
     /* Parameters for determining orientation */
-static const l_int32  DEFAULT_MIN_UP_DOWN_COUNT = 70;
-static const l_float32  DEFAULT_MIN_UP_DOWN_CONF = 8.0;
-static const l_float32  DEFAULT_MIN_UP_DOWN_RATIO = 2.5;
+static const l_int32  DefaultMinUpDownCount = 70;
+static const l_float32  DefaultMinUpDownConf = 8.0;
+static const l_float32  DefaultMinUpDownRatio = 2.5;
 
     /* Parameters for determining mirror flip */
-static const l_int32  DEFAULT_MIN_MIRROR_FLIP_COUNT = 100;
-static const l_float32  DEFAULT_MIN_MIRROR_FLIP_CONF = 5.0;
+static const l_int32  DefaultMinMirrorFlipCount = 100;
+static const l_float32  DefaultMinMirrorFlipConf = 5.0;
 
     /* Static debug function */
 static void pixDebugFlipDetect(const char *filename, PIX *pixs,
@@ -361,7 +398,13 @@ PIX       *pix1;
  *      (6) One should probably not interpret the direction unless
  *          there are a sufficient number of counts for both orientations,
  *          in which case neither upconf nor leftconf will be 0.0.
- *      (7) Uses rasterop implementation of HMT.
+ *      (7) This algorithm will fail on some images, such as tables,
+ *          where most of the characters are numbers and appear as
+ *          uppercase, but there are some repeated words that give a
+ *          biased signal.  It may be advisable to run a table detector
+ *          first (e.g., pixDecideIfTable()), and not run the orientation
+ *          detector if it is a table.
+ *      (8) Uses rasterop implementation of HMT.
  * </pre>
  */
 l_ok
@@ -380,7 +423,7 @@ PIX  *pix1;
     if (!pupconf && !pleftconf)
         return ERROR_INT("nothing to do", procName, 1);
     if (mincount == 0)
-        mincount = DEFAULT_MIN_UP_DOWN_COUNT;
+        mincount = DefaultMinUpDownCount;
 
     if (pupconf)
         pixUpDownDetect(pixs, pupconf, mincount, debug);
@@ -444,9 +487,9 @@ l_float32  absupconf, absleftconf;
     }
 
     if (minupconf == 0.0)
-        minupconf = DEFAULT_MIN_UP_DOWN_CONF;
+        minupconf = DefaultMinUpDownConf;
     if (minratio == 0.0)
-        minratio = DEFAULT_MIN_UP_DOWN_RATIO;
+        minratio = DefaultMinUpDownRatio;
     absupconf = L_ABS(upconf);
     absleftconf = L_ABS(leftconf);
 
@@ -462,17 +505,17 @@ l_float32  absupconf, absleftconf;
         *porient = L_TEXT_ORIENT_RIGHT;
 
     if (debug) {
-        fprintf(stderr, "upconf = %7.3f, leftconf = %7.3f\n", upconf, leftconf);
+        lept_stderr("upconf = %7.3f, leftconf = %7.3f\n", upconf, leftconf);
         if (*porient == L_TEXT_ORIENT_UNKNOWN)
-            fprintf(stderr, "Confidence is low; no determination is made\n");
+            lept_stderr("Confidence is low; no determination is made\n");
         else if (*porient == L_TEXT_ORIENT_UP)
-            fprintf(stderr, "Text is rightside-up\n");
+            lept_stderr("Text is rightside-up\n");
         else if (*porient == L_TEXT_ORIENT_LEFT)
-            fprintf(stderr, "Text is rotated 90 deg ccw\n");
+            lept_stderr("Text is rotated 90 deg ccw\n");
         else if (*porient == L_TEXT_ORIENT_DOWN)
-            fprintf(stderr, "Text is upside-down\n");
+            lept_stderr("Text is upside-down\n");
         else   /* *porient == L_TEXT_ORIENT_RIGHT */
-            fprintf(stderr, "Text is rotated 90 deg cw\n");
+            lept_stderr("Text is rotated 90 deg cw\n");
     }
 
     return 0;
@@ -568,7 +611,7 @@ SEL       *sel1, *sel2, *sel3, *sel4;
     if (!pixs || pixGetDepth(pixs) != 1)
         return ERROR_INT("pixs not defined or not 1 bpp", procName, 1);
     if (mincount == 0)
-        mincount = DEFAULT_MIN_UP_DOWN_COUNT;
+        mincount = DefaultMinUpDownCount;
     if (npixels < 0)
         npixels = 0;
 
@@ -648,12 +691,12 @@ SEL       *sel1, *sel2, *sel3, *sel4;
 
     if (debug) {
         if (pixm) pixWriteDebug("/tmp/lept/orient/pixm1.png", pixm, IFF_PNG);
-        fprintf(stderr, "nup = %7.3f, ndown = %7.3f, conf = %7.3f\n",
+        lept_stderr("nup = %7.3f, ndown = %7.3f, conf = %7.3f\n",
                 nup, ndown, *pconf);
-        if (*pconf > DEFAULT_MIN_UP_DOWN_CONF)
-            fprintf(stderr, "Text is rightside-up\n");
-        if (*pconf < -DEFAULT_MIN_UP_DOWN_CONF)
-            fprintf(stderr, "Text is upside-down\n");
+        if (*pconf > DefaultMinUpDownConf)
+            lept_stderr("Text is rightside-up\n");
+        if (*pconf < -DefaultMinUpDownConf)
+            lept_stderr("Text is upside-down\n");
     }
 
     pixDestroy(&pix0);
@@ -707,7 +750,7 @@ PIX  *pix1;
     if (!pupconf && !pleftconf)
         return ERROR_INT("nothing to do", procName, 1);
     if (mincount == 0)
-        mincount = DEFAULT_MIN_UP_DOWN_COUNT;
+        mincount = DefaultMinUpDownCount;
 
     if (pupconf)
         pixUpDownDetectDwa(pixs, pupconf, mincount, debug);
@@ -792,7 +835,7 @@ PIX       *pixt, *pix0, *pix1, *pix2, *pix3, *pixm;
     if (!pixs || pixGetDepth(pixs) != 1)
         return ERROR_INT("pixs not defined or not 1 bpp", procName, 1);
     if (mincount == 0)
-        mincount = DEFAULT_MIN_UP_DOWN_COUNT;
+        mincount = DefaultMinUpDownCount;
     if (npixels < 0)
         npixels = 0;
 
@@ -869,12 +912,12 @@ PIX       *pixt, *pix0, *pix1, *pix2, *pix3, *pixm;
             lept_mkdir("lept/orient");
             pixWriteDebug("/tmp/lept/orient/pixm2.png", pixm, IFF_PNG);
         }
-        fprintf(stderr, "nup = %7.3f, ndown = %7.3f, conf = %7.3f\n",
+        lept_stderr("nup = %7.3f, ndown = %7.3f, conf = %7.3f\n",
                 nup, ndown, *pconf);
-        if (*pconf > DEFAULT_MIN_UP_DOWN_CONF)
-            fprintf(stderr, "Text is rightside-up\n");
-        if (*pconf < -DEFAULT_MIN_UP_DOWN_CONF)
-            fprintf(stderr, "Text is upside-down\n");
+        if (*pconf > DefaultMinUpDownConf)
+            lept_stderr("Text is rightside-up\n");
+        if (*pconf < -DefaultMinUpDownConf)
+            lept_stderr("Text is upside-down\n");
     }
 
     pixDestroy(&pix0);
@@ -946,7 +989,7 @@ SEL       *sel1, *sel2;
     if (!pixs || pixGetDepth(pixs) != 1)
         return ERROR_INT("pixs not defined or not 1 bpp", procName, 1);
     if (mincount == 0)
-        mincount = DEFAULT_MIN_MIRROR_FLIP_COUNT;
+        mincount = DefaultMinMirrorFlipCount;
 
     if (debug) {
         lept_mkdir("lept/orient");
@@ -991,11 +1034,11 @@ SEL       *sel1, *sel2;
         *pconf = 2. * ((nright - nleft) / sqrt(nright + nleft));
 
     if (debug) {
-        fprintf(stderr, "nright = %f, nleft = %f\n", nright, nleft);
-        if (*pconf > DEFAULT_MIN_MIRROR_FLIP_CONF)
-            fprintf(stderr, "Text is not mirror reversed\n");
-        if (*pconf < -DEFAULT_MIN_MIRROR_FLIP_CONF)
-            fprintf(stderr, "Text is mirror reversed\n");
+        lept_stderr("nright = %f, nleft = %f\n", nright, nleft);
+        if (*pconf > DefaultMinMirrorFlipConf)
+            lept_stderr("Text is not mirror reversed\n");
+        if (*pconf < -DefaultMinMirrorFlipConf)
+            lept_stderr("Text is mirror reversed\n");
     }
 
     return 0;
@@ -1042,7 +1085,7 @@ PIX       *pix0, *pix1, *pix2, *pix3;
     if (!pixs || pixGetDepth(pixs) != 1)
         return ERROR_INT("pixs not defined or not 1 bpp", procName, 1);
     if (mincount == 0)
-        mincount = DEFAULT_MIN_MIRROR_FLIP_COUNT;
+        mincount = DefaultMinMirrorFlipCount;
 
         /* Fill x-height characters but not space between them, sort of. */
     pix3 = pixMorphSequenceDwa(pixs, "d1.30", 0);
@@ -1079,11 +1122,11 @@ PIX       *pix0, *pix1, *pix2, *pix3;
         *pconf = 2. * ((nright - nleft) / sqrt(nright + nleft));
 
     if (debug) {
-        fprintf(stderr, "nright = %f, nleft = %f\n", nright, nleft);
-        if (*pconf > DEFAULT_MIN_MIRROR_FLIP_CONF)
-            fprintf(stderr, "Text is not mirror reversed\n");
-        if (*pconf < -DEFAULT_MIN_MIRROR_FLIP_CONF)
-            fprintf(stderr, "Text is mirror reversed\n");
+        lept_stderr("nright = %f, nleft = %f\n", nright, nleft);
+        if (*pconf > DefaultMinMirrorFlipConf)
+            lept_stderr("Text is not mirror reversed\n");
+        if (*pconf < -DefaultMinMirrorFlipConf)
+            lept_stderr("Text is mirror reversed\n");
     }
 
     return 0;

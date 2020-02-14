@@ -30,6 +30,10 @@
  *     This tests quadtree statistical functions
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include "allheaders.h"
 
 int main(int    argc,
@@ -44,6 +48,11 @@ PIX          *pixs, *pixg, *pix1, *pix2, *pix3, *pix4, *pix5;
 FPIXA        *fpixam, *fpixav, *fpixarv;
 BOXAA        *baa;
 L_REGPARAMS  *rp;
+
+#if !defined(HAVE_LIBPNG)
+    L_ERROR("This test requires libpng to run.\n", "quadtree_reg");
+    exit(77);
+#endif
 
     if (regTestSetup(argc, argv, &rp))
         return 1;
