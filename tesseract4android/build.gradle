@@ -14,8 +14,12 @@ android {
 			cmake {
 				// Specifies which native libraries or executables to build and package.
 				// TODO: Include eyes-two in some build flavor of the library?
-				// targets "jpeg", "png", "leptonica", "tesseract"
-				cppFlags ""
+				//targets "jpeg", "png", "leptonica", "tesseract"
+
+				// We can compile with OpenMP to use parallel processing in Tesseract,
+				// but it actually results in worse processing time and cpu usage.
+				//cppFlags "-fopenmp"
+				//cFlags "-fopenmp"
 			}
 		}
 		ndk {
