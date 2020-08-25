@@ -1,9 +1,12 @@
 /**
  * Maven Publish Helper
  *
+ * Requires Android Gradle plugin 3.6.0 or higher (available since Android Studio 3.6).
+ * See also: https://developer.android.com/studio/build/maven-publish-plugin
+ *
  * @Author Robert Pösel
- * @Version 1.4.2
- * @Date 28.11.2019
+ * @Version 1.5
+ * @Date 3.3.2020
  */
 
 apply plugin: 'maven-publish'
@@ -13,42 +16,40 @@ task androidJavadocs(type: Javadoc) {
 	classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
 	android.libraryVariants.all { variant ->
 		if (variant.name == 'release') {
-			if (variant.hasProperty('javaCompileProvider')) {
-				// Android 3.3.0+
-				owner.classpath += variant.javaCompileProvider.get().classpath
-			} else {
-				owner.classpath += variant.javaCompile.classpath
-			}
+			owner.classpath += variant.javaCompileProvider.get().classpath
 		}
 	}
 	exclude '**/R.html', '**/R.*.html', '**/index.html'
 }
 
 task androidJavadocsJar(type: Jar, dependsOn: androidJavadocs) {
-	classifier = 'javadoc'
+	archiveClassifier.set('javadoc')
 	from androidJavadocs.destinationDir
 }
 
 task androidSourcesJar(type: Jar) {
-	classifier = 'sources'
+	archiveClassifier.set('sources')
 	from android.sourceSets.main.java.srcDirs
 }
 
-project.artifacts {
-	archives androidJavadocsJar, androidSourcesJar
-}
-
-project.afterEvaluate {
+// Because the components are created only during the afterEvaluate phase, you must
+// configure your publications using the afterEvaluate() lifecycle method.
+afterEvaluate {
 	publishing {
 		publications {
-			maven(MavenPublication) {
+			// Creates a Maven publication called "release".
+			release(MavenPublication) {
+				// Applies the component for the release build variant.
+				from components.release
+
+				// Adds javadocs and sources as separate jars.
+				artifact androidJavadocsJar
+				artifact androidSourcesJar
+
+				// You can customize attributes of the publication here or in module's build.gradle file.
 				groupId 'cz.adaptech.android'
 				artifactId 'tesseract4android'
 				version = android.defaultConfig.versionName
-
-				artifact bundleReleaseAar
-				artifact androidJavadocsJar
-				artifact androidSourcesJar
 
 				pom.withXml {
 					final root = asNode()
@@ -56,40 +57,6 @@ project.afterEvaluate {
 					// Bintray works without them. Maven Central requires in addition few more attributes.
 					root.appendNode('name', 'tesseract4android')
 					root.appendNode('scm').appendNode('url', 'https://github.com/adaptech-cz/Tesseract4Android')
-
-					final dependenciesNode = root.appendNode('dependencies')
-					ext.addDependency = { dep, String scope ->
-						if (dep.group == null || dep.version == null || dep.name == null || dep.name == "unspecified")
-							return // ignore invalid dependencies
-
-						final dependencyNode = dependenciesNode.appendNode('dependency')
-						dependencyNode.appendNode('groupId', dep.group)
-						dependencyNode.appendNode('artifactId', dep.name)
-						dependencyNode.appendNode('version', dep.version)
-						dependencyNode.appendNode('scope', scope)
-
-						if (!dep.transitive) {
-							// If this dependency is not transitive, we should force exclude all its dependencies from the POM
-							final exclusionNode = dependencyNode.appendNode('exclusions').appendNode('exclusion')
-							exclusionNode.appendNode('groupId', '*')
-							exclusionNode.appendNode('artifactId', '*')
-						} else if (!dep.properties.excludeRules.empty) {
-							// Otherwise add specified exclude rules
-							final exclusionsNode = dependencyNode.appendNode('exclusions')
-							dep.properties.excludeRules.each { rule ->
-								final exclusionNode = exclusionsNode.appendNode('exclusion')
-								exclusionNode.appendNode('groupId', rule.group ?: '*')
-								exclusionNode.appendNode('artifactId', rule.module ?: '*')
-							}
-						}
-					}
-
-					// List all "compile" dependencies (for old Gradle)
-					configurations.compile.getDependencies().each { dep -> addDependency(dep, "compile") }
-					// List all "api" dependencies (for new Gradle) as "compile" dependencies
-					configurations.api.getDependencies().each { dep -> addDependency(dep, "compile") }
-					// List all "implementation" dependencies (for new Gradle) as "runtime" dependencies
-					configurations.implementation.getDependencies().each { dep -> addDependency(dep, "runtime") }
 				}
 			}
 		}
@@ -112,7 +79,7 @@ bintray {
 	user = properties.getProperty("bintray.user")
 	key = properties.getProperty("bintray.apikey")
 
-	publications = ['maven']
+	publications = ['release']
 	publish = true
 	override = true
 	pkg {
