@@ -21,6 +21,11 @@
 
 cmake_minimum_required(VERSION 3.4.1)
 
+# Tesseract requires newer C++ standard, so let's enable it for all libraries
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 # Adds the CMakeLists.txt file located in the specified directory as a build dependency.
 add_subdirectory(libjpeg)
 add_subdirectory(libpng)

@@ -27,6 +27,7 @@ cmake_minimum_required(VERSION 3.4.1)
 # Gradle automatically packages shared libraries with your APK.
 
 set(TESS_PATH "src/src/")
+set(TESS_INCLUDE_PATH "src/include/")
 set(LEPT_PATH "../leptonica/src/src/")
 
 # Get version with components from VERSION file.
@@ -44,8 +45,8 @@ set(GENERIC_MINOR_VERSION ${VERSION_MINOR})
 set(GENERIC_MICRO_VERSION ${VERSION_PATCH})
 
 configure_file(
-        ${TESS_PATH}api/tess_version.h.in
-        ${CMAKE_CURRENT_SOURCE_DIR}/${TESS_PATH}api/tess_version.h @ONLY)
+        ${TESS_INCLUDE_PATH}tesseract/version.h.in
+        ${CMAKE_CURRENT_SOURCE_DIR}/${TESS_INCLUDE_PATH}tesseract/version.h @ONLY)
 
 configure_file(
         config_auto.h.in
@@ -106,6 +107,7 @@ add_library( # Sets the name of the library.
 # Specifies a path to native header files.
 include_directories(${LEPT_PATH})
 
+include_directories(${TESS_INCLUDE_PATH})
 include_directories(${TESS_PATH}api)
 include_directories(${TESS_PATH}arch)
 include_directories(${TESS_PATH}ccmain)
@@ -122,8 +124,6 @@ include_directories(${TESS_PATH}wordrec)
 
 # Define preprocessor constants
 add_definitions(-DHAVE_CONFIG_H)
-# NOTE: We can't use ANDROID_BUILD, because otherwise it disables LSTM and during that breaks whole build
-#add_definitions(-DANDROID_BUILD)
 add_definitions(-DGRAPHICS_DISABLED)
 
 # Ignore some warnings during build

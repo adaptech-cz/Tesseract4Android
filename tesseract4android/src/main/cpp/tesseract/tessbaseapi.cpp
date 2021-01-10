@@ -20,10 +20,10 @@
 #include <malloc.h>
 #include "android/bitmap.h"
 #include "common.h"
-#include "baseapi.h"
-#include "ocrclass.h"
+#include <tesseract/baseapi.h>
+#include <tesseract/ocrclass.h>
 #include "allheaders.h"
-#include "renderer.h"
+#include <tesseract/renderer.h>
 
 static jmethodID method_onProgressValues;
 
@@ -95,7 +95,7 @@ bool cancelFunc(void* cancel_this, int words) {
 /**
  * Callback for Tesseract's monitor to update progress.
  */
-bool progressJavaCallback(ETEXT_DESC* monitor, int left, int right, int top, int bottom) {
+bool progressJavaCallback(tesseract::ETEXT_DESC* monitor, int left, int right, int top, int bottom) {
   native_data_t *nat = (native_data_t*)monitor->cancel_this;
   l_int32 progress = monitor->progress;
   if (nat->isStateValid() && nat->currentTextBox != NULL) {
@@ -614,7 +614,7 @@ jstring Java_com_googlecode_tesseract_android_TessBaseAPI_nativeGetHOCRText(JNIE
   native_data_t *nat = (native_data_t*) mNativeData;
   nat->initStateVariables(env, &thiz);
 
-  ETEXT_DESC monitor;
+  tesseract::ETEXT_DESC monitor;
   monitor.progress_callback2 = progressJavaCallback;
   monitor.cancel = cancelFunc;
   monitor.cancel_this = nat;
