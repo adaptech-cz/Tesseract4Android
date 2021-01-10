@@ -46,6 +46,9 @@ android {
 			versionNameSuffix "-openmp"
 			externalNativeBuild {
 				cmake {
+					// TODO: Remove this line when we use new NDK version that enables it by default
+					arguments "-DANDROID_ARM_NEON=ON"
+
 					cFlags "-fopenmp"
 					cppFlags "-fopenmp"
 				}

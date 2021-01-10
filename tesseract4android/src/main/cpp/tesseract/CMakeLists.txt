@@ -54,9 +54,6 @@ configure_file(
 
 file(GLOB tesseract_src
         ${TESS_PATH}api/*.cpp
-        ${TESS_PATH}arch/simddetect.cpp
-        ${TESS_PATH}arch/intsimdmatrix.cpp
-        ${TESS_PATH}arch/dotproduct.cpp
         ${TESS_PATH}ccmain/*.cpp
         ${TESS_PATH}ccstruct/*.cpp
         ${TESS_PATH}ccutil/*.cpp
@@ -69,6 +66,27 @@ file(GLOB tesseract_src
         ${TESS_PATH}viewer/*.cpp
         ${TESS_PATH}wordrec/*.cpp
         )
+
+list(APPEND arch_files
+        ${TESS_PATH}arch/dotproduct.cpp
+        ${TESS_PATH}arch/simddetect.cpp
+        ${TESS_PATH}arch/intsimdmatrix.cpp
+        # NEON support (we can include this file on any architecture without explicit checks)
+        ${TESS_PATH}arch/intsimdmatrixneon.cpp
+        )
+
+# Enable use of NEON on armeabi-v7a
+if (${ANDROID_ABI} STREQUAL "armeabi-v7a")
+    add_definitions("-DHAVE_NEON")
+
+    set_source_files_properties(${TESS_PATH}arch/intsimdmatrixneon.cpp
+        PROPERTIES COMPILE_FLAGS -mfpu=neon)
+
+    # Include cpu-features for runtime detection of NEON support
+    include(AndroidNdkModules)
+    android_ndk_import_module_cpufeatures()
+    set(LIBRARY_CPU_FEATURES cpufeatures)
+endif()
 
 file(GLOB tesseract_hdr
         ${TESS_PATH}api/*.h
@@ -97,6 +115,7 @@ add_library( # Sets the name of the library.
 
         # Provides a relative path to your source file(s).
         ${tesseract_src}
+        ${arch_files}
         ${tesseract_hdr}
         pageiterator.cpp
         resultiterator.cpp
@@ -140,6 +159,7 @@ target_link_libraries( # Specifies the target library.
         atomic
         dl
         log
+        ${LIBRARY_CPU_FEATURES}
         jnigraphics
         leptonica
         )
