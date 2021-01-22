@@ -68,6 +68,7 @@ public class Skew {
 				SEARCH_MIN_DELTA);
 	}
 
+
 	/**
 	 * Finds and returns the skew angle, doing first a sweep through a set of
 	 * equal angles, and then doing a binary search until convergence.
@@ -102,6 +103,13 @@ public class Skew {
 				sweepReduction, searchReduction, searchMinDelta);
 	}
 
+	public static Pix deskew(Pix pixs,int redSearch){
+		if (pixs == null)
+			throw new IllegalArgumentException("Source pix must be non-null");
+
+		return new Pix(nativeDeskew(pixs.getNativePix(),redSearch));
+	}
+
 	// ***************
 	// * NATIVE CODE *
 	// ***************
@@ -109,4 +117,6 @@ public class Skew {
 	private static native float nativeFindSkew(long nativePix, float sweepRange, float sweepDelta,
 											   int sweepReduction, int searchReduction, float searchMinDelta);
 
+
+	private static native long nativeDeskew(long pixs,int redSearch);
 }
