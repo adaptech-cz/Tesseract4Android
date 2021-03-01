@@ -1,4 +1,4 @@
-‹¯¨<?xml version="1.0" encoding="utf-8"?>
+ï»¿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Source Files">
@@ -44,25 +44,25 @@
     <ClCompile Include="cdjpeg.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="djpeg.c">
+    <ClCompile Include="cjpeg.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="rdcolmap.c">
+    <ClCompile Include="rdbmp.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="wrbmp.c">
+    <ClCompile Include="rdgif.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="wrgif.c">
+    <ClCompile Include="rdppm.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="wrppm.c">
+    <ClCompile Include="rdrle.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="wrrle.c">
+    <ClCompile Include="rdswitch.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="wrtarga.c">
+    <ClCompile Include="rdtarga.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
