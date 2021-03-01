@@ -156,14 +156,15 @@ SRC =		adaptmap_reg.c adaptnorm_reg.c affine_reg.c \
 		blackwhite_reg.c blend1_reg.c blend2_reg.c \
 		blend3_reg.c blend4_reg.c blend5_reg.c \
 		boxa1_reg.c boxa2_reg.c boxa3_reg.c boxa4_reg.c \
-		bytea_reg.c ccthin1_reg.c ccthin2_reg.c \
-		checkerboard_reg.c cmapquant_reg.c colorcontent_reg.c \
-		coloring_reg.c colorize_reg.c \
+		bytea_reg.c ccbord_reg.c ccthin1_reg.c ccthin2_reg.c \
+		checkerboard_reg.c circle_reg.c \
+		cmapquant_reg.c colorcontent_reg.c \
+		colorfill_reg.c coloring_reg.c colorize_reg.c \
 		colormask_reg.c colormorph_reg.c colorquant_reg.c \
 		colorseg_reg.c colorspace_reg.c \
 		compare_reg.c compfilter_reg.c \
 		conncomp_reg.c conversion_reg.c convolve_reg.c \
-		dewarp_reg.c distance_reg.c \
+		crop_reg.c dewarp_reg.c distance_reg.c \
 		dither_reg.c dna_reg.c \
 		dwamorph1_reg.c dwamorph2_reg.c \
 		edge_reg.c enhance_reg.c equal_reg.c \
@@ -175,7 +176,7 @@ SRC =		adaptmap_reg.c adaptnorm_reg.c affine_reg.c \
 		genfonts_reg.c gifio_reg.c \
 		grayfill_reg.c graymorph1_reg.c \
 		graymorph2_reg.c  grayquant_reg.c \
-		hardlight_reg.c heap_reg.c \
+		hardlight_reg.c hash_reg.c heap_reg.c \
 		insert_reg.c ioformats_reg.c \
 		iomisc_reg.c italic_reg.c \
 		jbclass_reg.c jp2kio_reg.c jpegio_reg.c kernel_reg.c \
@@ -183,7 +184,7 @@ SRC =		adaptmap_reg.c adaptnorm_reg.c affine_reg.c \
 		logicops_reg.c lowaccess_reg.c lowsat_reg.c \
 		maze_reg.c morphseq_reg.c mtiff_reg.c \
 		multitype_reg.c nearline_reg.c newspaper_reg.c \
-		numa1_reg.c numa2_reg.c \
+		numa1_reg.c numa2_reg.c numa3_reg.c \
 		overlap_reg.c pageseg_reg.c paint_reg.c paintmask_reg.c \
 		pdfio1_reg.c pdfio2_reg.c pdfseg_reg.c \
 		pixa1_reg.c pixa2_reg.c \
@@ -219,7 +220,7 @@ SRC =		adaptmap_reg.c adaptnorm_reg.c affine_reg.c \
 		convertsegfilestopdf.c convertsegfilestops.c \
 		converttogray.c converttopdf.c converttops.c \
 		cornertest.c corrupttest.c \
-		croptest.c croptext.c deskew_it.c \
+		croptext.c deskew_it.c \
 		dewarprules.c dewarptest1.c dewarptest2.c \
 		dewarptest3.c dewarptest4.c dewarptest5.c \
 		digitprep1.c displayboxa.c displayboxes_on_pixa.c \
@@ -230,11 +231,11 @@ SRC =		adaptmap_reg.c adaptnorm_reg.c affine_reg.c \
 		flipselgen.c fmorphautogen.c \
 		fpixcontours.c gammatest.c \
 		graphicstest.c graymorphtest.c \
-		hashtest.c histoduptest.c histotest.c \
+		histoduptest.c histotest.c \
 		htmlviewer.c imagetops.c \
 		jbcorrelation.c jbrankhaus.c jbwords.c \
-		listtest.c livre_adapt.c livre_hmt.c \
-		livre_makefigs.c livre_orient.c \
+		lightcolortest.c listtest.c \
+		livre_adapt.c livre_hmt.c livre_makefigs.c livre_orient.c \
 		livre_pageseg.c livre_seedgen.c livre_tophat.c \
 		maketile.c maptest.c messagetest.c misctest1.c \
 		modifyhuesat.c morphtest1.c \
@@ -243,7 +244,7 @@ SRC =		adaptmap_reg.c adaptnorm_reg.c affine_reg.c \
 		partifytest.c partitiontest.c percolatetest.c \
 		pixaatest.c pixafileinfo.c plottest.c \
 		printimage.c printsplitimage.c printtiff.c \
-		rbtreetest.c \
+		rasteroptest.c rbtreetest.c \
 		recog_bootnum1.c recog_bootnum2.c recog_bootnum3.c \
 		recogsort.c recogtest1.c recogtest2.c recogtest3.c \
 		recogtest4.c recogtest5.c recogtest6.c recogtest7.c \
@@ -397,6 +398,9 @@ boxa4_reg:	boxa4_reg.o $(LEPTLIB)
 bytea_reg:	bytea_reg.o $(LEPTLIB)
 	$(CC) -o bytea_reg bytea_reg.o $(ALL_LIBS) $(EXTRALIBS)
 
+ccbord_reg:	ccbord_reg.o $(LEPTLIB)
+	$(CC) -o ccbord_reg ccbord_reg.o $(ALL_LIBS) $(EXTRALIBS)
+
 ccthin1_reg:	ccthin1_reg.o $(LEPTLIB)
 	$(CC) -o ccthin1_reg ccthin1_reg.o $(ALL_LIBS) $(EXTRALIBS)
 
@@ -406,11 +410,17 @@ ccthin2_reg:	ccthin2_reg.o $(LEPTLIB)
 checkerboard_reg:	checkerboard_reg.o $(LEPTLIB)
 	$(CC) -o checkerboard_reg checkerboard_reg.o $(ALL_LIBS) $(EXTRALIBS)
 
+circle_reg:	circle_reg.o $(LEPTLIB)
+	$(CC) -o circle_reg circle_reg.o $(ALL_LIBS) $(EXTRALIBS)
+
 cmapquant_reg:	cmapquant_reg.o $(LEPTLIB)
 	$(CC) -o cmapquant_reg cmapquant_reg.o $(ALL_LIBS) $(EXTRALIBS)
 
 colorcontent_reg:	colorcontent_reg.o $(LEPTLIB)
 	$(CC) -o colorcontent_reg colorcontent_reg.o $(ALL_LIBS) $(EXTRALIBS)
+
+colorfill_reg:	colorfill_reg.o $(LEPTLIB)
+	$(CC) -o colorfill_reg colorfill_reg.o $(ALL_LIBS) $(EXTRALIBS)
 
 coloring_reg:	coloring_reg.o $(LEPTLIB)
 	$(CC) -o coloring_reg coloring_reg.o $(ALL_LIBS) $(EXTRALIBS)
@@ -447,6 +457,9 @@ conversion_reg: conversion_reg.o $(LEPTLIB)
 
 convolve_reg:	convolve_reg.o $(LEPTLIB)
 	$(CC) -o convolve_reg convolve_reg.o $(ALL_LIBS) $(EXTRALIBS)
+
+crop_reg:	crop_reg.o $(LEPTLIB)
+	$(CC) -o crop_reg crop_reg.o $(ALL_LIBS) $(EXTRALIBS)
 
 dewarp_reg:	dewarp_reg.o $(LEPTLIB)
 	$(CC) -o dewarp_reg dewarp_reg.o $(ALL_LIBS) $(EXTRALIBS)
@@ -529,6 +542,9 @@ grayquant_reg:	grayquant_reg.o $(LEPTLIB)
 hardlight_reg:	hardlight_reg.o $(LEPTLIB)
 	$(CC) -o hardlight_reg hardlight_reg.o $(ALL_LIBS) $(EXTRALIBS)
 
+hash_reg:	hash_reg.o $(LEPTLIB)
+	$(CC) -o hash_reg hash_reg.o $(ALL_LIBS) $(EXTRALIBS)
+
 heap_reg:	heap_reg.o $(LEPTLIB)
 	$(CC) -o heap_reg heap_reg.o $(ALL_LIBS) $(EXTRALIBS)
 
@@ -597,6 +613,9 @@ numa1_reg:	numa1_reg.o $(LEPTLIB)
 
 numa2_reg:	numa2_reg.o $(LEPTLIB)
 	$(CC) -o numa2_reg numa2_reg.o $(ALL_LIBS) $(EXTRALIBS)
+
+numa3_reg:	numa3_reg.o $(LEPTLIB)
+	$(CC) -o numa3_reg numa3_reg.o $(ALL_LIBS) $(EXTRALIBS)
 
 overlap_reg:	overlap_reg.o $(LEPTLIB)
 	$(CC) -o overlap_reg overlap_reg.o $(ALL_LIBS) $(EXTRALIBS)
@@ -856,9 +875,6 @@ cornertest:	cornertest.o $(LEPTLIB)
 corrupttest:	corrupttest.o $(LEPTLIB)
 	$(CC) -o corrupttest corrupttest.o $(ALL_LIBS) $(EXTRALIBS)
 
-croptest:	croptest.o $(LEPTLIB)
-	$(CC) -o croptest croptest.o $(ALL_LIBS) $(EXTRALIBS)
-
 croptext:	croptext.o $(LEPTLIB)
 	$(CC) -o croptext croptext.o $(ALL_LIBS) $(EXTRALIBS)
 
@@ -943,9 +959,6 @@ graphicstest:	graphicstest.o $(LEPTLIB)
 graymorphtest:	graymorphtest.o $(LEPTLIB)
 	$(CC) -o graymorphtest graymorphtest.o $(ALL_LIBS) $(EXTRALIBS)
 
-hashtest:	hashtest.o $(LEPTLIB)
-	$(CC) -o hashtest hashtest.o $(ALL_LIBS) $(EXTRALIBS)
-
 histoduptest:	histoduptest.o $(LEPTLIB)
 	$(CC) -o histoduptest histoduptest.o $(ALL_LIBS) $(EXTRALIBS)
 
@@ -966,6 +979,9 @@ jbrankhaus:	jbrankhaus.o $(LEPTLIB)
 
 jbwords:	jbwords.o $(LEPTLIB)
 	$(CC) -o jbwords jbwords.o $(ALL_LIBS) $(EXTRALIBS)
+
+lightcolortest:	lightcolortest.o $(LEPTLIB)
+	$(CC) -o lightcolortest lightcolortest.o $(ALL_LIBS) $(EXTRALIBS)
 
 listtest:	listtest.o $(LEPTLIB)
 	$(CC) -o listtest listtest.o $(ALL_LIBS) $(EXTRALIBS)
@@ -1050,6 +1066,9 @@ printsplitimage:	printsplitimage.o $(LEPTLIB)
 
 printtiff:	printtiff.o $(LEPTLIB)
 	$(CC) -o printtiff printtiff.o $(ALL_LIBS) $(EXTRALIBS)
+
+rasteroptest:	rasteroptest.o $(LEPTLIB)
+	$(CC) -o rasteroptest rasteroptest.o $(ALL_LIBS) $(EXTRALIBS)
 
 rbtreetest:	rbtreetest.o $(LEPTLIB)
 	$(CC) -o rbtreetest rbtreetest.o $(ALL_LIBS) $(EXTRALIBS)

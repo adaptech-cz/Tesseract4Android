@@ -406,7 +406,7 @@ PIXCMAP  *cmap;
     if (pix) {
         pixSetInputFormat(pix, format);
         if ((cmap = pixGetColormap(pix))) {
-            pixcmapIsValid(cmap, &valid);
+            pixcmapIsValid(cmap, pix, &valid);
             if (!valid) {
                 pixDestroy(&pix);
                 return (PIX *)ERROR_PTR("invalid colormap", procName, NULL);
@@ -616,7 +616,7 @@ l_ok
 findFileFormatStream(FILE     *fp,
                      l_int32  *pformat)
 {
-l_uint8  firstbytes[12];
+l_uint8  firstbytes[13];
 l_int32  format;
 
     PROCNAME("findFileFormatStream");
@@ -633,6 +633,7 @@ l_int32  format;
 
     if (fread(&firstbytes, 1, 12, fp) != 12)
         return ERROR_INT("failed to read first 12 bytes of file", procName, 1);
+    firstbytes[12] = 0;
     rewind(fp);
 
     findFileFormatBuffer(firstbytes, &format);
@@ -929,7 +930,7 @@ PIXCMAP  *cmap;
             format = IFF_TIFF_G4;
         pixSetInputFormat(pix, format);
         if ((cmap = pixGetColormap(pix))) {
-            pixcmapIsValid(cmap, &valid);
+            pixcmapIsValid(cmap, pix, &valid);
             if (!valid) {
                 pixDestroy(&pix);
                 return (PIX *)ERROR_PTR("invalid colormap", procName, NULL);
@@ -1069,7 +1070,7 @@ PIX     *pix;
         return ERROR_INT("Pdf reading is not supported\n", procName, 1);
 
     case IFF_SPIX:
-        ret = sreadHeaderSpix((l_uint32 *)data, &w, &h, &bps,
+        ret = sreadHeaderSpix((l_uint32 *)data, size, &w, &h, &bps,
                                &spp, &iscmap);
         if (ret)
             return ERROR_INT( "pnm: no header info returned", procName, 1);

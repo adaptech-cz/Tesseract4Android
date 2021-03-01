@@ -694,8 +694,6 @@ setPixelLow(l_uint32  *line,
     default:
         lept_stderr("illegal depth in setPixelLow()\n");
     }
-
-    return;
 }
 
 
@@ -2591,7 +2589,7 @@ PIX *
 pixGetRGBComponentCmap(PIX     *pixs,
                        l_int32  comp)
 {
-l_int32     i, j, w, h, val, index;
+l_int32     i, j, w, h, val, index, valid;
 l_int32     wplc, wpld;
 l_uint32   *linec, *lined;
 l_uint32   *datac, *datad;
@@ -2615,6 +2613,11 @@ RGBA_QUAD  *cta;
         pixc = pixClone(pixs);
     else
         pixc = pixConvertTo8(pixs, TRUE);
+    pixcmapIsValid(cmap, pixc, &valid);
+    if (!valid) {
+        pixDestroy(&pixc);
+        return (PIX *)ERROR_PTR("invalid colormap", procName, NULL);
+    }
 
     pixGetDimensions(pixs, &w, &h, NULL);
     if ((pixd = pixCreateNoInit(w, h, 8)) == NULL) {
@@ -2811,7 +2814,6 @@ extractRGBValues(l_uint32  pixel,
     if (prval) *prval = (pixel >> L_RED_SHIFT) & 0xff;
     if (pgval) *pgval = (pixel >> L_GREEN_SHIFT) & 0xff;
     if (pbval) *pbval = (pixel >> L_BLUE_SHIFT) & 0xff;
-    return;
 }
 
 
@@ -2836,7 +2838,6 @@ extractRGBAValues(l_uint32  pixel,
     if (pgval) *pgval = (pixel >> L_GREEN_SHIFT) & 0xff;
     if (pbval) *pbval = (pixel >> L_BLUE_SHIFT) & 0xff;
     if (paval) *paval = (pixel >> L_ALPHA_SHIFT) & 0xff;
-    return;
 }
 
 
@@ -3016,7 +3017,8 @@ PIX       *pixd;
     datas = pixGetData(pixs);
     wpl = pixGetWpl(pixs);
     h = pixGetHeight(pixs);
-    pixd = pixCreateTemplate(pixs);
+    if ((pixd = pixCreateTemplate(pixs)) == NULL)
+        return (PIX *)ERROR_PTR("pixd not made", procName, NULL);
     datad = pixGetData(pixd);
     for (i = 0; i < h; i++) {
         for (j = 0; j < wpl; j++, datas++, datad++) {
@@ -3190,7 +3192,8 @@ PIX       *pixd;
     datas = pixGetData(pixs);
     wpl = pixGetWpl(pixs);
     h = pixGetHeight(pixs);
-    pixd = pixCreateTemplate(pixs);
+    if ((pixd = pixCreateTemplate(pixs)) == NULL)
+        return (PIX *)ERROR_PTR("pixd not made", procName, NULL);
     datad = pixGetData(pixd);
     for (i = 0; i < h; i++) {
         for (j = 0; j < wpl; j++, datas++, datad++) {

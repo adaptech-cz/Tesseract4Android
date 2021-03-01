@@ -906,6 +906,8 @@ PIX       *pixd, *piximi, *pixb, *pixf, *pixims;
     pixb = pixThresholdToBinary(pixs, thresh);
     pixf = pixMorphSequence(pixb, "d7.1 + d1.7", 0);
     pixDestroy(&pixb);
+    if (!pixf)
+        return ERROR_INT("pixf not made", procName, 1);
 
 
     /* ------------- Set up the output map pixd --------------- */
@@ -1470,7 +1472,6 @@ pixFillMapHoles(PIX     *pix,
 l_int32   w, h, y, nmiss, goodcol, i, j, found, ival, valtest;
 l_uint32  val, lastval;
 NUMA     *na;  /* indicates if there is any data in the column */
-PIX      *pixt;
 
     PROCNAME("pixFillMapHoles");
 
@@ -1512,7 +1513,6 @@ PIX      *pixt;
             }
         }
     }
-    numaAddNumber(na, 0);  /* last column */
 
     if (nmiss == nx) {  /* no data in any column! */
         numaDestroy(&na);
@@ -1522,7 +1522,6 @@ PIX      *pixt;
 
     /* ---------- Fill in missing columns by replication ----------- */
     if (nmiss > 0) {  /* replicate columns */
-        pixt = pixCopy(NULL, pix);
             /* Find the first good column */
         goodcol = 0;
         for (j = 0; j < w; j++) {
@@ -1533,26 +1532,19 @@ PIX      *pixt;
             }
         }
         if (goodcol > 0) {  /* copy cols backward */
-            for (j = goodcol - 1; j >= 0; j--) {
-                pixRasterop(pix, j, 0, 1, h, PIX_SRC, pixt, j + 1, 0);
-                pixRasterop(pixt, j, 0, 1, h, PIX_SRC, pix, j, 0);
-            }
+            for (j = goodcol - 1; j >= 0; j--)
+                pixRasterop(pix, j, 0, 1, h, PIX_SRC, pix, j + 1, 0);
         }
         for (j = goodcol + 1; j < w; j++) {   /* copy cols forward */
             numaGetIValue(na, j, &ival);
             if (ival == 0) {
                     /* Copy the column to the left of j */
-                pixRasterop(pix, j, 0, 1, h, PIX_SRC, pixt, j - 1, 0);
-                pixRasterop(pixt, j, 0, 1, h, PIX_SRC, pix, j, 0);
+                pixRasterop(pix, j, 0, 1, h, PIX_SRC, pix, j - 1, 0);
             }
         }
-        pixDestroy(&pixt);
     }
     if (w > nx) {  /* replicate the last column */
-        for (i = 0; i < h; i++) {
-            pixGetPixel(pix, w - 2, i, &val);
-            pixSetPixel(pix, w - 1, i, val);
-        }
+        pixRasterop(pix, w - 1, 0, 1, h, PIX_SRC, pix, w - 2, 0);
     }
 
     numaDestroy(&na);

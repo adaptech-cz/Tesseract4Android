@@ -41,8 +41,8 @@
  *    This file has the basic constructors, destructors and field accessors
  *
  *    Pix memory management (allows custom allocator and deallocator)
- *          static void  *pix_malloc()
- *          static void   pix_free()
+ *          static void  *pixdata_malloc()
+ *          static void   pixdata_free()
  *          void          setPixMemoryManager()
  *
  *    Pix creation
@@ -199,19 +199,20 @@
 
 static void pixFree(PIX *pix);
 
-
 /*-------------------------------------------------------------------------*
  *                        Pix Memory Management                            *
  *                                                                         *
  *  These functions give you the freedom to specify at compile or run      *
- *  time the allocator and deallocator to be used for pix.  It has no      *
- *  effect on memory management for other data structs, which are          *
- *  controlled by the #defines in environ.h.  Likewise, the #defines       *
- *  in environ.h have no effect on the pix memory management.              *
- *  The default functions are malloc and free.  Use setPixMemoryManager()  *
- *  to specify other functions to use.                                     *
+ *  time the allocator and deallocator to be used for the pix raster       *
+ *  image data.  They have no effect on any other heap allocation,         *
+ *  including the pix struct itself, which is controlled by the            *
+ *  #defines in environ.h.                                                 *
+ *                                                                         *
+ *  The default functions for allocating pix raster data are malloc and    *
+ *  free (or leptonica_* custom allocators if LEPTONICA_INTERCEPT_ALLOC    *
+ *  is defined).  Use setPixMemoryManager() to specify other functions     *
+ *  to use specifically for pix raster image data.                         *
  *-------------------------------------------------------------------------*/
-
 /*! Pix memory manager */
     /*
      * <pre>
@@ -228,33 +229,36 @@ struct PixMemoryManager
 
 /*! Default Pix memory manager */
 static struct PixMemoryManager  pix_mem_manager = {
+#ifdef LEPTONICA_INTERCEPT_ALLOC
+    &leptonica_malloc,
+    &leptonica_free
+#else
     &malloc,
     &free
+#endif  /* LEPTONICA_INTERCEPT_ALLOC */
 };
 
 static void *
-pix_malloc(size_t  size)
+pixdata_malloc(size_t  size)
 {
 #ifndef _MSC_VER
     return (*pix_mem_manager.allocator)(size);
 #else  /* _MSC_VER */
-    /* Under MSVC++, pix_mem_manager is initialized after a call
-     * to pix_malloc.  Just ignore the custom allocator feature. */
-    return malloc(size);
+    /* Under MSVC++, pix_mem_manager is initialized after a call to
+     * pixdata_malloc.  Just ignore the custom allocator feature. */
+    return LEPT_MALLOC(size);
 #endif  /* _MSC_VER */
 }
 
 static void
-pix_free(void  *ptr)
+pixdata_free(void  *ptr)
 {
 #ifndef _MSC_VER
     (*pix_mem_manager.deallocator)(ptr);
-    return;
 #else  /* _MSC_VER */
-    /* Under MSVC++, pix_mem_manager is initialized after a call
-     * to pix_malloc.  Just ignore the custom allocator feature. */
-    free(ptr);
-    return;
+    /* Under MSVC++, pix_mem_manager is initialized after a call to
+     * pixdata_malloc.  Just ignore the custom allocator feature. */
+    LEPT_FREE(ptr);
 #endif  /* _MSC_VER */
 }
 
@@ -289,7 +293,6 @@ setPixMemoryManager(alloc_fn   allocator,
 {
     if (allocator) pix_mem_manager.allocator = allocator;
     if (deallocator) pix_mem_manager.deallocator = deallocator;
-    return;
 }
 
 
@@ -345,9 +348,10 @@ l_uint32  *data;
     if ((pixd = pixCreateHeader(width, height, depth)) == NULL)
         return (PIX *)ERROR_PTR("pixd not made", procName, NULL);
     wpl = pixGetWpl(pixd);
-    if ((data = (l_uint32 *)pix_malloc(4LL * wpl * height)) == NULL) {
+    if ((data = (l_uint32 *)pixdata_malloc(4LL * wpl * height)) == NULL) {
         pixDestroy(&pixd);
-        return (PIX *)ERROR_PTR("pix_malloc fail for data", procName, NULL);
+        return (PIX *)ERROR_PTR("pixdata_malloc fail for data",
+                                procName, NULL);
     }
     pixSetData(pixd, data);
     pixSetPadBits(pixd, 0);
@@ -506,10 +510,10 @@ PIX      *pixd;
 
         /* Avoid overflow in malloc, malicious or otherwise */
     wpl64 = ((l_uint64)width * (l_uint64)depth + 31) / 32;
-    if (wpl64 > ((1LL << 29) - 1)) {
+    if (wpl64 > ((1LL << 24) - 1)) {
         L_ERROR("requested w = %d, h = %d, d = %d\n",
                 procName, width, height, depth);
-        return (PIX *)ERROR_PTR("wpl >= 2^29", procName, NULL);
+        return (PIX *)ERROR_PTR("wpl >= 2^24", procName, NULL);
     }
     wpl = (l_int32)wpl64;
     bignum = 4LL * wpl * height;   /* number of bytes to be requested */
@@ -518,6 +522,21 @@ PIX      *pixd;
                 procName, width, height, depth);
         return (PIX *)ERROR_PTR("requested bytes >= 2^31", procName, NULL);
     }
+
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    if (bignum > (1LL << 26)) {
+        L_ERROR("fuzzer requested > 64 MB; refused\n", procName);
+        return NULL;
+    }
+    if (width > 20000) {
+        L_ERROR("fuzzer requested width > 20K; refused\n", procName);
+        return NULL;
+    }
+    if (height > 20000) {
+        L_ERROR("fuzzer requested height > 20K; refused\n", procName);
+        return NULL;
+    }
+#endif   /* FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION */
 
     pixd = (PIX *)LEPT_CALLOC(1, sizeof(PIX));
     pixSetWidth(pixd, width);
@@ -602,7 +621,6 @@ PIX  *pix;
         return;
     pixFree(pix);
     *ppix = NULL;
-    return;
 }
 
 
@@ -628,7 +646,7 @@ char      *text;
     pixChangeRefcount(pix, -1);
     if (pixGetRefcount(pix) <= 0) {
         if ((data = pixGetData(pix)) != NULL)
-            pix_free(data);
+            pixdata_free(data);
         if ((text = pixGetText(pix)) != NULL)
             LEPT_FREE(text);
         pixDestroyColormap(pix);
@@ -755,8 +773,8 @@ l_uint32  *data;
     pixGetDimensions(pixs, &w, &h, &d);
     wpl = pixGetWpl(pixs);
     bytes = 4 * wpl * h;
-    if ((data = (l_uint32 *)pix_malloc(bytes)) == NULL)
-        return ERROR_INT("pix_malloc fail for data", procName, 1);
+    if ((data = (l_uint32 *)pixdata_malloc(bytes)) == NULL)
+        return ERROR_INT("pixdata_malloc fail for data", procName, 1);
 
         /* OK, do it */
     pixSetWidth(pixd, w);
@@ -798,11 +816,13 @@ PIXCMAP        *cmapd;
         return ERROR_INT("pixd not defined", procName, 1);
     if (pixs == pixd)
         return 0;   /* no-op */
+    if (pixGetDepth(pixs) != pixGetDepth(pixd))
+        return ERROR_INT("depths of pixs and pixd differ", procName, 1);
 
     pixDestroyColormap(pixd);
     if ((cmaps = pixs->colormap) == NULL)  /* not an error */
         return 0;
-    pixcmapIsValid(cmaps, &valid);
+    pixcmapIsValid(cmaps, NULL, &valid);
     if (!valid)
         return ERROR_INT("cmap not valid", procName, 1);
 
@@ -917,7 +937,8 @@ PIX     *pixs;
         pixFreeData(pixd);  /* dealloc any existing data */
         pixSetData(pixd, pixGetData(pixs));  /* transfer new data from pixs */
         pixs->data = NULL;  /* pixs no longer owns data */
-        pixSetColormap(pixd, pixGetColormap(pixs));  /* frees old; sets new */
+        pixDestroyColormap(pixd);  /* free the old one, if it exists */
+        pixd->colormap = pixGetColormap(pixs);  /* transfer to pixd */
         pixs->colormap = NULL;  /* pixs no longer owns colormap */
         if (copytext) {
             pixSetText(pixd, pixGetText(pixs));
@@ -1605,28 +1626,44 @@ pixGetColormap(PIX  *pix)
  * \brief   pixSetColormap()
  *
  * \param[in]   pix
- * \param[in]   colormap   to be assigned
+ * \param[in]   colormap   optional; can be null.
  * \return  0 if OK, 1 on error.
  *
  * <pre>
  * Notes:
- *      (1) Unlike with the pix data field, pixSetColormap() destroys
- *          any existing colormap before assigning the new one.
- *          Because colormaps are not ref counted, it is important that
- *          the new colormap does not belong to any other pix.
+ *      (1) If %colormap is not defined, this is a no-op.
+ *      (2) This destroys any existing colormap before assigning the
+ *          new %colormap to %pix.
+ *      (3) If the colormap is not valid, this returns 1.  The caller
+ *          should check if there is a possibility that the pix and
+ *          colormap depths differ.
+ *      (4) This does not do the work of checking pixs for a pixel value
+ *          that is out of bounds for the colormap -- that only needs to
+ *          be done when reading and writing with an I/O library like
+ *          png and gif.
+ *      (5) Because colormaps are not ref counted, the new colormap
+ *          must not belong to any other pix.
  * </pre>
  */
 l_ok
 pixSetColormap(PIX      *pix,
                PIXCMAP  *colormap)
 {
+l_int32  valid;
+
     PROCNAME("pixSetColormap");
 
     if (!pix)
         return ERROR_INT("pix not defined", procName, 1);
+    if (!colormap) return 0;
 
+        /* Make sure the colormap doesn't get lost */
     pixDestroyColormap(pix);
     pix->colormap = colormap;
+
+    pixcmapIsValid(colormap, NULL, &valid);
+    if (!valid)
+        return ERROR_INT("colormap is not valid", procName, 1);
     return 0;
 }
 
@@ -1665,6 +1702,11 @@ PIXCMAP  *cmap;
  * Notes:
  *      (1) This gives a new handle for the data.  The data is still
  *          owned by the pix, so do not call LEPT_FREE() on it.
+ *      (2) This cannot guarantee that the pix data returned will not
+ *          be changed, so %pix cannot be declared const.  And because
+ *          most imaging operations call this for access to the data,
+ *          this prevents them from declaring %pix to be const, even if
+ *          they only use the data for inspection.
  * </pre>
  */
 l_uint32 *
@@ -1739,7 +1781,7 @@ l_uint32  *data, *datas;
     } else {  /* refcount > 1; copy */
         bytes = 4 * pixGetWpl(pixs) * pixGetHeight(pixs);
         datas = pixGetData(pixs);
-        if ((data = (l_uint32 *)pix_malloc(bytes)) == NULL)
+        if ((data = (l_uint32 *)pixdata_malloc(bytes)) == NULL)
             return (l_uint32 *)ERROR_PTR("data not made", procName, NULL);
         memcpy(data, datas, bytes);
     }
@@ -1773,7 +1815,7 @@ l_uint32  *data;
         return ERROR_INT("pix not defined", procName, 1);
 
     if ((data = pixGetData(pix)) != NULL) {
-        pix_free(data);
+        pixdata_free(data);
         pix->data = NULL;
     }
     return 0;

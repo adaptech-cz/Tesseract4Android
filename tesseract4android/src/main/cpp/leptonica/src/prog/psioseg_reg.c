@@ -61,12 +61,25 @@ PIX          *pixs, *pixc, *pixht, *pixtxt, *pixmfull;
 PIX          *pix4c, *pix8c, *pix8g, *pix32, *pixcs, *pixcs2;
 L_REGPARAMS  *rp;
 
+#if !defined(HAVE_LIBPNG)
+    L_ERROR("This test requires libpng to run.\n", "psioseg_reg");
+    exit(77);
+#endif
+#if !defined(HAVE_LIBJPEG)
+    L_ERROR("This test requires libjpeg to run.\n", "psioseg_reg");
+    exit(77);
+#endif
+#if !defined(HAVE_LIBTIFF)
+    L_ERROR("This test requires libtiff to run.\n", "psioseg_reg");
+    exit(77);
+#endif
+
     if (regTestSetup(argc, argv, &rp))
         return 1;
 
 #if !USE_PSIO
-    fprintf(stderr, "psio writing is not enabled\n"
-            "See environ.h: #define USE_PSIO 1\n\n");
+    lept_stderr("psio writing is not enabled\n"
+                "See environ.h: #define USE_PSIO 1\n\n");
     regTestCleanup(rp);
     return 0;
 #endif  /* abort */
