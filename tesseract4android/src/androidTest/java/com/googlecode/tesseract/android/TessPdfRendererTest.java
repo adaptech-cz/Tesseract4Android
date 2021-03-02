@@ -67,10 +67,6 @@ public class TessPdfRendererTest {
 
 		pdfRenderer.recycle();
 		baseApi.end();
-
-		// Delete created PDF file.
-		//noinspection ResultOfMethodCallIgnored
-		new File(OUTPUT_PATH + pdfBasename + ".pdf").delete();
 	}
 
 	/**
@@ -105,7 +101,7 @@ public class TessPdfRendererTest {
 
 		// Add a second page.
 		final Pix pixTwo = getTextImage("page two", 640, 480);
-		final File fileTwo = File.createTempFile("testPageTwo", ".png");
+		final File fileTwo = File.createTempFile("testPageTwo", ".jpg");
 		WriteFile.writeImpliedFormat(pixTwo, fileTwo);
 		boolean addedPageTwo = baseApi.addPageToDocument(pixTwo,
 				fileTwo.getAbsolutePath(), pdfRenderer);
@@ -124,10 +120,6 @@ public class TessPdfRendererTest {
 		baseApi.end();
 		pixOne.recycle();
 		pixTwo.recycle();
-
-		// Delete created PDF file.
-		//noinspection ResultOfMethodCallIgnored
-		new File(OUTPUT_PATH + pdfBasename + ".pdf").delete();
 	}
 
 	private static Pix getTextImage(String text, int width, int height) {
