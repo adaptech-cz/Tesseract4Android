@@ -67,7 +67,7 @@ add_definitions(-DANDROID_BUILD)
 add_definitions(-DHAVE_LIBJPEG=1)
 add_definitions(-DHAVE_LIBPNG=1)
 add_definitions(-DHAVE_LIBZ=1)
-# TODO: Enable this when we use minSdkVersion 23 or higher
+#TODO: Enable this when we use minSdkVersion 23 or higher
 #add_definitions(-DHAVE_FMEMOPEN=1)
 
 # Ignore some warnings during build
