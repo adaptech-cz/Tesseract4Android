@@ -675,14 +675,8 @@ bool TessPDFRenderer::imageToPDFObj(Pix *pix,
 
   L_Compressed_Data *cid = nullptr;
 
-#ifdef __ANDROID__ // Remove this when we use minSdkVersion 23 or higher
-  bool flateEncode = true;
-#else
-  bool flateEncode = pixGetInputFormat(pix) == IFF_PNG;
-#endif
-
   int sad = 0;
-  if (flateEncode)
+  if (pixGetInputFormat(pix) == IFF_PNG)
     sad = pixGenerateCIData(pix, L_FLATE_ENCODE, 0, 0, &cid);
   if (!cid) {
     sad = l_generateCIDataForPdf(filename, pix, jpg_quality, &cid);
