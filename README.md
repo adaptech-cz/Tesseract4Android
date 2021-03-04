@@ -9,8 +9,8 @@ The Java/JNI wrapper files and tests for Leptonica / Tesseract are based on the 
 This project uses additional libraries (with their own specific licenses):
 
  - [Tesseract][tesseract-ocr] 4.1.1
- - [Leptonica][leptonica] 1.79.0
- - [libjpeg][jpeg] v9c
+ - [Leptonica][leptonica] 1.80.0
+ - [libjpeg][jpeg] v9d
  - [libpng][png] 1.6.37
 
 ## Prerequisites
