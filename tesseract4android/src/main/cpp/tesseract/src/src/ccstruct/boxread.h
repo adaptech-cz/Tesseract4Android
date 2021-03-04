@@ -2,7 +2,6 @@
  * File:        boxread.h
  * Description: Read data from a box file.
  * Author:      Ray Smith
- * Created:     Fri Aug 24 17:47:23 PDT 2007
  *
  * (C) Copyright 2007, Google Inc.
  ** Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,20 +19,21 @@
 #ifndef TESSERACT_CCUTIL_BOXREAD_H_
 #define TESSERACT_CCUTIL_BOXREAD_H_
 
-#include <cstdio>    // for FILE
 #include "strngs.h"  // for STRING
 
-class TBOX;
+#include <cstdio>    // for FILE
 
-template <typename T> class GenericVector;
-template <typename T> class GenericVector;
+namespace tesseract {
+
+class TBOX;
 
 // Size of buffer used to read a line from a box file.
 const int kBoxReadBufSize = 1024;
 
 // Open the boxfile based on the given image filename.
 // Returns nullptr if the box file cannot be opened.
-FILE* OpenBoxFile(const STRING& fname);
+TESS_API
+FILE* OpenBoxFile(const char* filename);
 
 // Reads all boxes from the given filename.
 // Reads a specific target_page number if >= 0, or all pages otherwise.
@@ -42,25 +42,23 @@ FILE* OpenBoxFile(const STRING& fname);
 // a string is put in box_texts, with the corresponding page number in pages.
 // Each of the output vectors is optional (may be nullptr).
 // Returns false if no boxes are found.
-bool ReadAllBoxes(int target_page, bool skip_blanks, const STRING& filename,
-                  GenericVector<TBOX>* boxes,
-                  GenericVector<STRING>* texts,
-                  GenericVector<STRING>* box_texts,
-                  GenericVector<int>* pages);
+bool ReadAllBoxes(int target_page, bool skip_blanks, const char* filename,
+                  std::vector<TBOX>* boxes,
+                  std::vector<STRING>* texts,
+                  std::vector<STRING>* box_texts,
+                  std::vector<int>* pages);
 
 // Reads all boxes from the string. Otherwise, as ReadAllBoxes.
 // continue_on_failure allows reading to continue even if an invalid box is
 // encountered and will return true if it succeeds in reading some boxes.
 // It otherwise gives up and returns false on encountering an invalid box.
+TESS_API
 bool ReadMemBoxes(int target_page, bool skip_blanks, const char* box_data,
                   bool continue_on_failure,
-                  GenericVector<TBOX>* boxes,
-                  GenericVector<STRING>* texts,
-                  GenericVector<STRING>* box_texts,
-                  GenericVector<int>* pages);
-
-// Returns the box file name corresponding to the given image_filename.
-STRING BoxFileName(const STRING& image_filename);
+                  std::vector<TBOX>* boxes,
+                  std::vector<STRING>* texts,
+                  std::vector<STRING>* box_texts,
+                  std::vector<int>* pages);
 
 // ReadNextBox factors out the code to interpret a line of a box
 // file so that applybox and unicharset_extractor interpret the same way.
@@ -70,21 +68,27 @@ STRING BoxFileName(const STRING& image_filename);
 // for valid utf-8 and allows space or tab between fields.
 // utf8_str is set with the unichar string, and bounding box with the box.
 // If there are page numbers in the file, it reads them all.
+TESS_API
 bool ReadNextBox(int *line_number, FILE* box_file,
                  STRING* utf8_str, TBOX* bounding_box);
 // As ReadNextBox above, but get a specific page number. (0-based)
 // Use -1 to read any page number. Files without page number all
 // read as if they are page 0.
+TESS_API
 bool ReadNextBox(int target_page, int *line_number, FILE* box_file,
                  STRING* utf8_str, TBOX* bounding_box);
 
 // Parses the given box file string into a page_number, utf8_str, and
 // bounding_box. Returns true on a successful parse.
+TESS_API
 bool ParseBoxFileStr(const char* boxfile_str, int* page_number,
                      STRING* utf8_str, TBOX* bounding_box);
 
 // Creates a box file string from a unichar string, TBOX and page number.
+TESS_API
 void MakeBoxFileStr(const char* unichar_str, const TBOX& box, int page_num,
                     STRING* box_str);
+
+} // namespace tesseract
 
 #endif  // TESSERACT_CCUTIL_BOXREAD_H_

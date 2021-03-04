@@ -1,5 +1,4 @@
-/* -*-C-*-
- ********************************************************************************
+/******************************************************************************
  *
  * File:        chop.h
  * Author:      Mark Seaman, SW Productivity
@@ -15,24 +14,23 @@
  ** See the License for the specific language governing permissions and
  ** limitations under the License.
  *
- *******************************************************************************/
+ *****************************************************************************/
 
 #ifndef CHOP_H
 #define CHOP_H
 
-/*----------------------------------------------------------------------
-              I n c l u d e s
-----------------------------------------------------------------------*/
 #include "genericheap.h"
 #include "kdpair.h"
 #include "seam.h"
 
-/*----------------------------------------------------------------------
-              T y p e s
----------------------------------------------------------------------*/
+namespace tesseract {
+
 #define MAX_NUM_POINTS 50
+
 // The PointPair elements do NOT own the EDGEPTs.
-using PointPair = tesseract::KDPairInc<float, EDGEPT*>;
-using PointHeap = tesseract::GenericHeap<PointPair>;
+using PointPair = KDPairInc<float, EDGEPT*>;
+using PointHeap = GenericHeap<PointPair>;
+
+} // namespace tesseract
 
 #endif

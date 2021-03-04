@@ -20,6 +20,12 @@
 #ifndef NORMALIS_H
 #define NORMALIS_H
 
+#include <tesseract/export.h>
+
+struct Pix;
+
+namespace tesseract {
+
 const int kBlnCellHeight = 256;     // Full-height for baseline normalization.
 const int kBlnXHeight = 128;        // x-height for baseline normalization.
 const int kBlnBaselineOffset = 64;  // offset for baseline normalization.
@@ -29,13 +35,10 @@ class FCOORD;
 class TBOX;
 class UNICHARSET;
 
-struct Pix;
 struct TBLOB;
 struct TPOINT;
 
 template <typename T> class GenericVector;
-
-namespace tesseract {
 
 // Possible normalization methods. Use NEGATIVE values as these also
 // double up as markers for the last sub-classifier.
@@ -45,9 +48,7 @@ enum NormalizationMode {
   NM_CHAR_ANISOTROPIC = -1  // The original CN normalization mode.
 };
 
-}  // namespace tesseract.
-
-class DENORM {
+class TESS_API DENORM {
  public:
   DENORM();
 
@@ -76,7 +77,7 @@ class DENORM {
   // A DENORM may point to a predecessor DENORM, which is actually the earlier
   // normalization, so the full normalization sequence involves executing all
   // predecessors first and then the transform in "this".
-  // Let x be image co-ordinates and that we have normalization classes A, B, C
+  // Let x be image coordinates and that we have normalization classes A, B, C
   // where we first apply A then B then C to get normalized x':
   // x' = CBAx
   // Then the backwards (to original coordinates) would be:
@@ -312,5 +313,7 @@ class DENORM {
   float final_xshift_;
   float final_yshift_;
 };
+
+}  // namespace tesseract
 
 #endif

@@ -2,7 +2,6 @@
 // File:        fullyconnected.cpp
 // Description: Simple feed-forward layer with various non-linearities.
 // Author:      Ray Smith
-// Created:     Wed Feb 26 14:49:15 PST 2014
 //
 // (C) Copyright 2014, Google Inc.
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,6 +14,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 ///////////////////////////////////////////////////////////////////////
+
+#ifdef HAVE_CONFIG_H
+#include "config_auto.h"
+#endif
 
 #include "fullyconnected.h"
 
@@ -36,7 +39,7 @@ const int kNumThreads = 1;
 
 namespace tesseract {
 
-FullyConnected::FullyConnected(const STRING& name, int ni, int no,
+FullyConnected::FullyConnected(const std::string& name, int ni, int no,
                                NetworkType type)
   : Network(type, name, ni, no), external_source_(nullptr), int_mode_(false) {
 }
@@ -99,7 +102,7 @@ void FullyConnected::ConvertToInt() {
 
 // Provides debug output on the weights.
 void FullyConnected::DebugWeights() {
-  weights_.Debug2D(name_.string());
+  weights_.Debug2D(name_.c_str());
 }
 
 // Writes to the given file. Returns false in case of error.
@@ -129,8 +132,11 @@ void FullyConnected::Forward(bool debug, const NetworkIO& input,
   temp_lines.init_to_size(kNumThreads, NetworkScratch::FloatVec());
   GenericVector<NetworkScratch::FloatVec> curr_input;
   curr_input.init_to_size(kNumThreads, NetworkScratch::FloatVec());
+  int ro = no_;
+  if (IntSimdMatrix::intSimdMatrix)
+    ro = IntSimdMatrix::intSimdMatrix->RoundOutputs(ro);
   for (int i = 0; i < kNumThreads; ++i) {
-    temp_lines[i].Init(no_, scratch);
+    temp_lines[i].Init(no_, ro, scratch);
     curr_input[i].Init(ni_, scratch);
   }
 #ifdef _OPENMP
@@ -163,10 +169,12 @@ void FullyConnected::Forward(bool debug, const NetworkIO& input,
   }
   output->ZeroInvalidElements();
 #if DEBUG_DETAIL > 0
-  tprintf("F Output:%s\n", name_.string());
+  tprintf("F Output:%s\n", name_.c_str());
   output->Print(10);
 #endif
+#ifndef GRAPHICS_DISABLED
   if (debug) DisplayForward(*output);
+#endif
 }
 
 // Components of Forward so FullyConnected can be reused inside LSTM.
@@ -221,7 +229,9 @@ void FullyConnected::ForwardTimeStep(const int8_t* i_input,
 bool FullyConnected::Backward(bool debug, const NetworkIO& fwd_deltas,
                               NetworkScratch* scratch,
                               NetworkIO* back_deltas) {
+#ifndef GRAPHICS_DISABLED
   if (debug) DisplayBackward(fwd_deltas);
+#endif
   back_deltas->Resize(fwd_deltas, ni_);
   GenericVector<NetworkScratch::FloatVec> errors;
   errors.init_to_size(kNumThreads, NetworkScratch::FloatVec());
@@ -254,7 +264,7 @@ bool FullyConnected::Backward(bool debug, const NetworkIO& fwd_deltas,
   if (needs_to_backprop_) {
     back_deltas->ZeroInvalidElements();
 #if DEBUG_DETAIL > 0
-    tprintf("F Backprop:%s\n", name_.string());
+    tprintf("F Backprop:%s\n", name_.c_str());
     back_deltas->Print(10);
 #endif
     return true;

@@ -1,5 +1,4 @@
-/* -*-C-*-
- ********************************************************************************
+/******************************************************************************
  *
  * File:         plotedges.h
  * Description:  Convert the various data type into line lists
@@ -16,12 +15,14 @@
  ** See the License for the specific language governing permissions and
  ** limitations under the License.
  *
- *********************************************************************************/
+ *****************************************************************************/
 
 #ifndef PLOTEDGES_H
 #define PLOTEDGES_H
 
 #include "oldlist.h"  // for LIST
+
+namespace tesseract {
 
 class ScrollView;
 
@@ -34,29 +35,6 @@ struct TBLOB;
 extern ScrollView *edge_window;        /* Window for edges */
 
 /*----------------------------------------------------------------------
-            Macros
-----------------------------------------------------------------------*/
-/**********************************************************************
- * update_edge_window
- *
- * Refresh the display of the edge window.
- **********************************************************************/
-#define update_edge_window()    \
-if (wordrec_display_splits) {   \
-  c_make_current (edge_window); \
-}
-
-
-/**********************************************************************
- * edge_window_wait
- *
- * Wait for someone to click in the edges window.
- **********************************************************************/
-
-#define edge_window_wait()  \
-if (wordrec_display_splits) window_wait (edge_window)
-
-/*----------------------------------------------------------------------
               F u n c t i o n s
 ---------------------------------------------------------------------*/
 void display_edgepts(LIST outlines);
@@ -64,5 +42,7 @@ void display_edgepts(LIST outlines);
 void draw_blob_edges(TBLOB *blob);
 
 void mark_outline(EDGEPT *edgept);
+
+} // namespace tesseract
 
 #endif

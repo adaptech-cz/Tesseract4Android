@@ -1,5 +1,4 @@
-/* -*-C-*-
- ********************************************************************************
+/******************************************************************************
  *
  * File:         blobs.cpp  (Formerly blobs.c)
  * Description:  Blob definition
@@ -16,7 +15,7 @@
  ** See the License for the specific language governing permissions and
  ** limitations under the License.
  *
- *********************************************************************************/
+ *****************************************************************************/
 
 /*----------------------------------------------------------------------
               I n c l u d e s
@@ -27,9 +26,9 @@
 #endif
 
 #include "blobs.h"
+
 #include "ccstruct.h"
 #include "clst.h"
-#include "helpers.h"
 #include "linlsq.h"
 #include "normalis.h"
 #include "ocrblock.h"
@@ -38,9 +37,11 @@
 #include "polyaprx.h"
 #include "werd.h"
 
+#include "helpers.h"
+
 #include <algorithm>
 
-using tesseract::CCStruct;
+namespace tesseract {
 
 // A Vector representing the "vertical" direction when measuring the
 // divisiblity of blobs into multiple blobs just by separating outlines.
@@ -276,7 +277,7 @@ void TESSLINE::plot(ScrollView* window, ScrollView::Color color,
       window->DrawTo(pt->pos.x, pt->pos.y);
   } while (pt != loop);
 }
-#endif  // GRAPHICS_DISABLED
+#endif // !GRAPHICS_DISABLED
 
 // Returns the first non-hidden EDGEPT that has a different src_outline to
 // its predecessor, or, if all the same, the lowest indexed point.
@@ -502,7 +503,7 @@ void TBLOB::CorrectBlobOrder(TBLOB* next) {
   TBOX box = bounding_box();
   TBOX next_box = next->bounding_box();
   if (box.x_middle() > next_box.x_middle()) {
-    Swap(&outlines, &next->outlines);
+    std::swap(outlines, next->outlines);
   }
 }
 
@@ -513,7 +514,7 @@ void TBLOB::plot(ScrollView* window, ScrollView::Color color,
        outline = outline->next)
     outline->plot(window, color, child_color);
 }
-#endif  // GRAPHICS_DISABLED
+#endif // !GRAPHICS_DISABLED
 
 // Computes the center of mass and second moments for the old baseline and
 // 2nd moment normalizations. Returns the outline length.
@@ -901,7 +902,7 @@ void TWERD::plot(ScrollView* window) {
     color = WERD::NextColor(color);
   }
 }
-#endif  // GRAPHICS_DISABLED
+#endif // !GRAPHICS_DISABLED
 
 /**********************************************************************
  * divisible_blob
@@ -996,3 +997,5 @@ void divide_blobs(TBLOB* blob, TBLOB* other_blob, bool italic_blob,
   if (outline1) outline1->next = nullptr;
   if (outline2) outline2->next = nullptr;
 }
+
+} // namespace tesseract

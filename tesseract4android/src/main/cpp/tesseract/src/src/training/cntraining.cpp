@@ -21,17 +21,18 @@
 ----------------------------------------------------------------------------*/
 #include "oldlist.h"
 #include "featdefs.h"
-#include "tessopt.h"
 #include "ocrfeatures.h"
 #include "clusttool.h"
 #include "cluster.h"
 #include <cstring>
 #include <cstdio>
 #include <cmath>
-#include "unichar.h"
+#include <tesseract/unichar.h>
 #include "commontraining.h"
 
 #define PROGRAM_FEATURE_TYPE "cn"
+
+using namespace tesseract;
 
 /*----------------------------------------------------------------------------
           Private Function Prototypes
@@ -119,7 +120,8 @@ int main(int argc, char *argv[]) {
 
   ParseArguments(&argc, &argv);
   int num_fonts = 0;
-  while ((PageName = GetNextFilename(argc, argv)) != nullptr) {
+  int tessoptind = 1;
+  while ((PageName = GetNextFilename(argc, argv, tessoptind)) != nullptr) {
     printf("Reading %s ...\n", PageName);
     FILE *TrainingPage = fopen(PageName, "rb");
     ASSERT_HOST(TrainingPage);
@@ -206,8 +208,8 @@ static void WriteNormProtos(const char *Directory, LIST LabeledProtoList,
     Filename += "/";
   }
   Filename += "normproto";
-  printf ("\nWriting %s ...", Filename.string());
-  File = fopen(Filename.string(), "wb");
+  printf ("\nWriting %s ...", Filename.c_str());
+  File = fopen(Filename.c_str(), "wb");
   ASSERT_HOST(File);
   fprintf(File, "%0d\n", feature_desc->NumParams);
   WriteParamDesc(File, feature_desc->NumParams, feature_desc->ParamDesc);

@@ -25,7 +25,7 @@
 #include "classify.h"
 #include "helpers.h"
 #include "serialis.h"
-#include "unichar.h"
+#include <tesseract/unichar.h>
 
 #define MAX_CUTOFF      1000
 
@@ -55,6 +55,7 @@ void Classify::ReadNewCutoffs(TFile* fp, uint16_t* Cutoffs) {
     std::string Class;
     CLASS_ID ClassId;
     std::istringstream stream(line);
+    stream.imbue(std::locale::classic());
     stream >> Class >> Cutoff;
     if (stream.fail()) {
       break;

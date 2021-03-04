@@ -19,11 +19,7 @@
 #include "include_gunit.h"
 #include "log.h"
 
-using tesseract::DocumentCache;
-using tesseract::DocumentData;
-using tesseract::ImageData;
-
-namespace {
+namespace tesseract {
 
 // Tests the caching mechanism of DocumentData/ImageData.
 
@@ -31,6 +27,7 @@ class ImagedataTest : public ::testing::Test {
  protected:
   void SetUp() {
     std::locale::global(std::locale(""));
+    file::MakeTmpdir();
   }
 
   ImagedataTest() {}
@@ -90,7 +87,7 @@ TEST_F(ImagedataTest, CachesProperly) {
       //EXPECT_NE(reinterpret_cast<ImageData*>(nullptr), imagedata);
       // Check that this is the right page.
       EXPECT_STREQ(page_texts[page].c_str(),
-                   imagedata->transcription().string());
+                   imagedata->transcription().c_str());
     }
   }
 }
@@ -101,7 +98,7 @@ TEST_F(ImagedataTest, CachesMultiDocs) {
   // Number of pages in each document.
   const std::vector<int> kNumPages = {6, 5, 7};
   std::vector<std::vector<std::string>> page_texts;
-  GenericVector<STRING> filenames;
+  std::vector<STRING> filenames;
   for (size_t d = 0; d < kNumPages.size(); ++d) {
     page_texts.emplace_back(std::vector<std::string>());
     std::string filename = MakeFakeDoc(kNumPages[d], d, &page_texts.back());
@@ -123,11 +120,11 @@ TEST_F(ImagedataTest, CachesMultiDocs) {
     int robin_page = p / kNumPages.size() % kNumPages[robin_doc];
     // Check that this is the right page.
     EXPECT_STREQ(page_texts[robin_doc][robin_page].c_str(),
-                 robin_data->transcription().string());
+                 robin_data->transcription().c_str());
     int serial_doc = p / kNumPages[0] % kNumPages.size();
     int serial_page = p % kNumPages[0] % kNumPages[serial_doc];
     EXPECT_STREQ(page_texts[serial_doc][serial_page].c_str(),
-                 serial_data->transcription().string());
+                 serial_data->transcription().c_str());
   }
 }
 

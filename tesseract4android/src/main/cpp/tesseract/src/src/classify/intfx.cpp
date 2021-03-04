@@ -19,19 +19,24 @@
 ----------------------------------------------------------------------------**/
 
 #define _USE_MATH_DEFINES       // for M_PI
+
 #include "intfx.h"
-#include <cmath>                // for M_PI
-#include "allheaders.h"
-#include "ccutil.h"
+
 #include "classify.h"
-#include "helpers.h"
 #include "intmatcher.h"
 #include "linlsq.h"
 #include "normalis.h"
 #include "statistc.h"
 #include "trainingsample.h"
 
-using tesseract::TrainingSample;
+#include "helpers.h"
+
+#include <allheaders.h>
+
+#include <cmath>                // for M_PI
+#include <mutex>                // for std::mutex
+
+namespace tesseract {
 
 /**----------------------------------------------------------------------------
         Global Data Definitions and Declarations
@@ -48,9 +53,9 @@ static float sin_table[INT_CHAR_NORM_RANGE];
 
 void InitIntegerFX() {
   // Guards write access to AtanTable so we don't create it more than once.
-  static tesseract::CCUtilMutex atan_table_mutex;
+  static std::mutex atan_table_mutex;
   static bool atan_table_init = false;
-  atan_table_mutex.Lock();
+  std::lock_guard<std::mutex> guard(atan_table_mutex);
   if (!atan_table_init) {
     for (int i = 0; i < INT_CHAR_NORM_RANGE; ++i) {
       cos_table[i] = cos(i * 2 * M_PI / INT_CHAR_NORM_RANGE + M_PI);
@@ -58,7 +63,6 @@ void InitIntegerFX() {
     }
     atan_table_init = true;
   }
-  atan_table_mutex.Unlock();
 }
 
 // Returns a vector representing the direction of a feature with the given
@@ -67,8 +71,6 @@ FCOORD FeatureDirection(uint8_t theta) {
   return FCOORD(cos_table[theta], sin_table[theta]);
 }
 
-namespace tesseract {
-
 // Generates a TrainingSample from a TBLOB. Extracts features and sets
 // the bounding box, so classifiers that operate on the image can work.
 // TODO(rays) Make BlobToTrainingSample a member of Classify now that
@@ -76,8 +78,8 @@ namespace tesseract {
 // is now a member of Classify.
 TrainingSample* BlobToTrainingSample(
     const TBLOB& blob, bool nonlinear_norm, INT_FX_RESULT_STRUCT* fx_info,
-    GenericVector<INT_FEATURE_STRUCT>* bl_features) {
-  GenericVector<INT_FEATURE_STRUCT> cn_features;
+    std::vector<INT_FEATURE_STRUCT>* bl_features) {
+  std::vector<INT_FEATURE_STRUCT> cn_features;
   Classify::ExtractFeatures(blob, nonlinear_norm, bl_features,
                             &cn_features, fx_info, nullptr);
   // TODO(rays) Use blob->PreciseBoundingBox() instead.
@@ -232,7 +234,7 @@ static FCOORD MeanDirectionVector(const LLSQ& point_diffs, const LLSQ& dirs,
 // Features are spaced at feature_length intervals.
 static int ComputeFeatures(const FCOORD& start_pt, const FCOORD& end_pt,
                            double feature_length,
-                           GenericVector<INT_FEATURE_STRUCT>* features) {
+                           std::vector<INT_FEATURE_STRUCT>* features) {
   FCOORD feature_vector(end_pt - start_pt);
   if (feature_vector.x() == 0.0f && feature_vector.y() == 0.0f) return 0;
   // Compute theta for the feature based on its direction.
@@ -326,7 +328,7 @@ static int GatherPoints(const C_OUTLINE* outline, double feature_length,
 static void ExtractFeaturesFromRun(
     const EDGEPT* startpt, const EDGEPT* lastpt,
     const DENORM& denorm, double feature_length, bool force_poly,
-    GenericVector<INT_FEATURE_STRUCT>* features) {
+    std::vector<INT_FEATURE_STRUCT>* features) {
   const EDGEPT* endpt = lastpt->next;
   const C_OUTLINE* outline = startpt->src_outline;
   if (outline != nullptr && !force_poly) {
@@ -441,8 +443,8 @@ static void ExtractFeaturesFromRun(
 // after the second outline, there were (*outline_cn_counts)[1] features etc.
 void Classify::ExtractFeatures(const TBLOB& blob,
                                bool nonlinear_norm,
-                               GenericVector<INT_FEATURE_STRUCT>* bl_features,
-                               GenericVector<INT_FEATURE_STRUCT>* cn_features,
+                               std::vector<INT_FEATURE_STRUCT>* bl_features,
+                               std::vector<INT_FEATURE_STRUCT>* cn_features,
                                INT_FX_RESULT_STRUCT* results,
                                GenericVector<int>* outline_cn_counts) {
   DENORM bl_denorm, cn_denorm;

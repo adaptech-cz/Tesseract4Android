@@ -19,14 +19,14 @@
 #ifndef SERIALIS_H
 #define SERIALIS_H
 
+#include <tesseract/baseapi.h> // FileReader
 #include <cstdint>  // uint8_t
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <vector>   // std::vector
 
-template <typename T>
-class GenericVector;
-class STRING;
+namespace tesseract {
 
 /***********************************************************************
   QUOTE_IT   MACRO DEFINITION
@@ -36,44 +36,37 @@ Replace <parm> with "<parm>".  <parm> may be an arbitrary number of tokens
 
 #define QUOTE_IT(parm) #parm
 
-namespace tesseract {
-
 // Return number of elements of an array.
 template <typename T, size_t N>
 constexpr size_t countof(T const (&)[N]) noexcept {
   return N;
 }
 
-// Function to read a GenericVector<char> from a whole file.
+// Function to write a std::vector<char> to a whole file.
 // Returns false on failure.
-using FileReader = bool (*)(const STRING&, GenericVector<char>*);
-// Function to write a GenericVector<char> to a whole file.
-// Returns false on failure.
-using FileWriter = bool (*)(const GenericVector<char>&, const STRING&);
+using FileWriter = bool (*)(const std::vector<char>& data,
+                            const char* filename);
+
+TESS_API
+bool LoadDataFromFile(const char* filename, std::vector<char>* data);
+TESS_API
+bool SaveDataToFile(const std::vector<char>& data, const char* filename);
 
 // Deserialize data from file.
-bool DeSerialize(FILE* fp, char* data, size_t n = 1);
-bool DeSerialize(FILE* fp, float* data, size_t n = 1);
-bool DeSerialize(FILE* fp, int8_t* data, size_t n = 1);
-bool DeSerialize(FILE* fp, int16_t* data, size_t n = 1);
-bool DeSerialize(FILE* fp, int32_t* data, size_t n = 1);
-bool DeSerialize(FILE* fp, uint8_t* data, size_t n = 1);
-bool DeSerialize(FILE* fp, uint16_t* data, size_t n = 1);
-bool DeSerialize(FILE* fp, uint32_t* data, size_t n = 1);
+template <typename T>
+bool DeSerialize(FILE *fp, T *data, size_t n = 1) {
+  return fread(data, sizeof(T), n, fp) == n;
+}
 
 // Serialize data to file.
-bool Serialize(FILE* fp, const char* data, size_t n = 1);
-bool Serialize(FILE* fp, const float* data, size_t n = 1);
-bool Serialize(FILE* fp, const int8_t* data, size_t n = 1);
-bool Serialize(FILE* fp, const int16_t* data, size_t n = 1);
-bool Serialize(FILE* fp, const int32_t* data, size_t n = 1);
-bool Serialize(FILE* fp, const uint8_t* data, size_t n = 1);
-bool Serialize(FILE* fp, const uint16_t* data, size_t n = 1);
-bool Serialize(FILE* fp, const uint32_t* data, size_t n = 1);
+template <typename T>
+bool Serialize(FILE *fp, const T *data, size_t n = 1) {
+  return fwrite(data, sizeof(T), n, fp) == n;
+}
 
 // Simple file class.
 // Allows for portable file input from memory and from foreign file systems.
-class TFile {
+class TESS_API TFile {
  public:
   TFile();
   ~TFile();
@@ -81,7 +74,7 @@ class TFile {
   // All the Open methods load the whole file into memory for reading.
   // Opens a file with a supplied reader, or nullptr to use the default.
   // Note that mixed read/write is not supported.
-  bool Open(const STRING& filename, FileReader reader);
+  bool Open(const char* filename, FileReader reader);
   // From an existing memory buffer.
   bool Open(const char* data, int size);
   // From an open file and an end offset.
@@ -92,30 +85,46 @@ class TFile {
   }
 
   // Deserialize data.
-  bool DeSerialize(char* data, size_t count = 1);
-  bool DeSerialize(double* data, size_t count = 1);
-  bool DeSerialize(float* data, size_t count = 1);
-  bool DeSerialize(int8_t* data, size_t count = 1);
-  bool DeSerialize(int16_t* data, size_t count = 1);
-  bool DeSerialize(int32_t* data, size_t count = 1);
-  bool DeSerialize(int64_t* data, size_t count = 1);
-  bool DeSerialize(uint8_t* data, size_t count = 1);
-  bool DeSerialize(uint16_t* data, size_t count = 1);
-  bool DeSerialize(uint32_t* data, size_t count = 1);
-  bool DeSerialize(uint64_t* data, size_t count = 1);
+  bool DeSerialize(std::string& data);
+  bool DeSerialize(std::vector<char>& data);
+  template <typename T> bool DeSerialize(std::vector<T>& data);
+  template <typename T>
+  bool DeSerialize(T *data, size_t count = 1) {
+      return FReadEndian(data, sizeof(T), count) == count;
+  }
 
   // Serialize data.
-  bool Serialize(const char* data, size_t count = 1);
-  bool Serialize(const double* data, size_t count = 1);
-  bool Serialize(const float* data, size_t count = 1);
-  bool Serialize(const int8_t* data, size_t count = 1);
-  bool Serialize(const int16_t* data, size_t count = 1);
-  bool Serialize(const int32_t* data, size_t count = 1);
-  bool Serialize(const int64_t* data, size_t count = 1);
-  bool Serialize(const uint8_t* data, size_t count = 1);
-  bool Serialize(const uint16_t* data, size_t count = 1);
-  bool Serialize(const uint32_t* data, size_t count = 1);
-  bool Serialize(const uint64_t* data, size_t count = 1);
+  bool Serialize(const std::string& data);
+  bool Serialize(const std::vector<char>& data);
+  template <typename T>
+  bool Serialize(const std::vector<T>& data);
+  template <typename T>
+  bool Serialize(const T *data, size_t count = 1) {
+      return FWrite(data, sizeof(T), count) == count;
+  }
+  template <typename T>
+  bool SerializeClasses(const std::vector<T> &data) {
+    int32_t sz = data.size();
+    if (FWrite(&sz, sizeof(sz), 1) != 1)
+      return false;
+    for (auto &d : data) {
+      if (!d.Serialize(this))
+        return false;
+    }
+    return true;
+  }
+  template <typename T>
+  bool DeSerializeClasses(std::vector<T> &data) {
+    int32_t sz = data.size();
+    if (FRead(&sz, sizeof(sz), 1) != 1)
+      return false;
+    data.resize(sz);
+    for (auto &d : data) {
+      if (!d.DeSerialize(this))
+        return false;
+    }
+    return true;
+  }
 
   // Skip data.
   bool Skip(size_t count);
@@ -137,18 +146,18 @@ class TFile {
   // Open for writing. Either supply a non-nullptr data with OpenWrite before
   // calling FWrite, (no close required), or supply a nullptr data to OpenWrite
   // and call CloseWrite to write to a file after the FWrites.
-  void OpenWrite(GenericVector<char>* data);
-  bool CloseWrite(const STRING& filename, FileWriter writer);
+  void OpenWrite(std::vector<char>* data);
+  bool CloseWrite(const char* filename, FileWriter writer);
 
   // Replicates fwrite, returning the number of items written.
   // To use fprintf, use snprintf and FWrite.
   int FWrite(const void* buffer, size_t size, int count);
 
  private:
+  // The buffered data from the file.
+  std::vector<char>* data_;
   // The number of bytes used so far.
   int offset_;
-  // The buffered data from the file.
-  GenericVector<char>* data_;
   // True if the data_ pointer is owned by *this.
   bool data_is_owned_;
   // True if the TFile is open for writing.

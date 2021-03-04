@@ -19,11 +19,15 @@
 #ifndef POINTS_H
 #define POINTS_H
 
-#include <cmath>                // for sqrt, atan2
-#include <cstdio>
 #include "elst.h"
 #include "errcode.h"            // for ASSERT_HOST
-#include "platform.h"           // for DLLSYM
+
+#include <tesseract/export.h>           // for DLLSYM
+
+#include <cmath>                // for sqrt, atan2
+#include <cstdio>
+
+namespace tesseract {
 
 class FCOORD;
 
@@ -71,7 +75,7 @@ class ICOORD
 
     ///find sq length
     float sqlength() const {
-      return xcoord * xcoord + ycoord * ycoord;
+      return (float)(xcoord * xcoord + ycoord * ycoord);
     }
 
     ///find length
@@ -95,7 +99,7 @@ class ICOORD
 
     ///find angle
     float angle() const {
-      return std::atan2(ycoord, xcoord);
+      return (float)std::atan2(ycoord, xcoord);
     }
 
     ///test equality
@@ -158,7 +162,7 @@ class ICOORD
     int16_t ycoord;                ///< y value
 };
 
-class DLLSYM ICOORDELT:public ELIST_LINK, public ICOORD
+class ICOORDELT : public ELIST_LINK, public ICOORD
                                  //embedded coord list
 {
   public:
@@ -185,7 +189,8 @@ class DLLSYM ICOORDELT:public ELIST_LINK, public ICOORD
 };
 
 ELISTIZEH (ICOORDELT)
-class DLLSYM FCOORD
+
+class TESS_API FCOORD
 {
   public:
     ///empty constructor
@@ -772,5 +777,7 @@ inline void FCOORD::rotate(  //rotate by vector
 inline void FCOORD::unrotate(const FCOORD& vec) {
   rotate(FCOORD(vec.x(), -vec.y()));
 }
+
+}  // namespace tesseract
 
 #endif

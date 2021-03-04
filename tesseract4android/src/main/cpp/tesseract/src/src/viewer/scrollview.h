@@ -2,7 +2,6 @@
 // File:        scrollview.h
 // Description: ScrollView
 // Author:      Joern Wanke
-// Created:     Thu Nov 29 2007
 //
 // (C) Copyright 2007, Google Inc.
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,14 +30,18 @@
 
 #ifndef TESSERACT_VIEWER_SCROLLVIEW_H_
 #define TESSERACT_VIEWER_SCROLLVIEW_H_
-// TODO(rays) Move ScrollView into the tesseract namespace.
-#ifndef OCR_SCROLLVIEW_H__
+
+#include <tesseract/export.h>
 
 #include <cstdio>
+#include <mutex>
+
+struct Pix;
+
+namespace tesseract {
 
 class ScrollView;
 class SVNetwork;
-class SVMutex;
 class SVSemaphore;
 struct SVPolyLineBuffer;
 
@@ -88,14 +91,13 @@ class SVEventHandler {
     virtual void Notify(const SVEvent* sve) { (void)sve; }
 };
 
-// The ScrollView class provides the expernal API to the scrollviewer process.
+// The ScrollView class provides the external API to the scrollviewer process.
 // The scrollviewer process manages windows and displays images, graphics and
 // text while allowing the user to zoom and scroll the windows arbitrarily.
 // Each ScrollView class instance represents one window, and stuff is drawn in
 // the window through method calls on the class. The constructor is used to
 // create the class instance (and the window).
-
-class ScrollView {
+class TESS_API ScrollView {
  public:
 // Color enum for pens and brushes.
   enum Color {
@@ -200,7 +202,7 @@ class ScrollView {
 *******************************************************************************/
 
 // Draw a Pix on (x,y).
-  void Image(struct Pix* image, int x_pos, int y_pos);
+  void Image(Pix* image, int x_pos, int y_pos);
 
 // Flush buffers and update display.
   static void Update();
@@ -342,6 +344,8 @@ class ScrollView {
 // have to be flipped (by ySize).
   int TranslateYCoordinate(int y);
 
+  char Wait();
+
  private:
 // Transfers a binary Image.
   void TransferBinaryImage(struct Pix* image);
@@ -358,8 +362,8 @@ class ScrollView {
 // Send the current buffered polygon (if any) and clear it.
   void SendPolygon();
 
-// Start the message receiving thread.
-  static void* MessageReceiver(void* a);
+  // Start the message receiving thread.
+  static void MessageReceiver();
 
 // Place an event into the event_table (synchronized).
   void SetEvent(SVEvent* svevent);
@@ -370,8 +374,9 @@ class ScrollView {
 // Returns the unique, shared network stream.
   static SVNetwork* GetStream() { return stream_; }
 
-// Starts a new event handler. Called whenever a new window is created.
-  static void* StartEventHandler(void* sv);
+  // Starts a new event handler.
+  // Called asynchronously whenever a new window is created.
+  void StartEventHandler();
 
 // Escapes the ' character with a \, so it can be processed by LUA.
   char* AddEscapeChars(const char* input);
@@ -403,12 +408,13 @@ class ScrollView {
   SVEvent* event_table_[SVET_COUNT];
 
   // Mutex to access the event_table_ in a synchronized fashion.
-  SVMutex* mutex_;
+  std::mutex* mutex_;
 
   // Semaphore to the thread belonging to this window.
   SVSemaphore* semaphore_;
-#endif  // GRAPHICS_DISABLED
+#endif // !GRAPHICS_DISABLED
 };
 
-#endif  // OCR_SCROLLVIEW_H__
+} // namespace tesseract
+
 #endif  // TESSERACT_VIEWER_SCROLLVIEW_H_

@@ -1,5 +1,4 @@
-/* -*-C-*-
- ********************************************************************************
+/******************************************************************************
  *
  * File:         split.cpp  (Formerly split.c)
  * Author:       Mark Seaman, OCR Technology
@@ -16,19 +15,20 @@
  ** limitations under the License.
  *
  *************************************************************************/
-/*----------------------------------------------------------------------
-              I n c l u d e s
-----------------------------------------------------------------------*/
+
 // Include automatically generated configuration file if running autoconf.
 #ifdef HAVE_CONFIG_H
 #include "config_auto.h"
 #endif
 
 #include "split.h"
+
 #include "coutln.h"
 #include "tprintf.h"
 
 #include <algorithm>
+
+namespace tesseract {
 
 /*----------------------------------------------------------------------
               V a r i a b l e s
@@ -39,13 +39,6 @@ const int kCenterGradeCap = 25;
 const double kBadPriority = 999.0;
 
 BOOL_VAR(wordrec_display_splits, 0, "Display splits");
-
-// Returns the bounding box of all the points in the split.
-TBOX SPLIT::bounding_box() const {
-  return TBOX(
-      std::min(point1->pos.x, point2->pos.x), std::min(point1->pos.y, point2->pos.y),
-      std::max(point1->pos.x, point2->pos.x), std::max(point1->pos.y, point2->pos.y));
-}
 
 // Hides the SPLIT so the outlines appear not to be cut by it.
 void SPLIT::Hide() const {
@@ -320,3 +313,5 @@ void SPLIT::UnsplitOutlines() const {
   point2->vec.x = point2->next->pos.x - point2->pos.x;
   point2->vec.y = point2->next->pos.y - point2->pos.y;
 }
+
+} // namespace tesseract

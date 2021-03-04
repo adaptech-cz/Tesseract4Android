@@ -14,7 +14,7 @@
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
-#include "allheaders.h"
+#include <allheaders.h>
 
 #include "include_gunit.h"
 #include "log.h"                        // for LOG
@@ -23,12 +23,12 @@
 #include "unicharcompress.h"
 
 namespace tesseract {
-namespace {
 
 class UnicharcompressTest : public ::testing::Test {
  protected:
   void SetUp() {
     std::locale::global(std::locale(""));
+    file::MakeTmpdir();
   }
 
   // Loads and compresses the given unicharset.
@@ -37,13 +37,10 @@ class UnicharcompressTest : public ::testing::Test {
         file::JoinPath(LANGDATA_DIR, "radical-stroke.txt");
     std::string unicharset_file =
         file::JoinPath(TESTDATA_DIR, unicharset_name);
-    std::string uni_data;
-    CHECK_OK(file::GetContents(unicharset_file, &uni_data, file::Defaults()));
     std::string radical_data;
     CHECK_OK(file::GetContents(radical_stroke_file, &radical_data,
                                file::Defaults()));
-    CHECK(
-        unicharset_.load_from_inmemory_file(uni_data.data(), uni_data.size()));
+    CHECK(unicharset_.load_from_file(unicharset_file.c_str()));
     STRING radical_str(radical_data.c_str());
     null_char_ =
         unicharset_.has_special_codes() ? UNICHAR_BROKEN : unicharset_.size();
@@ -61,7 +58,7 @@ class UnicharcompressTest : public ::testing::Test {
   }
   // Serializes and de-serializes compressed_ over itself.
   void SerializeAndUndo() {
-    GenericVector<char> data;
+    std::vector<char> data;
     TFile wfp;
     wfp.OpenWrite(&data);
     EXPECT_TRUE(compressed_.Serialize(&wfp));
@@ -257,5 +254,4 @@ TEST_F(UnicharcompressTest, GetEncodingAsString) {
   EXPECT_EQ("3\t<nul>", lines[4]);
 }
 
-}  // namespace
 }  // namespace tesseract

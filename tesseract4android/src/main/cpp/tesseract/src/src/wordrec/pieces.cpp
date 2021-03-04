@@ -1,5 +1,4 @@
-/* -*-C-*-
- ********************************************************************************
+/******************************************************************************
  *
  * File:         pieces.cpp  (Formerly pieces.c)
  * Description:
@@ -16,7 +15,7 @@
  ** See the License for the specific language governing permissions and
  ** limitations under the License.
  *
- *********************************************************************************/
+ *****************************************************************************/
 /*----------------------------------------------------------------------
           I n c l u d e s
 ----------------------------------------------------------------------*/
@@ -55,7 +54,7 @@ BLOB_CHOICE_LIST *Wordrec::classify_piece(const GenericVector<SEAM*>& seams,
                                           BlamerBundle *blamer_bundle) {
   if (end > start) SEAM::JoinPieces(seams, word->blobs, start, end);
   BLOB_CHOICE_LIST *choices = classify_blob(word->blobs[start], description,
-                                            White, blamer_bundle);
+                                            ScrollView::WHITE, blamer_bundle);
   // Set the matrix_cell_ entries in all the BLOB_CHOICES.
   BLOB_CHOICE_IT bc_it(choices);
   for (bc_it.mark_cycle_pt(); !bc_it.cycled_list(); bc_it.forward()) {
@@ -189,8 +188,7 @@ void Wordrec::merge_and_put_fragment_lists(int16_t row, int16_t column,
     if (same_unichar) {
       // Add the merged character to the result
       UNICHAR_ID merged_unichar_id = first_unichar_id;
-      GenericVector<ScoredFont> merged_fonts =
-          choice_lists_it[0].data()->fonts();
+      auto merged_fonts = choice_lists_it[0].data()->fonts();
       float merged_min_xheight = choice_lists_it[0].data()->min_xheight();
       float merged_max_xheight = choice_lists_it[0].data()->max_xheight();
       float positive_yshift = 0, negative_yshift = 0;
@@ -217,17 +215,16 @@ void Wordrec::merge_and_put_fragment_lists(int16_t row, int16_t column,
         if (yshift < negative_yshift) negative_yshift = yshift;
         // Use the min font rating over the parts.
         // TODO(rays) font lists are unsorted. Need to be faster?
-        const GenericVector<ScoredFont>& frag_fonts =
-            choice_lists_it[i].data()->fonts();
-        for (int f = 0; f < frag_fonts.size(); ++f) {
+        const auto& frag_fonts = choice_lists_it[i].data()->fonts();
+        for (auto frag_font : frag_fonts) {
           int merged_f = 0;
-          for (merged_f = 0; merged_f < merged_fonts.size() &&
-               merged_fonts[merged_f].fontinfo_id != frag_fonts[f].fontinfo_id;
+          for (; merged_f < merged_fonts.size() &&
+               merged_fonts[merged_f].fontinfo_id != frag_font.fontinfo_id;
                ++merged_f) {}
           if (merged_f == merged_fonts.size()) {
-            merged_fonts.push_back(frag_fonts[f]);
-          } else if (merged_fonts[merged_f].score > frag_fonts[f].score) {
-            merged_fonts[merged_f].score = frag_fonts[f].score;
+            merged_fonts.push_back(frag_font);
+          } else if (merged_fonts[merged_f].score > frag_font.score) {
+            merged_fonts[merged_f].score = frag_font.score;
           }
         }
       }

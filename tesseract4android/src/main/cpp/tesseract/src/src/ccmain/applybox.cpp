@@ -16,22 +16,26 @@
  *
  **********************************************************************/
 
+#ifndef DISABLED_LEGACY_ENGINE
 #include <cctype>
 #include <cerrno>
 #include <cstring>
-#include "allheaders.h"
+#include <allheaders.h>
 #include "boxread.h"
+#endif  // ndef DISABLED_LEGACY_ENGINE
 #include "pageres.h"
-#include "unichar.h"
+#include <tesseract/unichar.h>
 #include "unicharset.h"
 #include "tesseractclass.h"
 #include "genericvector.h"
 
+#ifndef DISABLED_LEGACY_ENGINE
 /** Max number of blobs to classify together in FindSegmentation. */
 const int kMaxGroupSize = 4;
 /// Max fraction of median allowed as deviation in xheight before switching
 /// to median.
 const double kMaxXHeightDeviationFraction = 0.125;
+#endif  // ndef DISABLED_LEGACY_ENGINE
 
 /**
  * The box file is assumed to contain box definitions, one per line, of the
@@ -86,7 +90,7 @@ static void clear_any_old_text(BLOCK_LIST *block_list) {
   }
 }
 
-// Applies the box file based on the image name fname, and resegments
+// Applies the box file based on the image name filename, and resegments
 // the words in the block_list (page), with:
 // blob-mode: one blob per line in the box file, words as input.
 // word/line-mode: one blob per space-delimited unit after the #, and one word
@@ -106,12 +110,12 @@ static void clear_any_old_text(BLOCK_LIST *block_list) {
 // Instead, the correct_text member of WERD_RES is set, and this may be later
 // converted to a best_choice using CorrectClassifyWords. CorrectClassifyWords
 // is not required before calling ApplyBoxTraining.
-PAGE_RES* Tesseract::ApplyBoxes(const STRING& fname,
+PAGE_RES* Tesseract::ApplyBoxes(const char* filename,
                                 bool find_segmentation,
                                 BLOCK_LIST *block_list) {
-  GenericVector<TBOX> boxes;
-  GenericVector<STRING> texts, full_texts;
-  if (!ReadAllBoxes(applybox_page, true, fname, &boxes, &texts, &full_texts,
+  std::vector<TBOX> boxes;
+  std::vector<STRING> texts, full_texts;
+  if (!ReadAllBoxes(applybox_page, true, filename, &boxes, &texts, &full_texts,
                     nullptr)) {
     return nullptr;  // Can't do it.
   }
@@ -132,15 +136,15 @@ PAGE_RES* Tesseract::ApplyBoxes(const STRING& fname,
                                  (i == 0) ? nullptr : &boxes[i - 1],
                                  boxes[i],
                                  (i == box_count - 1) ? nullptr : &boxes[i + 1],
-                                 full_texts[i].string());
+                                 full_texts[i].c_str());
     } else {
       foundit = ResegmentWordBox(block_list, boxes[i],
                                  (i == box_count - 1) ? nullptr : &boxes[i + 1],
-                                 texts[i].string());
+                                 texts[i].c_str());
     }
     if (!foundit) {
       box_failures++;
-      ReportFailedBox(i, boxes[i], texts[i].string(),
+      ReportFailedBox(i, boxes[i], texts[i].c_str(),
                       "FAILURE! Couldn't find a matching blob");
     }
   }
@@ -160,7 +164,6 @@ PAGE_RES* Tesseract::ApplyBoxes(const STRING& fname,
   TidyUp(page_res);
   return page_res;
 }
-#endif  // ndef DISABLED_LEGACY_ENGINE
 
 // Helper computes median xheight in the image.
 static double MedianXHeight(BLOCK_LIST *block_list) {
@@ -200,11 +203,9 @@ void Tesseract::PreenXHeights(BLOCK_LIST *block_list) {
   }
 }
 
-#ifndef DISABLED_LEGACY_ENGINE
-
 /// Builds a PAGE_RES from the block_list in the way required for ApplyBoxes:
 /// All fuzzy spaces are removed, and all the words are maximally chopped.
-PAGE_RES* Tesseract::SetupApplyBoxes(const GenericVector<TBOX>& boxes,
+PAGE_RES* Tesseract::SetupApplyBoxes(const std::vector<TBOX>& boxes,
                                      BLOCK_LIST *block_list) {
   PreenXHeights(block_list);
   // Strip all fuzzy space markers to simplify the PAGE_RES.
@@ -240,7 +241,7 @@ PAGE_RES* Tesseract::SetupApplyBoxes(const GenericVector<TBOX>& boxes,
 /// Tests the chopper by exhaustively running chop_one_blob.
 /// The word_res will contain filled chopped_word, seam_array, denorm,
 /// box_word and best_state for the maximally chopped word.
-void Tesseract::MaximallyChopWord(const GenericVector<TBOX>& boxes,
+void Tesseract::MaximallyChopWord(const std::vector<TBOX>& boxes,
                                   BLOCK* block, ROW* row,
                                   WERD_RES* word_res) {
   if (!word_res->SetupForRecognition(unicharset, this, BestPix(),
@@ -408,7 +409,7 @@ bool Tesseract::ResegmentCharBox(PAGE_RES* page_res, const TBOX* prev_box,
           tprintf("\n");
           tprintf("Correct text = [[ ");
           for (int j = 0; j < word_res->correct_text.size(); ++j) {
-            tprintf("%s ", word_res->correct_text[j].string());
+            tprintf("%s ", word_res->correct_text[j].c_str());
           }
           tprintf("]]\n");
         }
@@ -527,8 +528,6 @@ void Tesseract::ReSegmentByClassification(PAGE_RES* page_res) {
   }
 }
 
-#endif  // ndef DISABLED_LEGACY_ENGINE
-
 /// Converts the space-delimited string of utf8 text to a vector of UNICHAR_ID.
 /// @return false if an invalid UNICHAR_ID is encountered.
 bool Tesseract::ConvertStringToUnichars(const char* utf8,
@@ -548,9 +547,6 @@ bool Tesseract::ConvertStringToUnichars(const char* utf8,
   }
   return true;
 }
-
-#ifndef DISABLED_LEGACY_ENGINE
-
 
 /// Resegments the word to achieve the target_text from the classifier.
 /// Returns false if the re-segmentation fails.
@@ -762,8 +758,6 @@ void Tesseract::TidyUp(PAGE_RES* page_res) {
   }
 }
 
-#endif  // ndef DISABLED_LEGACY_ENGINE
-
 /** Logs a bad box by line in the box file and box coords.*/
 void Tesseract::ReportFailedBox(int boxfile_lineno, TBOX box,
                                 const char *box_ch, const char *err_msg) {
@@ -771,6 +765,21 @@ void Tesseract::ReportFailedBox(int boxfile_lineno, TBOX box,
           boxfile_lineno + 1, box_ch,
           box.left(), box.bottom(), box.right(), box.top(), err_msg);
 }
+
+/// Calls #LearnWord to extract features for labelled blobs within each word.
+/// Features are stored in an internal buffer.
+void Tesseract::ApplyBoxTraining(const STRING& fontname, PAGE_RES* page_res) {
+  PAGE_RES_IT pr_it(page_res);
+  int word_count = 0;
+  for (WERD_RES *word_res = pr_it.word(); word_res != nullptr;
+       word_res = pr_it.forward()) {
+    LearnWord(fontname.c_str(), word_res);
+    ++word_count;
+  }
+  tprintf("Generated training data for %d words\n", word_count);
+}
+
+#endif  // ndef DISABLED_LEGACY_ENGINE
 
 /** Creates a fake best_choice entry in each WERD_RES with the correct text.*/
 void Tesseract::CorrectClassifyWords(PAGE_RES* page_res) {
@@ -782,9 +791,9 @@ void Tesseract::CorrectClassifyWords(PAGE_RES* page_res) {
     for (int i = 0; i < word_res->correct_text.size(); ++i) {
       // The part before the first space is the real ground truth, and the
       // rest is the bounding box location and page number.
-      GenericVector<STRING> tokens;
+      std::vector<STRING> tokens;
       word_res->correct_text[i].split(' ', &tokens);
-      UNICHAR_ID char_id = unicharset.unichar_to_id(tokens[0].string());
+      UNICHAR_ID char_id = unicharset.unichar_to_id(tokens[0].c_str());
       choice->append_unichar_id_space_allocated(char_id,
                                                 word_res->best_state[i],
                                                 0.0f, 0.0f);
@@ -794,23 +803,5 @@ void Tesseract::CorrectClassifyWords(PAGE_RES* page_res) {
     word_res->LogNewCookedChoice(1, false, choice);
   }
 }
-
-#ifndef DISABLED_LEGACY_ENGINE
-
-
-/// Calls #LearnWord to extract features for labelled blobs within each word.
-/// Features are stored in an internal buffer.
-void Tesseract::ApplyBoxTraining(const STRING& fontname, PAGE_RES* page_res) {
-  PAGE_RES_IT pr_it(page_res);
-  int word_count = 0;
-  for (WERD_RES *word_res = pr_it.word(); word_res != nullptr;
-       word_res = pr_it.forward()) {
-    LearnWord(fontname.string(), word_res);
-    ++word_count;
-  }
-  tprintf("Generated training data for %d words\n", word_count);
-}
-
-#endif  // ndef DISABLED_LEGACY_ENGINE
 
 }  // namespace tesseract

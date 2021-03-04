@@ -3,7 +3,6 @@
 // Description: Class to hold partitions of the page that correspond
 //              roughly to text lines.
 // Author:      Ray Smith
-// Created:     Thu Aug 14 10:50:01 PDT 2008
 //
 // (C) Copyright 2008, Google Inc.
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -65,7 +64,7 @@ CLISTIZEH(ColPartition)
  * to a given y-coordinate range, eventually, a ColPartitionSet of ColPartitions
  * emerges, which represents the columns over a wide y-coordinate range.
  */
-class ColPartition : public ELIST2_LINK {
+class TESS_API ColPartition : public ELIST2_LINK {
  public:
   // This empty constructor is here only so that the class can be ELISTIZED.
   // TODO(rays) change deep_copy in elst.h line 955 to take a callback copier
@@ -573,7 +572,7 @@ class ColPartition : public ELIST2_LINK {
   ColPartition* SingletonPartner(bool upper);
 
   // Merge with the other partition and delete it.
-  void Absorb(ColPartition* other, WidthCallback* cb);
+  void Absorb(ColPartition* other, WidthCallback cb);
 
   // Returns true if the overlap between this and the merged pair of
   // merge candidates is sufficiently trivial to be allowed.
@@ -618,7 +617,7 @@ class ColPartition : public ELIST2_LINK {
                    int* first_col, int* last_col);
 
   // Sets the internal flags good_width_ and good_column_.
-  void SetColumnGoodness(WidthCallback* cb);
+  void SetColumnGoodness(WidthCallback cb);
 
   // Determines whether the blobs in this partition mostly represent
   // a leader (fixed pitch sequence) and sets the member blobs accordingly.
@@ -688,7 +687,7 @@ class ColPartition : public ELIST2_LINK {
   #ifndef GRAPHICS_DISABLED
   // Provides a color for BBGrid to draw the rectangle.
   ScrollView::Color  BoxColor() const;
-  #endif  // GRAPHICS_DISABLED
+  #endif // !GRAPHICS_DISABLED
 
   // Prints debug information on this.
   void Print() const;
@@ -737,18 +736,6 @@ class ColPartition : public ELIST2_LINK {
   }
 
  private:
-  // enum to refer to the entries in a neighbourhood of lines.
-  // Used by SmoothSpacings to test for blips with OKSpacingBlip.
-  enum SpacingNeighbourhood {
-    PN_ABOVE2,
-    PN_ABOVE1,
-    PN_UPPER,
-    PN_LOWER,
-    PN_BELOW1,
-    PN_BELOW2,
-    PN_COUNT
-  };
-
   // Cleans up the partners above if upper is true, else below.
   // If get_desperate is true, goes to more desperate merge methods
   // to merge flowing text before breaking partnerships.
@@ -787,7 +774,7 @@ class ColPartition : public ELIST2_LINK {
   // condition for a spacing blip. See SmoothSpacings for what this means
   // and how it is used.
   static bool OKSpacingBlip(int resolution, int median_spacing,
-                            ColPartition** parts);
+                            ColPartition** parts, int offset);
 
   // Returns true if both the top and bottom spacings of this match the given
   // spacing to within suitable margins dictated by the image resolution.

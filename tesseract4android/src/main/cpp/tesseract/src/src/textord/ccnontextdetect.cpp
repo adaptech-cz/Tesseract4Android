@@ -1,10 +1,9 @@
 ///////////////////////////////////////////////////////////////////////
 // File:        ccnontextdetect.cpp
 // Description: Connected-Component-based photo (non-text) detection.
-// Copyright 2011 Google Inc. All Rights Reserved.
-// Author: rays@google.com (Ray Smith)
-// Created:     Sat Jun 11 10:12:01 PST 2011
+// Author:      rays@google.com (Ray Smith)
 //
+// Copyright 2011 Google Inc. All Rights Reserved.
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -113,7 +112,7 @@ Pix* CCNonTextDetect::ComputeNonTextMask(bool debug, Pix* photo_map,
   if (debug) {
     win = MakeWindow(0, 400, "Photo Mask Blobs");
   }
-  #endif  // GRAPHICS_DISABLED
+  #endif // !GRAPHICS_DISABLED
   // Large and medium blobs are not text if they overlap with "a lot" of small
   // blobs.
   MarkAndDeleteNonTextBlobs(&blob_block->large_blobs,
@@ -138,12 +137,12 @@ Pix* CCNonTextDetect::ComputeNonTextMask(bool debug, Pix* photo_map,
   if (debug) {
     #ifndef GRAPHICS_DISABLED
     win->Update();
-    #endif  // GRAPHICS_DISABLED
+    #endif // !GRAPHICS_DISABLED
     pixWrite("junkccphotomask.png", pix, IFF_PNG);
     #ifndef GRAPHICS_DISABLED
     delete win->AwaitEvent(SVET_DESTROY);
     delete win;
-    #endif  // GRAPHICS_DISABLED
+    #endif // !GRAPHICS_DISABLED
   }
   return pix;
 }
@@ -263,7 +262,7 @@ void CCNonTextDetect::MarkAndDeleteNonTextBlobs(BLOBNBOX_LIST* blobs,
       #ifndef GRAPHICS_DISABLED
       if (win != nullptr)
         blob->plot(win, ok_color, ok_color);
-      #endif  // GRAPHICS_DISABLED
+      #endif // !GRAPHICS_DISABLED
     } else {
       if (noise_density_->AnyZeroInRect(box)) {
         // There is a danger that the bounding box may overlap real text, so
@@ -287,7 +286,7 @@ void CCNonTextDetect::MarkAndDeleteNonTextBlobs(BLOBNBOX_LIST* blobs,
       #ifndef GRAPHICS_DISABLED
       if (win != nullptr)
         blob->plot(win, ScrollView::RED, ScrollView::RED);
-      #endif  // GRAPHICS_DISABLED
+      #endif // !GRAPHICS_DISABLED
       // It is safe to delete the cblob now, as it isn't used by the grid
       // or BlobOverlapsTooMuch, and the BLOBNBOXes will go away with the
       // dead_blobs list.

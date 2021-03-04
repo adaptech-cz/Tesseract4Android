@@ -24,15 +24,15 @@
 
 #include <algorithm>
 
+namespace tesseract {
+
 INT_VAR(textord_debug_tabfind, 0, "Debug tab finding");
 INT_VAR(textord_debug_bugs, 0, "Turn on output related to bugs in tab finding");
-static INT_VAR(textord_testregion_left, -1, "Left edge of debug reporting rectangle");
-static INT_VAR(textord_testregion_top, -1, "Top edge of debug reporting rectangle");
-static INT_VAR(textord_testregion_right, INT32_MAX, "Right edge of debug rectangle");
-static INT_VAR(textord_testregion_bottom, INT32_MAX, "Bottom edge of debug rectangle");
+static INT_VAR(textord_testregion_left, -1, "Left edge of debug reporting rectangle in Leptonica coords (bottom=0/top=height), with horizontal lines x/y-flipped");
+static INT_VAR(textord_testregion_top, INT32_MAX, "Top edge of debug reporting rectangle in Leptonica coords (bottom=0/top=height), with horizontal lines x/y-flipped");
+static INT_VAR(textord_testregion_right, INT32_MAX, "Right edge of debug rectangle in Leptonica coords (bottom=0/top=height), with horizontal lines x/y-flipped");
+static INT_VAR(textord_testregion_bottom, -1, "Bottom edge of debug rectangle in Leptonica coords (bottom=0/top=height), with horizontal lines x/y-flipped");
 BOOL_VAR(textord_debug_printable, false, "Make debug windows printable");
-
-namespace tesseract {
 
 // Fraction of resolution used as alignment tolerance for aligned tabs.
 const double kAlignedFraction = 0.03125;
@@ -53,7 +53,7 @@ const int kMinRaggedTabs = 5;
 // Min number of points to accept for an aligned tab stop.
 const int kMinAlignedTabs = 4;
 // Constant number of pixels minimum height of a vertical line.
-const int kVLineMinLength = 500;
+const int kVLineMinLength = 300;
 // Minimum gradient for a vertical tab vector. Used to prune away junk
 // tab vectors with what would be a ridiculously large skew angle.
 // Value corresponds to tan(90 - max allowed skew angle)
@@ -154,10 +154,11 @@ bool AlignedBlob::WithinTestRegion(int detail_level, int x, int y) {
          y <= textord_testregion_top && y >= textord_testregion_bottom;
 }
 
+#ifndef GRAPHICS_DISABLED
+
 // Display the tab codes of the BLOBNBOXes in this grid.
 ScrollView* AlignedBlob::DisplayTabs(const char* window_name,
                                      ScrollView* tab_win) {
-#ifndef GRAPHICS_DISABLED
   if (tab_win == nullptr)
     tab_win = MakeWindow(0, 50, window_name);
   // For every tab in the grid, display it.
@@ -196,9 +197,10 @@ ScrollView* AlignedBlob::DisplayTabs(const char* window_name,
     }
   }
   tab_win->Update();
-#endif
   return tab_win;
 }
+
+#endif // !GRAPHICS_DISABLED
 
 // Helper returns true if the total number of line_crossings of all the blobs
 // in the list is at least 2.
@@ -384,7 +386,7 @@ BLOBNBOX* AlignedBlob::FindAlignedBlob(const AlignedBlobParams& p,
   // Compute skew tolerance.
   int skew_tolerance = p.max_v_gap / kMaxSkewFactor;
   // Calculate xmin and xmax of the search box so that it contains
-  // all possibly relevant boxes up to p.max_v_gap above or below accoording
+  // all possibly relevant boxes up to p.max_v_gap above or below according
   // to top_to_bottom.
   // Start with a notion of vertical with the current estimate.
   int x2 = (p.max_v_gap * p.vertical.x() + p.vertical.y()/2) / p.vertical.y();

@@ -3,7 +3,6 @@
 // Description: Module allowing precise error causes to be allocated.
 // Author:      Rike Antonova
 // Refactored:  Ray Smith
-// Created:     Mon Feb 04 14:37:01 PST 2013
 //
 // (C) Copyright 2013, Google Inc.
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,18 +20,25 @@
 #ifndef TESSERACT_CCSTRUCT_BLAMER_H_
 #define TESSERACT_CCSTRUCT_BLAMER_H_
 
-#include <cstdint>                    // for int16_t
-#include <cstring>                    // for memcpy
+#ifdef HAVE_CONFIG_H
+#include "config_auto.h" // DISABLED_LEGACY_ENGINE
+#endif
 #include "boxword.h"                  // for BoxWord
-#include "genericvector.h"            // for GenericVector
 #ifndef DISABLED_LEGACY_ENGINE
 #include "params_training_featdef.h"  // for ParamsTrainingBundle, ParamsTra...
 #endif //  ndef DISABLED_LEGACY_ENGINE
 #include "ratngs.h"                   // for BLOB_CHOICE_LIST (ptr only)
 #include "rect.h"                     // for TBOX
-#include "strngs.h"                   // for STRING
 #include "tprintf.h"                  // for tprintf
-#include "unichar.h"                  // for UNICHAR_ID
+
+#include <tesseract/unichar.h>        // for UNICHAR_ID
+#include "strngs.h"                   // for STRING
+
+#include <cstdint>                    // for int16_t
+#include <cstring>                    // for memcpy
+#include <vector>                     // for std::vector
+
+namespace tesseract {
 
 class DENORM;
 class MATRIX;
@@ -42,7 +48,7 @@ class WERD_RES;
 struct MATRIX_COORD;
 struct TWERD;
 
-template <class R, class A1, class A2> class TessResultCallback2;
+class LMPainPoints;
 
 static const int16_t kBlamerBoxTolerance = 5;
 
@@ -113,8 +119,9 @@ struct BlamerBundle {
   // Accessors.
   STRING TruthString() const {
     STRING truth_str;
-    for (int i = 0; i < truth_text_.length(); ++i)
-      truth_str += truth_text_[i];
+    for (auto& text : truth_text_) {
+      truth_str += text;
+    }
     return truth_str;
   }
   IncorrectResultReason incorrect_result_reason() const {
@@ -138,7 +145,7 @@ struct BlamerBundle {
       best_correctly_segmented_rating_ = rating;
   }
   int correct_segmentation_length() const {
-    return correct_segmentation_cols_.length();
+    return correct_segmentation_cols_.size();
   }
   // Returns true if the given ratings matrix col,row position is included
   // in the correct segmentation path at the given index.
@@ -270,14 +277,11 @@ struct BlamerBundle {
   // Returns true if a guided segmentation search is needed.
   bool GuidedSegsearchNeeded(const WERD_CHOICE *best_choice) const;
   // Setup ready to guide the segmentation search to the correct segmentation.
-  // The callback pp_cb is used to avoid a cyclic dependency.
-  // It calls into LMPainPoints::GenerateForBlamer by pre-binding the
-  // WERD_RES, and the LMPainPoints itself.
-  // pp_cb must be a permanent callback, and should be deleted by the caller.
-  void InitForSegSearch(const WERD_CHOICE *best_choice,
+  void InitForSegSearch(const WERD_CHOICE* best_choice,
                         MATRIX* ratings, UNICHAR_ID wildcard_id,
-                        bool debug, STRING *debug_str,
-                        TessResultCallback2<bool, int, int>* pp_cb);
+                        bool debug, STRING* debug_str,
+                        tesseract::LMPainPoints* pain_points,
+                        double max_char_wh_ratio, WERD_RES* word_res);
   // Returns true if the guided segsearch is in progress.
   bool GuidedSegsearchStillGoing() const;
   // The segmentation search has ended. Sets the blame appropriately.
@@ -301,50 +305,51 @@ struct BlamerBundle {
     debug_ = IncorrectReason();
     debug_ += " to blame: ";
     FillDebugString(msg, choice, &debug_);
-    if (debug) tprintf("SetBlame(): %s", debug_.string());
+    if (debug) tprintf("SetBlame(): %s", debug_.c_str());
   }
 
  private:
   // Set to true when bounding boxes for individual unichars are recorded.
   bool truth_has_char_boxes_;
+  // Variables used by the segmentation search when looking for the blame.
+  // Set to true while segmentation search is continued after the usual
+  // termination condition in order to look for the blame.
+  bool segsearch_is_looking_for_blame_;
+  // Set to true if best choice is a dictionary word and
+  // classifier's top choice.
+  bool best_choice_is_dict_and_top_choice_;
+  // Tolerance for bounding box comparisons in normalized space.
+  int norm_box_tolerance_;
   // The true_word (in the original image coordinate space) contains ground
   // truth bounding boxes for this WERD_RES.
   tesseract::BoxWord truth_word_;
   // Same as above, but in normalized coordinates
   // (filled in by WERD_RES::SetupForRecognition()).
   tesseract::BoxWord norm_truth_word_;
-  // Tolerance for bounding box comparisons in normalized space.
-  int norm_box_tolerance_;
   // Contains ground truth unichar for each of the bounding boxes in truth_word.
-  GenericVector<STRING> truth_text_;
+  std::vector<STRING> truth_text_;
   // The reason for incorrect OCR result.
   IncorrectResultReason incorrect_result_reason_;
   // Debug text associated with the blame.
   STRING debug_;
   // Misadaption debug information (filled in if this word was misadapted to).
   STRING misadaption_debug_;
-  // Variables used by the segmentation search when looking for the blame.
-  // Set to true while segmentation search is continued after the usual
-  // termination condition in order to look for the blame.
-  bool segsearch_is_looking_for_blame_;
+  // Vectors populated by SegSearch to indicate column and row indices that
+  // correspond to blobs with correct bounding boxes.
+  std::vector<int> correct_segmentation_cols_;
+  std::vector<int> correct_segmentation_rows_;
   // Best rating for correctly segmented path
   // (set and used by SegSearch when looking for blame).
   float best_correctly_segmented_rating_;
-  // Vectors populated by SegSearch to indicate column and row indices that
-  // correspond to blobs with correct bounding boxes.
-  GenericVector<int> correct_segmentation_cols_;
-  GenericVector<int> correct_segmentation_rows_;
-  // Set to true if best choice is a dictionary word and
-  // classifier's top choice.
-  bool best_choice_is_dict_and_top_choice_;
+  int lattice_size_;  // size of lattice_data in bytes
   // Serialized segmentation search lattice.
   char *lattice_data_;
-  int lattice_size_;  // size of lattice_data in bytes
   // Information about hypotheses (paths) explored by the segmentation search.
 #ifndef DISABLED_LEGACY_ENGINE
   tesseract::ParamsTrainingBundle params_training_bundle_;
 #endif  // ndef DISABLED_LEGACY_ENGINE
 };
 
+} // namespace tesseract
 
 #endif  // TESSERACT_CCSTRUCT_BLAMER_H_

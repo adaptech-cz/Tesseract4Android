@@ -30,7 +30,7 @@
 #include "params.h"                   // for IntParam, BoolParam, DoubleParam
 #include "params_training_featdef.h"  // for ParamsTrainingHypothesis, PTRAI...
 #include "tprintf.h"                  // for tprintf
-#include "unichar.h"                  // for UNICHAR_ID, INVALID_UNICHAR_ID
+#include <tesseract/unichar.h>                  // for UNICHAR_ID, INVALID_UNICHAR_ID
 #include "unicharset.h"               // for UNICHARSET
 #include "unicity_table.h"            // for UnicityTable
 
@@ -120,7 +120,7 @@ LanguageModel::LanguageModel(const UnicityTable<FontInfo> *fontinfo_table,
                     dict->getCCUtil()->params()),
       double_MEMBER(language_model_penalty_increment, 0.01, "Penalty increment",
                     dict->getCCUtil()->params()),
-      INT_MEMBER(wordrec_display_segmentations, 0, "Display Segmentations",
+      INT_MEMBER(wordrec_display_segmentations, 0, "Display Segmentations (ScrollView)",
                  dict->getCCUtil()->params()),
       BOOL_INIT_MEMBER(language_model_use_sigmoidal_certainty, false,
                        "Use sigmoidal score for certainty",
@@ -151,13 +151,13 @@ void LanguageModel::InitForWord(const WERD_CHOICE *prev_word,
   // Fill prev_word_str_ with the last language_model_ngram_order
   // unichars from prev_word.
   if (language_model_ngram_on) {
-    if (prev_word != nullptr && prev_word->unichar_string() != nullptr) {
+    if (prev_word != nullptr && !prev_word->unichar_string().empty()) {
       prev_word_str_ = prev_word->unichar_string();
       if (language_model_ngram_space_delimited_language) prev_word_str_ += ' ';
     } else {
       prev_word_str_ = " ";
     }
-    const char *str_ptr = prev_word_str_.string();
+    const char *str_ptr = prev_word_str_.c_str();
     const char *str_end = str_ptr + prev_word_str_.length();
     int step;
     prev_word_unichar_step_len_ = 0;
@@ -843,7 +843,7 @@ LanguageModelDawgInfo *LanguageModel::GenerateDawgInfo(
   // Call LetterIsOkay().
   // Use the normalized IDs so that all shapes of ' can be allowed in words
   // like don't.
-  const GenericVector<UNICHAR_ID>& normed_ids =
+  const auto &normed_ids =
       dict_->getUnicharset().normed_ids(b.unichar_id());
   DawgPositionVector tmp_active_dawgs;
   for (int i = 0; i < normed_ids.size(); ++i) {
@@ -882,10 +882,10 @@ LanguageModelNgramInfo *LanguageModel::GenerateNgramInfo(
   const char *pcontext_ptr = "";
   int pcontext_unichar_step_len = 0;
   if (parent_vse == nullptr) {
-    pcontext_ptr = prev_word_str_.string();
+    pcontext_ptr = prev_word_str_.c_str();
     pcontext_unichar_step_len = prev_word_unichar_step_len_;
   } else {
-    pcontext_ptr = parent_vse->ngram_info->context.string();
+    pcontext_ptr = parent_vse->ngram_info->context.c_str();
     pcontext_unichar_step_len =
       parent_vse->ngram_info->context_unichar_step_len;
   }
@@ -1251,7 +1251,7 @@ void LanguageModel::UpdateBestChoice(
   if (dict_->stopper_debug_level >= 1) {
     STRING word_str;
     word->string_and_lengths(&word_str, nullptr);
-    vse->Print(word_str.string());
+    vse->Print(word_str.c_str());
   }
   if (language_model_debug_level > 0) {
     word->print("UpdateBestChoice() constructed word");
@@ -1266,7 +1266,7 @@ void LanguageModel::UpdateBestChoice(
     curr_hyp.cost = vse->cost;  // record cost for error rate computations
     if (language_model_debug_level > 0) {
       tprintf("Raw features extracted from %s (cost=%g) [ ",
-              curr_hyp.str.string(), curr_hyp.cost);
+              curr_hyp.str.c_str(), curr_hyp.cost);
       for (float feature : curr_hyp.features) {
         tprintf("%g ", feature);
       }
@@ -1333,9 +1333,11 @@ void LanguageModel::UpdateBestChoice(
           vse->dawg_info != nullptr && vse->top_choice_flags);
     }
   }
+#ifndef GRAPHICS_DISABLED
   if (wordrec_display_segmentations && word_res->chopped_word != nullptr) {
     word->DisplaySegmentation(word_res->chopped_word);
   }
+#endif
 }
 
 void LanguageModel::ExtractFeaturesFromPath(

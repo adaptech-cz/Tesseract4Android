@@ -26,7 +26,7 @@
 
 // This base class needs to know about all its sub-classes because of the
 // factory deserializing method: CreateFromFile.
-#include "allheaders.h"
+#include <allheaders.h>
 #include "convolve.h"
 #include "fullyconnected.h"
 #include "input.h"
@@ -84,7 +84,7 @@ Network::Network()
       forward_win_(nullptr),
       backward_win_(nullptr),
       randomizer_(nullptr) {}
-Network::Network(NetworkType type, const STRING& name, int ni, int no)
+Network::Network(NetworkType type, const std::string& name, int ni, int no)
     : type_(type),
       training_(TS_ENABLED),
       needs_to_backprop_(true),
@@ -161,8 +161,9 @@ bool Network::Serialize(TFile* fp) const {
   if (!fp->Serialize(&ni_)) return false;
   if (!fp->Serialize(&no_)) return false;
   if (!fp->Serialize(&num_weights_)) return false;
-  if (!name_.Serialize(fp)) return false;
-  return true;
+  uint32_t length = name_.length();
+  if (!fp->Serialize(&length)) return false;
+  return fp->Serialize(name_.c_str(), length);
 }
 
 static NetworkType getNetworkType(TFile* fp) {
@@ -174,7 +175,7 @@ static NetworkType getNetworkType(TFile* fp) {
     for (data = 0; data < NT_COUNT && type_name != kTypeNames[data]; ++data) {
     }
     if (data == NT_COUNT) {
-      tprintf("Invalid network layer type:%s\n", type_name.string());
+      tprintf("Invalid network layer type:%s\n", type_name.c_str());
       return NT_NONE;
     }
   }
@@ -208,20 +209,20 @@ Network* Network::CreateFromFile(TFile* fp) {
 
   switch (type) {
     case NT_CONVOLVE:
-      network = new Convolve(name, ni, 0, 0);
+      network = new Convolve(name.c_str(), ni, 0, 0);
       break;
     case NT_INPUT:
-      network = new Input(name, ni, no);
+      network = new Input(name.c_str(), ni, no);
       break;
     case NT_LSTM:
     case NT_LSTM_SOFTMAX:
     case NT_LSTM_SOFTMAX_ENCODED:
     case NT_LSTM_SUMMARY:
       network =
-          new LSTM(name, ni, no, no, false, type);
+          new LSTM(name.c_str(), ni, no, no, false, type);
       break;
     case NT_MAXPOOL:
-      network = new Maxpool(name, ni, 0, 0);
+      network = new Maxpool(name.c_str(), ni, 0, 0);
       break;
     // All variants of Parallel.
     case NT_PARALLEL:
@@ -229,23 +230,23 @@ Network* Network::CreateFromFile(TFile* fp) {
     case NT_PAR_RL_LSTM:
     case NT_PAR_UD_LSTM:
     case NT_PAR_2D_LSTM:
-      network = new Parallel(name, type);
+      network = new Parallel(name.c_str(), type);
       break;
     case NT_RECONFIG:
-      network = new Reconfig(name, ni, 0, 0);
+      network = new Reconfig(name.c_str(), ni, 0, 0);
       break;
     // All variants of reversed.
     case NT_XREVERSED:
     case NT_YREVERSED:
     case NT_XYTRANSPOSE:
-      network = new Reversed(name, type);
+      network = new Reversed(name.c_str(), type);
       break;
     case NT_SERIES:
-      network = new Series(name);
+      network = new Series(name.c_str());
       break;
     case NT_TENSORFLOW:
 #ifdef INCLUDE_TENSORFLOW
-      network = new TFNetwork(name);
+      network = new TFNetwork(name.c_str());
 #else
       tprintf("TensorFlow not compiled in! -DINCLUDE_TENSORFLOW\n");
 #endif
@@ -259,7 +260,7 @@ Network* Network::CreateFromFile(TFile* fp) {
     case NT_LOGISTIC:
     case NT_POSCLIP:
     case NT_SYMCLIP:
-      network = new FullyConnected(name, ni, no, type);
+      network = new FullyConnected(name.c_str(), ni, no, type);
       break;
     default:
       break;
@@ -283,31 +284,28 @@ double Network::Random(double range) {
   return randomizer_->SignedRand(range);
 }
 
+#ifndef GRAPHICS_DISABLED
+
 // === Debug image display methods. ===
 // Displays the image of the matrix to the forward window.
 void Network::DisplayForward(const NetworkIO& matrix) {
-#ifndef GRAPHICS_DISABLED  // do nothing if there's no graphics
   Pix* image = matrix.ToPix();
-  ClearWindow(false, name_.string(), pixGetWidth(image),
+  ClearWindow(false, name_.c_str(), pixGetWidth(image),
               pixGetHeight(image), &forward_win_);
   DisplayImage(image, forward_win_);
   forward_win_->Update();
-#endif  // GRAPHICS_DISABLED
 }
 
 // Displays the image of the matrix to the backward window.
 void Network::DisplayBackward(const NetworkIO& matrix) {
-#ifndef GRAPHICS_DISABLED  // do nothing if there's no graphics
   Pix* image = matrix.ToPix();
-  STRING window_name = name_ + "-back";
-  ClearWindow(false, window_name.string(), pixGetWidth(image),
+  std::string window_name = name_ + "-back";
+  ClearWindow(false, window_name.c_str(), pixGetWidth(image),
               pixGetHeight(image), &backward_win_);
   DisplayImage(image, backward_win_);
   backward_win_->Update();
-#endif  // GRAPHICS_DISABLED
 }
 
-#ifndef GRAPHICS_DISABLED
 // Creates the window if needed, otherwise clears it.
 void Network::ClearWindow(bool tess_coords, const char* window_name,
                           int width, int height, ScrollView** window) {
@@ -338,6 +336,6 @@ int Network::DisplayImage(Pix* pix, ScrollView* window) {
   pixDestroy(&pix);
   return height;
 }
-#endif  // GRAPHICS_DISABLED
+#endif // !GRAPHICS_DISABLED
 
 }  // namespace tesseract.

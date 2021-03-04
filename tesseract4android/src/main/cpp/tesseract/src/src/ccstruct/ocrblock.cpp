@@ -17,10 +17,14 @@
  **********************************************************************/
 
 #include "ocrblock.h"
-#include <cstdlib>
-#include <memory>  // std::unique_ptr
+
 #include "stepblob.h"
 #include "tprintf.h"
+
+#include <cstdlib>
+#include <memory>  // std::unique_ptr
+
+namespace tesseract {
 
 ELISTIZE (BLOCK)
 /**
@@ -198,7 +202,7 @@ void BLOCK::print(            //print list of sides
   tprintf ("Kerning= %d\n", kerning);
   tprintf ("Spacing= %d\n", spacing);
   tprintf ("Fixed_pitch=%d\n", pitch);
-  tprintf ("Filename= %s\n", filename.string ());
+  tprintf ("Filename= %s\n", filename.c_str ());
 
   if (dump) {
     tprintf ("Left side coords are:\n");
@@ -511,3 +515,5 @@ void RefreshWordBlobsFromNewBlobs(BLOCK_LIST* block_list,
     }
   }
 }
+
+} // namespace tesseract

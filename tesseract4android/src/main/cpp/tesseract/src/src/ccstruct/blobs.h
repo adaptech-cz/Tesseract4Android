@@ -1,5 +1,4 @@
-/* -*-C-*-
- ********************************************************************************
+/******************************************************************************
  *
  * File:        blobs.h
  * Description: Blob definition
@@ -16,23 +15,26 @@
  ** See the License for the specific language governing permissions and
  ** limitations under the License.
  *
- *********************************************************************************/
+ *****************************************************************************/
 
 #ifndef BLOBS_H
 #define BLOBS_H
 
-/*----------------------------------------------------------------------
-              I n c l u d e s
-----------------------------------------------------------------------*/
-#include <cstdint>             // for int16_t
-#include <cstring>             // for memcpy, memset
 #include "clst.h"              // for CLIST_ITERATOR, CLISTIZEH
-#include "genericvector.h"     // for GenericVector
 #include "normalis.h"          // for DENORM
 #include "points.h"            // for FCOORD, ICOORD
-#include "publictypes.h"       // for OcrEngineMode
 #include "rect.h"              // for TBOX
 #include "scrollview.h"        // for ScrollView, ScrollView::Color
+
+#include "genericvector.h"     // for GenericVector
+#include <tesseract/publictypes.h>       // for OcrEngineMode
+
+#include <cstdint>             // for int16_t
+#include <cstring>             // for memcpy, memset
+
+struct Pix;
+
+namespace tesseract {
 
 class BLOCK;
 class C_BLOB;
@@ -40,8 +42,6 @@ class C_OUTLINE;
 class LLSQ;
 class ROW;
 class WERD;
-
-struct Pix;
 
 /*----------------------------------------------------------------------
               T y p e s
@@ -262,7 +262,7 @@ struct TESSLINE {
   #ifndef GRAPHICS_DISABLED
   void plot(ScrollView* window, ScrollView::Color color,
             ScrollView::Color child_color);
-  #endif  // GRAPHICS_DISABLED
+  #endif // !GRAPHICS_DISABLED
 
   // Returns the first outline point that has a different src_outline to its
   // predecessor, or, if all the same, the lowest indexed point.
@@ -367,7 +367,7 @@ struct TBLOB {
   #ifndef GRAPHICS_DISABLED
   void plot(ScrollView* window, ScrollView::Color color,
             ScrollView::Color child_color);
-  #endif  // GRAPHICS_DISABLED
+  #endif // !GRAPHICS_DISABLED
 
   int BBArea() const {
     int total_area = 0;
@@ -468,5 +468,7 @@ bool divisible_blob(TBLOB *blob, bool italic_blob, TPOINT* location);
 
 void divide_blobs(TBLOB *blob, TBLOB *other_blob, bool italic_blob,
                   const TPOINT& location);
+
+} // namespace tesseract
 
 #endif

@@ -16,6 +16,13 @@
  *
  **********************************************************************/
 
+ // Include automatically generated configuration file if running autoconf.
+#ifdef HAVE_CONFIG_H
+#include "config_auto.h"
+#endif
+
+#include "topitch.h"
+
 #include "blobbox.h"
 #include "statistc.h"
 #include "drawtord.h"
@@ -24,15 +31,12 @@
 #include "pithsync.h"
 #include "tovars.h"
 #include "wordseg.h"
-#include "topitch.h"
+
 #include "helpers.h"
 
-// Include automatically generated configuration file if running autoconf.
-#ifdef HAVE_CONFIG_H
-#include "config_auto.h"
-#endif
-
 #include <memory>
+
+namespace tesseract {
 
 static BOOL_VAR (textord_all_prop, false, "All doc is proportial text");
 BOOL_VAR (textord_debug_pitch_test, false,
@@ -417,10 +421,8 @@ bool try_doc_fixed(                             //determine pitch
   int16_t projection_right;
   int16_t row_left;                //edges of row
   int16_t row_right;
-  ICOORDELT_LIST *master_cells;  //cells for page
   float master_y;                //uniform shifts
   float shift_factor;            //page skew correction
-  float row_shift;               //shift for row
   float final_pitch;             //output pitch
   float row_y;                   //baseline
   STATS projection;              //entire page
@@ -512,13 +514,15 @@ bool try_doc_fixed(                             //determine pitch
 
 #ifndef GRAPHICS_DISABLED
   if (textord_show_page_cuts && to_win != nullptr) {
+    float row_shift;               //shift for row
+    ICOORDELT_LIST *master_cells;  //cells for page
     master_cells = &row->char_cells;
     for (block_it.mark_cycle_pt (); !block_it.cycled_list ();
     block_it.forward ()) {
       block = block_it.data ();
       row_it.set_to_list (block->get_rows ());
       for (row_it.mark_cycle_pt (); !row_it.cycled_list ();
-      row_it.forward ()) {
+           row_it.forward ()) {
         row = row_it.data ();
         row_y = row->baseline.y (master_x);
         row_shift = shift_factor * (master_y - row_y);
@@ -871,7 +875,7 @@ bool find_row_pitch(                    //find lines
 
   if (!count_pitch_stats (row, &gap_stats, &pitch_stats,
   initial_pitch, min_space, true, false, dm_gap)) {
-    dm_gap_iqr = 0.0001;
+    dm_gap_iqr = 0.0001f;
     dm_pitch_iqr = maxwidth * 2.0f;
     dm_pitch = initial_pitch;
   }
@@ -884,7 +888,7 @@ bool find_row_pitch(                    //find lines
   pitch_stats.clear ();
   if (!count_pitch_stats (row, &gap_stats, &pitch_stats,
   initial_pitch, min_space, true, false, 0)) {
-    gap_iqr = 0.0001;
+    gap_iqr = 0.0001f;
     pitch_iqr = maxwidth * 3.0f;
   }
   else {
@@ -1839,3 +1843,5 @@ void plot_fp_word(                  //draw block of words
   }
 }
 #endif
+
+} // namespace tesseract

@@ -25,19 +25,21 @@
 // A SVMenuNode can both be used in the context_ of popup menus as well as
 // menu bars.
 
-#include <cstring>
-#include <iostream>
-
-#include "svmnode.h"
-
 // Include automatically generated configuration file if running autoconf.
 #ifdef HAVE_CONFIG_H
 #include "config_auto.h"
 #endif
 
+#include "svmnode.h"
+
+#include <cstring>
+#include <iostream>
+
 #ifndef GRAPHICS_DISABLED
 
 #include "scrollview.h"
+
+namespace tesseract {
 
 // Create the empty root menu node. with just a caption. All other nodes should
 // be added to this or one of the submenus.
@@ -120,16 +122,16 @@ void SVMenuNode::AddChild(SVMenuNode* svmn) {
 void SVMenuNode::BuildMenu(ScrollView* sv, bool menu_bar) {
   if ((parent_ != nullptr) && (menu_bar)) {
     if (is_check_box_entry_) {
-      sv->MenuItem(parent_->text_.string(), text_.string(), cmd_event_,
+      sv->MenuItem(parent_->text_.c_str(), text_.c_str(), cmd_event_,
                    toggle_value_);
     } else {
-      sv->MenuItem(parent_->text_.string(), text_.string(), cmd_event_); }
+      sv->MenuItem(parent_->text_.c_str(), text_.c_str(), cmd_event_); }
   } else if ((parent_ != nullptr) && (!menu_bar)) {
     if (description_.length() > 0) {
-      sv->PopupItem(parent_->text_.string(), text_.string(), cmd_event_,
-                    value_.string(), description_.string());
+      sv->PopupItem(parent_->text_.c_str(), text_.c_str(), cmd_event_,
+                    value_.c_str(), description_.c_str());
       } else {
-      sv->PopupItem(parent_->text_.string(), text_.string());
+      sv->PopupItem(parent_->text_.c_str(), text_.c_str());
     }
   }
   if (child_ != nullptr) {
@@ -140,4 +142,6 @@ void SVMenuNode::BuildMenu(ScrollView* sv, bool menu_bar) {
   }
 }
 
-#endif  // GRAPHICS_DISABLED
+} // namespace tesseract
+
+#endif // !GRAPHICS_DISABLED

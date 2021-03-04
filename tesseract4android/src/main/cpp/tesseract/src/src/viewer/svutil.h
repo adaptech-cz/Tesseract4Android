@@ -16,7 +16,7 @@
 //
 ///////////////////////////////////////////////////////////////////////
 //
-// SVUtil contains the SVSync, SVSemaphore, SVMutex and SVNetwork
+// SVUtil contains the SVSync, SVSemaphore and SVNetwork
 // classes, which are used for thread/process creation & synchronization
 // and network connection.
 
@@ -26,19 +26,17 @@
 #ifdef _WIN32
 #  include "host.h"  // also includes windows.h
 #else
-#include <pthread.h>
 #include <semaphore.h>
 #endif
 
+#include <mutex>
 #include <string>
+
+namespace tesseract {
 
 /// The SVSync class provides functionality for Thread & Process Creation
 class SVSync {
  public:
-  /// Create new thread.
-  static void StartThread(void *(*func)(void*), void* arg);
-  /// Signals a thread to exit.
-  static void ExitThread();
   /// Starts a new process.
   static void StartProcess(const char* executable, const char* args);
 };
@@ -61,35 +59,6 @@ class SVSemaphore {
 #else
   sem_t semaphore_;
 #endif
-};
-
-/// A mutex which encapsulates the main locking and unlocking
-/// abilities of mutexes for windows and unix.
-class SVMutex {
- public:
-  /// Sets up a new mutex.
-  SVMutex();
-  /// Locks on a mutex.
-  void Lock();
-  /// Unlocks on a mutex.
-  void Unlock();
- private:
-#ifdef _WIN32
-  HANDLE mutex_;
-#else
-  pthread_mutex_t mutex_;
-#endif
-};
-
-// Auto-unlocking object that locks a mutex on construction and unlocks it
-// on destruction.
-class SVAutoLock {
- public:
-  explicit SVAutoLock(SVMutex* mutex) : mutex_(mutex) { mutex->Lock(); }
-  ~SVAutoLock() { mutex_->Unlock(); }
-
- private:
-  SVMutex* mutex_;
 };
 
 /// The SVNetwork class takes care of the remote connection for ScrollView
@@ -119,7 +88,7 @@ class SVNetwork {
 
  private:
   /// The mutex for access to Send() and Flush().
-  SVMutex mutex_send_;
+  std::mutex mutex_send_;
   /// The actual stream_ to the server.
   int stream_;
   /// Stores the last received message-chunk from the server.
@@ -128,9 +97,10 @@ class SVNetwork {
   /// Stores the messages which are supposed to go out.
   std::string msg_buffer_out_;
 
-  bool has_content;  // Win32 (strtok)
   /// Where we are at in our msg_buffer_in_
-  char* buffer_ptr_;  // Unix (strtok_r)
+  char* buffer_ptr_;  // strtok_r, strtok_s
 };
+
+} // namespace tesseract
 
 #endif  // TESSERACT_VIEWER_SVUTIL_H_

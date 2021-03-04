@@ -14,16 +14,16 @@
  ** See the License for the specific language governing permissions and
  ** limitations under the License.
  ******************************************************************************/
-/*----------------------------------------------------------------------------
-          Include Files and Type Defines
-----------------------------------------------------------------------------*/
+
 #include "ocrfeatures.h"
-#include "emalloc.h"
-#include "callcpp.h"
+
 #include "scanutils.h"
+#include "strngs.h"             // for STRING
 
 #include <cassert>
 #include <cmath>
+
+namespace tesseract {
 
 /*----------------------------------------------------------------------------
               Public Code
@@ -94,7 +94,7 @@ FEATURE NewFeature(const FEATURE_DESC_STRUCT* FeatureDesc) {
 FEATURE_SET NewFeatureSet(int NumFeatures) {
   FEATURE_SET FeatureSet;
 
-  FeatureSet = static_cast<FEATURE_SET>(Emalloc (sizeof (FEATURE_SET_STRUCT) +
+  FeatureSet = static_cast<FEATURE_SET>(malloc (sizeof (FEATURE_SET_STRUCT) +
     (NumFeatures - 1) * sizeof (FEATURE)));
   FeatureSet->MaxNumFeatures = NumFeatures;
   FeatureSet->NumFeatures = 0;
@@ -186,3 +186,5 @@ void WriteFeatureSet(FEATURE_SET FeatureSet, STRING* str) {
     }
   }
 }                                /* WriteFeatureSet */
+
+} // namespace tesseract

@@ -37,8 +37,8 @@ bool FontInfo::DeSerialize(TFile* fp) {
 }
 
 FontInfoTable::FontInfoTable() {
-  set_compare_callback(NewPermanentTessCallback(CompareFontInfo));
-  set_clear_callback(NewPermanentTessCallback(FontInfoDeleteCallback));
+  using namespace std::placeholders; // for _1, _2
+  set_clear_callback(std::bind(FontInfoDeleteCallback, _1));
 }
 
 FontInfoTable::~FontInfoTable() {
@@ -58,7 +58,7 @@ bool FontInfoTable::DeSerialize(TFile* fp) {
 // Returns true if the given set of fonts includes one with the same
 // properties as font_id.
 bool FontInfoTable::SetContainsFontProperties(
-    int font_id, const GenericVector<ScoredFont>& font_set) const {
+    int font_id, const std::vector<ScoredFont>& font_set) const {
   uint32_t properties = get(font_id).properties;
   for (int f = 0; f < font_set.size(); ++f) {
     if (get(font_set[f].fontinfo_id).properties == properties)
@@ -69,7 +69,7 @@ bool FontInfoTable::SetContainsFontProperties(
 
 // Returns true if the given set of fonts includes multiple properties.
 bool FontInfoTable::SetContainsMultipleFontProperties(
-    const GenericVector<ScoredFont>& font_set) const {
+    const std::vector<ScoredFont>& font_set) const {
   if (font_set.empty()) return false;
   int first_font = font_set[0].fontinfo_id;
   uint32_t properties = get(first_font).properties;
@@ -82,8 +82,8 @@ bool FontInfoTable::SetContainsMultipleFontProperties(
 
 // Moves any non-empty FontSpacingInfo entries from other to this.
 void FontInfoTable::MoveSpacingInfoFrom(FontInfoTable* other) {
-  set_compare_callback(NewPermanentTessCallback(CompareFontInfo));
-  set_clear_callback(NewPermanentTessCallback(FontInfoDeleteCallback));
+  using namespace std::placeholders; // for _1, _2
+  set_clear_callback(std::bind(FontInfoDeleteCallback, _1));
   for (int i = 0; i < other->size(); ++i) {
     GenericVector<FontSpacingInfo*>* spacing_vec = other->get(i).spacing_vec;
     if (spacing_vec != nullptr) {
@@ -104,34 +104,14 @@ void FontInfoTable::MoveSpacingInfoFrom(FontInfoTable* other) {
 // Moves this to the target unicity table.
 void FontInfoTable::MoveTo(UnicityTable<FontInfo>* target) {
   target->clear();
-  target->set_compare_callback(NewPermanentTessCallback(CompareFontInfo));
-  target->set_clear_callback(NewPermanentTessCallback(FontInfoDeleteCallback));
+  using namespace std::placeholders; // for _1, _2
+  target->set_clear_callback(std::bind(FontInfoDeleteCallback, _1));
   for (int i = 0; i < size(); ++i) {
     // Bit copy the FontInfo and steal all the pointers.
     target->push_back(get(i));
     get(i).name = nullptr;
     get(i).spacing_vec = nullptr;
   }
-}
-
-
-// Compare FontInfo structures.
-bool CompareFontInfo(const FontInfo& fi1, const FontInfo& fi2) {
-  // The font properties are required to be the same for two font with the same
-  // name, so there is no need to test them.
-  // Consequently, querying the table with only its font name as information is
-  // enough to retrieve its properties.
-  return strcmp(fi1.name, fi2.name) == 0;
-}
-// Compare FontSet structures.
-bool CompareFontSet(const FontSet& fs1, const FontSet& fs2) {
-  if (fs1.size != fs2.size)
-    return false;
-  for (int i = 0; i < fs1.size; ++i) {
-    if (fs1.configs[i] != fs2.configs[i])
-      return false;
-  }
-  return true;
 }
 
 // Callbacks for GenericVector.

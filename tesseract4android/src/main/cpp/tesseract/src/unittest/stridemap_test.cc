@@ -1,12 +1,40 @@
-#include "tesseract/lstm/stridemap.h"
+// (C) Copyright 2017, Google Inc.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
-using tesseract::FD_BATCH;
-using tesseract::FD_HEIGHT;
-using tesseract::FD_WIDTH;
-using tesseract::FlexDimensions;
-using tesseract::StrideMap;
+#ifdef INCLUDE_TENSORFLOW
+#include <tensorflow/compiler/xla/array2d.h> // for xla::Array2D
+#else
+#include <array> // std::array
+#endif
+#include "include_gunit.h"
+#include "stridemap.h"
 
-namespace {
+namespace tesseract {
+
+#if !defined(INCLUDE_TENSORFLOW) && 0
+namespace xla {
+
+template <typename T>
+class Array2D : public std::vector<T> {
+ public:
+  Array2D() : std::vector<T>(std::vector<int64_t>{0, 0}) {}
+
+  Array2D(const int64_t n1, const int64_t n2)
+      : std::vector<T>(std::vector<int64_t>{n1, n2}) {}
+
+  Array2D(const int64_t n1, const int64_t n2, const T value)
+      : std::vector<T>({n1, n2}, value) {}
+};
+}
+#endif
 
 class StridemapTest : public ::testing::Test {
  protected:
@@ -14,30 +42,37 @@ class StridemapTest : public ::testing::Test {
     std::locale::global(std::locale(""));
   }
 
+#ifdef INCLUDE_TENSORFLOW
   // Sets up an Array2d object of the given size, initialized to increasing
   // values starting with start.
-  std::unique_ptr<Array2D<int>> SetupArray(int ysize, int xsize, int start) {
-    std::unique_ptr<Array2D<int>> a(new Array2D<int>(ysize, xsize));
+  std::unique_ptr<xla::Array2D<int>> SetupArray(int ysize, int xsize, int start) {
+    std::unique_ptr<xla::Array2D<int>> a(new xla::Array2D<int>(ysize, xsize));
     int value = start;
     for (int y = 0; y < ysize; ++y) {
       for (int x = 0; x < xsize; ++x) {
+#ifdef INCLUDE_TENSORFLOW
         (*a)(y, x) = value++;
+#else
+        a[y][x] = value++;
+#endif
       }
     }
     return a;
   }
+#endif
 };
 
 TEST_F(StridemapTest, Indexing) {
   // This test verifies that with a batch of arrays of different sizes, the
   // iteration index each of them in turn, without going out of bounds.
-  std::vector<std::unique_ptr<Array2D<int>>> arrays;
+#ifdef INCLUDE_TENSORFLOW
+  std::vector<std::unique_ptr<xla::Array2D<int>>> arrays;
   arrays.push_back(SetupArray(3, 4, 0));
   arrays.push_back(SetupArray(4, 5, 12));
   arrays.push_back(SetupArray(4, 4, 32));
   arrays.push_back(SetupArray(3, 5, 48));
   std::vector<std::pair<int, int>> h_w_sizes;
-  for (int i = 0; i < arrays.size(); ++i) {
+  for (size_t i = 0; i < arrays.size(); ++i) {
     h_w_sizes.emplace_back(arrays[i].get()->height(), arrays[i].get()->width());
   }
   StrideMap stride_map;
@@ -72,13 +107,17 @@ TEST_F(StridemapTest, Indexing) {
     // Since a change in batch index changes the height and width, it isn't
     // necessarily true that the position is still valid, even when changing
     // to another valid batch index.
-    if (index.IsLast(FD_BATCH)) EXPECT_FALSE(copy.AddOffset(1, FD_BATCH));
+    if (index.IsLast(FD_BATCH)) {
+      EXPECT_FALSE(copy.AddOffset(1, FD_BATCH));
+    }
     copy = index;
     EXPECT_EQ(index.IsLast(FD_HEIGHT), !copy.AddOffset(1, FD_HEIGHT));
     copy = index;
     EXPECT_EQ(index.IsLast(FD_WIDTH), !copy.AddOffset(1, FD_WIDTH));
     copy = index;
-    if (index.index(FD_BATCH) == 0) EXPECT_FALSE(copy.AddOffset(-1, FD_BATCH));
+    if (index.index(FD_BATCH) == 0) {
+      EXPECT_FALSE(copy.AddOffset(-1, FD_BATCH));
+    }
     copy = index;
     EXPECT_EQ(index.index(FD_HEIGHT) == 0, !copy.AddOffset(-1, FD_HEIGHT));
     copy = index;
@@ -89,18 +128,23 @@ TEST_F(StridemapTest, Indexing) {
     EXPECT_FALSE(copy.AddOffset(-10, FD_HEIGHT));
     EXPECT_TRUE(index.IsValid());
   } while (index.Decrement());
+#else
+  LOG(INFO) << "Skip test because of missing xla::Array2D";
+  GTEST_SKIP();
+#endif
 }
 
 TEST_F(StridemapTest, Scaling) {
   // This test verifies that with a batch of arrays of different sizes, the
   // scaling/reduction functions work as expected.
-  std::vector<std::unique_ptr<Array2D<int>>> arrays;
+#ifdef INCLUDE_TENSORFLOW
+  std::vector<std::unique_ptr<xla::Array2D<int>>> arrays;
   arrays.push_back(SetupArray(3, 4, 0));   // 0-11
   arrays.push_back(SetupArray(4, 5, 12));  // 12-31
   arrays.push_back(SetupArray(4, 4, 32));  // 32-47
   arrays.push_back(SetupArray(3, 5, 48));  // 48-62
   std::vector<std::pair<int, int>> h_w_sizes;
-  for (int i = 0; i < arrays.size(); ++i) {
+  for (size_t i = 0; i < arrays.size(); ++i) {
     h_w_sizes.emplace_back(arrays[i].get()->height(), arrays[i].get()->width());
   }
   StrideMap stride_map;
@@ -166,6 +210,10 @@ TEST_F(StridemapTest, Scaling) {
               expected_value);
   } while (index.Increment());
   EXPECT_EQ(pos, values_x_to_1.size());
+#else
+  LOG(INFO) << "Skip test because of missing xla::Array2D";
+  GTEST_SKIP();
+#endif
 }
 
 }  // namespace

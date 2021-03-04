@@ -19,24 +19,21 @@
 #include "config_auto.h"
 #endif
 
-/*----------------------------------------------------------------------------
-                          Include Files and Type Defines
-----------------------------------------------------------------------------*/
 #include "intmatcher.h"
 
-#include <cassert>
-#include <cmath>
 #include "fontinfo.h"
 #include "intproto.h"
-#include "callcpp.h"
 #include "scrollview.h"
 #include "float2int.h"
-#include "helpers.h"
 #include "classify.h"
 #include "shapetable.h"
 
-using tesseract::ScoredFont;
-using tesseract::UnicharRating;
+#include "helpers.h"
+
+#include <cassert>
+#include <cmath>
+
+namespace tesseract {
 
 /*----------------------------------------------------------------------------
                     Global Data Definitions and Declarations
@@ -86,8 +83,6 @@ static const uint8_t next_table[] = {
 };
 
 // See http://b/19318793 (#6) for a complete discussion.
-
-namespace tesseract {
 
 /**
  * Sort Key array in ascending order using heap sort
@@ -362,7 +357,7 @@ class ClassPruner {
             if (norm_count_[class_id] >= pruning_threshold_) {
               tprintf(" %s=%d,",
                       classify.ClassIDToDebugStr(int_templates,
-                                                 class_id, 0).string(),
+                                                 class_id, 0).c_str(),
                       pruner_word & CLASS_PRUNER_CLASS_MASK);
             }
             pruner_word >>= NUM_BITS_PER_CLASS;
@@ -385,7 +380,7 @@ class ClassPruner {
       STRING class_string = classify.ClassIDToDebugStr(int_templates,
                                                        class_id, 0);
       tprintf("%s:Initial=%d, E=%d, Xht-adj=%d, N=%d, Rat=%.2f\n",
-              class_string.string(),
+              class_string.c_str(),
               class_count_[class_id],
               expected_num_features[class_id],
               (norm_multiplier * normalization_factors[class_id]) >> 8,
@@ -397,9 +392,8 @@ class ClassPruner {
 
   /// Copies the pruned, sorted classes into the output results and returns
   /// the number of classes.
-  int SetupResults(GenericVector<CP_RESULT_STRUCT>* results) const {
-    CP_RESULT_STRUCT empty;
-    results->init_to_size(num_classes_, empty);
+  int SetupResults(std::vector<CP_RESULT_STRUCT>* results) const {
+    results->resize(num_classes_);
     for (int c = 0; c < num_classes_; ++c) {
       (*results)[c].Class = sort_index_[num_classes_ - c];
       (*results)[c].Rating = 1.0f - sort_key_[num_classes_ - c] /
@@ -454,7 +448,7 @@ int Classify::PruneClasses(const INT_TEMPLATES_STRUCT* int_templates,
                            const INT_FEATURE_STRUCT* features,
                            const uint8_t* normalization_factors,
                            const uint16_t* expected_num_features,
-                           GenericVector<CP_RESULT_STRUCT>* results) {
+                           std::vector<CP_RESULT_STRUCT>* results) {
   ClassPruner pruner(int_templates->NumClasses);
   // Compute initial match scores for all classes.
   pruner.ComputeScores(int_templates, num_features, features);
@@ -491,8 +485,6 @@ int Classify::PruneClasses(const INT_TEMPLATES_STRUCT* int_templates,
   return pruner.SetupResults(results);
 }
 
-}  // namespace tesseract
-
 /**
  * IntegerMatcher returns the best configuration and rating
  * for a single class.  The class matched against is determined
@@ -521,7 +513,7 @@ void IntegerMatcher::Match(INT_CLASS ClassTemplate,
   int Feature;
 
   if (MatchDebuggingOn (Debug))
-    cprintf ("Integer Matcher -------------------------------------------\n");
+    tprintf ("Integer Matcher -------------------------------------------\n");
 
   tables->Clear(ClassTemplate);
   Result->feature_misses = 0;
@@ -563,7 +555,7 @@ void IntegerMatcher::Match(INT_CLASS ClassTemplate,
     Result->Print();
 
   if (MatchDebuggingOn(Debug))
-    cprintf("Match Complete --------------------------------------------\n");
+    tprintf("Match Complete --------------------------------------------\n");
 #endif
 
   delete tables;
@@ -600,7 +592,7 @@ int IntegerMatcher::FindGoodProtos(
 
   /* DEBUG opening heading */
   if (MatchDebuggingOn (Debug))
-    cprintf
+    tprintf
       ("Find Good Protos -------------------------------------------\n");
 
   tables->Clear(ClassTemplate);
@@ -635,7 +627,7 @@ int IntegerMatcher::FindGoodProtos(
   }
 
   if (MatchDebuggingOn (Debug))
-    cprintf ("Match Complete --------------------------------------------\n");
+    tprintf ("Match Complete --------------------------------------------\n");
   delete tables;
 
   return NumGoodProtos;
@@ -668,7 +660,7 @@ int IntegerMatcher::FindBadFeatures(
 
   /* DEBUG opening heading */
   if (MatchDebuggingOn(Debug))
-    cprintf("Find Bad Features -------------------------------------------\n");
+    tprintf("Find Bad Features -------------------------------------------\n");
 
   tables->Clear(ClassTemplate);
 
@@ -699,7 +691,7 @@ int IntegerMatcher::FindBadFeatures(
 #endif
 
   if (MatchDebuggingOn(Debug))
-    cprintf("Match Complete --------------------------------------------\n");
+    tprintf("Match Complete --------------------------------------------\n");
 
   delete tables;
   return NumBadFeatures;
@@ -753,16 +745,16 @@ void ScratchEvidence::ClearFeatureEvidence(const INT_CLASS class_template) {
  */
 static void IMDebugConfiguration(int FeatureNum, uint16_t ActualProtoNum,
                                  uint8_t Evidence, uint32_t ConfigWord) {
-  cprintf ("F = %3d, P = %3d, E = %3d, Configs = ",
+  tprintf ("F = %3d, P = %3d, E = %3d, Configs = ",
     FeatureNum, static_cast<int>(ActualProtoNum), static_cast<int>(Evidence));
   while (ConfigWord) {
     if (ConfigWord & 1)
-      cprintf ("1");
+      tprintf ("1");
     else
-      cprintf ("0");
+      tprintf ("0");
     ConfigWord >>= 1;
   }
-  cprintf ("\n");
+  tprintf ("\n");
 }
 
 /**
@@ -770,11 +762,11 @@ static void IMDebugConfiguration(int FeatureNum, uint16_t ActualProtoNum,
  */
 static void IMDebugConfigurationSum(int FeatureNum, uint8_t *FeatureEvidence,
                                     int32_t ConfigCount) {
-  cprintf("F=%3d, C=", FeatureNum);
+  tprintf("F=%3d, C=", FeatureNum);
   for (int ConfigNum = 0; ConfigNum < ConfigCount; ConfigNum++) {
-    cprintf("%4d", FeatureEvidence[ConfigNum]);
+    tprintf("%4d", FeatureEvidence[ConfigNum]);
   }
-  cprintf("\n");
+  tprintf("\n");
 }
 
 /**
@@ -891,18 +883,21 @@ int IntegerMatcher::UpdateTablesForFeature(
               tables->feature_evidence_[config_offset] = Evidence;
           }
 
+          uint8_t ProtoIndex =
+            ClassTemplate->ProtoLengths[ActualProtoNum + proto_offset];
+          if (ProtoIndex > MAX_PROTO_INDEX) {
+            // Avoid buffer overflow.
+            // TODO: A better fix is still open.
+            ProtoIndex = MAX_PROTO_INDEX;
+          }
           uint8_t* UINT8Pointer =
             &(tables->proto_evidence_[ActualProtoNum + proto_offset][0]);
-          for (uint8_t ProtoIndex =
-            ClassTemplate->ProtoLengths[ActualProtoNum + proto_offset];
-          ProtoIndex > 0; ProtoIndex--, UINT8Pointer++) {
+          for (; Evidence > 0 && ProtoIndex > 0; ProtoIndex--, UINT8Pointer++) {
             if (Evidence > *UINT8Pointer) {
               uint8_t Temp = *UINT8Pointer;
               *UINT8Pointer = Evidence;
               Evidence = Temp;
             }
-            else if (Evidence == 0)
-              break;
           }
         }
       }
@@ -946,23 +941,23 @@ void IntegerMatcher::DebugFeatureProtoError(
   uint16_t ActualProtoNum;
 
   if (PrintMatchSummaryOn(Debug)) {
-    cprintf("Configuration Mask:\n");
+    tprintf("Configuration Mask:\n");
     for (ConfigNum = 0; ConfigNum < ClassTemplate->NumConfigs; ConfigNum++)
-      cprintf("%1d", (((*ConfigMask) >> ConfigNum) & 1));
-    cprintf("\n");
+      tprintf("%1d", (((*ConfigMask) >> ConfigNum) & 1));
+    tprintf("\n");
 
-    cprintf("Feature Error for Configurations:\n");
+    tprintf("Feature Error for Configurations:\n");
     for (ConfigNum = 0; ConfigNum < ClassTemplate->NumConfigs; ConfigNum++) {
-      cprintf(
+      tprintf(
           " %5.1f",
           100.0 * (1.0 - static_cast<float>(tables.sum_feature_evidence_[ConfigNum])
           / NumFeatures / 256.0));
     }
-    cprintf("\n\n\n");
+    tprintf("\n\n\n");
   }
 
   if (PrintMatchSummaryOn (Debug)) {
-    cprintf ("Proto Mask:\n");
+    tprintf ("Proto Mask:\n");
     for (ProtoSetIndex = 0; ProtoSetIndex < ClassTemplate->NumProtoSets;
     ProtoSetIndex++) {
       ActualProtoNum = (ProtoSetIndex * PROTOS_PER_PROTO_SET);
@@ -973,18 +968,18 @@ void IntegerMatcher::DebugFeatureProtoError(
           ((ProtoNum < (PROTOS_PER_PROTO_SET >> 1))
           && (ActualProtoNum < ClassTemplate->NumProtos));
           ProtoNum++, ActualProtoNum++)
-        cprintf ("%1d", (((*ProtoMask) >> ProtoNum) & 1));
-        cprintf ("\n");
+        tprintf ("%1d", (((*ProtoMask) >> ProtoNum) & 1));
+        tprintf ("\n");
       }
     }
-    cprintf ("\n");
+    tprintf ("\n");
   }
 
   for (int i = 0; i < ClassTemplate->NumConfigs; i++)
     ProtoConfigs[i] = 0;
 
   if (PrintProtoMatchesOn (Debug)) {
-    cprintf ("Proto Evidence:\n");
+    tprintf ("Proto Evidence:\n");
     for (ProtoSetIndex = 0; ProtoSetIndex < ClassTemplate->NumProtoSets;
     ProtoSetIndex++) {
       ProtoSet = ClassTemplate->ProtoSets[ProtoSetIndex];
@@ -993,52 +988,52 @@ void IntegerMatcher::DebugFeatureProtoError(
            ((ProtoNum < PROTOS_PER_PROTO_SET) &&
             (ActualProtoNum < ClassTemplate->NumProtos));
            ProtoNum++, ActualProtoNum++) {
-        cprintf ("P %3d =", ActualProtoNum);
+        tprintf ("P %3d =", ActualProtoNum);
         int temp = 0;
         for (uint8_t j = 0; j < ClassTemplate->ProtoLengths[ActualProtoNum]; j++) {
           uint8_t data = tables.proto_evidence_[ActualProtoNum][j];
-          cprintf(" %d", data);
+          tprintf(" %d", data);
           temp += data;
         }
 
-        cprintf(" = %6.4f%%\n",
+        tprintf(" = %6.4f%%\n",
                 temp / 256.0 / ClassTemplate->ProtoLengths[ActualProtoNum]);
 
         ConfigWord = ProtoSet->Protos[ProtoNum].Configs[0];
         ConfigNum = 0;
         while (ConfigWord) {
-          cprintf ("%5d", ConfigWord & 1 ? temp : 0);
+          tprintf ("%5d", ConfigWord & 1 ? temp : 0);
           if (ConfigWord & 1)
             ProtoConfigs[ConfigNum] += temp;
           ConfigNum++;
           ConfigWord >>= 1;
         }
-        cprintf("\n");
+        tprintf("\n");
       }
     }
   }
 
   if (PrintMatchSummaryOn (Debug)) {
-    cprintf ("Proto Error for Configurations:\n");
+    tprintf ("Proto Error for Configurations:\n");
     for (ConfigNum = 0; ConfigNum < ClassTemplate->NumConfigs; ConfigNum++)
-      cprintf (" %5.1f",
+      tprintf (" %5.1f",
         100.0 * (1.0 -
         ProtoConfigs[ConfigNum] /
         ClassTemplate->ConfigLengths[ConfigNum] / 256.0));
-    cprintf ("\n\n");
+    tprintf ("\n\n");
   }
 
   if (PrintProtoMatchesOn (Debug)) {
-    cprintf ("Proto Sum for Configurations:\n");
+    tprintf ("Proto Sum for Configurations:\n");
     for (ConfigNum = 0; ConfigNum < ClassTemplate->NumConfigs; ConfigNum++)
-      cprintf (" %4.1f", ProtoConfigs[ConfigNum] / 256.0);
-    cprintf ("\n\n");
+      tprintf (" %4.1f", ProtoConfigs[ConfigNum] / 256.0);
+    tprintf ("\n\n");
 
-    cprintf ("Proto Length for Configurations:\n");
+    tprintf ("Proto Length for Configurations:\n");
     for (ConfigNum = 0; ConfigNum < ClassTemplate->NumConfigs; ConfigNum++)
-      cprintf (" %4.1f",
+      tprintf (" %4.1f",
         static_cast<float>(ClassTemplate->ConfigLengths[ConfigNum]));
-    cprintf ("\n\n");
+    tprintf ("\n\n");
   }
 
 }
@@ -1152,7 +1147,6 @@ void ScratchEvidence::UpdateSumOfProtoEvidences(
          ((ProtoNum < PROTOS_PER_PROTO_SET) && (ActualProtoNum < NumProtos));
          ProtoNum++, ActualProtoNum++) {
       int temp = 0;
-      assert(ClassTemplate->ProtoLengths[ActualProtoNum] < MAX_PROTO_INDEX);
       for (uint8_t i = 0; i < MAX_PROTO_INDEX &&
            i < ClassTemplate->ProtoLengths[ActualProtoNum]; i++)
         temp += proto_evidence_[ActualProtoNum] [i];
@@ -1195,7 +1189,7 @@ int IntegerMatcher::FindBestMatch(
     UnicharRating* result) {
   int best_match = 0;
   result->config = 0;
-  result->fonts.truncate(0);
+  result->fonts.clear();
   result->fonts.reserve(class_template->NumConfigs);
 
   /* Find best match */
@@ -1228,3 +1222,5 @@ float IntegerMatcher::ApplyCNCorrection(float rating, int blob_length,
   return divisor == 0 ? 1.0f : (rating * blob_length +
       matcher_multiplier * normalization_factor / 256.0f) / divisor;
 }
+
+}  // namespace tesseract

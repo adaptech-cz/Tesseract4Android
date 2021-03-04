@@ -22,8 +22,12 @@
 #include "bits16.h"
 #include "elst2.h"
 #include "params.h"
+#include "genericvector.h" // GenericVector
 #include "stepblob.h"
+
 #include "strngs.h"
+
+namespace tesseract {
 
 enum WERD_FLAGS {
   W_SEGMENTED,           ///< correctly segmented
@@ -53,7 +57,7 @@ enum DISPLAY_FLAGS {
 
 class ROW;  // forward decl
 
-class WERD : public ELIST2_LINK {
+class TESS_API WERD : public ELIST2_LINK {
  public:
   WERD() = default;
   // WERD constructed with:
@@ -111,15 +115,15 @@ class WERD : public ELIST2_LINK {
   // Returns the bounding box of only the good blobs.
   TBOX true_bounding_box() const;
 
-  const char* text() const { return correct.string(); }
+  const char* text() const { return correct.c_str(); }
   void set_text(const char* new_text) { correct = new_text; }
 
-  bool flag(WERD_FLAGS mask) const { return flags.bit(mask); }
-  void set_flag(WERD_FLAGS mask, bool value) { flags.set_bit(mask, value); }
+  bool flag(WERD_FLAGS mask) const { return flags[mask]; }
+  void set_flag(WERD_FLAGS mask, bool value) { flags.set(mask, value); }
 
-  bool display_flag(uint8_t flag) const { return disp_flags.bit(flag); }
+  bool display_flag(uint8_t flag) const { return disp_flags[flag]; }
   void set_display_flag(uint8_t flag, bool value) {
-    disp_flags.set_bit(flag, value);
+    disp_flags.set(flag, value);
   }
 
   WERD* shallow_copy();  // shallow copy word
@@ -148,7 +152,7 @@ class WERD : public ELIST2_LINK {
 
   // plot rejected blobs in a rainbow of colours
   void plot_rej_blobs(ScrollView* window);
-#endif  // GRAPHICS_DISABLED
+#endif // !GRAPHICS_DISABLED
 
   // Removes noise from the word by moving small outlines to the rej_cblobs
   // list, based on the size_threshold.
@@ -181,7 +185,16 @@ class WERD : public ELIST2_LINK {
 };
 
 ELIST2IZEH(WERD)
+
+} // namespace tesseract
+
 #include "ocrrow.h"  // placed here due to
+
+namespace tesseract {
+
 // compare words by increasing order of left edge, suitable for qsort(3)
 int word_comparator(const void* word1p, const void* word2p);
+
+} // namespace tesseract
+
 #endif

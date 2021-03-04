@@ -16,12 +16,11 @@
 //
 ///////////////////////////////////////////////////////////////////////
 
-#include <cstdio>
-
 #include "dict.h"
-#include "unicodes.h"
 
 #include "tprintf.h"
+
+#include <cstdio>
 
 namespace tesseract {
 
@@ -30,7 +29,6 @@ class Image;
 Dict::Dict(CCUtil* ccutil)
     : letter_is_okay_(&tesseract::Dict::def_letter_is_okay),
       probability_in_context_(&tesseract::Dict::def_probability_in_context),
-      params_model_classify_(nullptr),
       ccutil_(ccutil),
       wildcard_unichar_id_(INVALID_UNICHAR_ID),
       apostrophe_unichar_id_(INVALID_UNICHAR_ID),
@@ -190,7 +188,7 @@ DawgCache* Dict::GlobalDawgCache() {
 
 // Sets up ready for a Load or LoadLSTM.
 void Dict::SetupForLoad(DawgCache* dawg_cache) {
-  if (dawgs_.length() != 0) this->End();
+  if (dawgs_.size() != 0) this->End();
 
   apostrophe_unichar_id_ = getUnicharset().unichar_to_id(kApostropheSymbol);
   question_unichar_id_ = getUnicharset().unichar_to_id(kQuestionSymbol);
@@ -251,9 +249,9 @@ void Dict::Load(const STRING& lang, TessdataManager* data_file) {
       name = getCCUtil()->language_data_path_prefix;
       name += user_words_suffix;
     }
-    if (!trie_ptr->read_and_add_word_list(name.string(), getUnicharset(),
+    if (!trie_ptr->read_and_add_word_list(name.c_str(), getUnicharset(),
                                           Trie::RRP_REVERSE_IF_HAS_RTL)) {
-      tprintf("Error: failed to load %s\n", name.string());
+      tprintf("Error: failed to load %s\n", name.c_str());
       delete trie_ptr;
     } else {
       dawgs_ += trie_ptr;
@@ -270,8 +268,8 @@ void Dict::Load(const STRING& lang, TessdataManager* data_file) {
       name = getCCUtil()->language_data_path_prefix;
       name += user_patterns_suffix;
     }
-    if (!trie_ptr->read_pattern_list(name.string(), getUnicharset())) {
-      tprintf("Error: failed to load %s\n", name.string());
+    if (!trie_ptr->read_pattern_list(name.c_str(), getUnicharset())) {
+      tprintf("Error: failed to load %s\n", name.c_str());
       delete trie_ptr;
     } else {
       dawgs_ += trie_ptr;
@@ -318,9 +316,9 @@ void Dict::LoadLSTM(const STRING& lang, TessdataManager* data_file) {
       name = getCCUtil()->language_data_path_prefix;
       name += user_words_suffix;
     }
-    if (!trie_ptr->read_and_add_word_list(name.string(), getUnicharset(),
+    if (!trie_ptr->read_and_add_word_list(name.c_str(), getUnicharset(),
                                           Trie::RRP_REVERSE_IF_HAS_RTL)) {
-      tprintf("Error: failed to load %s\n", name.string());
+      tprintf("Error: failed to load %s\n", name.c_str());
       delete trie_ptr;
     } else {
       dawgs_ += trie_ptr;
@@ -337,8 +335,8 @@ void Dict::LoadLSTM(const STRING& lang, TessdataManager* data_file) {
       name = getCCUtil()->language_data_path_prefix;
       name += user_patterns_suffix;
     }
-    if (!trie_ptr->read_pattern_list(name.string(), getUnicharset())) {
-      tprintf("Error: failed to load %s\n", name.string());
+    if (!trie_ptr->read_pattern_list(name.c_str(), getUnicharset())) {
+      tprintf("Error: failed to load %s\n", name.c_str());
       delete trie_ptr;
     } else {
       dawgs_ += trie_ptr;
@@ -353,11 +351,11 @@ bool Dict::FinishLoad() {
   // Construct a list of corresponding successors for each dawg. Each entry, i,
   // in the successors_ vector is a vector of integers that represent the
   // indices into the dawgs_ vector of the successors for dawg i.
-  successors_.reserve(dawgs_.length());
-  for (int i = 0; i < dawgs_.length(); ++i) {
+  successors_.reserve(dawgs_.size());
+  for (int i = 0; i < dawgs_.size(); ++i) {
     const Dawg* dawg = dawgs_[i];
     auto* lst = new SuccessorList();
-    for (int j = 0; j < dawgs_.length(); ++j) {
+    for (int j = 0; j < dawgs_.size(); ++j) {
       const Dawg* other = dawgs_[j];
       if (dawg != nullptr && other != nullptr &&
           (dawg->lang() == other->lang()) &&
@@ -370,7 +368,7 @@ bool Dict::FinishLoad() {
 }
 
 void Dict::End() {
-  if (dawgs_.length() == 0) return;  // Not safe to call twice.
+  if (dawgs_.size() == 0) return;  // Not safe to call twice.
   for (int i = 0; i < dawgs_.size(); i++) {
     if (!dawg_cache_->FreeDawg(dawgs_[i])) {
       delete dawgs_[i];
@@ -402,8 +400,8 @@ int Dict::def_letter_is_okay(void* void_dawg_args, const UNICHARSET& unicharset,
     tprintf(
         "def_letter_is_okay: current unichar=%s word_end=%d"
         " num active dawgs=%d\n",
-        getUnicharset().debug_str(unichar_id).string(), word_end,
-        dawg_args->active_dawgs->length());
+        getUnicharset().debug_str(unichar_id).c_str(), word_end,
+        dawg_args->active_dawgs->size());
   }
 
   // Do not accept words that contain kPatternUnicharID.
@@ -423,7 +421,7 @@ int Dict::def_letter_is_okay(void* void_dawg_args, const UNICHARSET& unicharset,
   // Go over the active_dawgs vector and insert DawgPosition records
   // with the updated ref (an edge with the corresponding unichar id) into
   // dawg_args->updated_pos.
-  for (int a = 0; a < dawg_args->active_dawgs->length(); ++a) {
+  for (int a = 0; a < dawg_args->active_dawgs->size(); ++a) {
     const DawgPosition& pos = (*dawg_args->active_dawgs)[a];
     const Dawg* punc_dawg =
         pos.punc_index >= 0 ? dawgs_[pos.punc_index] : nullptr;
@@ -442,7 +440,7 @@ int Dict::def_letter_is_okay(void* void_dawg_args, const UNICHARSET& unicharset,
       if (punc_transition_edge != NO_EDGE) {
         // Find all successors, and see which can transition.
         const SuccessorList& slist = *(successors_[pos.punc_index]);
-        for (int s = 0; s < slist.length(); ++s) {
+        for (int s = 0; s < slist.size(); ++s) {
           int sdawg_index = slist[s];
           const Dawg* sdawg = dawgs_[sdawg_index];
           UNICHAR_ID ch = char_for_dawg(unicharset, unichar_id, sdawg);
@@ -620,7 +618,7 @@ void Dict::default_dawgs(DawgPositionVector* dawg_pos_vec,
       (punc_dawg_ != nullptr) &&
       punc_dawg_->edge_char_of(0, Dawg::kPatternUnicharID, true) != NO_EDGE;
 
-  for (int i = 0; i < dawgs_.length(); i++) {
+  for (int i = 0; i < dawgs_.size(); i++) {
     if (dawgs_[i] != nullptr &&
         !(suppress_patterns && (dawgs_[i])->type() == DAWG_TYPE_PATTERN)) {
       int dawg_ty = dawgs_[i]->type();
@@ -687,12 +685,12 @@ void Dict::add_document_word(const WERD_CHOICE& best_choice) {
   if (save_doc_words) {
     STRING filename(getCCUtil()->imagefile);
     filename += ".doc";
-    FILE* doc_word_file = fopen(filename.string(), "a");
+    FILE* doc_word_file = fopen(filename.c_str(), "a");
     if (doc_word_file == nullptr) {
-      tprintf("Error: Could not open file %s\n", filename.string());
+      tprintf("Error: Could not open file %s\n", filename.c_str());
       ASSERT_HOST(doc_word_file);
     }
-    fprintf(doc_word_file, "%s\n", best_choice.debug_string().string());
+    fprintf(doc_word_file, "%s\n", best_choice.debug_string().c_str());
     fclose(doc_word_file);
   }
   document_words_->add_word_to_dawg(best_choice);
@@ -735,7 +733,7 @@ void Dict::adjust_word(WERD_CHOICE* word, bool nonword,
   }
   if (debug) {
     tprintf("%sWord: %s %4.2f%s", nonword ? "Non-" : "",
-            word->unichar_string().string(), word->rating(), xheight_triggered);
+            word->unichar_string().c_str(), word->rating(), xheight_triggered);
   }
 
   if (nonword) {  // non-dictionary word
@@ -786,7 +784,7 @@ int Dict::valid_word(const WERD_CHOICE& word, bool numbers_ok) const {
   if (word_ptr->length() == 0) return NO_PERM;
   // Allocate vectors for holding current and updated
   // active_dawgs and initialize them.
-  auto* active_dawgs = new DawgPositionVector[2];
+  DawgPositionVector active_dawgs[2];
   init_active_dawgs(&(active_dawgs[0]), false);
   DawgArgs dawg_args(&(active_dawgs[0]), &(active_dawgs[1]), NO_PERM);
   int last_index = word_ptr->length() - 1;
@@ -804,7 +802,6 @@ int Dict::valid_word(const WERD_CHOICE& word, bool numbers_ok) const {
       dawg_args.active_dawgs = &(active_dawgs[0]);
     }
   }
-  delete[] active_dawgs;
   return valid_word_permuter(dawg_args.permuter, numbers_ok)
              ? dawg_args.permuter
              : NO_PERM;
@@ -826,24 +823,24 @@ bool Dict::valid_bigram(const WERD_CHOICE& word1,
   if (w2start >= w2end) return word2.length() < 3;
 
   const UNICHARSET& uchset = getUnicharset();
-  GenericVector<UNICHAR_ID> bigram_string;
+  std::vector<UNICHAR_ID> bigram_string;
   bigram_string.reserve(w1end + w2end + 1);
   for (int i = w1start; i < w1end; i++) {
-    const GenericVector<UNICHAR_ID>& normed_ids =
+    const auto &normed_ids =
         getUnicharset().normed_ids(word1.unichar_id(i));
     if (normed_ids.size() == 1 && uchset.get_isdigit(normed_ids[0]))
       bigram_string.push_back(question_unichar_id_);
     else
-      bigram_string += normed_ids;
+      bigram_string.insert(bigram_string.end(), normed_ids.begin(), normed_ids.end());
   }
   bigram_string.push_back(UNICHAR_SPACE);
   for (int i = w2start; i < w2end; i++) {
-    const GenericVector<UNICHAR_ID>& normed_ids =
+    const auto &normed_ids =
         getUnicharset().normed_ids(word2.unichar_id(i));
     if (normed_ids.size() == 1 && uchset.get_isdigit(normed_ids[0]))
       bigram_string.push_back(question_unichar_id_);
     else
-      bigram_string += normed_ids;
+      bigram_string.insert(bigram_string.end(), normed_ids.begin(), normed_ids.end());
   }
   WERD_CHOICE normalized_word(&uchset, bigram_string.size());
   for (int i = 0; i < bigram_string.size(); ++i) {

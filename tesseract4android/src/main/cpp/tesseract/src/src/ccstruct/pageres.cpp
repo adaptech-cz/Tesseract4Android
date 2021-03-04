@@ -22,9 +22,7 @@
  **********************************************************************/
 
 #include "pageres.h"
-#include <cassert>         // for assert
-#include <cstdint>         // for INT32_MAX
-#include <cstring>         // for strlen
+
 #include "blamer.h"        // for BlamerBundle
 #include "blobs.h"         // for TWERD, TBLOB
 #include "boxword.h"       // for BoxWord
@@ -33,13 +31,19 @@
 #include "ocrrow.h"        // for ROW, ROW_IT
 #include "pdblock.h"       // for PDBLK
 #include "polyblk.h"       // for POLY_BLOCK
-#include "publictypes.h"   // for OcrEngineMode, OEM_LSTM_ONLY
 #include "seam.h"          // for SEAM, start_seam_list
 #include "stepblob.h"      // for C_BLOB_IT, C_BLOB, C_BLOB_LIST
-#include "tesscallback.h"  // for NewPermanentTessCallback, TessResultCallback2
 #include "tprintf.h"       // for tprintf
 
+#include <tesseract/publictypes.h>   // for OcrEngineMode, OEM_LSTM_ONLY
+
+#include <cassert>         // for assert
+#include <cstdint>         // for INT32_MAX
+#include <cstring>         // for strlen
+
 struct Pix;
+
+namespace tesseract {
 
 ELISTIZE (BLOCK_RES)
 CLISTIZE (BLOCK_RES) ELISTIZE (ROW_RES) ELISTIZE (WERD_RES)
@@ -490,7 +494,7 @@ void WERD_RES::DebugWordChoices(bool debug, const char* word_to_debug) {
       WERD_CHOICE* choice = it.data();
       STRING label;
       label.add_str_int("\nCooked Choice #", index);
-      choice->print(label.string());
+      choice->print(label.c_str());
     }
   }
 }
@@ -637,7 +641,7 @@ bool WERD_RES::LogNewCookedChoice(int max_num_choices, bool debug,
         word_choice->string_and_lengths(&bad_string, nullptr);
         tprintf("Discarding choice \"%s\" with an overly low certainty"
                 " %.3f vs best choice certainty %.3f (Threshold: %.3f)\n",
-                bad_string.string(), word_choice->certainty(),
+                bad_string.c_str(), word_choice->certainty(),
                 best_choice->certainty(),
                 max_certainty_delta + best_choice->certainty());
       }
@@ -671,7 +675,7 @@ bool WERD_RES::LogNewCookedChoice(int max_num_choices, bool debug,
           // Old is better.
           if (debug) {
             tprintf("Discarding duplicate choice \"%s\", rating %g vs %g\n",
-                    new_str.string(), word_choice->rating(), choice->rating());
+                    new_str.c_str(), word_choice->rating(), choice->rating());
           }
           delete word_choice;
           return false;
@@ -722,7 +726,7 @@ void WERD_RES::PrintBestChoices() const {
     alternates_str += it.data()->unichar_string();
   }
   tprintf("Alternates for \"%s\": {\"%s\"}\n",
-          best_choice->unichar_string().string(), alternates_str.string());
+          best_choice->unichar_string().c_str(), alternates_str.c_str());
 }
 
 // Returns the sum of the widths of the blob between start_blob and last_blob
@@ -798,7 +802,7 @@ void WERD_RES::ReplaceBestChoice(WERD_CHOICE* choice) {
   SetupBoxWord();
   // Make up a fake reject map of the right length to keep the
   // rejection pass happy.
-  reject_map.initialise(best_state.length());
+  reject_map.initialise(best_state.size());
   done = tess_accepted = tess_would_adapt = true;
   SetScriptPositions();
 }
@@ -901,8 +905,9 @@ void WERD_RES::FakeWordFromRatings(PermuterType permuter) {
   word_choice->set_permuter(permuter);
   for (int b = 0; b < num_blobs; ++b) {
     UNICHAR_ID unichar_id = UNICHAR_SPACE;
-    float rating = INT32_MAX;
-    float certainty = -INT32_MAX;
+    // Initialize rating and certainty like in WERD_CHOICE::make_bad().
+    float rating = WERD_CHOICE::kBadRating;
+    float certainty = -FLT_MAX;
     BLOB_CHOICE_LIST* choices = ratings->get(b, b);
     if (choices != nullptr && !choices->empty()) {
       BLOB_CHOICE_IT bc_it(choices);
@@ -936,16 +941,16 @@ void WERD_RES::BestChoiceToCorrectText() {
 // result to the class returned from class_cb.
 // Returns true if anything was merged.
 bool WERD_RES::ConditionalBlobMerge(
-    TessResultCallback2<UNICHAR_ID, UNICHAR_ID, UNICHAR_ID>* class_cb,
-    TessResultCallback2<bool, const TBOX&, const TBOX&>* box_cb) {
+    std::function<UNICHAR_ID(UNICHAR_ID, UNICHAR_ID)> class_cb,
+    std::function<bool(const TBOX&, const TBOX&)> box_cb) {
   ASSERT_HOST(best_choice->length() == 0 || ratings != nullptr);
   bool modified = false;
   for (int i = 0; i + 1 < best_choice->length(); ++i) {
-    UNICHAR_ID new_id = class_cb->Run(best_choice->unichar_id(i),
-                                      best_choice->unichar_id(i+1));
+    UNICHAR_ID new_id = class_cb(best_choice->unichar_id(i),
+                                 best_choice->unichar_id(i+1));
     if (new_id != INVALID_UNICHAR_ID &&
-        (box_cb == nullptr || box_cb->Run(box_word->BlobBox(i),
-                                       box_word->BlobBox(i + 1)))) {
+        (box_cb == nullptr || box_cb(box_word->BlobBox(i),
+                                     box_word->BlobBox(i + 1)))) {
       // Raw choice should not be fixed.
       best_choice->set_unichar_id(new_id, i);
       modified = true;
@@ -964,8 +969,6 @@ bool WERD_RES::ConditionalBlobMerge(
       }
     }
   }
-  delete class_cb;
-  delete box_cb;
   return modified;
 }
 
@@ -977,7 +980,7 @@ void WERD_RES::MergeAdjacentBlobs(int index) {
   best_choice->remove_unichar_id(index + 1);
   rebuild_word->MergeBlobs(index, index + 2);
   box_word->MergeBoxes(index, index + 2);
-  if (index + 1 < best_state.length()) {
+  if (index + 1 < best_state.size()) {
     best_state[index] += best_state[index + 1];
     best_state.remove(index + 1);
   }
@@ -1020,9 +1023,9 @@ void WERD_RES::fix_quotes() {
       !uch_set->get_enabled(uch_set->unichar_to_id("\"")))
     return;  // Don't create it if it is disallowed.
 
-  ConditionalBlobMerge(
-      NewPermanentTessCallback(this, &WERD_RES::BothQuotes),
-      nullptr);
+  using namespace std::placeholders;  // for _1, _2
+  ConditionalBlobMerge(std::bind(&WERD_RES::BothQuotes, this, _1, _2),
+                       nullptr);
 }
 
 // Callback helper for fix_hyphens returns UNICHAR_ID of - if both
@@ -1049,9 +1052,9 @@ void WERD_RES::fix_hyphens() {
       !uch_set->get_enabled(uch_set->unichar_to_id("-")))
     return;  // Don't create it if it is disallowed.
 
-  ConditionalBlobMerge(
-      NewPermanentTessCallback(this, &WERD_RES::BothHyphens),
-      NewPermanentTessCallback(this, &WERD_RES::HyphenBoxesOverlap));
+  using namespace std::placeholders;  // for _1, _2
+  ConditionalBlobMerge(std::bind(&WERD_RES::BothHyphens, this, _1, _2),
+                       std::bind(&WERD_RES::HyphenBoxesOverlap, this, _1, _2));
 }
 
 // Callback helper for merge_tess_fails returns a space if both
@@ -1065,8 +1068,9 @@ UNICHAR_ID WERD_RES::BothSpaces(UNICHAR_ID id1, UNICHAR_ID id2) {
 
 // Change pairs of tess failures to a single one
 void WERD_RES::merge_tess_fails() {
-  if (ConditionalBlobMerge(
-      NewPermanentTessCallback(this, &WERD_RES::BothSpaces), nullptr)) {
+  using namespace std::placeholders;  // for _1, _2
+  if (ConditionalBlobMerge(std::bind(&WERD_RES::BothSpaces,
+                                     this, _1, _2), nullptr)) {
     int len = best_choice->length();
     ASSERT_HOST(reject_map.length() == len);
     ASSERT_HOST(box_word->length() == len);
@@ -1681,3 +1685,5 @@ void PAGE_RES_IT::rej_stat_word() {
   if (chars_in_word == rejects_in_word)
     row_res->whole_word_rej_count += rejects_in_word;
 }
+
+} // namespace tesseract

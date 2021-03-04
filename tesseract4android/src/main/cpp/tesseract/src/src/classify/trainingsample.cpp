@@ -21,12 +21,14 @@
 
 #include "trainingsample.h"
 
-#include <cmath>                // for M_PI
-#include "allheaders.h"
+#include "intfeaturespace.h"
 #include "helpers.h"
-#include "intfeaturemap.h"
 #include "normfeat.h"
 #include "shapetable.h"
+
+#include <allheaders.h>
+
+#include <cmath>                // for M_PI
 
 namespace tesseract {
 
@@ -281,17 +283,6 @@ void TrainingSample::IndexFeatures(const IntFeatureSpace& feature_space) {
   features_are_mapped_ = false;
 }
 
-// Sets the mapped_features_ from the features using the provided
-// feature_map.
-void TrainingSample::MapFeatures(const IntFeatureMap& feature_map) {
-  GenericVector<int> indexed_features;
-  feature_map.feature_space().IndexAndSortFeatures(features_, num_features_,
-                                                   &indexed_features);
-  feature_map.MapIndexedFeatures(indexed_features, &mapped_features_);
-  features_are_indexed_ = false;
-  features_are_mapped_ = true;
-}
-
 // Returns a pix representing the sample. (Int features only.)
 Pix* TrainingSample::RenderToPix(const UNICHARSET* unicharset) const {
   Pix* pix = pixCreate(kIntFeatureExtent, kIntFeatureExtent, 1);
@@ -312,15 +303,17 @@ Pix* TrainingSample::RenderToPix(const UNICHARSET* unicharset) const {
   return pix;
 }
 
+#ifndef GRAPHICS_DISABLED
+
 // Displays the features in the given window with the given color.
 void TrainingSample::DisplayFeatures(ScrollView::Color color,
                                      ScrollView* window) const {
-  #ifndef GRAPHICS_DISABLED
   for (uint32_t f = 0; f < num_features_; ++f) {
     RenderIntFeature(window, &features_[f], color);
   }
-  #endif  // GRAPHICS_DISABLED
 }
+
+#endif // !GRAPHICS_DISABLED
 
 // Returns a pix of the original sample image. The pix is padded all round
 // by padding wherever possible.

@@ -1,5 +1,4 @@
-/* -*-C-*-
- ********************************************************************************
+/******************************************************************************
  *
  * File:         measure.h
  * Description:  Statistics for a group of single measurements
@@ -16,8 +15,7 @@
  ** See the License for the specific language governing permissions and
  ** limitations under the License.
  *
- ********************************************************************************
- */
+ *****************************************************************************/
 
 #ifndef MEASURE_H
 #define MEASURE_H
@@ -116,7 +114,7 @@ typedef struct
  **********************************************************************/
 
 #define print_summary(string, measure)                             \
-  cprintf("\t%-20s \tn = %d, \tm = %4.2f, \ts = %4.2f\n ", string, \
+  tprintf("\t%-20s \tn = %d, \tm = %4.2f, \ts = %4.2f\n ", string, \
           number_of_samples(measure), MEAN(measure),               \
           standard_deviation(measure))
 #endif

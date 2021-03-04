@@ -16,14 +16,18 @@
  *
  **********************************************************************/
 
-#include <cmath>
-#include <cfloat>       // for FLT_MAX
-#include <vector>       // for std::vector
+#include "pithsync.h"
+
 #include "makerow.h"
 #include "pitsync1.h"
 #include "topitch.h"
-#include "pithsync.h"
 #include "tprintf.h"
+
+#include <cmath>
+#include <cfloat>       // for FLT_MAX
+#include <vector>       // for std::vector
+
+namespace tesseract {
 
 /**********************************************************************
  * FPCUTPT::setup
@@ -72,7 +76,7 @@ void FPCUTPT::setup(                     //constructor
   }
   else {
     back_balance = cutpts[x - 1 - array_origin].back_balance << 1;
-    back_balance &= lead_flag + lead_flag - 1;
+    back_balance &= lead_flag + (lead_flag - 1);
     if (projection->pile_count (x) > zero_count)
       back_balance |= 1;
     fwd_balance = cutpts[x - 1 - array_origin].fwd_balance >> 1;
@@ -122,7 +126,7 @@ void FPCUTPT::assign(                         //constructor
   lead_flag = 1 << half_pitch;
 
   back_balance = cutpts[x - 1 - array_origin].back_balance << 1;
-  back_balance &= lead_flag + lead_flag - 1;
+  back_balance &= lead_flag + (lead_flag - 1);
   if (projection->pile_count (x) > zero_count)
     back_balance |= 1;
   fwd_balance = cutpts[x - 1 - array_origin].fwd_balance >> 1;
@@ -229,7 +233,7 @@ void FPCUTPT::assign_cheap(                         //constructor
   lead_flag = 1 << half_pitch;
 
   back_balance = cutpts[x - 1 - array_origin].back_balance << 1;
-  back_balance &= lead_flag + lead_flag - 1;
+  back_balance &= lead_flag + (lead_flag - 1);
   if (projection->pile_count (x) > zero_count)
     back_balance |= 1;
   fwd_balance = cutpts[x - 1 - array_origin].fwd_balance >> 1;
@@ -685,3 +689,5 @@ double check_pitch_sync3(                          //find segmentation
       seg_it.data ()->squares (), seg_it.data ()->sum (), best_count);
   return seg_it.data ()->squares () - mean_sum;
 }
+
+} // namespace tesseract

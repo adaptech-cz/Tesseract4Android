@@ -39,6 +39,18 @@ CLISTIZE(ColPartition)
 
 //////////////// ColPartition Implementation ////////////////
 
+// enum to refer to the entries in a neighbourhood of lines.
+// Used by SmoothSpacings to test for blips with OKSpacingBlip.
+enum SpacingNeighbourhood {
+  PN_ABOVE2,
+  PN_ABOVE1,
+  PN_UPPER,
+  PN_LOWER,
+  PN_BELOW1,
+  PN_BELOW2,
+  PN_COUNT
+};
+
 // Maximum change in spacing (in inches) to ignore.
 const double kMaxSpacingDrift = 1.0 / 72;  // 1/72 is one point.
 // Maximum fraction of line height used as an additional allowance
@@ -635,7 +647,7 @@ ColPartition* ColPartition::SingletonPartner(bool upper) {
 }
 
 // Merge with the other partition and delete it.
-void ColPartition::Absorb(ColPartition* other, WidthCallback* cb) {
+void ColPartition::Absorb(ColPartition* other, WidthCallback cb) {
   // The result has to either own all of the blobs or none of them.
   // Verify the flag is consistent.
   ASSERT_HOST(owns_blobs() == other->owns_blobs());
@@ -929,11 +941,13 @@ void ColPartition::ComputeLimits() {
   }
 
   if (right_margin_ < bounding_box_.right() && textord_debug_bugs) {
-    tprintf("Made partition with bad right coords");
+    tprintf("Made partition with bad right coords, %d < %d\n",
+            right_margin_, bounding_box_.right());
     Print();
   }
   if (left_margin_ > bounding_box_.left() && textord_debug_bugs) {
-    tprintf("Made partition with bad left coords");
+    tprintf("Made partition with bad left coords, %d > %d\n",
+            left_margin_, bounding_box_.left());
     Print();
   }
   // Fix partner lists. The bounding box has changed and partners are stored
@@ -1067,10 +1081,10 @@ void ColPartition::ColumnRange(int resolution, ColPartitionSet* columns,
 }
 
 // Sets the internal flags good_width_ and good_column_.
-void ColPartition::SetColumnGoodness(WidthCallback* cb) {
+void ColPartition::SetColumnGoodness(WidthCallback cb) {
   int y = MidY();
   int width = RightAtY(y) - LeftAtY(y);
-  good_width_ = cb->Run(width);
+  good_width_ = cb(width);
   good_column_ = blob_type_ == BRT_TEXT && left_key_tab_ && right_key_tab_;
 }
 
@@ -1773,7 +1787,7 @@ ScrollView::Color  ColPartition::BoxColor() const {
     return BLOBNBOX::TextlineColor(blob_type_, flow_);
   return POLY_BLOCK::ColorForPolyBlockType(type_);
 }
-#endif  // GRAPHICS_DISABLED
+#endif // !GRAPHICS_DISABLED
 
 // Keep in sync with BlobRegionType.
 static char kBlobTypes[BRT_COUNT + 1] = "NHSRIUVT";
@@ -2237,10 +2251,16 @@ void ColPartition::SmoothSpacings(int resolution, int page_height,
     if (neighbourhood[PN_LOWER] == nullptr ||
         (!neighbourhood[PN_UPPER]->SpacingsEqual(*neighbourhood[PN_LOWER],
                                                  resolution) &&
-         !OKSpacingBlip(resolution, median_space, neighbourhood) &&
-         (!OKSpacingBlip(resolution, median_space, neighbourhood - 1) ||
+         (neighbourhood[PN_UPPER] == nullptr ||
+          neighbourhood[PN_LOWER] == nullptr ||
+          !OKSpacingBlip(resolution, median_space, neighbourhood, 0)) &&
+         (neighbourhood[PN_UPPER - 1] == nullptr ||
+          neighbourhood[PN_LOWER - 1] == nullptr ||
+          !OKSpacingBlip(resolution, median_space, neighbourhood, -1) ||
           !neighbourhood[PN_LOWER]->SpacingEqual(median_space, resolution)) &&
-         (!OKSpacingBlip(resolution, median_space, neighbourhood + 1) ||
+         (neighbourhood[PN_UPPER + 1] == nullptr ||
+          neighbourhood[PN_LOWER + 1] == nullptr ||
+          !OKSpacingBlip(resolution, median_space, neighbourhood, 1) ||
           !neighbourhood[PN_UPPER]->SpacingEqual(median_space, resolution)))) {
       // The group has ended. PN_UPPER is the last member.
       // Compute the mean spacing over the group.
@@ -2327,11 +2347,10 @@ void ColPartition::SmoothSpacings(int resolution, int page_height,
 // condition for a spacing blip. See SmoothSpacings for what this means
 // and how it is used.
 bool ColPartition::OKSpacingBlip(int resolution, int median_spacing,
-                                 ColPartition** parts) {
-  if (parts[PN_UPPER] == nullptr || parts[PN_LOWER] == nullptr)
-    return false;
+                                 ColPartition** parts, int offset) {
   // The blip is OK if upper and lower sum to an OK value and at least
   // one of above1 and below1 is equal to the median.
+  parts += offset;
   return parts[PN_UPPER]->SummedSpacingOK(*parts[PN_LOWER],
                                           median_spacing, resolution) &&
          ((parts[PN_ABOVE1] != nullptr &&

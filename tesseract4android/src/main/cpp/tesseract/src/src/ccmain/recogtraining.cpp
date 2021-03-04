@@ -33,7 +33,7 @@ const int16_t kMaxBoxEdgeDiff = 2;
 
 // Sets flags necessary for recognition in the training mode.
 // Opens and returns the pointer to the output file.
-FILE* Tesseract::init_recog_training(const STRING& fname) {
+FILE* Tesseract::init_recog_training(const char* filename) {
   if (tessedit_ambigs_training) {
     tessedit_tess_adaption_mode.set_value(0);  // turn off adaption
     tessedit_enable_doc_dict.set_value(0);     // turn off document dictionary
@@ -41,14 +41,14 @@ FILE* Tesseract::init_recog_training(const STRING& fname) {
     getDict().stopper_no_acceptable_choices.set_value(1);
   }
 
-  STRING output_fname = fname;
-  const char* lastdot = strrchr(output_fname.string(), '.');
+  std::string output_fname = filename;
+  const char* lastdot = strrchr(output_fname.c_str(), '.');
   if (lastdot != nullptr)
-    output_fname[lastdot - output_fname.string()] = '\0';
+    output_fname[lastdot - output_fname.c_str()] = '\0';
   output_fname += ".txt";
-  FILE* output_file = fopen(output_fname.string(), "a+");
+  FILE* output_file = fopen(output_fname.c_str(), "a+");
   if (output_file == nullptr) {
-    tprintf("Error: Could not open file %s\n", output_fname.string());
+    tprintf("Error: Could not open file %s\n", output_fname.c_str());
     ASSERT_HOST(output_file);
   }
   return output_file;
@@ -81,19 +81,19 @@ static bool read_t(PAGE_RES_IT* page_res_it, TBOX* tbox) {
 // match to those specified by the input box file. For each word (ngram in a
 // single bounding box from the input box file) it outputs the ocred result,
 // the correct label, rating and certainty.
-void Tesseract::recog_training_segmented(const STRING& fname,
+void Tesseract::recog_training_segmented(const char* filename,
                                          PAGE_RES* page_res,
                                          volatile ETEXT_DESC* monitor,
                                          FILE* output_file) {
-  STRING box_fname = fname;
-  const char* lastdot = strrchr(box_fname.string(), '.');
+  std::string box_fname = filename;
+  const char* lastdot = strrchr(box_fname.c_str(), '.');
   if (lastdot != nullptr)
-    box_fname[lastdot - box_fname.string()] = '\0';
+    box_fname[lastdot - box_fname.c_str()] = '\0';
   box_fname += ".box";
   // ReadNextBox() will close box_file
-  FILE* box_file = fopen(box_fname.string(), "r");
+  FILE* box_file = fopen(box_fname.c_str(), "r");
   if (box_file == nullptr) {
-    tprintf("Error: Could not open file %s\n", box_fname.string());
+    tprintf("Error: Could not open file %s\n", box_fname.c_str());
     ASSERT_HOST(box_file);
   }
 
@@ -137,7 +137,7 @@ void Tesseract::recog_training_segmented(const STRING& fname,
     if (keep_going &&
         NearlyEqual<int>(tbox.right(), bbox.right(), kMaxBoxEdgeDiff) &&
         NearlyEqual<int>(tbox.top(), bbox.top(), kMaxBoxEdgeDiff)) {
-      ambigs_classify_and_output(label.string(), &page_res_it, output_file);
+      ambigs_classify_and_output(label.c_str(), &page_res_it, output_file);
       examined_words++;
     }
     page_res_it.forward();
@@ -221,7 +221,7 @@ void Tesseract::ambigs_classify_and_output(const char* label,
   ASSERT_HOST(best_choice != nullptr);
 
   // Compute the number of unichars in the label.
-  GenericVector<UNICHAR_ID> encoding;
+  std::vector<UNICHAR_ID> encoding;
   if (!unicharset.encode_string(label, true, &encoding, nullptr, nullptr)) {
     tprintf("Not outputting illegal unichar %s\n", label);
     return;

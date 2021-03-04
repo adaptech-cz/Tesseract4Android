@@ -23,7 +23,7 @@
 #include "equationdetectbase.h"  // for EquationDetectBase
 #include "genericvector.h"       // for GenericVector
 #include "tesseractclass.h"      // for Tesseract
-#include "unichar.h"             // for UNICHAR_ID
+#include <tesseract/unichar.h>             // for UNICHAR_ID
 
 class TBOX;
 class UNICHARSET;
@@ -35,7 +35,7 @@ class ColPartition;
 class ColPartitionGrid;
 class ColPartitionSet;
 
-class EquationDetect : public EquationDetectBase {
+class TESS_API EquationDetect : public EquationDetectBase {
  public:
   EquationDetect(const char* equ_datapath,
                  const char* equ_language);

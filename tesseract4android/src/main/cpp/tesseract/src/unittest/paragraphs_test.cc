@@ -25,15 +25,13 @@
 // ccstruct
 #include "ocrpara.h"
 
-namespace {  // anonymous namespace
+namespace tesseract {
 
 // Functions for making monospace ASCII trial text for the paragraph detector.
-const tesseract::ParagraphJustification kLeft = tesseract::JUSTIFICATION_LEFT;
-const tesseract::ParagraphJustification kCenter =
-    tesseract::JUSTIFICATION_CENTER;
-const tesseract::ParagraphJustification kRight = tesseract::JUSTIFICATION_RIGHT;
-const tesseract::ParagraphJustification kUnknown =
-    tesseract::JUSTIFICATION_UNKNOWN;
+const ParagraphJustification kLeft = JUSTIFICATION_LEFT;
+const ParagraphJustification kCenter = JUSTIFICATION_CENTER;
+const ParagraphJustification kRight = JUSTIFICATION_RIGHT;
+const ParagraphJustification kUnknown = JUSTIFICATION_UNKNOWN;
 
 enum TextModelInputType {
   PCONT = 0,   // Continuation line of a paragraph (default).
@@ -53,8 +51,7 @@ struct TextAndModel {
 
 // Imagine that the given text is typewriter ASCII with each character ten
 // pixels wide and twenty pixels high and return an appropriate row_info.
-void AsciiToRowInfo(const char* text, int row_number,
-                    tesseract::RowInfo* info) {
+void AsciiToRowInfo(const char* text, int row_number, RowInfo* info) {
   const int kCharWidth = 10;
   const int kLineSpace = 30;
   info->text = text;
@@ -94,18 +91,18 @@ void AsciiToRowInfo(const char* text, int row_number,
       TBOX(info->pix_ldistance, bottom, info->pix_ldistance + lword_width, top);
   info->rword_box = TBOX(row_right - info->pix_rdistance - rword_width, bottom,
                          row_right - info->pix_rdistance, top);
-  tesseract::LeftWordAttributes(
+  LeftWordAttributes(
       nullptr, nullptr, info->lword_text, &info->lword_indicates_list_item,
       &info->lword_likely_starts_idea, &info->lword_likely_ends_idea);
-  tesseract::RightWordAttributes(
+  RightWordAttributes(
       nullptr, nullptr, info->rword_text, &info->rword_indicates_list_item,
       &info->rword_likely_starts_idea, &info->rword_likely_ends_idea);
 }
 
 void MakeAsciiRowInfos(const TextAndModel* row_infos, int n,
-                       GenericVector<tesseract::RowInfo>* output) {
+                       std::vector<RowInfo>* output) {
   output->clear();
-  tesseract::RowInfo info;
+  RowInfo info;
   for (int i = 0; i < n; i++) {
     AsciiToRowInfo(row_infos[i].ascii, i, &info);
     output->push_back(info);
@@ -162,7 +159,7 @@ void EvaluateParagraphDetection(const TextAndModel* correct, int n,
     for (int i = 0; i < n; i++) {
       if (correct[i].model_type != PCONT) {
         dbg_lines.push_back(absl::StrCat(
-            correct[i].ascii, "  #  ", correct[i].model.ToString().string(),
+            correct[i].ascii, "  #  ", correct[i].model.ToString().c_str(),
             correct[i].is_very_first_or_continuation ? " crown" : "",
             correct[i].is_list_item ? " li" : ""));
       } else {
@@ -178,7 +175,7 @@ void EvaluateParagraphDetection(const TextAndModel* correct, int n,
       if (i == 0 || (detector_output[i - 1] != detector_output[i])) {
         if (detector_output[i] && detector_output[i]->model) {
           annotation += absl::StrCat(
-              "  #  ", detector_output[i]->model->ToString().string(),
+              "  #  ", detector_output[i]->model->ToString().c_str(),
               detector_output[i]->is_very_first_or_continuation ? " crown" : "",
               detector_output[i]->is_list_item ? " li" : "");
         } else {
@@ -192,17 +189,19 @@ void EvaluateParagraphDetection(const TextAndModel* correct, int n,
 }
 
 void TestParagraphDetection(const TextAndModel* correct, int num_rows) {
-  GenericVector<tesseract::RowInfo> row_infos;
+  std::vector<RowInfo> row_infos;
   GenericVector<PARA*> row_owners;
   PARA_LIST paragraphs;
-  GenericVector<ParagraphModel*> models;
+  std::vector<ParagraphModel*> models;
 
   MakeAsciiRowInfos(correct, num_rows, &row_infos);
   int debug_level(3);
   tesseract::DetectParagraphs(debug_level, &row_infos, &row_owners, &paragraphs,
                               &models);
   EvaluateParagraphDetection(correct, num_rows, row_owners);
-  models.delete_data_pointers();
+  for (auto* model : models) {
+    delete model;
+  }
 }
 
 TEST(ParagraphsTest, ListItemsIdentified) {
@@ -244,7 +243,7 @@ const TextAndModel kTwoSimpleParagraphs[] = {
 
 TEST(ParagraphsTest, TestSimpleParagraphDetection) {
   TestParagraphDetection(kTwoSimpleParagraphs,
-                         ABSL_ARRAYSIZE(kTwoSimpleParagraphs));
+                         countof(kTwoSimpleParagraphs));
 }
 
 const TextAndModel kFewCluesWithCrown[] = {
@@ -261,7 +260,7 @@ const TextAndModel kFewCluesWithCrown[] = {
 
 TEST(ParagraphsTest, TestFewCluesWithCrown) {
   TestParagraphDetection(kFewCluesWithCrown,
-                         ABSL_ARRAYSIZE(kFewCluesWithCrown));
+                         countof(kFewCluesWithCrown));
 }
 
 const TextAndModel kCrownedParagraph[] = {
@@ -279,7 +278,7 @@ const TextAndModel kCrownedParagraph[] = {
 };
 
 TEST(ParagraphsTest, TestCrownParagraphDetection) {
-  TestParagraphDetection(kCrownedParagraph, ABSL_ARRAYSIZE(kCrownedParagraph));
+  TestParagraphDetection(kCrownedParagraph, countof(kCrownedParagraph));
 }
 
 const TextAndModel kFlushLeftParagraphs[] = {
@@ -299,7 +298,7 @@ const TextAndModel kFlushLeftParagraphs[] = {
 
 TEST(ParagraphsText, TestRealFlushLeftParagraphs) {
   TestParagraphDetection(kFlushLeftParagraphs,
-                         ABSL_ARRAYSIZE(kFlushLeftParagraphs));
+                         countof(kFlushLeftParagraphs));
 }
 
 const TextAndModel kSingleFullPageContinuation[] = {
@@ -321,16 +320,18 @@ const TextAndModel kSingleFullPageContinuation[] = {
 
 TEST(ParagraphsTest, TestSingleFullPageContinuation) {
   const TextAndModel* correct = kSingleFullPageContinuation;
-  int num_rows = ABSL_ARRAYSIZE(kSingleFullPageContinuation);
-  GenericVector<tesseract::RowInfo> row_infos;
+  int num_rows = countof(kSingleFullPageContinuation);
+  std::vector<RowInfo> row_infos;
   GenericVector<PARA*> row_owners;
   PARA_LIST paragraphs;
-  GenericVector<ParagraphModel*> models;
+  std::vector<ParagraphModel*> models;
   models.push_back(new ParagraphModel(kLeft, 0, 20, 0, 10));
   MakeAsciiRowInfos(correct, num_rows, &row_infos);
   tesseract::DetectParagraphs(3, &row_infos, &row_owners, &paragraphs, &models);
   EvaluateParagraphDetection(correct, num_rows, row_owners);
-  models.delete_data_pointers();
+  for (auto* model : models) {
+    delete model;
+  }
 }
 
 const TextAndModel kRightAligned[] = {
@@ -345,7 +346,7 @@ const TextAndModel kRightAligned[] = {
 };
 
 TEST(ParagraphsTest, TestRightAlignedParagraph) {
-  TestParagraphDetection(kRightAligned, ABSL_ARRAYSIZE(kRightAligned));
+  TestParagraphDetection(kRightAligned, countof(kRightAligned));
 }
 
 const TextAndModel kTinyParagraphs[] = {
@@ -367,7 +368,7 @@ const TextAndModel kTinyParagraphs[] = {
 };
 
 TEST(ParagraphsTest, TestTinyParagraphs) {
-  TestParagraphDetection(kTinyParagraphs, ABSL_ARRAYSIZE(kTinyParagraphs));
+  TestParagraphDetection(kTinyParagraphs, countof(kTinyParagraphs));
 }
 
 const TextAndModel kComplexPage1[] = {
@@ -417,7 +418,7 @@ const TextAndModel kComplexPage1[] = {
 };
 
 TEST(ParagraphsTest, TestComplexPage1) {
-  TestParagraphDetection(kComplexPage1, ABSL_ARRAYSIZE(kComplexPage1));
+  TestParagraphDetection(kComplexPage1, countof(kComplexPage1));
 }
 
 // The same as above, but wider.
@@ -466,7 +467,7 @@ const TextAndModel kComplexPage2[] = {
 };
 
 TEST(ParagraphsTest, TestComplexPage2) {
-  TestParagraphDetection(kComplexPage2, ABSL_ARRAYSIZE(kComplexPage2));
+  TestParagraphDetection(kComplexPage2, countof(kComplexPage2));
 }
 
 const TextAndModel kSubtleCrown[] = {
@@ -482,11 +483,11 @@ const TextAndModel kSubtleCrown[] = {
 };
 
 TEST(ParagraphsTest, TestSubtleCrown) {
-  TestParagraphDetection(kSubtleCrown, ABSL_ARRAYSIZE(kSubtleCrown) - 1);
+  TestParagraphDetection(kSubtleCrown, countof(kSubtleCrown) - 1);
 }
 
 TEST(ParagraphsTest, TestStrayLineInBlock) {
-  TestParagraphDetection(kSubtleCrown, ABSL_ARRAYSIZE(kSubtleCrown));
+  TestParagraphDetection(kSubtleCrown, countof(kSubtleCrown));
 }
 
 const TextAndModel kUnlvRep3AO[] = {
@@ -530,7 +531,7 @@ const TextAndModel kUnlvRep3AO[] = {
 };
 
 TEST(ParagraphsTest, TestUnlvInsurance) {
-  TestParagraphDetection(kUnlvRep3AO, ABSL_ARRAYSIZE(kUnlvRep3AO));
+  TestParagraphDetection(kUnlvRep3AO, countof(kUnlvRep3AO));
 }
 
 // The basic outcome we want for something with a bunch of leader dots is that
@@ -555,7 +556,7 @@ const TextAndModel kTableOfContents[] = {
 };
 
 TEST(ParagraphsTest, TestSplitsOutLeaderLines) {
-  TestParagraphDetection(kTableOfContents, ABSL_ARRAYSIZE(kTableOfContents));
+  TestParagraphDetection(kTableOfContents, countof(kTableOfContents));
 }
 
 const TextAndModel kTextWithSourceCode[] = {
@@ -591,7 +592,7 @@ const TextAndModel kTextWithSourceCode[] = {
 
 TEST(ParagraphsTest, NotDistractedBySourceCode) {
   TestParagraphDetection(kTextWithSourceCode,
-                         ABSL_ARRAYSIZE(kTextWithSourceCode));
+                         countof(kTextWithSourceCode));
 }
 
 const TextAndModel kOldManAndSea[] = {
@@ -658,7 +659,7 @@ const TextAndModel kOldManAndSea[] = {
 };
 
 TEST(ParagraphsTest, NotOverlyAggressiveWithBlockQuotes) {
-  TestParagraphDetection(kOldManAndSea, ABSL_ARRAYSIZE(kOldManAndSea));
+  TestParagraphDetection(kOldManAndSea, countof(kOldManAndSea));
 }
 
 const TextAndModel kNewZealandIndex[] = {
@@ -696,7 +697,7 @@ const TextAndModel kNewZealandIndex[] = {
 };
 
 TEST(ParagraphsTest, IndexPageTest) {
-  TestParagraphDetection(kNewZealandIndex, ABSL_ARRAYSIZE(kNewZealandIndex));
+  TestParagraphDetection(kNewZealandIndex, countof(kNewZealandIndex));
 }
 
 // TODO(eger): Add some right-to-left examples, and fix the algorithm as needed.

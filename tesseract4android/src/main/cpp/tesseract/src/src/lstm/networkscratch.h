@@ -19,10 +19,10 @@
 #ifndef TESSERACT_LSTM_NETWORKSCRATCH_H_
 #define TESSERACT_LSTM_NETWORKSCRATCH_H_
 
+#include <mutex>
 #include "genericvector.h"
 #include "matrix.h"
 #include "networkio.h"
-#include "svutil.h"
 
 namespace tesseract {
 
@@ -144,13 +144,22 @@ class NetworkScratch {
       if (scratch_space_ != nullptr) scratch_space_->vec_stack_.Return(vec_);
     }
 
-    void Init(int size, NetworkScratch* scratch) {
+    void Init(int size, int reserve, NetworkScratch* scratch) {
       if (scratch_space_ != nullptr && vec_ != nullptr)
         scratch_space_->vec_stack_.Return(vec_);
       scratch_space_ = scratch;
       vec_ = scratch_space_->vec_stack_.Borrow();
+      // Abuse vec_ here; first resize to 'reserve', which is larger
+      // than 'size' (i.e. it's size rounded up) then resize down again
+      // to the desired size. This assumes that the implementation does
+      // not shrink the storage on a resize.
+      vec_->resize_no_init(reserve);
       vec_->resize_no_init(size);
       data_ = &(*vec_)[0];
+    }
+
+    void Init(int size, NetworkScratch *scratch) {
+      Init(size, size, scratch);
     }
 
     // Use the cast operator instead of operator[] so the FloatVec can be used
@@ -210,7 +219,7 @@ class NetworkScratch {
     // Lends out the next free item, creating one if none available, sets
     // the used flags and increments the stack top.
     T* Borrow() {
-      SVAutoLock lock(&mutex_);
+      std::lock_guard<std::mutex> lock(mutex_);
       if (stack_top_ == stack_.size()) {
         stack_.push_back(new T);
         flags_.push_back(false);
@@ -224,7 +233,7 @@ class NetworkScratch {
     // small, temporary variations from true stack use. (Determined by the order
     // of destructors within a local scope.)
     void Return(T* item) {
-      SVAutoLock lock(&mutex_);
+      std::lock_guard<std::mutex> lock(mutex_);
       // Linear search will do.
       int index = stack_top_ - 1;
       while (index >= 0 && stack_[index] != item) --index;
@@ -236,7 +245,7 @@ class NetworkScratch {
     PointerVector<T> stack_;
     GenericVector<bool> flags_;
     int stack_top_;
-    SVMutex mutex_;
+    std::mutex mutex_;
   };  // class Stack.
 
  private:

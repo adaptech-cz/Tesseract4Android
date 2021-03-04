@@ -10,17 +10,15 @@
 // limitations under the License.
 
 #include <string>
-#include "allheaders.h"
-#include "baseapi.h"
+#include <allheaders.h>
+#include <tesseract/baseapi.h>
 #include "boxread.h"
 #include "rect.h"
-#include "resultiterator.h"
+#include <tesseract/resultiterator.h>
 
 #include "include_gunit.h"
 
-namespace {
-
-using tesseract::ResultIterator;
+namespace tesseract {
 
 const char* kTruthTextWords = "To simple burn running of goods lately.\n";
 const char* kTruthTextLine = "Tosimpleburnrunningofgoodslately.\n";
@@ -73,7 +71,7 @@ class ApplyBoxTest : public testing::Test {
     // Test the boxes by reading the target box file in parallel with the
     // bounding boxes in the ocr output.
     std::string box_filename = TestDataNameToPath(target_box_file);
-    FILE* box_file = OpenBoxFile(STRING(box_filename.c_str()));
+    FILE* box_file = OpenBoxFile(box_filename.c_str());
     ASSERT_TRUE(box_file != nullptr);
     int height = pixGetHeight(src_pix_);
     ResultIterator* it = api_.GetIterator();
@@ -92,7 +90,7 @@ class ApplyBoxTest : public testing::Test {
       EXPECT_TRUE(ocr_box.major_overlap(truth_box));
       // Also check that the symbol text matches the box text.
       char* symbol_text = it->GetUTF8Text(tesseract::RIL_SYMBOL);
-      EXPECT_STREQ(box_text.string(), symbol_text);
+      EXPECT_STREQ(box_text.c_str(), symbol_text);
       delete[] symbol_text;
     } while (it->Next(tesseract::RIL_SYMBOL));
     delete it;

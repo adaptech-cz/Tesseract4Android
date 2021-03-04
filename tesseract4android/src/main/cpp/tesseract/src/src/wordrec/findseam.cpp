@@ -1,5 +1,4 @@
-/* -*-C-*-
- ********************************************************************************
+/******************************************************************************
  *
  * File:         findseam.cpp  (Formerly findseam.c)
  * Author:       Mark Seaman, OCR Technology
@@ -15,7 +14,7 @@
  ** See the License for the specific language governing permissions and
  ** limitations under the License.
  *
- *********************************************************************************/
+ *****************************************************************************/
 /*----------------------------------------------------------------------
               I n c l u d e s
 ----------------------------------------------------------------------*/
@@ -234,7 +233,7 @@ SEAM *Wordrec::pick_good_seam(TBLOB *blob) {
     prioritize_points(outline, &point_heap);
 
   while (!point_heap.empty() && num_points < MAX_NUM_POINTS) {
-    points[num_points++] = point_heap.PeekTop().data;
+    points[num_points++] = point_heap.PeekTop().data();
     point_heap.Pop(nullptr);
   }
 
@@ -274,8 +273,8 @@ SEAM *Wordrec::pick_good_seam(TBLOB *blob) {
     else if (wordrec_display_splits) {
       seam->Mark(edge_window);
       if (chop_debug > 2) {
-        update_edge_window();
-        edge_window_wait();
+        edge_window->Update();
+        edge_window->Wait();
       }
     }
 #endif

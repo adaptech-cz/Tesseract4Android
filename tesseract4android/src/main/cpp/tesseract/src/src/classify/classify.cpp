@@ -170,31 +170,11 @@ Classify::Classify()
       double_MEMBER(speckle_rating_penalty, 10.0,
                     "Penalty to add to worst rating for noise", this->params()),
       im_(&classify_debug_level),
-      shape_table_(nullptr),
-      dict_(this),
-      static_classifier_(nullptr) {
-  fontinfo_table_.set_compare_callback(
-      NewPermanentTessCallback(CompareFontInfo));
-  fontinfo_table_.set_clear_callback(
-      NewPermanentTessCallback(FontInfoDeleteCallback));
-  fontset_table_.set_compare_callback(
-      NewPermanentTessCallback(CompareFontSet));
-  fontset_table_.set_clear_callback(
-      NewPermanentTessCallback(FontSetDeleteCallback));
-  AdaptedTemplates = nullptr;
-  BackupAdaptedTemplates = nullptr;
-  PreTrainedTemplates = nullptr;
-  AllProtosOn = nullptr;
-  AllConfigsOn = nullptr;
-  AllConfigsOff = nullptr;
-  TempProtoMask = nullptr;
-  NormProtos = nullptr;
+      dict_(this) {
+  using namespace std::placeholders; // for _1, _2
+  fontinfo_table_.set_clear_callback(std::bind(FontInfoDeleteCallback, _1));
+  fontset_table_.set_clear_callback(std::bind(FontSetDeleteCallback, _1));
 
-  NumAdaptationsFailed = 0;
-
-  learn_debug_win_ = nullptr;
-  learn_fragmented_word_debug_win_ = nullptr;
-  learn_fragments_debug_win_ = nullptr;
   InitFeatureDefs(&feature_defs_);
 }
 

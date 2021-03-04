@@ -1,8 +1,6 @@
-/* -*-C-*-
- ********************************************************************************
+/******************************************************************************
  *
  * File:        split.h
- * Description:
  * Author:      Mark Seaman, SW Productivity
  * Status:      Reusable Software Component
  *
@@ -21,13 +19,11 @@
 #ifndef SPLIT_H
 #define SPLIT_H
 
-/*----------------------------------------------------------------------
-              I n c l u d e s
-----------------------------------------------------------------------*/
-
 #include "blobs.h"   // for EDGEPT, TBLOB, TESSLINE
 #include "params.h"  // for BOOL_VAR_H, BoolParam
 #include "rect.h"    // for TBOX
+
+namespace tesseract {
 
 class ScrollView;
 
@@ -39,7 +35,13 @@ struct SPLIT {
   SPLIT(EDGEPT* pt1, EDGEPT* pt2) : point1(pt1), point2(pt2) {}
 
   // Returns the bounding box of all the points in the split.
-  TBOX bounding_box() const;
+  TBOX bounding_box() const {
+    return TBOX(std::min(point1->pos.x, point2->pos.x),
+                std::min(point1->pos.y, point2->pos.y),
+                std::max(point1->pos.x, point2->pos.x),
+                std::max(point1->pos.y, point2->pos.y));
+  }
+
   // Returns the bounding box of the outline from point1 to point2.
   TBOX Box12() const { return point1->SegmentBox(point2); }
   // Returns the bounding box of the outline from point1 to point1.
@@ -116,5 +118,7 @@ extern BOOL_VAR_H(wordrec_display_splits, 0, "Display splits");
 EDGEPT *make_edgept(int x, int y, EDGEPT *next, EDGEPT *prev);
 
 void remove_edgept(EDGEPT *point);
+
+} // namespace tesseract
 
 #endif

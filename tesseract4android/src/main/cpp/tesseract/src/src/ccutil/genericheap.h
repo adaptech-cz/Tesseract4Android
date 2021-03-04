@@ -23,6 +23,7 @@
 #define TESSERACT_CCUTIL_GENERICHEAP_H_
 
 #include "errcode.h"
+
 #include "genericvector.h"
 
 namespace tesseract {

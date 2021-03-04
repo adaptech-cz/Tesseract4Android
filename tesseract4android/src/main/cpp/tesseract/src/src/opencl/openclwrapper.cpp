@@ -7,6 +7,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+#ifdef USE_OPENCL
+
 #ifdef _WIN32
 #include <io.h>
 #else
@@ -21,7 +24,7 @@
 
 // for micro-benchmark
 #include "otsuthr.h"
-#include "thresholder.h"
+#include <tesseract/thresholder.h>
 
 // platform preprocessor commands
 #if defined(WIN32) || defined(__WIN32__) || defined(_WIN32) || \
@@ -42,8 +45,6 @@
 #if ON_APPLE
 #include <mach/mach_time.h>
 #endif
-
-#ifdef USE_OPENCL
 
 #include <cstdio>
 #include <cstring>    // for memset, strcpy, ...

@@ -20,11 +20,11 @@
 #include <locale>     // for std::locale::classic
 #include <memory>     // for std::unique_ptr
 #include <sstream>    // for std::stringstream
-#include "baseapi.h"  // for TessBaseAPI
+#include <tesseract/baseapi.h>  // for TessBaseAPI
 #ifdef _WIN32
 # include "host.h"    // windows.h for MultiByteToWideChar, ...
 #endif
-#include "renderer.h"
+#include <tesseract/renderer.h>
 #include "tesseractclass.h"  // for Tesseract
 
 namespace tesseract {
@@ -133,7 +133,7 @@ char* TessBaseAPI::GetHOCRText(ETEXT_DESC* monitor, int page_number) {
   if (tesseract_ == nullptr || (page_res_ == nullptr && Recognize(monitor) < 0))
     return nullptr;
 
-  int lcnt = 1, bcnt = 1, pcnt = 1, wcnt = 1, scnt = 1, tcnt = 1, gcnt = 1;
+  int lcnt = 1, bcnt = 1, pcnt = 1, wcnt = 1, scnt = 1, tcnt = 1, ccnt = 1;
   int page_id = page_number + 1;  // hOCR uses 1-based page numbers.
   bool para_is_ltr = true;        // Default direction is LTR
   const char* paragraph_lang = nullptr;
@@ -142,21 +142,21 @@ char* TessBaseAPI::GetHOCRText(ETEXT_DESC* monitor, int page_number) {
   GetBoolVariable("hocr_font_info", &font_info);
   GetBoolVariable("hocr_char_boxes", &hocr_boxes);
 
-  if (input_file_ == nullptr) SetInputName(nullptr);
+  if (input_file_.empty()) SetInputName(nullptr);
 
 #ifdef _WIN32
   // convert input name from ANSI encoding to utf-8
   int str16_len =
-      MultiByteToWideChar(CP_ACP, 0, input_file_->string(), -1, nullptr, 0);
+      MultiByteToWideChar(CP_ACP, 0, input_file_.c_str(), -1, nullptr, 0);
   wchar_t* uni16_str = new WCHAR[str16_len];
-  str16_len = MultiByteToWideChar(CP_ACP, 0, input_file_->string(), -1,
+  str16_len = MultiByteToWideChar(CP_ACP, 0, input_file_.c_str(), -1,
                                   uni16_str, str16_len);
   int utf8_len = WideCharToMultiByte(CP_UTF8, 0, uni16_str, str16_len, nullptr,
                                      0, nullptr, nullptr);
   char* utf8_str = new char[utf8_len];
   WideCharToMultiByte(CP_UTF8, 0, uni16_str, str16_len, utf8_str, utf8_len,
                       nullptr, nullptr);
-  *input_file_ = utf8_str;
+  input_file_ = utf8_str;
   delete[] uni16_str;
   delete[] utf8_str;
 #endif
@@ -170,8 +170,8 @@ char* TessBaseAPI::GetHOCRText(ETEXT_DESC* monitor, int page_number) {
   hocr_str << " id='"
            << "page_" << page_id << "'";
   hocr_str << " title='image \"";
-  if (input_file_) {
-    hocr_str << HOcrEscape(input_file_->string()).c_str();
+  if (!input_file_.empty()) {
+    hocr_str << HOcrEscape(input_file_.c_str()).c_str();
   } else {
     hocr_str << "unknown";
   }
@@ -229,11 +229,15 @@ char* TessBaseAPI::GetHOCRText(ETEXT_DESC* monitor, int page_number) {
     }
 
     // Now, process the word...
-    std::vector<std::vector<std::pair<const char*, float>>>* choiceMap =
+    int32_t lstm_choice_mode = tesseract_->lstm_choice_mode;
+    std::vector<std::vector<std::vector<std::pair<const char*, float>>>>* rawTimestepMap =
         nullptr;
-    if (tesseract_->lstm_choice_mode) {
+    std::vector<std::vector<std::pair<const char*, float>>>* CTCMap =
+        nullptr;
+    if (lstm_choice_mode) {
 
-      choiceMap = res_it->GetBestLSTMSymbolChoices();
+      CTCMap = res_it->GetBestLSTMSymbolChoices();
+      rawTimestepMap = res_it->GetRawLSTMTimesteps();
     }
     hocr_str << "\n      <span class='ocrx_word'"
              << " id='"
@@ -292,6 +296,56 @@ char* TessBaseAPI::GetHOCRText(ETEXT_DESC* monitor, int page_number) {
         hocr_str << HOcrEscape(grapheme.get()).c_str();
         if (hocr_boxes) {
           hocr_str << "</span>";
+          tesseract::ChoiceIterator ci(*res_it);
+          if (lstm_choice_mode == 1 && ci.Timesteps() != nullptr) {
+            std::vector<std::vector<std::pair<const char*, float>>>* symbol =
+                ci.Timesteps();
+              hocr_str << "\n        <span class='ocr_symbol'"
+                       << " id='"
+                       << "symbol_" << page_id << "_" << wcnt << "_" << scnt
+                       << "'>";
+              for (auto timestep : *symbol) {
+                hocr_str << "\n         <span class='ocrx_cinfo'"
+                         << " id='"
+                         << "timestep" << page_id << "_" << wcnt << "_" << tcnt
+                         << "'>";
+                for (auto conf : timestep) {
+                  hocr_str << "\n          <span class='ocrx_cinfo'"
+                           << " id='"
+                           << "choice_" << page_id << "_" << wcnt << "_" << ccnt
+                           << "'"
+                           << " title='x_confs " << int(conf.second * 100)
+                           << "'>" << HOcrEscape(conf.first).c_str()
+                           << "</span>";
+                  ++ccnt;
+                }
+                hocr_str << "</span>";
+                ++tcnt;
+              }
+              hocr_str << "\n        </span>";
+              ++scnt;
+          } else if (lstm_choice_mode == 2) {
+            tesseract::ChoiceIterator ci(*res_it);
+            hocr_str << "\n        <span class='ocrx_cinfo'"
+                     << " id='"
+                     << "lstm_choices_" << page_id << "_" << wcnt << "_" << tcnt
+                     << "'>";
+            do {
+              const char* choice = ci.GetUTF8Text();
+              float choiceconf = ci.Confidence();
+              if (choice != nullptr) {
+                hocr_str << "\n         <span class='ocrx_cinfo'"
+                         << " id='"
+                         << "choice_" << page_id << "_" << wcnt << "_" << ccnt
+                         << "'"
+                         << " title='x_confs " << choiceconf << "'>"
+                         << HOcrEscape(choice).c_str() << "</span>";
+                ccnt++;
+              }
+            } while (ci.Next());
+            hocr_str << "\n        </span>";
+            tcnt++;
+          }
         }
       }
       res_it->Next(RIL_SYMBOL);
@@ -299,38 +353,51 @@ char* TessBaseAPI::GetHOCRText(ETEXT_DESC* monitor, int page_number) {
     if (italic) hocr_str << "</em>";
     if (bold) hocr_str << "</strong>";
     // If the lstm choice mode is required it is added here
-    if (tesseract_->lstm_choice_mode == 1 && choiceMap != nullptr) {
-      for (auto timestep : *choiceMap) {
-        hocr_str << "\n       <span class='ocrx_cinfo'"
+    if (lstm_choice_mode == 1 && !hocr_boxes && rawTimestepMap != nullptr) {
+      for (auto symbol : *rawTimestepMap) {
+        hocr_str << "\n       <span class='ocr_symbol'"
                  << " id='"
-                 << "timestep_" << page_id << "_" << wcnt << "_" << tcnt << "'"
-                 << ">";
-        for (std::pair<const char*, float> conf : timestep) {
-          hocr_str << "<span class='ocr_glyph'"
+                 << "symbol_" << page_id << "_" << wcnt << "_" << scnt << "'>";
+        for (auto timestep : symbol) {
+          hocr_str << "\n        <span class='ocrx_cinfo'"
                    << " id='"
-                   << "choice_" << page_id << "_" << wcnt << "_" << gcnt << "'"
-                   << " title='x_confs " << int(conf.second * 100) << "'>"
-                   << conf.first << "</span>";
-          gcnt++;
+                   << "timestep" << page_id << "_" << wcnt << "_" << tcnt
+                   << "'>";
+          for (auto conf : timestep) {
+            hocr_str << "\n         <span class='ocrx_cinfo'"
+                     << " id='"
+                     << "choice_" << page_id << "_" << wcnt << "_" << ccnt
+                     << "'"
+                     << " title='x_confs " << int(conf.second * 100) << "'>"
+                     << HOcrEscape(conf.first).c_str() << "</span>";
+            ++ccnt;
+          }
+          hocr_str << "</span>";
+          ++tcnt;
         }
         hocr_str << "</span>";
-        tcnt++;
+        ++scnt;
       }
-    } else if (tesseract_->lstm_choice_mode == 2 && choiceMap != nullptr) {
-      for (auto timestep : *choiceMap) {
+    } else if (lstm_choice_mode == 2 && !hocr_boxes && CTCMap != nullptr) {
+      for (auto timestep : *CTCMap) {
         if (timestep.size() > 0) {
           hocr_str << "\n       <span class='ocrx_cinfo'"
                    << " id='"
                    << "lstm_choices_" << page_id << "_" << wcnt << "_" << tcnt
                    << "'>";
-          for (auto & j : timestep) {
-            hocr_str << "<span class='ocr_glyph'"
+          for (auto& j : timestep) {
+            float conf = 100 - tesseract_->lstm_rating_coefficient * j.second;
+            if (conf < 0.0f)
+              conf = 0.0f;
+            if (conf > 100.0f)
+              conf = 100.0f;
+            hocr_str << "\n        <span class='ocrx_cinfo'"
                      << " id='"
-                     << "choice_" << page_id << "_" << wcnt << "_" << gcnt
+                     << "choice_" << page_id << "_" << wcnt << "_" << ccnt
                      << "'"
-                     << " title='x_confs " << int(j.second * 100)
-                     << "'>" << j.first << "</span>";
-            gcnt++;
+                     << " title='x_confs " << conf << "'>"
+                     << HOcrEscape(j.first).c_str() << "</span>";
+            ccnt++;
           }
           hocr_str << "</span>";
           tcnt++;
@@ -338,12 +405,12 @@ char* TessBaseAPI::GetHOCRText(ETEXT_DESC* monitor, int page_number) {
       }
     }
     // Close ocrx_word.
-    if (hocr_boxes || tesseract_->lstm_choice_mode > 0) {
+    if (hocr_boxes || lstm_choice_mode > 0) {
       hocr_str << "\n      ";
     }
     hocr_str << "</span>";
     tcnt = 1;
-    gcnt = 1;
+    ccnt = 1;
     wcnt++;
     // Close any ending block/paragraph/textline.
     if (last_word_in_line) {
@@ -393,7 +460,7 @@ bool TessHOcrRenderer::BeginDocumentHandler() {
       "</title>\n"
       "  <meta http-equiv=\"Content-Type\" content=\"text/html;"
       "charset=utf-8\"/>\n"
-      "  <meta name='ocr-system' content='tesseract " PACKAGE_VERSION
+      "  <meta name='ocr-system' content='tesseract " TESSERACT_VERSION_STR
       "' />\n"
       "  <meta name='ocr-capabilities' content='ocr_page ocr_carea ocr_par"
       " ocr_line ocrx_word ocrp_wconf");

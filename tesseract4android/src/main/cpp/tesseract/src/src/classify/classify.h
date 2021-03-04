@@ -24,7 +24,6 @@
 #include "config_auto.h"
 #endif
 
-
 #ifdef DISABLED_LEGACY_ENGINE
 
 #include "ccstruct.h"
@@ -67,13 +66,14 @@ class Classify : public CCStruct {
 #include "dict.h"
 #include "featdefs.h"
 #include "fontinfo.h"
-#include "imagedata.h"
 #include "intfx.h"
 #include "intmatcher.h"
 #include "normalis.h"
 #include "ratngs.h"
 #include "ocrfeatures.h"
 #include "unicity_table.h"
+
+namespace tesseract {
 
 class ScrollView;
 class WERD_CHOICE;
@@ -83,8 +83,6 @@ struct NORM_PROTOS;
 
 static const int kUnknownFontinfoId = -1;
 static const int kBlankFontinfoId = -2;
-
-namespace tesseract {
 
 class ShapeClassifier;
 struct ShapeRating;
@@ -100,7 +98,7 @@ enum CharSegmentationType {
   CST_NGRAM      // Multiple characters.
 };
 
-class Classify : public CCStruct {
+class TESS_API Classify : public CCStruct {
  public:
   Classify();
   ~Classify() override;
@@ -144,7 +142,7 @@ class Classify : public CCStruct {
                    int keep_this, const INT_FEATURE_STRUCT* features,
                    const uint8_t* normalization_factors,
                    const uint16_t* expected_num_features,
-                   GenericVector<CP_RESULT_STRUCT>* results);
+                   std::vector<CP_RESULT_STRUCT>* results);
   void ReadNewCutoffs(TFile* fp, uint16_t* Cutoffs);
   void PrintAdaptedTemplates(FILE *File, ADAPT_TEMPLATES Templates);
   void WriteAdaptedTemplates(FILE *File, ADAPT_TEMPLATES Templates);
@@ -185,7 +183,7 @@ class Classify : public CCStruct {
                         int FontinfoId,
                         ADAPT_CLASS Class,
                         ADAPT_TEMPLATES Templates);
-  void AmbigClassifier(const GenericVector<INT_FEATURE_STRUCT>& int_features,
+  void AmbigClassifier(const std::vector<INT_FEATURE_STRUCT>& int_features,
                        const INT_FX_RESULT_STRUCT& fx_info,
                        const TBLOB *blob,
                        INT_TEMPLATES templates,
@@ -200,7 +198,7 @@ class Classify : public CCStruct {
                      int debug,
                      int matcher_multiplier,
                      const TBOX& blob_box,
-                     const GenericVector<CP_RESULT_STRUCT>& results,
+                     const std::vector<CP_RESULT_STRUCT>& results,
                      ADAPT_RESULTS* final_results);
   // Converts configs to fonts, and if the result is not adapted, and a
   // shape_table_ is present, the shape is expanded to include all
@@ -280,7 +278,7 @@ class Classify : public CCStruct {
   // unichar-id!). Uses a search, so not fast.
   int ShapeIDToClassID(int shape_id) const;
   UNICHAR_ID *BaselineClassifier(
-      TBLOB *Blob, const GenericVector<INT_FEATURE_STRUCT>& int_features,
+      TBLOB *Blob, const std::vector<INT_FEATURE_STRUCT>& int_features,
       const INT_FX_RESULT_STRUCT& fx_info,
       ADAPT_TEMPLATES Templates, ADAPT_RESULTS *Results);
   int CharNormClassifier(TBLOB *blob,
@@ -291,7 +289,7 @@ class Classify : public CCStruct {
   // a GenericVector of ShapeRating without conversion to classes.
   int CharNormTrainingSample(bool pruner_only, int keep_this,
                              const TrainingSample& sample,
-                             GenericVector<UnicharRating>* results);
+                             std::vector<UnicharRating>* results);
   UNICHAR_ID *GetAmbiguities(TBLOB *Blob, CLASS_ID CorrectClass);
   void DoAdaptiveMatch(TBLOB *Blob, ADAPT_RESULTS *Results);
   void AdaptToChar(TBLOB* Blob, CLASS_ID ClassId, int FontinfoId,
@@ -366,8 +364,8 @@ class Classify : public CCStruct {
   // after the second outline, there were (*outline_cn_counts)[1] features etc.
   static void ExtractFeatures(const TBLOB& blob,
                               bool nonlinear_norm,
-                              GenericVector<INT_FEATURE_STRUCT>* bl_features,
-                              GenericVector<INT_FEATURE_STRUCT>* cn_features,
+                              std::vector<INT_FEATURE_STRUCT>* bl_features,
+                              std::vector<INT_FEATURE_STRUCT>* cn_features,
                               INT_FX_RESULT_STRUCT* results,
                               GenericVector<int>* outline_cn_counts);
   /* float2int.cpp ************************************************************/
@@ -413,7 +411,7 @@ class Classify : public CCStruct {
                  const INT_FX_RESULT_STRUCT& fx_info, const char* blob_text);
   // Writes stored training data to a .tr file based on the given filename.
   // Returns false on error.
-  bool WriteTRFile(const STRING& filename);
+  bool WriteTRFile(const char* filename);
 
   // Member variables.
 
@@ -511,20 +509,20 @@ class Classify : public CCStruct {
                "Penalty to add to worst rating for noise");
 
   // Use class variables to hold onto built-in templates and adapted templates.
-  INT_TEMPLATES PreTrainedTemplates;
-  ADAPT_TEMPLATES AdaptedTemplates;
+  INT_TEMPLATES PreTrainedTemplates = nullptr;
+  ADAPT_TEMPLATES AdaptedTemplates = nullptr;
   // The backup adapted templates are created from the previous page (only)
   // so they are always ready and reasonably well trained if the primary
   // adapted templates become full.
-  ADAPT_TEMPLATES BackupAdaptedTemplates;
+  ADAPT_TEMPLATES BackupAdaptedTemplates = nullptr;
 
   // Create dummy proto and config masks for use with the built-in templates.
-  BIT_VECTOR AllProtosOn;
-  BIT_VECTOR AllConfigsOn;
-  BIT_VECTOR AllConfigsOff;
-  BIT_VECTOR TempProtoMask;
+  BIT_VECTOR AllProtosOn = nullptr;
+  BIT_VECTOR AllConfigsOn = nullptr;
+  BIT_VECTOR AllConfigsOff = nullptr;
+  BIT_VECTOR TempProtoMask = nullptr;
   /* normmatch.cpp */
-  NORM_PROTOS *NormProtos;
+  NORM_PROTOS* NormProtos = nullptr;
   /* font detection ***********************************************************/
   UnicityTable<FontInfo> fontinfo_table_;
   // Without shape training, each class_id, config pair represents a single
@@ -543,14 +541,14 @@ class Classify : public CCStruct {
   // ExpandShapesAndApplyCorrections. font_ids referenced by configs actually
   // mean an index to the shape_table_ and the choices returned are *all* the
   // shape_table_ entries at that index.
-  ShapeTable* shape_table_;
+  ShapeTable* shape_table_ = nullptr;
 
  private:
   // The currently active static classifier.
-  ShapeClassifier* static_classifier_;
-  ScrollView* learn_debug_win_;
-  ScrollView* learn_fragmented_word_debug_win_;
-  ScrollView* learn_fragments_debug_win_;
+  ShapeClassifier* static_classifier_ = nullptr;
+  ScrollView* learn_debug_win_ = nullptr;
+  ScrollView* learn_fragmented_word_debug_win_ = nullptr;
+  ScrollView* learn_fragments_debug_win_ = nullptr;
 
   // Training data gathered here for all the images in a document.
   STRING tr_file_data_;
@@ -560,7 +558,7 @@ class Classify : public CCStruct {
   GenericVector<uint16_t> shapetable_cutoffs_;
 
   /* variables used to hold performance statistics */
-  int NumAdaptationsFailed;
+  int NumAdaptationsFailed = 0;
 
   // Expected number of features in the class pruner, used to penalize
   // unknowns that have too few features (like a c being classified as e) so
@@ -574,9 +572,10 @@ class Classify : public CCStruct {
   uint16_t BaselineCutoffs[MAX_NUM_CLASSES];
 
  public:
-  bool EnableLearning;
+  bool EnableLearning = true;
 };
-}  // namespace tesseract
+
+} // namespace tesseract
 
 #endif  // DISABLED_LEGACY_ENGINE
 

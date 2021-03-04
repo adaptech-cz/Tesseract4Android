@@ -26,7 +26,6 @@
 #include <cstdio>                // for fclose, fopen, FILE
 #include <ctime>                 // for clock
 #include <cctype>
-#include "callcpp.h"
 #include "control.h"
 #ifndef DISABLED_LEGACY_ENGINE
 #include "docqual.h"
@@ -34,7 +33,7 @@
 #include "fixspace.h"
 #endif
 #include "lstmrecognizer.h"
-#include "ocrclass.h"
+#include <tesseract/ocrclass.h>
 #include "output.h"
 #include "pageres.h"             // for WERD_RES, PAGE_RES_IT, PAGE_RES, BLO...
 #ifndef DISABLED_LEGACY_ENGINE
@@ -75,9 +74,6 @@ void Tesseract::recog_pseudo_word(PAGE_RES* page_res,
  * @param pr_it the page results iterator
  */
 bool Tesseract::recog_interactive(PAGE_RES_IT* pr_it) {
-  int16_t char_qual;
-  int16_t good_char_qual;
-
   WordData word_data(*pr_it);
   SetupWordPassN(2, &word_data);
   // LSTM doesn't run on pass2, but we want to run pass2 for tesseract.
@@ -90,12 +86,14 @@ bool Tesseract::recog_interactive(PAGE_RES_IT* pr_it) {
   }
 #ifndef DISABLED_LEGACY_ENGINE
   if (tessedit_debug_quality_metrics) {
+    int16_t char_qual;
+    int16_t good_char_qual;
     WERD_RES* word_res = pr_it->word();
-    word_char_quality(word_res, pr_it->row()->row, &char_qual, &good_char_qual);
+    word_char_quality(word_res, &char_qual, &good_char_qual);
     tprintf("\n%d chars;  word_blob_quality: %d;  outline_errs: %d; "
             "char_quality: %d; good_char_quality: %d\n",
             word_res->reject_map.length(),
-            word_blob_quality(word_res, pr_it->row()->row),
+            word_blob_quality(word_res),
             word_outline_errs(word_res), char_qual, good_char_qual);
   }
 #endif  // ndef DISABLED_LEGACY_ENGINE
@@ -155,7 +153,7 @@ void Tesseract::SetupAllWordsPassN(int pass_n,
                                    const TBOX* target_word_box,
                                    const char* word_config,
                                    PAGE_RES* page_res,
-                                   GenericVector<WordData>* words) {
+                                   std::vector<WordData>* words) {
   // Prepare all the words.
   PAGE_RES_IT page_res_it(page_res);
   for (page_res_it.restart_page(); page_res_it.word() != nullptr;
@@ -212,7 +210,7 @@ void Tesseract::SetupWordPassN(int pass_n, WordData* word) {
 // Runs word recognition on all the words.
 bool Tesseract::RecogAllWordsPassN(int pass_n, ETEXT_DESC* monitor,
                                    PAGE_RES_IT* pr_it,
-                                   GenericVector<WordData>* words) {
+                                   std::vector<WordData>* words) {
   // TODO(rays) Before this loop can be parallelized (it would yield a massive
   // speed-up) all remaining member globals need to be converted to local/heap
   // (eg set_pass1 and set_pass2) and an intermediate adaption pass needs to be
@@ -267,8 +265,8 @@ bool Tesseract::RecogAllWordsPassN(int pass_n, ETEXT_DESC* monitor,
     classify_word_and_language(pass_n, pr_it, word);
     if (tessedit_dump_choices || debug_noise_removal) {
       tprintf("Pass%d: %s [%s]\n", pass_n,
-              word->word->best_choice->unichar_string().string(),
-              word->word->best_choice->debug_string().string());
+              word->word->best_choice->unichar_string().c_str(),
+              word->word->best_choice->debug_string().c_str());
     }
     pr_it->forward();
     if (make_next_word_fuzzy && pr_it->word() != nullptr) {
@@ -338,7 +336,7 @@ bool Tesseract::recog_all_words(PAGE_RES* page_res,
 
     // Set up all words ready for recognition, so that if parallelism is on
     // all the input and output classes are ready to run the classifier.
-    GenericVector<WordData> words;
+    std::vector<WordData> words;
     SetupAllWordsPassN(1, target_word_box, word_config, page_res, &words);
     #ifndef DISABLED_LEGACY_ENGINE
     if (tessedit_parallelize) {
@@ -388,7 +386,7 @@ bool Tesseract::recog_all_words(PAGE_RES* page_res,
   if (tessedit_tess_adaption_mode != 0x0 && !tessedit_test_adaption &&
       AnyTessLang()) {
     page_res_it.restart_page();
-    GenericVector<WordData> words;
+    std::vector<WordData> words;
     SetupAllWordsPassN(2, target_word_box, word_config, page_res, &words);
     if (tessedit_parallelize) {
       PrerecAllWordsPar(words);
@@ -402,7 +400,6 @@ bool Tesseract::recog_all_words(PAGE_RES* page_res,
   if (AnyTessLang() && !AnyLSTMLang()) {
     // ****************** Pass 3 *******************
     // Fix fuzzy spaces.
-    set_global_loc_code(LOC_FUZZY_SPACE);
 
     if (!tessedit_test_adaption && tessedit_fix_fuzzy_spaces
         && !tessedit_word_for_word && !right_to_left())
@@ -427,7 +424,6 @@ bool Tesseract::recog_all_words(PAGE_RES* page_res,
   #endif  // ndef DISABLED_LEGACY_ENGINE
 
   // Write results pass.
-  set_global_loc_code(LOC_WRITE_RESULTS);
   // This is now redundant, but retained commented so show how to obtain
   // bounding boxes and style information.
 
@@ -508,13 +504,13 @@ void Tesseract::bigram_correction_pass(PAGE_RES *page_res) {
     if (w->tesseract->getDict().valid_bigram(prev_best, this_best)) {
       if (tessedit_bigram_debug) {
         tprintf("Top choice \"%s %s\" verified by bigram model.\n",
-                orig_w1_str.string(), orig_w2_str.string());
+                orig_w1_str.c_str(), orig_w2_str.c_str());
       }
       continue;
     }
     if (tessedit_bigram_debug > 2) {
       tprintf("Examining alt choices for \"%s %s\".\n",
-              orig_w1_str.string(), orig_w2_str.string());
+              orig_w1_str.c_str(), orig_w2_str.c_str());
     }
     if (tessedit_bigram_debug > 1) {
       if (!w_prev->best_choices.singleton()) {
@@ -563,7 +559,7 @@ void Tesseract::bigram_correction_pass(PAGE_RES *page_res) {
                                             *overrides_word2[best_idx])) {
         if (tessedit_bigram_debug > 1) {
           tprintf("Top choice \"%s %s\" verified (sans case) by bigram "
-                  "model.\n", orig_w1_str.string(), orig_w2_str.string());
+                  "model.\n", orig_w1_str.c_str(), orig_w2_str.c_str());
         }
         continue;
       }
@@ -601,9 +597,9 @@ void Tesseract::bigram_correction_pass(PAGE_RES *page_res) {
           }
         }
         tprintf("Replaced \"%s %s\" with \"%s %s\" with bigram model. %s\n",
-                orig_w1_str.string(), orig_w2_str.string(),
-                new_w1_str.string(), new_w2_str.string(),
-                choices_description.string());
+                orig_w1_str.c_str(), orig_w2_str.c_str(),
+                new_w1_str.c_str(), new_w2_str.c_str(),
+                choices_description.c_str());
       }
     }
   }
@@ -618,7 +614,6 @@ void Tesseract::rejection_passes(PAGE_RES* page_res,
   // Gather statistics on rejects.
   int word_index = 0;
   while (!tessedit_test_adaption && page_res_it.word() != nullptr) {
-    set_global_loc_code(LOC_MM_ADAPT);
     WERD_RES* word = page_res_it.word();
     word_index++;
     if (monitor != nullptr) {
@@ -646,14 +641,13 @@ void Tesseract::rejection_passes(PAGE_RES* page_res,
     const int chars_in_word = word->reject_map.length();
     const int rejects_in_word = word->reject_map.reject_count();
 
-    const int blob_quality = word_blob_quality(word, page_res_it.row()->row);
+    const int blob_quality = word_blob_quality(word);
     stats_.doc_blob_quality += blob_quality;
     const int outline_errs = word_outline_errs(word);
     stats_.doc_outline_errs += outline_errs;
     int16_t all_char_quality;
     int16_t accepted_all_char_quality;
-    word_char_quality(word, page_res_it.row()->row,
-                      &all_char_quality, &accepted_all_char_quality);
+    word_char_quality(word, &all_char_quality, &accepted_all_char_quality);
     stats_.doc_char_quality += all_char_quality;
     const uint8_t permuter_type = word->best_choice->permuter();
     if ((permuter_type == SYSTEM_DAWG_PERM) ||
@@ -700,7 +694,6 @@ void Tesseract::rejection_passes(PAGE_RES* page_res,
   // ****************** Pass 6 *******************
   // Do whole document or whole block rejection pass
   if (!tessedit_test_adaption) {
-    set_global_loc_code(LOC_DOC_BLK_REJ);
     quality_based_rejection(page_res_it, good_quality_doc);
   }
 }
@@ -722,10 +715,10 @@ void Tesseract::blamer_pass(PAGE_RES* page_res) {
         static_cast<IncorrectResultReason>(bl)),
         page_res->blame_reasons[bl]);
   }
-  if (page_res->misadaption_log.length() > 0) {
+  if (page_res->misadaption_log.size() > 0) {
     tprintf("Misadaption log:\n");
-    for (int i = 0; i < page_res->misadaption_log.length(); ++i) {
-      tprintf("%s\n", page_res->misadaption_log[i].string());
+    for (int i = 0; i < page_res->misadaption_log.size(); ++i) {
+      tprintf("%s\n", page_res->misadaption_log[i].c_str());
     }
   }
 }
@@ -907,7 +900,7 @@ int Tesseract::RetryWithLanguage(const WordData& word_data,
                                  PointerVector<WERD_RES>* best_words) {
   if (debug) {
     tprintf("Trying word using lang %s, oem %d\n",
-            lang.string(), static_cast<int>(tessedit_ocr_engine_mode));
+            lang.c_str(), static_cast<int>(tessedit_ocr_engine_mode));
   }
   // Run the recognizer on the word.
   PointerVector<WERD_RES> new_words;
@@ -1013,10 +1006,10 @@ void Tesseract::AssignDiacriticsToOverlappingBlobs(
     PAGE_RES_IT* pr_it, GenericVector<bool>* word_wanted,
     GenericVector<bool>* overlapped_any_blob,
     GenericVector<C_BLOB*>* target_blobs) {
-  GenericVector<bool> blob_wanted;
-  word_wanted->init_to_size(outlines.size(), false);
-  overlapped_any_blob->init_to_size(outlines.size(), false);
-  target_blobs->init_to_size(outlines.size(), nullptr);
+  std::vector<bool> blob_wanted;
+  word_wanted->resize(outlines.size(), false);
+  overlapped_any_blob->resize(outlines.size(), false);
+  target_blobs->resize(outlines.size(), nullptr);
   // For each real blob, find the outlines that seriously overlap it.
   // A single blob could be several merged characters, so there can be quite
   // a few outlines overlapping, and the full engine needs to be used to chop
@@ -1025,7 +1018,7 @@ void Tesseract::AssignDiacriticsToOverlappingBlobs(
   for (blob_it.mark_cycle_pt(); !blob_it.cycled_list(); blob_it.forward()) {
     C_BLOB* blob = blob_it.data();
     const TBOX blob_box = blob->bounding_box();
-    blob_wanted.init_to_size(outlines.size(), false);
+    blob_wanted.resize(outlines.size(), false);
     int num_blob_outlines = 0;
     for (int i = 0; i < outlines.size(); ++i) {
       if (blob_box.major_x_overlap(outlines[i]->bounding_box()) &&
@@ -1065,14 +1058,14 @@ void Tesseract::AssignDiacriticsToNewBlobs(
     const GenericVector<C_OUTLINE*>& outlines, int pass, WERD* real_word,
     PAGE_RES_IT* pr_it, GenericVector<bool>* word_wanted,
     GenericVector<C_BLOB*>* target_blobs) {
-  GenericVector<bool> blob_wanted;
-  word_wanted->init_to_size(outlines.size(), false);
-  target_blobs->init_to_size(outlines.size(), nullptr);
+  std::vector<bool> blob_wanted;
+  word_wanted->resize(outlines.size(), false);
+  target_blobs->resize(outlines.size(), nullptr);
   // Check for outlines that need to be turned into stand-alone blobs.
   for (int i = 0; i < outlines.size(); ++i) {
     if (outlines[i] == nullptr) continue;
     // Get a set of adjacent outlines that don't overlap any existing blob.
-    blob_wanted.init_to_size(outlines.size(), false);
+    blob_wanted.resize(outlines.size(), false);
     int num_blob_outlines = 0;
     TBOX total_ol_box(outlines[i]->bounding_box());
     while (i < outlines.size() && outlines[i] != nullptr) {
@@ -1140,23 +1133,23 @@ void Tesseract::AssignDiacriticsToNewBlobs(
 bool Tesseract::SelectGoodDiacriticOutlines(
     int pass, float certainty_threshold, PAGE_RES_IT* pr_it, C_BLOB* blob,
     const GenericVector<C_OUTLINE*>& outlines, int num_outlines,
-    GenericVector<bool>* ok_outlines) {
+    std::vector<bool>* ok_outlines) {
   STRING best_str;
   float target_cert = certainty_threshold;
   if (blob != nullptr) {
     float target_c2;
     target_cert = ClassifyBlobAsWord(pass, pr_it, blob, &best_str, &target_c2);
     if (debug_noise_removal) {
-      tprintf("No Noise blob classified as %s=%g(%g) at:", best_str.string(),
+      tprintf("No Noise blob classified as %s=%g(%g) at:", best_str.c_str(),
               target_cert, target_c2);
       blob->bounding_box().print();
     }
     target_cert -= (target_cert - certainty_threshold) * noise_cert_factor;
   }
-  GenericVector<bool> test_outlines = *ok_outlines;
+  std::vector<bool> test_outlines = *ok_outlines;
   // Start with all the outlines in.
   STRING all_str;
-  GenericVector<bool> best_outlines = *ok_outlines;
+  std::vector<bool> best_outlines = *ok_outlines;
   float best_cert = ClassifyBlobPlusOutlines(test_outlines, outlines, pass,
                                              pr_it, blob, &all_str);
   if (debug_noise_removal) {
@@ -1165,7 +1158,7 @@ bool Tesseract::SelectGoodDiacriticOutlines(
       if (test_outlines[i]) ol_box += outlines[i]->bounding_box();
     }
     tprintf("All Noise blob classified as %s=%g, delta=%g at:",
-            all_str.string(), best_cert, best_cert - target_cert);
+            all_str.c_str(), best_cert, best_cert - target_cert);
     ol_box.print();
   }
   // Iteratively zero out the bit that improves the certainty the most, until
@@ -1185,9 +1178,9 @@ bool Tesseract::SelectGoodDiacriticOutlines(
           TBOX ol_box;
           for (int j = 0; j < outlines.size(); ++j) {
             if (test_outlines[j]) ol_box += outlines[j]->bounding_box();
-            tprintf("%d", test_outlines[j]);
+            tprintf("%c", test_outlines[j] ? 'T' : 'F');
           }
-          tprintf(" blob classified as %s=%g, delta=%g) at:", str.string(),
+          tprintf(" blob classified as %s=%g, delta=%g) at:", str.c_str(),
                   cert, cert - target_cert);
           ol_box.print();
         }
@@ -1210,7 +1203,7 @@ bool Tesseract::SelectGoodDiacriticOutlines(
     if (debug_noise_removal) {
       tprintf("%s noise combination ", blob ? "Adding" : "New");
       for (int i = 0; i < best_outlines.size(); ++i) {
-        tprintf("%d", best_outlines[i]);
+        tprintf("%c", best_outlines[i] ? 'T' : 'F');
       }
       tprintf(" yields certainty %g, beating target of %g\n", best_cert,
               target_cert);
@@ -1224,7 +1217,7 @@ bool Tesseract::SelectGoodDiacriticOutlines(
 // Classifies the given blob plus the outlines flagged by ok_outlines, undoes
 // the inclusion of the outlines, and returns the certainty of the raw choice.
 float Tesseract::ClassifyBlobPlusOutlines(
-    const GenericVector<bool>& ok_outlines,
+    const std::vector<bool>& ok_outlines,
     const GenericVector<C_OUTLINE*>& outlines, int pass_n, PAGE_RES_IT* pr_it,
     C_BLOB* blob, STRING* best_str) {
   C_OUTLINE_IT ol_it;
@@ -1334,7 +1327,7 @@ void Tesseract::classify_word_and_language(int pass_n, PAGE_RES_IT* pr_it,
   if (debug) {
     tprintf("%s word with lang %s at:",
             word->done ? "Already done" : "Processing",
-            most_recently_used_->lang.string());
+            most_recently_used_->lang.c_str());
     word->word->bounding_box().print();
   }
   if (word->done) {
@@ -1387,7 +1380,7 @@ void Tesseract::classify_word_and_language(int pass_n, PAGE_RES_IT* pr_it,
   clock_t ocr_t = clock();
   if (tessedit_timing_debug) {
     tprintf("%s (ocr took %.2f sec)\n",
-            word_data->word->best_choice->unichar_string().string(),
+            word_data->word->best_choice->unichar_string().c_str(),
             static_cast<double>(ocr_t-start_t)/CLOCKS_PER_SEC);
   }
 }
@@ -1405,7 +1398,6 @@ void Tesseract::classify_word_pass1(const WordData& word_data,
   BLOCK* block = word_data.block;
   prev_word_best_choice_ = word_data.prev_word != nullptr
       ? word_data.prev_word->word->best_choice : nullptr;
-#ifndef ANDROID_BUILD
 #ifdef DISABLED_LEGACY_ENGINE
   if (tessedit_ocr_engine_mode == OEM_LSTM_ONLY) {
 #else
@@ -1430,9 +1422,8 @@ void Tesseract::classify_word_pass1(const WordData& word_data,
                                     classify_bln_numeric_mode,
                                     textord_use_cjk_fp_model,
                                     poly_allow_detailed_fx, row, block);
-#endif  // ndef DISABLED_LEGACY_ENGINE
+  #endif  // ndef DISABLED_LEGACY_ENGINE
   }
-#endif  // ndef ANDROID_BUILD
 
 #ifndef DISABLED_LEGACY_ENGINE
   WERD_RES* word = *in_word;
@@ -1462,12 +1453,12 @@ void Tesseract::classify_word_pass1(const WordData& word_data,
 void Tesseract::ReportXhtFixResult(bool accept_new_word, float new_x_ht,
                                    WERD_RES* word, WERD_RES* new_word) {
   tprintf("New XHT Match:%s = %s ",
-          word->best_choice->unichar_string().string(),
-          word->best_choice->debug_string().string());
+          word->best_choice->unichar_string().c_str(),
+          word->best_choice->debug_string().c_str());
   word->reject_map.print(debug_fp);
   tprintf(" -> %s = %s ",
-          new_word->best_choice->unichar_string().string(),
-          new_word->best_choice->debug_string().string());
+          new_word->best_choice->unichar_string().c_str(),
+          new_word->best_choice->debug_string().c_str());
   new_word->reject_map.print(debug_fp);
   tprintf(" %s->%s %s %s\n",
           word->guessed_x_ht ? "GUESS" : "CERT",
@@ -1583,7 +1574,6 @@ void Tesseract::classify_word_pass2(const WordData& word_data,
   prev_word_best_choice_ = word_data.prev_word != nullptr
       ? word_data.prev_word->word->best_choice : nullptr;
 
-  set_global_subloc_code(SUBLOC_NORM);
   check_debug_pt(word, 30);
   if (!word->done) {
     word->caps_height = 0.0;
@@ -1601,8 +1591,6 @@ void Tesseract::classify_word_pass2(const WordData& word_data,
       // Use the tops and bottoms since they are available.
       TrainedXheightFix(word, block, row);
     }
-
-    set_global_subloc_code(SUBLOC_NORM);
   }
 #ifndef GRAPHICS_DISABLED
   if (tessedit_display_outwords) {
@@ -1616,7 +1604,6 @@ void Tesseract::classify_word_pass2(const WordData& word_data,
     ScrollView::Update();
   }
 #endif
-  set_global_subloc_code(SUBLOC_NORM);
   check_debug_pt(word, 50);
 #endif  // ndef DISABLED_LEGACY_ENGINE
 }
@@ -1641,7 +1628,7 @@ void Tesseract::match_word_pass_n(int pass_n, WERD_RES *word,
       if (word->best_choice->length() != word->box_word->length()) {
         tprintf("POST FIX_QUOTES FAIL String:\"%s\"; Strlen=%d;"
                 " #Blobs=%d\n",
-                word->best_choice->debug_string().string(),
+                word->best_choice->debug_string().c_str(),
                 word->best_choice->length(),
                 word->box_word->length());
 
@@ -1720,7 +1707,7 @@ void Tesseract::fix_rep_char(PAGE_RES_IT* page_res_it) {
   BLOB_CHOICE* best_choice = FindBestMatchingChoice(maxch_id, word_res);
   if (best_choice == nullptr) {
     tprintf("Failed to find a choice for %s, occurring %d times\n",
-            word_res->uch_set->debug_str(maxch_id).string(), max_count);
+            word_res->uch_set->debug_str(maxch_id).c_str(), max_count);
     return;
   }
   word_res->done = true;
@@ -1907,11 +1894,11 @@ bool Tesseract::check_debug_pt(WERD_RES* word, int location) {
         break;
     }
     if (word->best_choice != nullptr) {
-      tprintf(" \"%s\" ", word->best_choice->unichar_string().string());
+      tprintf(" \"%s\" ", word->best_choice->unichar_string().c_str());
       word->reject_map.print(debug_fp);
       tprintf("\n");
       if (show_map_detail) {
-        tprintf("\"%s\"\n", word->best_choice->unichar_string().string());
+        tprintf("\"%s\"\n", word->best_choice->unichar_string().c_str());
         for (i = 0; word->best_choice->unichar_string()[i] != '\0'; i++) {
           tprintf("**** \"%c\" ****\n", word->best_choice->unichar_string()[i]);
           word->reject_map[i].full_print(debug_fp);
@@ -1974,12 +1961,12 @@ void Tesseract::set_word_fonts(WERD_RES *word) {
   // Compute the font scores for the word
   if (tessedit_debug_fonts) {
     tprintf("Examining fonts in %s\n",
-            word->best_choice->debug_string().string());
+            word->best_choice->debug_string().c_str());
   }
   for (int b = 0; b < word->best_choice->length(); ++b) {
     const BLOB_CHOICE* choice = word->GetBlobChoice(b);
     if (choice == nullptr) continue;
-    const GenericVector<ScoredFont>& fonts = choice->fonts();
+    auto &fonts = choice->fonts();
     for (int f = 0; f < fonts.size(); ++f) {
       const int fontinfo_id = fonts[f].fontinfo_id;
       if (0 <= fontinfo_id && fontinfo_id < fontinfo_size) {
@@ -2109,8 +2096,8 @@ void Tesseract::dictionary_correction_pass(PAGE_RES *page_res) {
         // The alternate choice is in the dictionary.
         if (tessedit_bigram_debug) {
           tprintf("Dictionary correction replaces best choice '%s' with '%s'\n",
-                  best->unichar_string().string(),
-                  alternate->unichar_string().string());
+                  best->unichar_string().c_str(),
+                  alternate->unichar_string().c_str());
         }
         // Replace the 'best' choice with a better choice.
         word->ReplaceBestChoice(alternate);

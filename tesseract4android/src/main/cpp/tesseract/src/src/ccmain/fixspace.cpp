@@ -19,31 +19,34 @@
  **********************************************************************/
 
 #include "fixspace.h"
-#include <cstdint>             // for INT16_MAX, int16_t, int32_t
+
 #include "blobs.h"             // for TWERD, TBLOB, TESSLINE
 #include "boxword.h"           // for BoxWord
 #include "errcode.h"           // for ASSERT_HOST
 #include "normalis.h"          // for kBlnXHeight, kBlnBaselineOffset
-#include "ocrclass.h"          // for ETEXT_DESC
 #include "pageres.h"           // for WERD_RES_IT, WERD_RES, WERD_RES_LIST
 #include "params.h"            // for IntParam, StringParam, BoolParam, Doub...
 #include "ratngs.h"            // for WERD_CHOICE, FREQ_DAWG_PERM, NUMBER_PERM
 #include "rect.h"              // for TBOX
 #include "stepblob.h"          // for C_BLOB_IT, C_BLOB_LIST, C_BLOB
-#include "strngs.h"            // for STRING
 #include "tesseractclass.h"    // for Tesseract, TesseractStats, WordData
 #include "tessvars.h"          // for debug_fp
 #include "tprintf.h"           // for tprintf
-#include "unichar.h"           // for UNICHAR_ID
 #include "unicharset.h"        // for UNICHARSET
 #include "werd.h"              // for WERD, W_EOL, W_FUZZY_NON, W_FUZZY_SP
+
+#include <tesseract/ocrclass.h>          // for ETEXT_DESC
+#include "strngs.h"            // for STRING
+#include <tesseract/unichar.h>           // for UNICHAR_ID
+
+#include <cstdint>             // for INT16_MAX, int16_t, int32_t
+
+namespace tesseract {
 
 class BLOCK;
 class ROW;
 
 #define PERFECT_WERDS   999
-
-namespace tesseract {
 
 /**********************************************************************
  *  c_blob_comparator()
@@ -199,8 +202,6 @@ void Tesseract::fix_fuzzy_space_list(WERD_RES_LIST &best_perm,
   dump_words(best_perm, best_score, 3, improved);
 }
 
-}  // namespace tesseract
-
 void initialise_search(WERD_RES_LIST &src_list, WERD_RES_LIST &new_list) {
   WERD_RES_IT src_it(&src_list);
   WERD_RES_IT new_it(&new_list);
@@ -218,8 +219,6 @@ void initialise_search(WERD_RES_LIST &src_list, WERD_RES_LIST &new_list) {
   }
 }
 
-
-namespace tesseract {
 void Tesseract::match_current_words(WERD_RES_LIST &words, ROW *row,
                                     BLOCK* block) {
   WERD_RES_IT word_it(&words);
@@ -268,24 +267,19 @@ int16_t Tesseract::eval_word_spacing(WERD_RES_LIST &word_res_list) {
   int16_t total_score = 0;
   int16_t word_count = 0;
   int16_t done_word_count = 0;
-  int16_t word_len;
   int16_t i;
   int16_t offset;
-  WERD_RES *word;                 // current word
   int16_t prev_word_score = 0;
   bool prev_word_done = false;
   bool prev_char_1 = false;      // prev ch a "1/I/l"?
   bool prev_char_digit = false;  // prev ch 2..9 or 0
-  bool current_char_1 = false;
-  bool current_word_ok_so_far;
-  STRING punct_chars = "!\"`',.:;";
+  const char* punct_chars = "!\"`',.:;";
   bool prev_char_punct = false;
-  bool current_char_punct = false;
-  bool word_done = false;
 
   do {
-    word = word_res_it.data();
-    word_done = fixspace_thinks_word_done(word);
+    // current word
+    WERD_RES* word = word_res_it.data();
+    bool word_done = fixspace_thinks_word_done(word);
     word_count++;
     if (word->tess_failed) {
       total_score += prev_word_score;
@@ -301,12 +295,12 @@ int16_t Tesseract::eval_word_spacing(WERD_RES_LIST &word_res_list) {
         Yes IF it didn't end in a 1 when the first char of this word is a digit
           AND it didn't end in a digit when the first char of this word is a 1
       */
-      word_len = word->reject_map.length();
-      current_word_ok_so_far = false;
+      auto word_len = word->reject_map.length();
+      bool current_word_ok_so_far = false;
       if (!((prev_char_1 && digit_or_numeric_punct(word, 0)) ||
             (prev_char_digit && (
                 (word_done &&
-                 word->best_choice->unichar_lengths().string()[0] == 1 &&
+                 word->best_choice->unichar_lengths().c_str()[0] == 1 &&
                  word->best_choice->unichar_string()[0] == '1') ||
                 (!word_done && STRING(conflict_set_I_l_1).contains(
                       word->best_choice->unichar_string()[0])))))) {
@@ -327,7 +321,7 @@ int16_t Tesseract::eval_word_spacing(WERD_RES_LIST &word_res_list) {
       /* Add 1 to total score for every joined 1 regardless of context and
          rejtn */
       for (i = 0, prev_char_1 = false; i < word_len; i++) {
-        current_char_1 = word->best_choice->unichar_string()[i] == '1';
+        bool current_char_1 = word->best_choice->unichar_string()[i] == '1';
         if (prev_char_1 || (current_char_1 && (i > 0)))
           total_score++;
         prev_char_1 = current_char_1;
@@ -338,8 +332,9 @@ int16_t Tesseract::eval_word_spacing(WERD_RES_LIST &word_res_list) {
       if (tessedit_prefer_joined_punct) {
         for (i = 0, offset = 0, prev_char_punct = false; i < word_len;
              offset += word->best_choice->unichar_lengths()[i++]) {
-          current_char_punct =
-            punct_chars.contains(word->best_choice->unichar_string()[offset]);
+          bool current_char_punct =
+            strchr(punct_chars,
+                   word->best_choice->unichar_string()[offset]) != nullptr;
           if (prev_char_punct || (current_char_punct && i > 0))
             total_score++;
           prev_char_punct = current_char_punct;
@@ -375,15 +370,12 @@ bool Tesseract::digit_or_numeric_punct(WERD_RES *word, int char_position) {
        offset += word->best_choice->unichar_lengths()[i++]);
   return (
       word->uch_set->get_isdigit(
-          word->best_choice->unichar_string().string() + offset,
+          word->best_choice->unichar_string().c_str() + offset,
           word->best_choice->unichar_lengths()[i]) ||
       (word->best_choice->permuter() == NUMBER_PERM &&
        STRING(numeric_punctuation).contains(
-           word->best_choice->unichar_string().string()[offset])));
+           word->best_choice->unichar_string().c_str()[offset])));
 }
-
-}  // namespace tesseract
-
 
 /**
  * @name transform_to_next_perm()
@@ -472,7 +464,6 @@ void transform_to_next_perm(WERD_RES_LIST &words) {
   }
 }
 
-namespace tesseract {
 void Tesseract::dump_words(WERD_RES_LIST &perm, int16_t score,
                            int16_t mode, bool improved) {
   WERD_RES_IT word_res_it(&perm);
@@ -507,18 +498,18 @@ void Tesseract::dump_words(WERD_RES_LIST &perm, int16_t score,
            word_res_it.forward()) {
         if (!word_res_it.data()->part_of_combo) {
           tprintf("%s/%1d ",
-                  word_res_it.data()->best_choice->unichar_string().string(),
+                  word_res_it.data()->best_choice->unichar_string().c_str(),
                   static_cast<int>(word_res_it.data()->best_choice->permuter()));
         }
       }
       tprintf("\"\n");
     } else if (improved) {
-      tprintf("FIX SPACING \"%s\" => \"", stats_.dump_words_str.string());
+      tprintf("FIX SPACING \"%s\" => \"", stats_.dump_words_str.c_str());
       for (word_res_it.mark_cycle_pt(); !word_res_it.cycled_list();
            word_res_it.forward()) {
         if (!word_res_it.data()->part_of_combo) {
           tprintf("%s/%1d ",
-                  word_res_it.data()->best_choice->unichar_string().string(),
+                  word_res_it.data()->best_choice->unichar_string().c_str(),
                   static_cast<int>(word_res_it.data()->best_choice->permuter()));
         }
       }
@@ -540,7 +531,7 @@ bool Tesseract::fixspace_thinks_word_done(WERD_RES *word) {
       (word->tess_accepted ||
        (fixsp_done_mode == 2 && word->reject_map.reject_count() == 0) ||
        fixsp_done_mode == 3) &&
-      (strchr(word->best_choice->unichar_string().string(), ' ') == nullptr) &&
+      (strchr(word->best_choice->unichar_string().c_str(), ' ') == nullptr) &&
       ((word->best_choice->permuter() == SYSTEM_DAWG_PERM) ||
        (word->best_choice->permuter() == FREQ_DAWG_PERM) ||
        (word->best_choice->permuter() == USER_DAWG_PERM) ||
@@ -581,7 +572,7 @@ void Tesseract::fix_sp_fp_word(WERD_RES_IT &word_res_it, ROW *row,
 
   if (debug_fix_space_level > 1) {
     tprintf("FP fixspace working on \"%s\"\n",
-            word_res->best_choice->unichar_string().string());
+            word_res->best_choice->unichar_string().c_str());
   }
   word_res->word->rej_cblob_list()->sort(c_blob_comparator);
   sub_word_list_it.add_after_stay_put(word_res_it.extract());
@@ -729,7 +720,7 @@ int16_t Tesseract::worst_noise_blob(WERD_RES *word_res,
   #ifndef SECURE_NAMES
   if (debug_fix_space_level > 5)
     tprintf("FP fixspace Noise metrics for \"%s\": ",
-            word_res->best_choice->unichar_string().string());
+            word_res->best_choice->unichar_string().c_str());
   #endif
 
   for (i = 0; i < blob_count && i < word_res->rebuild_word->NumBlobs(); i++) {
@@ -817,7 +808,6 @@ float Tesseract::blob_noise_score(TBLOB *blob) {
 
   return largest_outline_dimension;
 }
-}  // namespace tesseract
 
 void fixspace_dbg(WERD_RES *word) {
   TBOX box = word->word->bounding_box();
@@ -825,7 +815,7 @@ void fixspace_dbg(WERD_RES *word) {
   int16_t i;
 
   box.print();
-  tprintf(" \"%s\" ", word->best_choice->unichar_string().string());
+  tprintf(" \"%s\" ", word->best_choice->unichar_string().c_str());
   tprintf("Blob count: %d (word); %d/%d (rebuild word)\n",
           word->word->cblob_list()->length(),
           word->rebuild_word->NumBlobs(),
@@ -833,7 +823,7 @@ void fixspace_dbg(WERD_RES *word) {
   word->reject_map.print(debug_fp);
   tprintf("\n");
   if (show_map_detail) {
-    tprintf("\"%s\"\n", word->best_choice->unichar_string().string());
+    tprintf("\"%s\"\n", word->best_choice->unichar_string().c_str());
     for (i = 0; word->best_choice->unichar_string()[i] != '\0'; i++) {
       tprintf("**** \"%c\" ****\n", word->best_choice->unichar_string()[i]);
       word->reject_map[i].full_print(debug_fp);
@@ -853,7 +843,6 @@ void fixspace_dbg(WERD_RES *word) {
  * acceptable words or in dict words and are not rejected.
  * Penalise any potential noise chars
  */
-namespace tesseract {
 int16_t Tesseract::fp_eval_word_spacing(WERD_RES_LIST &word_res_list) {
   WERD_RES_IT word_it(&word_res_list);
   WERD_RES *word;

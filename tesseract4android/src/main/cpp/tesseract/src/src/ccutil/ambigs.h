@@ -20,11 +20,15 @@
 #ifndef TESSERACT_CCUTIL_AMBIGS_H_
 #define TESSERACT_CCUTIL_AMBIGS_H_
 
+#ifdef HAVE_CONFIG_H
+#include "config_auto.h" // DISABLED_LEGACY_ENGINE
+#endif
+
 #if !defined(DISABLED_LEGACY_ENGINE)
 
 #include "elst.h"
 #include "tprintf.h"
-#include "unichar.h"
+#include <tesseract/unichar.h>
 #include "unicharset.h"
 #include "genericvector.h"
 

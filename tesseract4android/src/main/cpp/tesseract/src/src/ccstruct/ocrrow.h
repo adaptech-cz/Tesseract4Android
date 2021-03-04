@@ -20,20 +20,23 @@
 #ifndef OCRROW_H
 #define OCRROW_H
 
-#include <cstdint>      // for int16_t, int32_t
-#include <cstdio>       // for FILE
 #include "elst.h"       // for ELIST_ITERATOR, ELISTIZEH, ELIST_LINK
 #include "quspline.h"   // for QSPLINE
 #include "rect.h"       // for TBOX
 #include "scrollview.h" // for ScrollView, ScrollView::Color
 #include "werd.h"       // for WERD_LIST
 
+#include <cstdint>      // for int16_t, int32_t
+#include <cstdio>       // for FILE
+
+namespace tesseract {
+
 class ICOORD;
 class TO_ROW;
 
 struct PARA;
 
-class ROW:public ELIST_LINK
+class ROW : public ELIST_LINK
 {
   friend void tweak_row_baseline(ROW *, double, double);
   public:
@@ -140,7 +143,7 @@ class ROW:public ELIST_LINK
                                  //draw it
       baseline.plot (window, colour);
     }
-    #endif  // GRAPHICS_DISABLED
+    #endif // !GRAPHICS_DISABLED
     ROW& operator= (const ROW & source);
 
   private:
@@ -168,4 +171,7 @@ class ROW:public ELIST_LINK
 };
 
 ELISTIZEH (ROW)
+
+}  // namespace tesseract
+
 #endif

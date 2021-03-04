@@ -1,5 +1,4 @@
-/* -*-C-*-
-###############################################################################
+/******************************************************************************
 #
 # File:         oldlist.cpp
 # Description:  List processing procedures.
@@ -56,22 +55,13 @@
 
 ******************************************************************************/
 #include "oldlist.h"
-#include <cstdio>
-#include <cstring>      // for strcmp
+
 #include "errcode.h"    // for ASSERT_HOST
 
-/**********************************************************************
- *  c o p y   f i r s t
- *
- *  Do the appropriate kind a push operation to copy the first node from
- *  one list to another.
- *
- **********************************************************************/
+#include <cstdio>
+#include <cstring>      // for strcmp
 
-#define copy_first(l1,l2)  \
-(l2=push(l2, first_node(l1)))
-
-
+namespace tesseract {
 
 /*----------------------------------------------------------------------
               F u n c t i o n s
@@ -164,25 +154,6 @@ void destroy_nodes(LIST list, void_dest destructor) {
 }
 
 /**********************************************************************
- *  i n s e r t
- *
- *  Create a list element and rearrange the pointers so that the first
- *  element in the list is the second argument.
- **********************************************************************/
-void insert(LIST list, void *node) {
-  LIST element;
-
-  if (list != NIL_LIST) {
-    element = push(NIL_LIST, node);
-    set_rest(element, list_rest(list));
-    set_rest(list, element);
-    node = first_node(list);
-    list->node = first_node(list_rest(list));
-    list->next->node = (LIST)node;
-  }
-}
-
-/**********************************************************************
  *  l a s t
  *
  *  Return the last list item (this is list type).
@@ -236,19 +207,6 @@ LIST push_last(LIST list, void *item) {
 }
 
 /**********************************************************************
- *  r e v e r s e
- *
- *  Create a new list with the elements reversed. The old list is not
- *  destroyed.
- **********************************************************************/
-LIST reverse(LIST list) {
-  LIST newlist = NIL_LIST;
-
-  iterate(list) copy_first(list, newlist);
-  return (newlist);
-}
-
-/**********************************************************************
  *   s e a r c h
  *
  *  Search list, return NIL_LIST if not found. Return the list starting from
@@ -261,3 +219,5 @@ LIST search(LIST list, void *key, int_compare is_equal) {
   iterate(list) if ((*is_equal)(first_node(list), key)) return (list);
   return (NIL_LIST);
 }
+
+} // namespace tesseract

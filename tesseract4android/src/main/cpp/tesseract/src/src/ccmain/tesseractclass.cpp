@@ -40,12 +40,12 @@
 
 #include "tesseractclass.h"
 
-#include "allheaders.h"
+#include <allheaders.h>
 #include "edgblob.h"
+#ifndef DISABLED_LEGACY_ENGINE
 #include "equationdetect.h"
-#ifndef ANDROID_BUILD
-#include "lstmrecognizer.h"
 #endif
+#include "lstmrecognizer.h"
 
 namespace tesseract {
 
@@ -75,7 +75,7 @@ Tesseract::Tesseract()
           "Page seg mode: 0=osd only, 1=auto+osd, 2=auto_only, 3=auto, 4=column,"
           " 5=block_vert, 6=block, 7=line, 8=word, 9=word_circle, 10=char,"
           "11=sparse_text, 12=sparse_text+osd, 13=raw_line"
-          " (Values from PageSegMode enum in publictypes.h)",
+          " (Values from PageSegMode enum in tesseract/publictypes.h)",
           this->params()),
       INT_INIT_MEMBER(tessedit_ocr_engine_mode, tesseract::OEM_DEFAULT,
                       "Which OCR engine(s) to run (Tesseract, LSTM, both)."
@@ -508,11 +508,24 @@ Tesseract::Tesseract()
                     this->params()),
       INT_MEMBER(lstm_choice_mode, 0,
           "Allows to include alternative symbols choices in the hOCR output. "
-          "Valid input values are 0, 1, 2 and 3. 0 is the default value. "
+          "Valid input values are 0, 1 and 2. 0 is the default value. "
           "With 1 the alternative symbol choices per timestep are included. "
-          "With 2 the alternative symbol choices are accumulated per "
-          "character. ",
+          "With 2 alternative symbol choices are extracted from the CTC "
+          "process instead of the lattice. The choices are mapped per "
+          "character.",
           this->params()),
+      INT_MEMBER(
+          lstm_choice_iterations, 5,
+          "Sets the number of cascading iterations for the Beamsearch in "
+          "lstm_choice_mode. Note that lstm_choice_mode must be set to a "
+          "value greater than 0 to produce results.",
+                 this->params()),
+      double_MEMBER(
+          lstm_rating_coefficient, 5,
+          "Sets the rating coefficient for the lstm choices. The smaller the "
+          "coefficient, the better are the ratings for each choice and less "
+          "information is lost due to the cut off at 0. The standard value is "
+          "5", this->params()),
       BOOL_MEMBER(pageseg_apply_music_mask, true,
                 "Detect music staff and remove intersecting components", this->params()),
 
@@ -531,9 +544,7 @@ Tesseract::Tesseract()
       most_recently_used_(this),
       font_table_size_(0),
       equ_detect_(nullptr),
-#ifndef ANDROID_BUILD
       lstm_recognizer_(nullptr),
-#endif
       train_line_page_num_(0) {
 }
 
@@ -541,29 +552,26 @@ Tesseract::~Tesseract() {
   Clear();
   pixDestroy(&pix_original_);
   end_tesseract();
-  sub_langs_.delete_data_pointers();
-#ifndef ANDROID_BUILD
+  for (auto* lang : sub_langs_) {
+    delete lang;
+  }
   delete lstm_recognizer_;
   lstm_recognizer_ = nullptr;
-#endif
 }
 
-Dict& Tesseract::getDict()
-{
-    if (0 == Classify::getDict().NumDawgs() && AnyLSTMLang())
-    {
-        if (lstm_recognizer_ && lstm_recognizer_->GetDict())
-        {
-            return *const_cast<Dict*>(lstm_recognizer_->GetDict());
-        }
+Dict& Tesseract::getDict() {
+  if (0 == Classify::getDict().NumDawgs() && AnyLSTMLang()) {
+    if (lstm_recognizer_ && lstm_recognizer_->GetDict()) {
+      return *lstm_recognizer_->GetDict();
     }
-    return Classify::getDict();
   }
+  return Classify::getDict();
+}
 
 
 void Tesseract::Clear() {
   STRING debug_name = imagebasename + "_debug.pdf";
-  pixa_debug_.WritePDF(debug_name.string());
+  pixa_debug_.WritePDF(debug_name.c_str());
   pixDestroy(&pix_binary_);
   pixDestroy(&pix_grey_);
   pixDestroy(&pix_thresholds_);
@@ -603,25 +611,25 @@ void Tesseract::ResetDocumentDictionary() {
 
 void Tesseract::SetBlackAndWhitelist() {
   // Set the white and blacklists (if any)
-  unicharset.set_black_and_whitelist(tessedit_char_blacklist.string(),
-                                     tessedit_char_whitelist.string(),
-                                     tessedit_char_unblacklist.string());
+  unicharset.set_black_and_whitelist(tessedit_char_blacklist.c_str(),
+                                     tessedit_char_whitelist.c_str(),
+                                     tessedit_char_unblacklist.c_str());
   if (lstm_recognizer_) {
-    UNICHARSET& lstm_unicharset = const_cast<UNICHARSET&> (lstm_recognizer_->GetUnicharset());
-    lstm_unicharset.set_black_and_whitelist(tessedit_char_blacklist.string(),
-                                            tessedit_char_whitelist.string(),
-                                            tessedit_char_unblacklist.string());
+    UNICHARSET& lstm_unicharset = lstm_recognizer_->GetUnicharset();
+    lstm_unicharset.set_black_and_whitelist(tessedit_char_blacklist.c_str(),
+                                            tessedit_char_whitelist.c_str(),
+                                            tessedit_char_unblacklist.c_str());
   }
   // Black and white lists should apply to all loaded classifiers.
   for (int i = 0; i < sub_langs_.size(); ++i) {
     sub_langs_[i]->unicharset.set_black_and_whitelist(
-        tessedit_char_blacklist.string(), tessedit_char_whitelist.string(),
-        tessedit_char_unblacklist.string());
+        tessedit_char_blacklist.c_str(), tessedit_char_whitelist.c_str(),
+        tessedit_char_unblacklist.c_str());
     if (sub_langs_[i]->lstm_recognizer_) {
-      UNICHARSET& lstm_unicharset = const_cast<UNICHARSET&> (sub_langs_[i]->lstm_recognizer_->GetUnicharset());
-      lstm_unicharset.set_black_and_whitelist(tessedit_char_blacklist.string(),
-                                              tessedit_char_whitelist.string(),
-                                              tessedit_char_unblacklist.string());
+      UNICHARSET& lstm_unicharset = sub_langs_[i]->lstm_recognizer_->GetUnicharset();
+      lstm_unicharset.set_black_and_whitelist(tessedit_char_blacklist.c_str(),
+                                              tessedit_char_whitelist.c_str(),
+                                              tessedit_char_unblacklist.c_str());
     }
   }
 }

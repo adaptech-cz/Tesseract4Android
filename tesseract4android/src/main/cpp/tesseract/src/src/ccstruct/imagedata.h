@@ -3,7 +3,6 @@
 // Description: Class to hold information about a single image and its
 //              corresponding boxes or text file.
 // Author:      Ray Smith
-// Created:     Mon Jul 22 14:17:06 PDT 2013
 //
 // (C) Copyright 2013, Google Inc.
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,18 +19,21 @@
 #ifndef TESSERACT_IMAGE_IMAGEDATA_H_
 #define TESSERACT_IMAGE_IMAGEDATA_H_
 
-#include "genericvector.h"      // for GenericVector, PointerVector, FileReader
 #include "points.h"             // for FCOORD
-#include "strngs.h"             // for STRING
-#include "svutil.h"             // for SVAutoLock, SVMutex
 
-class ScrollView;
-class TBOX;
+#include "genericvector.h"      // for GenericVector, PointerVector, FileReader
+#include "strngs.h"             // for STRING
+
+#include <mutex>                // for std::mutex
+#include <thread>               // for std::thread
+
 struct Pix;
 
 namespace tesseract {
 
 class TFile;
+class ScrollView;
+class TBOX;
 
 // Amount of padding to apply in output pixels in feature mode.
 const int kFeaturePadding = 2;
@@ -53,6 +55,8 @@ enum CachingStrategy {
   // Best for smaller data sets that mostly fit in memory.
   CS_ROUND_ROBIN,
 };
+
+#if 0
 
 class WordFeature {
  public:
@@ -97,12 +101,14 @@ struct FloatWordFeature {
   int x_bucket;
 };
 
+#endif
+
 // Class to hold information on a single image:
 // Filename, cached image as a Pix*, character boxes, text transcription.
 // The text transcription is the ground truth UTF-8 text for the image.
 // Character boxes are optional and indicate the desired segmentation of
 // the text into recognition units.
-class ImageData {
+class TESS_API ImageData {
  public:
   ImageData();
   // Takes ownership of the pix.
@@ -179,9 +185,9 @@ class ImageData {
 
   // Adds the supplied boxes and transcriptions that correspond to the correct
   // page number.
-  void AddBoxes(const GenericVector<TBOX>& boxes,
-                const GenericVector<STRING>& texts,
-                const GenericVector<int>& box_pages);
+  void AddBoxes(const std::vector<TBOX>& boxes,
+                const std::vector<STRING>& texts,
+                const std::vector<int>& box_pages);
 
  private:
   // Saves the given Pix as a PNG-encoded string and destroys it.
@@ -197,6 +203,9 @@ class ImageData {
  private:
   STRING imagefilename_;             // File to read image from.
   int32_t page_number_;              // Page number if multi-page tif or -1.
+#ifdef TESSERACT_IMAGEDATA_AS_PIX
+  Pix *internal_pix_;
+#endif
   GenericVector<char> image_data_;   // PNG/PNM file data.
   STRING language_;                  // Language code for image.
   STRING transcription_;             // UTF-8 ground truth of image.
@@ -207,38 +216,40 @@ class ImageData {
 
 // A collection of ImageData that knows roughly how much memory it is using.
 class DocumentData {
-  friend void* ReCachePagesFunc(void* data);
-
  public:
+  TESS_API
   explicit DocumentData(const STRING& name);
+  TESS_API
   ~DocumentData();
 
   // Reads all the pages in the given lstmf filename to the cache. The reader
   // is used to read the file.
+  TESS_API
   bool LoadDocument(const char* filename, int start_page, int64_t max_memory,
                     FileReader reader);
   // Sets up the document, without actually loading it.
   void SetDocument(const char* filename, int64_t max_memory, FileReader reader);
   // Writes all the pages to the given filename. Returns false on error.
+  TESS_API
   bool SaveDocument(const char* filename, FileWriter writer);
-  bool SaveToBuffer(GenericVector<char>* buffer);
 
   // Adds the given page data to this document, counting up memory.
+  TESS_API
   void AddPageToDocument(ImageData* page);
 
   const STRING& document_name() const {
-    SVAutoLock lock(&general_mutex_);
+    std::lock_guard<std::mutex> lock(general_mutex_);
     return document_name_;
   }
   int NumPages() const {
-    SVAutoLock lock(&general_mutex_);
+    std::lock_guard<std::mutex> lock(general_mutex_);
     return total_pages_;
   }
   size_t PagesSize() const {
     return pages_.size();
   }
   int64_t memory_used() const {
-    SVAutoLock lock(&general_mutex_);
+    std::lock_guard<std::mutex> lock(general_mutex_);
     return memory_used_;
   }
   // If the given index is not currently loaded, loads it using a separate
@@ -255,6 +266,7 @@ class DocumentData {
   void LoadPageInBackground(int index);
   // Returns a pointer to the page with the given index, modulo the total
   // number of pages. Blocks until the background load is completed.
+  TESS_API
   const ImageData* GetPage(int index);
   // Returns true if the requested page is available, and provides a pointer,
   // which may be nullptr if the document is empty. May block, even though it
@@ -262,7 +274,7 @@ class DocumentData {
   bool IsPageAvailable(int index, ImageData** page);
   // Takes ownership of the given page index. The page is made nullptr in *this.
   ImageData* TakePage(int index) {
-    SVAutoLock lock(&pages_mutex_);
+    std::lock_guard<std::mutex> lock(pages_mutex_);
     ImageData* page = pages_[index];
     pages_[index] = nullptr;
     return page;
@@ -279,11 +291,11 @@ class DocumentData {
  private:
   // Sets the value of total_pages_ behind a mutex.
   void set_total_pages(int total) {
-    SVAutoLock lock(&general_mutex_);
+    std::lock_guard<std::mutex> lock(general_mutex_);
     total_pages_ = total;
   }
   void set_memory_used(int64_t memory_used) {
-    SVAutoLock lock(&general_mutex_);
+    std::lock_guard<std::mutex> lock(general_mutex_);
     memory_used_ = memory_used;
   }
   // Locks the pages_mutex_ and Loads as many pages can fit in max_memory_
@@ -307,10 +319,13 @@ class DocumentData {
   FileReader reader_;
   // Mutex that protects pages_ and pages_offset_ against multiple parallel
   // loads, and provides a wait for page.
-  SVMutex pages_mutex_;
+  std::mutex pages_mutex_;
   // Mutex that protects other data members that callers want to access without
   // waiting for a load operation.
-  mutable SVMutex general_mutex_;
+  mutable std::mutex general_mutex_;
+
+  // Thread which loads document.
+  std::thread thread;
 };
 
 // A collection of DocumentData that knows roughly how much memory it is using.
@@ -320,17 +335,23 @@ class DocumentData {
 // content.
 class DocumentCache {
  public:
+  TESS_API
   explicit DocumentCache(int64_t max_memory);
+  TESS_API
   ~DocumentCache();
 
   // Deletes all existing documents from the cache.
   void Clear() {
+    for (auto* document : documents_) {
+      delete document;
+    }
     documents_.clear();
     num_pages_per_doc_ = 0;
   }
   // Adds all the documents in the list of filenames, counting memory.
   // The reader is used to read the files.
-  bool LoadDocuments(const GenericVector<STRING>& filenames,
+  TESS_API
+  bool LoadDocuments(const std::vector<STRING>& filenames,
                      CachingStrategy cache_strategy, FileReader reader);
 
   // Adds document to the cache.
@@ -348,21 +369,24 @@ class DocumentCache {
       return GetPageRoundRobin(serial);
   }
 
-  const PointerVector<DocumentData>& documents() const {
+  const std::vector<DocumentData*>& documents() const {
     return documents_;
   }
   // Returns the total number of pages in an epoch. For CS_ROUND_ROBIN cache
   // strategy, could take a long time.
+  TESS_API
   int TotalPages();
 
  private:
   // Returns a page by serial number, selecting them in a round-robin fashion
   // from all the documents. Highly disk-intensive, but doesn't need samples
   // to be shuffled between files to begin with.
+  TESS_API
   const ImageData* GetPageRoundRobin(int serial);
   // Returns a page by serial number, selecting them in sequence from each file.
   // Requires the samples to be shuffled between the files to give a random or
   // uniform distribution of data. Less disk-intensive than GetPageRoundRobin.
+  TESS_API
   const ImageData* GetPageSequential(int serial);
 
   // Helper counts the number of adjacent cached neighbour documents_ of index
@@ -370,14 +394,14 @@ class DocumentCache {
   int CountNeighbourDocs(int index, int dir);
 
   // A group of pages that corresponds in some loose way to a document.
-  PointerVector<DocumentData> documents_;
+  std::vector<DocumentData*> documents_;
   // Strategy to use for caching and serializing data samples.
-  CachingStrategy cache_strategy_;
+  CachingStrategy cache_strategy_ = CS_SEQUENTIAL;
   // Number of pages in the first document, used as a divisor in
   // GetPageSequential to determine the document index.
-  int num_pages_per_doc_;
+  int num_pages_per_doc_ = 0;
   // Max memory allowed in this cache.
-  int64_t max_memory_;
+  int64_t max_memory_ = 0;
 };
 
 }  // namespace tesseract

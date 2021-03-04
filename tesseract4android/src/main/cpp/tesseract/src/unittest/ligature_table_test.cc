@@ -15,14 +15,7 @@
 #include "ligature_table.h"
 #include "pango_font_info.h"
 
-DECLARE_STRING_PARAM_FLAG(fonts_dir);
-DECLARE_STRING_PARAM_FLAG(fontconfig_tmpdir);
-
-namespace {
-
-using tesseract::File;
-using tesseract::LigatureTable;
-using tesseract::PangoFontInfo;
+namespace tesseract {
 
 const char kEngNonLigatureText[] = "fidelity effigy ſteep";
 // Same as above text, but with "fi" in the first word and "ffi" in the second
@@ -32,17 +25,26 @@ const char kEngLigatureText[] = "ﬁdelity eﬃgy ﬅeep";
 // ligature. The test Verdana font does not support the "ffi" or "ſt" ligature.
 const char kRenderableEngLigatureText[] = "ﬁdelity efﬁgy ſteep";
 
+static PangoFontMap* font_map;
+
 class LigatureTableTest : public ::testing::Test {
  protected:
  void SetUp() override {
-    static std::locale system_locale("");
-    std::locale::global(system_locale);
     lig_table_ = LigatureTable::Get();
+    if (!font_map) {
+      font_map = pango_cairo_font_map_new_for_font_type(CAIRO_FONT_TYPE_FT);
+    }
+    pango_cairo_font_map_set_default(PANGO_CAIRO_FONT_MAP(font_map));
   }
 
   static void SetUpTestCase() {
+    static std::locale system_locale("");
+    std::locale::global(system_locale);
+
     FLAGS_fonts_dir = TESTING_DIR;
     FLAGS_fontconfig_tmpdir = FLAGS_test_tmpdir;
+    file::MakeTmpdir();
+    PangoFontInfo::SoftInitFontConfig(); // init early
   }
   LigatureTable* lig_table_;
 };
@@ -83,7 +85,7 @@ TEST_F(LigatureTableTest, TestCustomLigatures) {
       "act",       "a\uE003", "publiſh",    "publi\uE006", "ſince",
       "\uE007nce", "aſleep",  "a\uE008eep", "neceſſary",   "nece\uE009ary",
   };
-  for (size_t i = 0; i < ARRAYSIZE(kTestCases); i += 2) {
+  for (size_t i = 0; i < countof(kTestCases); i += 2) {
     EXPECT_STREQ(kTestCases[i + 1],
                  lig_table_->AddLigatures(kTestCases[i], nullptr).c_str());
     EXPECT_STREQ(kTestCases[i],
@@ -99,7 +101,7 @@ TEST_F(LigatureTableTest, TestRemovesCustomLigatures) {
       "ﬁ\uE003ion",
       "ﬁction",
   };
-  for (size_t i = 0; i < ARRAYSIZE(kTestCases); i += 3) {
+  for (size_t i = 0; i < countof(kTestCases); i += 3) {
     EXPECT_STREQ(kTestCases[i + 1],
                  lig_table_->AddLigatures(kTestCases[i], nullptr).c_str());
     EXPECT_STREQ(kTestCases[i + 2],

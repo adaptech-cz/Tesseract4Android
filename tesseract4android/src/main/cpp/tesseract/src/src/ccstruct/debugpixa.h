@@ -1,7 +1,7 @@
 #ifndef TESSERACT_CCSTRUCT_DEBUGPIXA_H_
 #define TESSERACT_CCSTRUCT_DEBUGPIXA_H_
 
-#include "allheaders.h"
+#include <allheaders.h>
 
 namespace tesseract {
 
@@ -12,7 +12,11 @@ class DebugPixa {
   // TODO(rays) add another constructor with size control.
   DebugPixa() {
     pixa_ = pixaCreate(0);
+#ifdef TESSERACT_DISABLE_DEBUG_FONTS
+    fonts_ = NULL;
+#else
     fonts_ = bmfCreate(nullptr, 14);
+#endif
   }
   // If the filename_ has been set and there are any debug images, they are
   // written to the set filename_.

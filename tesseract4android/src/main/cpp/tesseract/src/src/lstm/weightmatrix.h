@@ -19,7 +19,7 @@
 #define TESSERACT_LSTM_WEIGHTMATRIX_H_
 
 #include <memory>
-#include "genericvector.h"
+#include <vector>
 #include "intsimdmatrix.h"
 #include "matrix.h"
 #include "tprintf.h"
@@ -139,7 +139,7 @@ class WeightMatrix {
                           bool parallel);
   // Updates the weights using the given learning rate, momentum and adam_beta.
   // num_samples is used in the Adam correction factor.
-  void Update(double learning_rate, double momentum, double adam_beta,
+  void Update(float learning_rate, float momentum, float adam_beta,
               int num_samples);
   // Adds the dw_ in other to the dw_ is *this.
   void AddDeltas(const WeightMatrix& other);
@@ -168,7 +168,7 @@ class WeightMatrix {
   bool use_adam_;
   // If we are using wi_, then scales_ is a factor to restore the row product
   // with a vector to the correct range.
-  GenericVector<double> scales_;
+  std::vector<double> scales_;
   // Weight deltas. dw_ is the new delta, and updates_ the momentum-decaying
   // amount to be added to wf_/wi_.
   GENERIC_2D_ARRAY<double> dw_;

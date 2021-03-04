@@ -15,13 +15,13 @@
 #include <unistd.h>     // for access
 #endif
 #include <string>
-#include "allheaders.h"
+#include <allheaders.h>
 #include <tesseract/baseapi.h>
-#include <tesseract/helpers.h>
+#include "helpers.h"
 #include "log.h"
 #include "include_gunit.h"
 
-namespace {
+namespace tesseract {
 
 // Replacement for std::filesystem::exists (C++-17)
 static bool file_exists(const char* filename) {

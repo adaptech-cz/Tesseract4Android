@@ -1,8 +1,8 @@
 
-#include "resultiterator.h"
+#include <tesseract/resultiterator.h>
 #include <string>
-#include "allheaders.h"
-#include "baseapi.h"
+#include <allheaders.h>
+#include <tesseract/baseapi.h>
 #include "genericvector.h"
 #include "scrollview.h"
 
@@ -10,14 +10,10 @@
 #include "log.h"                        // for LOG
 #include "absl/strings/str_format.h"        // for absl::StrFormat
 
-namespace {
+namespace tesseract {
 
 // DEFINE_string(tess_config, "", "config file for tesseract");
 // DEFINE_bool(visual_test, false, "Runs a visual test using scrollview");
-
-using tesseract::PageIterator;
-using tesseract::PageIteratorLevel;
-using tesseract::ResultIterator;
 
 // Helper functions for converting to STL vectors
 template <typename T>
@@ -27,7 +23,7 @@ void ToVector(const GenericVector<T>& from, std::vector<T>* to) {
 }
 
 template <typename T>
-void ToVector(const GenericVectorEqEq<T>& from, std::vector<T>* to) {
+void ToVector(const std::vector<T>& from, std::vector<T>* to) {
   to->clear();
   for (int i = 0; i < from.size(); i++) to->push_back(from[i]);
 }
@@ -42,6 +38,7 @@ class ResultIteratorTest : public testing::Test {
     return file::JoinPath(TESSDATA_DIR, "");
   }
   std::string OutputNameToPath(const std::string& name) {
+    file::MakeTmpdir();
     return file::JoinPath(FLAGS_test_tmpdir, name);
   }
 
@@ -168,15 +165,15 @@ class ResultIteratorTest : public testing::Test {
   // (expected_reading_order[num_reading_order_entries]) and a given reading
   // context (ltr or rtl).
   void ExpectTextlineReadingOrder(bool in_ltr_context,
-                                  StrongScriptDirection* word_dirs,
+                                  const StrongScriptDirection* word_dirs,
                                   int num_words, int* expected_reading_order,
                                   int num_reading_order_entries) const {
-    GenericVector<StrongScriptDirection> gv_word_dirs;
+    std::vector<StrongScriptDirection> gv_word_dirs;
     for (int i = 0; i < num_words; i++) {
       gv_word_dirs.push_back(word_dirs[i]);
     }
 
-    GenericVectorEqEq<int> output;
+    std::vector<int> output;
     ResultIterator::CalculateTextlineOrder(in_ltr_context, gv_word_dirs,
                                            &output);
     // STL vector can be used with EXPECT_EQ, so convert...
@@ -193,19 +190,19 @@ class ResultIteratorTest : public testing::Test {
   // Sane means that the output contains some permutation of the indices
   // 0..[num_words - 1] interspersed optionally with negative (marker) values.
   void VerifySaneTextlineOrder(bool in_ltr_context,
-                               StrongScriptDirection* word_dirs,
+                               const StrongScriptDirection* word_dirs,
                                int num_words) const {
-    GenericVector<StrongScriptDirection> gv_word_dirs;
+    std::vector<StrongScriptDirection> gv_word_dirs;
     for (int i = 0; i < num_words; i++) {
       gv_word_dirs.push_back(word_dirs[i]);
     }
 
-    GenericVectorEqEq<int> output;
+    std::vector<int> output;
     ResultIterator::CalculateTextlineOrder(in_ltr_context, gv_word_dirs,
                                            &output);
     ASSERT_GE(output.size(), num_words);
-    GenericVector<int> output_copy(output);
-    output_copy.sort();
+    std::vector<int> output_copy(output);
+    std::sort(output_copy.begin(), output_copy.end());
     bool sane = true;
     int j = 0;
     while (j < output_copy.size() && output_copy[j] < 0) j++;
@@ -358,7 +355,7 @@ TEST_F(ResultIteratorTest, ComplexTest) {
   PageIterator* it = api_.AnalyseLayout();
   EXPECT_FALSE(it == nullptr);
   // The images should rebuild almost perfectly.
-  VerifyRebuilds(400, 400, 400, 400, 650, it);
+  VerifyRebuilds(2073, 2073, 2080, 2081, 2090, it);
   delete it;
 }
 
@@ -475,13 +472,12 @@ TEST_F(ResultIteratorTest, SubSuperTest) {
 static const StrongScriptDirection dL = DIR_LEFT_TO_RIGHT;
 static const StrongScriptDirection dR = DIR_RIGHT_TO_LEFT;
 static const StrongScriptDirection dN = DIR_NEUTRAL;
-static const StrongScriptDirection dZ = DIR_MIX;
 
 // Test that a sequence of words that could be interpreted to start from
 // the left side left-to-right or from the right side right-to-left is
 // interpreted appropriately in different contexts.
 TEST_F(ResultIteratorTest, DualStartTextlineOrderTest) {
-  StrongScriptDirection word_dirs[] = {dL, dL, dN, dL, dN, dR, dR, dR};
+  const StrongScriptDirection word_dirs[] = {dL, dL, dN, dL, dN, dR, dR, dR};
   int reading_order_rtl_context[] = {7, 6, 5, 4, ResultIterator::kMinorRunStart,
                                      0, 1, 2, 3, ResultIterator::kMinorRunEnd};
   int reading_order_ltr_context[] = {0, 1,
@@ -490,18 +486,18 @@ TEST_F(ResultIteratorTest, DualStartTextlineOrderTest) {
                                      7, 6,
                                      5, ResultIterator::kMinorRunEnd};
 
-  ExpectTextlineReadingOrder(true, word_dirs, ABSL_ARRAYSIZE(word_dirs),
+  ExpectTextlineReadingOrder(true, word_dirs, countof(word_dirs),
                              reading_order_ltr_context,
-                             ABSL_ARRAYSIZE(reading_order_ltr_context));
-  ExpectTextlineReadingOrder(false, word_dirs, ABSL_ARRAYSIZE(word_dirs),
+                             countof(reading_order_ltr_context));
+  ExpectTextlineReadingOrder(false, word_dirs, countof(word_dirs),
                              reading_order_rtl_context,
-                             ABSL_ARRAYSIZE(reading_order_rtl_context));
+                             countof(reading_order_rtl_context));
 }
 
 // Tests that clearly left-direction text (with no right-to-left indications)
 // comes out strictly left to right no matter the context.
 TEST_F(ResultIteratorTest, LeftwardTextlineOrderTest) {
-  StrongScriptDirection word_dirs[] = {dL, dL, dN, dL, dN, dN, dL, dL};
+  const StrongScriptDirection word_dirs[] = {dL, dL, dN, dL, dN, dN, dL, dL};
   // The order here is just left to right, nothing fancy.
   int reading_order_ltr_context[] = {0, 1, 2, 3, 4, 5, 6, 7};
   // In the strange event that this shows up in an RTL paragraph, nonetheless
@@ -510,23 +506,23 @@ TEST_F(ResultIteratorTest, LeftwardTextlineOrderTest) {
       ResultIterator::kMinorRunStart, 0, 1, 2, 3, 4, 5, 6, 7,
       ResultIterator::kMinorRunEnd};
 
-  ExpectTextlineReadingOrder(true, word_dirs, ABSL_ARRAYSIZE(word_dirs),
+  ExpectTextlineReadingOrder(true, word_dirs, countof(word_dirs),
                              reading_order_ltr_context,
-                             ABSL_ARRAYSIZE(reading_order_ltr_context));
-  ExpectTextlineReadingOrder(false, word_dirs, ABSL_ARRAYSIZE(word_dirs),
+                             countof(reading_order_ltr_context));
+  ExpectTextlineReadingOrder(false, word_dirs, countof(word_dirs),
                              reading_order_rtl_context,
-                             ABSL_ARRAYSIZE(reading_order_rtl_context));
+                             countof(reading_order_rtl_context));
 }
 
 // Test that right-direction text comes out strictly right-to-left in
 // a right-to-left context.
 TEST_F(ResultIteratorTest, RightwardTextlineOrderTest) {
-  StrongScriptDirection word_dirs[] = {dR, dR, dN, dR, dN, dN, dR, dR};
+  const StrongScriptDirection word_dirs[] = {dR, dR, dN, dR, dN, dN, dR, dR};
   // The order here is just right-to-left, nothing fancy.
   int reading_order_rtl_context[] = {7, 6, 5, 4, 3, 2, 1, 0};
-  ExpectTextlineReadingOrder(false, word_dirs, ABSL_ARRAYSIZE(word_dirs),
+  ExpectTextlineReadingOrder(false, word_dirs, countof(word_dirs),
                              reading_order_rtl_context,
-                             ABSL_ARRAYSIZE(reading_order_rtl_context));
+                             countof(reading_order_rtl_context));
 }
 
 TEST_F(ResultIteratorTest, TextlineOrderSanityCheck) {

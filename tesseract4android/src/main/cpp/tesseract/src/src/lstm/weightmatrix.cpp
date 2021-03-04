@@ -41,7 +41,7 @@ const double kAdamEpsilon = 1e-8;
 // W.dim1() - skip_bias_back.
 // If add_bias_fwd, u is imagined to have an extra element at the end with value
 // 1, to implement the bias, weight.
-// If skip_bias_back, we are actullay performing the backwards product on a
+// If skip_bias_back, we are actually performing the backwards product on a
 // transposed matrix, so we need to drop the v output corresponding to the last
 // element in dim1.
 static inline void MatrixDotVectorInternal(const GENERIC_2D_ARRAY<double>& w,
@@ -105,7 +105,7 @@ int WeightMatrix::RemapOutputs(const std::vector<int>& code_map) {
     for (int i = 0; i < ni; ++i) means[i] += weights[i];
   }
   for (double& mean : means) mean /= old_no;
-  wf_.ResizeNoInit(new_no, ni);
+  wf_.Resize(new_no, ni, 0.0);
   InitBackward();
   for (int dest = 0; dest < new_no; ++dest) {
     int src = code_map[dest];
@@ -124,7 +124,7 @@ int WeightMatrix::RemapOutputs(const std::vector<int>& code_map) {
 // the original value, subject to rounding errors.
 void WeightMatrix::ConvertToInt() {
   wi_.ResizeNoInit(wf_.dim1(), wf_.dim2());
-  scales_.init_to_size(wi_.dim1(), 0.0);
+  scales_.reserve(wi_.dim1());
   int dim2 = wi_.dim2();
   for (int t = 0; t < wi_.dim1(); ++t) {
     double* f_line = wf_[t];
@@ -135,7 +135,7 @@ void WeightMatrix::ConvertToInt() {
       if (abs_val > max_abs) max_abs = abs_val;
     }
     double scale = max_abs / INT8_MAX;
-    scales_[t] = scale;
+    scales_.push_back(scale / INT8_MAX);
     if (scale == 0.0) scale = 1.0;
     for (int f = 0; f < dim2; ++f) {
       i_line[f] = IntCastRounded(f_line[f] / scale);
@@ -144,7 +144,9 @@ void WeightMatrix::ConvertToInt() {
   wf_.Resize(1, 1, 0.0);
   int_mode_ = true;
   if (IntSimdMatrix::intSimdMatrix) {
-    IntSimdMatrix::intSimdMatrix->Init(wi_, shaped_w_);
+    int32_t rounded_num_out;
+    IntSimdMatrix::intSimdMatrix->Init(wi_, shaped_w_, rounded_num_out);
+    scales_.resize(rounded_num_out);
   }
 }
 
@@ -177,7 +179,16 @@ bool WeightMatrix::Serialize(bool training, TFile* fp) const {
   if (!fp->Serialize(&mode)) return false;
   if (int_mode_) {
     if (!wi_.Serialize(fp)) return false;
-    if (!scales_.Serialize(fp)) return false;
+    // The scales stored in memory have an extra factor applied to them
+    // to allow faster operation. We have to remove that factor here
+    // before writing to disc.
+    auto scales = scales_;
+    for (auto& scale : scales) {
+      scale *= INT8_MAX;
+    }
+    uint32_t size = scales.size();
+    if (!fp->Serialize(&size)) return false;
+    if (!fp->Serialize(&scales[0], size)) return false;
   } else {
     if (!wf_.Serialize(fp)) return false;
     if (training && !updates_.Serialize(fp)) return false;
@@ -196,9 +207,17 @@ bool WeightMatrix::DeSerialize(bool training, TFile* fp) {
   if ((mode & kDoubleFlag) == 0) return DeSerializeOld(training, fp);
   if (int_mode_) {
     if (!wi_.DeSerialize(fp)) return false;
-    if (!scales_.DeSerialize(fp)) return false;
+    uint32_t size;
+    if (!fp->DeSerialize(&size)) return false;
+    scales_.resize(size);
+    if (!fp->DeSerialize(&scales_[0], size)) return false;
+    for (auto& scale : scales_) {
+      scale /= INT8_MAX;
+    }
     if (IntSimdMatrix::intSimdMatrix) {
-      IntSimdMatrix::intSimdMatrix->Init(wi_, shaped_w_);
+      int32_t rounded_num_out;
+      IntSimdMatrix::intSimdMatrix->Init(wi_, shaped_w_, rounded_num_out);
+      scales_.resize(rounded_num_out);
     }
   } else {
     if (!wf_.DeSerialize(fp)) return false;
@@ -219,8 +238,10 @@ bool WeightMatrix::DeSerializeOld(bool training, TFile* fp) {
     if (!wi_.DeSerialize(fp)) return false;
     GenericVector<float> old_scales;
     if (!old_scales.DeSerialize(fp)) return false;
-    scales_.resize_no_init(old_scales.size());
-    for (int i = 0; i < old_scales.size(); ++i) scales_[i] = old_scales[i];
+    scales_.reserve(old_scales.size());
+    for (int i = 0; i < old_scales.size(); ++i) {
+      scales_.push_back(old_scales[i]);
+    }
   } else {
     if (!float_array.DeSerialize(fp)) return false;
     FloatToDouble(float_array, &wf_);
@@ -311,24 +332,25 @@ void WeightMatrix::SumOuterTransposed(const TransposedArray& u,
 // Updates the weights using the given learning rate and momentum.
 // num_samples is the quotient to be used in the adam computation iff
 // use_adam_ is true.
-void WeightMatrix::Update(double learning_rate, double momentum,
-                          double adam_beta, int num_samples) {
+void WeightMatrix::Update(float learning_rate, float momentum,
+                          float adam_beta, int num_samples) {
   assert(!int_mode_);
-  if (use_adam_ && num_samples > 0 && num_samples < kAdamCorrectionIterations) {
-    learning_rate *= sqrt(1.0 - pow(adam_beta, num_samples));
-    learning_rate /= 1.0 - pow(momentum, num_samples);
+  if (use_adam_ && momentum > 0.0f &&
+      num_samples > 0 && num_samples < kAdamCorrectionIterations) {
+    learning_rate *= sqrt(1.0f - pow(adam_beta, num_samples));
+    learning_rate /= 1.0f - pow(momentum, num_samples);
   }
-  if (use_adam_ && num_samples > 0 && momentum > 0.0) {
+  if (use_adam_ && num_samples > 0 && momentum > 0.0f) {
     dw_sq_sum_.SumSquares(dw_, adam_beta);
-    dw_ *= learning_rate * (1.0 - momentum);
+    dw_ *= learning_rate * (1.0f - momentum);
     updates_ *= momentum;
     updates_ += dw_;
     wf_.AdamUpdate(updates_, dw_sq_sum_, learning_rate * kAdamEpsilon);
   } else {
     dw_ *= learning_rate;
     updates_ += dw_;
-    if (momentum > 0.0) wf_ += updates_;
-    if (momentum >= 0.0) updates_ *= momentum;
+    if (momentum > 0.0f) wf_ += updates_;
+    if (momentum >= 0.0f) updates_ *= momentum;
   }
   wf_t_.Transpose(wf_);
 }

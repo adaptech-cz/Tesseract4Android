@@ -54,8 +54,6 @@ const double kMaxRowSize = 2.5;
 // Number of filled columns required to form a strong table row.
 // For small tables, this is an absolute number.
 const double kGoodRowNumberOfColumnsSmall[] = { 2, 2, 2, 2, 2, 3, 3 };
-const int kGoodRowNumberOfColumnsSmallSize =
-    sizeof(kGoodRowNumberOfColumnsSmall) / sizeof(double) - 1;
 // For large tables, it is a relative number
 const double kGoodRowNumberOfColumnsLarge = 0.7;
 // The amount of area that must be covered in a cell by ColPartitions to
@@ -95,10 +93,10 @@ bool StructuredTable::is_lined() const {
   return is_lined_;
 }
 int StructuredTable::row_count() const {
-  return cell_y_.length() == 0 ? 0 : cell_y_.length() - 1;
+  return cell_y_.size() == 0 ? 0 : cell_y_.size() - 1;
 }
 int StructuredTable::column_count() const {
-  return cell_x_.length() == 0 ? 0 : cell_x_.length() - 1;
+  return cell_x_.size() == 0 ? 0 : cell_x_.size() - 1;
 }
 int StructuredTable::cell_count() const {
   return row_count() * column_count();
@@ -157,7 +155,7 @@ bool StructuredTable::FindLinedStructure() {
   // HasSignificantLines should guarantee cells.
   // Because that code is a different class, just gracefully
   // return false. This could be an assert.
-  if (cell_x_.length() < 3 || cell_y_.length() < 3)
+  if (cell_x_.size() < 3 || cell_y_.size() < 3)
     return false;
 
   cell_x_.sort();
@@ -169,9 +167,9 @@ bool StructuredTable::FindLinedStructure() {
 
   // The border should be the extents of line boxes, not middle.
   cell_x_[0] = bounding_box_.left();
-  cell_x_[cell_x_.length() - 1] = bounding_box_.right();
+  cell_x_[cell_x_.size() - 1] = bounding_box_.right();
   cell_y_[0] = bounding_box_.bottom();
-  cell_y_[cell_y_.length() - 1] = bounding_box_.top();
+  cell_y_[cell_y_.size() - 1] = bounding_box_.top();
 
   // Remove duplicates that may have occurred due to moving the borders.
   cell_x_.compact_sorted();
@@ -193,9 +191,9 @@ bool StructuredTable::FindWhitespacedStructure() {
     return false;
   } else {
     bounding_box_.set_left(cell_x_[0]);
-    bounding_box_.set_right(cell_x_[cell_x_.length() - 1]);
+    bounding_box_.set_right(cell_x_[cell_x_.size() - 1]);
     bounding_box_.set_bottom(cell_y_[0]);
-    bounding_box_.set_top(cell_y_[cell_y_.length() - 1]);
+    bounding_box_.set_top(cell_y_[cell_y_.size() - 1]);
     AbsorbNearbyLines();
     CalculateMargins();
     CalculateStats();
@@ -210,10 +208,10 @@ bool StructuredTable::FindWhitespacedStructure() {
 // throughout the code is that "0" distance is a very very small space.
 bool StructuredTable::DoesPartitionFit(const ColPartition& part) const {
   const TBOX& box = part.bounding_box();
-  for (int i = 0; i < cell_x_.length(); ++i)
+  for (int i = 0; i < cell_x_.size(); ++i)
     if (box.left() < cell_x_[i] && cell_x_[i] < box.right())
       return false;
-  for (int i = 0; i < cell_y_.length(); ++i)
+  for (int i = 0; i < cell_y_.size(); ++i)
     if (box.bottom() < cell_y_[i] && cell_y_[i] < box.top())
       return false;
   return true;
@@ -286,23 +284,25 @@ double StructuredTable::CalculateCellFilledPercentage(int row, int column) {
   return std::min(1.0, area_covered / current_area);
 }
 
-void StructuredTable::Display(ScrollView* window, ScrollView::Color color) {
 #ifndef GRAPHICS_DISABLED
+
+void StructuredTable::Display(ScrollView* window, ScrollView::Color color) {
   window->Brush(ScrollView::NONE);
   window->Pen(color);
   window->Rectangle(bounding_box_.left(), bounding_box_.bottom(),
                     bounding_box_.right(), bounding_box_.top());
-  for (int i = 0; i < cell_x_.length(); i++) {
+  for (int i = 0; i < cell_x_.size(); i++) {
     window->Line(cell_x_[i], bounding_box_.bottom(),
                  cell_x_[i], bounding_box_.top());
   }
-  for (int i = 0; i < cell_y_.length(); i++) {
+  for (int i = 0; i < cell_y_.size(); i++) {
     window->Line(bounding_box_.left(), cell_y_[i],
                  bounding_box_.right(), cell_y_[i]);
   }
   window->UpdateWindow();
-#endif
 }
+
+#endif
 
 // Clear structure information.
 void StructuredTable::ClearStructure() {
@@ -321,12 +321,12 @@ void StructuredTable::ClearStructure() {
 // The following function makes sure the previous assumption is met.
 bool StructuredTable::VerifyLinedTableCells() {
   // Function only called when lines exist.
-  ASSERT_HOST(cell_y_.length() >= 2 && cell_x_.length() >= 2);
-  for (int i = 0; i < cell_y_.length(); ++i) {
+  ASSERT_HOST(cell_y_.size() >= 2 && cell_x_.size() >= 2);
+  for (int i = 0; i < cell_y_.size(); ++i) {
     if (CountHorizontalIntersections(cell_y_[i]) > 0)
       return false;
   }
-  for (int i = 0; i < cell_x_.length(); ++i) {
+  for (int i = 0; i < cell_x_.size(); ++i) {
     if (CountVerticalIntersections(cell_x_[i]) > 0)
       return false;
   }
@@ -353,8 +353,8 @@ bool StructuredTable::VerifyWhitespacedTable() {
 // in the middle of the two nearest partitions.
 void StructuredTable::FindWhitespacedColumns() {
   // Set of the extents of all partitions on the page.
-  GenericVectorEqEq<int> left_sides;
-  GenericVectorEqEq<int> right_sides;
+  GenericVector<int> left_sides;
+  GenericVector<int> right_sides;
 
   // Look at each text partition. We want to find the partitions
   // that have extremal left/right sides. These will give us a basis
@@ -374,7 +374,7 @@ void StructuredTable::FindWhitespacedColumns() {
     right_sides.push_back(text->bounding_box().right() + spacing);
   }
   // It causes disaster below, so avoid it!
-  if (left_sides.length() == 0 || right_sides.length() == 0)
+  if (left_sides.size() == 0 || right_sides.size() == 0)
     return;
 
   // Since data may be inserted in grid order, we sort the left/right sides.
@@ -398,8 +398,8 @@ void StructuredTable::FindWhitespacedColumns() {
 // in the middle of the two nearest partitions.
 void StructuredTable::FindWhitespacedRows() {
   // Set of the extents of all partitions on the page.
-  GenericVectorEqEq<int> bottom_sides;
-  GenericVectorEqEq<int> top_sides;
+  GenericVector<int> bottom_sides;
+  GenericVector<int> top_sides;
   // We will be "shrinking" partitions, so keep the min/max around to
   // make sure the bottom/top lines do not intersect text.
   int min_bottom = INT32_MAX;
@@ -440,7 +440,7 @@ void StructuredTable::FindWhitespacedRows() {
     top_sides.push_back(top);
   }
   // It causes disaster below, so avoid it!
-  if (bottom_sides.length() == 0 || top_sides.length() == 0)
+  if (bottom_sides.size() == 0 || top_sides.size() == 0)
     return;
 
   // Since data may be inserted in grid order, we sort the bottom/top sides.
@@ -458,7 +458,7 @@ void StructuredTable::FindWhitespacedRows() {
 
   // Recover the min/max correctly since it was shifted.
   cell_y_[0] = min_bottom;
-  cell_y_[cell_y_.length() - 1] = max_top;
+  cell_y_[cell_y_.size() - 1] = max_top;
 }
 
 void StructuredTable::CalculateMargins() {
@@ -594,12 +594,12 @@ void StructuredTable::FindCellSplitLocations(const GenericVector<int>& min_list,
                                              int max_merged,
                                              GenericVector<int>* locations) {
   locations->clear();
-  ASSERT_HOST(min_list.length() == max_list.length());
-  if (min_list.length() == 0)
+  ASSERT_HOST(min_list.size() == max_list.size());
+  if (min_list.size() == 0)
     return;
   ASSERT_HOST(min_list.get(0) < max_list.get(0));
-  ASSERT_HOST(min_list.get(min_list.length() - 1) <
-              max_list.get(max_list.length() - 1));
+  ASSERT_HOST(min_list.get(min_list.size() - 1) <
+              max_list.get(max_list.size() - 1));
 
   locations->push_back(min_list.get(0));
   int min_index = 0;
@@ -609,7 +609,7 @@ void StructuredTable::FindCellSplitLocations(const GenericVector<int>& min_list,
   // max_index will expire after min_index.
   // However, we can't "increase" the hill size if min_index expired.
   // So finish processing when min_index expires.
-  while (min_index < min_list.length()) {
+  while (min_index < min_list.size()) {
     // Increase the hill count.
     if (min_list[min_index] < max_list[max_index]) {
       ++stacked_partitions;
@@ -630,7 +630,7 @@ void StructuredTable::FindCellSplitLocations(const GenericVector<int>& min_list,
       ++max_index;
     }
   }
-  locations->push_back(max_list.get(max_list.length() - 1));
+  locations->push_back(max_list.get(max_list.size() - 1));
 }
 
 // Counts the number of partitions in the table
@@ -1053,11 +1053,12 @@ bool TableRecognizer::IsWeakTableRow(StructuredTable* table, int row) {
   if (!table->VerifyRowFilled(row))
     return false;
 
-  double threshold = 0.0;
-  if (table->column_count() > kGoodRowNumberOfColumnsSmallSize)
-    threshold = table->column_count() * kGoodRowNumberOfColumnsLarge;
-  else
+  double threshold;
+  if (table->column_count() < countof(kGoodRowNumberOfColumnsSmall)) {
     threshold = kGoodRowNumberOfColumnsSmall[table->column_count()];
+  } else {
+    threshold = table->column_count() * kGoodRowNumberOfColumnsLarge;
+  }
 
   return table->CountFilledCellsInRow(row) < threshold;
 }

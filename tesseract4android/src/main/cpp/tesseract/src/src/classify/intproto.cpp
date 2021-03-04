@@ -19,30 +19,30 @@
 -----------------------------------------------------------------------------*/
 
 #define _USE_MATH_DEFINES  // for M_PI
-#include <algorithm>
-#include <cmath>           // for M_PI, std::floor
-#include <cstdio>
-#include <cassert>
-
-#include "classify.h"
-#include "callcpp.h"       // for cprintf
-#include "emalloc.h"
-#include "fontinfo.h"
-#include "genericvector.h"
-#include "helpers.h"
-#include "intproto.h"
-#include "mfoutline.h"
-#include "picofeat.h"
-#include "points.h"
-#include "shapetable.h"
-#include "svmnode.h"
 
 // Include automatically generated configuration file if running autoconf.
 #ifdef HAVE_CONFIG_H
 #include "config_auto.h"
 #endif
 
-using tesseract::FontSet;
+#include "intproto.h"
+
+#include "classify.h"
+#include "fontinfo.h"
+#include "mfoutline.h"
+#include "picofeat.h"
+#include "points.h"
+#include "shapetable.h"
+#include "svmnode.h"
+
+#include "helpers.h"
+
+#include <algorithm>
+#include <cmath>           // for M_PI, std::floor
+#include <cstdio>
+#include <cassert>
+
+namespace tesseract {
 
 /* match debug display constants*/
 #define PROTO_PRUNER_SCALE  (4.0)
@@ -76,8 +76,6 @@ typedef struct
   int16_t YInit;
   int16_t Delta;
 }
-
-
 FILL_SWITCH;
 
 typedef struct
@@ -89,8 +87,6 @@ typedef struct
   int16_t StartDelta, EndDelta;
   FILL_SWITCH Switch[MAX_NUM_SWITCHES];
 }
-
-
 TABLE_FILLER;
 
 typedef struct
@@ -99,8 +95,6 @@ typedef struct
   int8_t YStart, YEnd;
   uint8_t AngleStart, AngleEnd;
 }
-
-
 FILL_SPEC;
 
 
@@ -163,18 +157,18 @@ void RenderIntProto(ScrollView *window,
                     INT_CLASS Class,
                     PROTO_ID ProtoId,
                     ScrollView::Color color);
-#endif  // GRAPHICS_DISABLED
-
-int TruncateParam(float Param, int Min, int Max, char *Id);
+#endif // !GRAPHICS_DISABLED
 
 /*-----------------------------------------------------------------------------
         Global Data Definitions and Declarations
 -----------------------------------------------------------------------------*/
 
+#ifndef GRAPHICS_DISABLED
 /* global display lists used to display proto and feature match information*/
 static ScrollView* IntMatchWindow = nullptr;
 static ScrollView* FeatureDisplayWindow = nullptr;
 static ScrollView* ProtoDisplayWindow = nullptr;
+#endif
 
 /*-----------------------------------------------------------------------------
         Variables
@@ -197,6 +191,27 @@ static double_VAR(classify_cp_side_pad_tight, 0.6, "Class Pruner Side Pad Tight"
 static double_VAR(classify_pp_angle_pad, 45.0, "Proto Pruner Angle Pad");
 static double_VAR(classify_pp_end_pad, 0.5, "Proto Prune End Pad");
 static double_VAR(classify_pp_side_pad, 2.5, "Proto Pruner Side Pad");
+
+/**
+ * This routine truncates Param to lie within the range
+ * of Min-Max inclusive.
+ *
+ * @param Param   parameter value to be truncated
+ * @param Min, Max  parameter limits (inclusive)
+ *
+ * @return Truncated parameter.
+ */
+static int TruncateParam(float Param, int Min, int Max) {
+  int result;
+  if (Param < Min) {
+    result = Min;
+  } else if (Param > Max) {
+    result = Max;
+  } else {
+    result = static_cast<int>(std::floor(Param));
+  }
+  return result;
+}
 
 /*-----------------------------------------------------------------------------
               Public Code
@@ -233,8 +248,9 @@ void AddIntClass(INT_TEMPLATES Templates, CLASS_ID ClassId, INT_CLASS Class) {
 
   assert (LegalClassId (ClassId));
   if (ClassId != Templates->NumClasses) {
-    fprintf(stderr, "Please make sure that classes are added to templates");
-    fprintf(stderr, " in increasing order of ClassIds\n");
+    fprintf(stderr,
+            "Please make sure that classes are added to templates"
+            " in increasing order of ClassIds\n");
     exit(1);
   }
   ClassForClassId (Templates, ClassId) = Class;
@@ -294,13 +310,13 @@ int AddIntProto(INT_CLASS Class) {
   if (Class->NumProtos > MaxNumIntProtosIn(Class)) {
     ProtoSetId = Class->NumProtoSets++;
 
-    ProtoSet = static_cast<PROTO_SET>(Emalloc(sizeof(PROTO_SET_STRUCT)));
+    ProtoSet = static_cast<PROTO_SET>(malloc(sizeof(PROTO_SET_STRUCT)));
     Class->ProtoSets[ProtoSetId] = ProtoSet;
     memset(ProtoSet, 0, sizeof(*ProtoSet));
 
     /* reallocate space for the proto lengths and install in class */
     Class->ProtoLengths =
-      static_cast<uint8_t *>(Erealloc(Class->ProtoLengths,
+      static_cast<uint8_t *>(realloc(Class->ProtoLengths,
                         MaxNumIntProtosIn(Class) * sizeof(uint8_t)));
     memset(&Class->ProtoLengths[Index], 0,
            sizeof(*Class->ProtoLengths) * (MaxNumIntProtosIn(Class) - Index));
@@ -372,7 +388,7 @@ void AddProtoToProtoPruner(PROTO Proto, int ProtoId,
   PROTO_SET ProtoSet;
 
   if (ProtoId >= Class->NumProtos)
-    cprintf("AddProtoToProtoPruner:assert failed: %d < %d",
+    tprintf("AddProtoToProtoPruner:assert failed: %d < %d",
             ProtoId, Class->NumProtos);
   assert(ProtoId < Class->NumProtos);
 
@@ -476,8 +492,6 @@ void ConvertConfig(BIT_VECTOR Config, int ConfigId, INT_CLASS Class) {
   Class->ConfigLengths[ConfigId] = TotalLength;
 }                                /* ConvertConfig */
 
-
-namespace tesseract {
 /**
  * This routine converts Proto to integer format and
  * installs it as ProtoId in Class.
@@ -486,21 +500,18 @@ namespace tesseract {
  * @param Class integer class to add converted proto to
  */
 void Classify::ConvertProto(PROTO Proto, int ProtoId, INT_CLASS Class) {
-  INT_PROTO P;
-  float Param;
-
   assert(ProtoId < Class->NumProtos);
 
-  P = ProtoForProtoId(Class, ProtoId);
+  INT_PROTO P = ProtoForProtoId(Class, ProtoId);
 
-  Param = Proto->A * 128;
-  P->A = TruncateParam(Param, -128, 127, nullptr);
+  float Param = Proto->A * 128;
+  P->A = TruncateParam(Param, -128, 127);
 
   Param = -Proto->B * 256;
-  P->B = TruncateParam(Param, 0, 255, nullptr);
+  P->B = TruncateParam(Param, 0, 255);
 
   Param = Proto->C * 128;
-  P->C = TruncateParam(Param, -128, 127, nullptr);
+  P->C = TruncateParam(Param, -128, 127);
 
   Param = Proto->Angle * 256;
   if (Param < 0 || Param >= 256)
@@ -510,9 +521,9 @@ void Classify::ConvertProto(PROTO Proto, int ProtoId, INT_CLASS Class) {
 
   /* round proto length to nearest integer number of pico-features */
   Param = (Proto->Length / GetPicoFeatureLength()) + 0.5;
-  Class->ProtoLengths[ProtoId] = TruncateParam(Param, 1, 255, nullptr);
+  Class->ProtoLengths[ProtoId] = TruncateParam(Param, 1, 255);
   if (classify_learning_debug_level >= 2)
-    cprintf("Converted ffeat to (A=%d,B=%d,C=%d,L=%d)",
+    tprintf("Converted ffeat to (A=%d,B=%d,C=%d,L=%d)",
             P->A, P->B, P->C, Class->ProtoLengths[ProtoId]);
 }                                /* ConvertProto */
 
@@ -540,7 +551,7 @@ INT_TEMPLATES Classify::CreateIntTemplates(CLASSES FloatProtos,
     FClass = &(FloatProtos[ClassId]);
     if (FClass->NumProtos == 0 && FClass->NumConfigs == 0 &&
         strcmp(target_unicharset.id_to_unichar(ClassId), " ") != 0) {
-      cprintf("Warning: no protos/configs for %s in CreateIntTemplates()\n",
+      tprintf("Warning: no protos/configs for %s in CreateIntTemplates()\n",
               target_unicharset.id_to_unichar(ClassId));
     }
     assert(UnusedClassIdIn(IntTemplates, ClassId));
@@ -574,8 +585,6 @@ INT_TEMPLATES Classify::CreateIntTemplates(CLASSES FloatProtos,
   }
   return (IntTemplates);
 }                                /* CreateIntTemplates */
-}  // namespace tesseract
-
 
 #ifndef GRAPHICS_DISABLED
 /**
@@ -630,7 +639,7 @@ INT_CLASS NewIntClass(int MaxNumProtos, int MaxNumConfigs) {
 
   assert(MaxNumConfigs <= MAX_NUM_CONFIGS);
 
-  Class = static_cast<INT_CLASS>(Emalloc(sizeof(INT_CLASS_STRUCT)));
+  Class = static_cast<INT_CLASS>(malloc(sizeof(INT_CLASS_STRUCT)));
   Class->NumProtoSets = ((MaxNumProtos + PROTOS_PER_PROTO_SET - 1) /
                             PROTOS_PER_PROTO_SET);
 
@@ -641,7 +650,7 @@ INT_CLASS NewIntClass(int MaxNumProtos, int MaxNumConfigs) {
 
   for (i = 0; i < Class->NumProtoSets; i++) {
     /* allocate space for a proto set, install in class, and initialize */
-    ProtoSet = static_cast<PROTO_SET>(Emalloc(sizeof(PROTO_SET_STRUCT)));
+    ProtoSet = static_cast<PROTO_SET>(malloc(sizeof(PROTO_SET_STRUCT)));
     memset(ProtoSet, 0, sizeof(*ProtoSet));
     Class->ProtoSets[i] = ProtoSet;
 
@@ -649,7 +658,7 @@ INT_CLASS NewIntClass(int MaxNumProtos, int MaxNumConfigs) {
   }
   if (MaxNumIntProtosIn (Class) > 0) {
     Class->ProtoLengths =
-      static_cast<uint8_t *>(Emalloc(MaxNumIntProtosIn (Class) * sizeof (uint8_t)));
+      static_cast<uint8_t *>(malloc(MaxNumIntProtosIn (Class) * sizeof (uint8_t)));
     memset(Class->ProtoLengths, 0,
            MaxNumIntProtosIn(Class) * sizeof(*Class->ProtoLengths));
   } else {
@@ -665,12 +674,12 @@ static void free_int_class(INT_CLASS int_class) {
   int i;
 
   for (i = 0; i < int_class->NumProtoSets; i++) {
-    Efree (int_class->ProtoSets[i]);
+    free (int_class->ProtoSets[i]);
   }
   if (int_class->ProtoLengths != nullptr) {
-    Efree (int_class->ProtoLengths);
+    free (int_class->ProtoLengths);
   }
-  Efree(int_class);
+  free(int_class);
 }
 
 /**
@@ -683,7 +692,7 @@ INT_TEMPLATES NewIntTemplates() {
   INT_TEMPLATES T;
   int i;
 
-  T = static_cast<INT_TEMPLATES>(Emalloc (sizeof (INT_TEMPLATES_STRUCT)));
+  T = static_cast<INT_TEMPLATES>(malloc (sizeof (INT_TEMPLATES_STRUCT)));
   T->NumClasses = 0;
   T->NumClassPruners = 0;
 
@@ -702,11 +711,9 @@ void free_int_templates(INT_TEMPLATES templates) {
     free_int_class(templates->Class[i]);
   for (i = 0; i < templates->NumClassPruners; i++)
     delete templates->ClassPruners[i];
-  Efree(templates);
+  free(templates);
 }
 
-
-namespace tesseract {
 /**
  * This routine reads a set of integer templates from
  * File.  File must already be open and must be in the
@@ -843,7 +850,7 @@ INT_TEMPLATES Classify::ReadIntTemplates(TFile *fp) {
   /* then read in each class */
   for (i = 0; i < Templates->NumClasses; i++) {
     /* first read in the high level struct for the class */
-    Class = static_cast<INT_CLASS>(Emalloc (sizeof (INT_CLASS_STRUCT)));
+    Class = static_cast<INT_CLASS>(malloc (sizeof (INT_CLASS_STRUCT)));
     if (fp->FReadEndian(&Class->NumProtos, sizeof(Class->NumProtos), 1) != 1 ||
         fp->FRead(&Class->NumProtoSets, sizeof(Class->NumProtoSets), 1) != 1 ||
         fp->FRead(&Class->NumConfigs, sizeof(Class->NumConfigs), 1) != 1)
@@ -871,7 +878,7 @@ INT_TEMPLATES Classify::ReadIntTemplates(TFile *fp) {
     /* then read in the proto lengths */
     Lengths = nullptr;
     if (MaxNumIntProtosIn (Class) > 0) {
-      Lengths = static_cast<uint8_t *>(Emalloc(sizeof(uint8_t) * MaxNumIntProtosIn(Class)));
+      Lengths = static_cast<uint8_t *>(malloc(sizeof(uint8_t) * MaxNumIntProtosIn(Class)));
       if (fp->FRead(Lengths, sizeof(uint8_t), MaxNumIntProtosIn(Class)) !=
           MaxNumIntProtosIn(Class))
         tprintf("Bad read of inttemp!\n");
@@ -880,7 +887,7 @@ INT_TEMPLATES Classify::ReadIntTemplates(TFile *fp) {
 
     /* then read in the proto sets */
     for (j = 0; j < Class->NumProtoSets; j++) {
-      ProtoSet = static_cast<PROTO_SET>(Emalloc(sizeof(PROTO_SET_STRUCT)));
+      ProtoSet = static_cast<PROTO_SET>(malloc(sizeof(PROTO_SET_STRUCT)));
       int num_buckets = NUM_PP_PARAMS * NUM_PP_BUCKETS * WERDS_PER_PP_VECTOR;
       if (fp->FReadEndian(&ProtoSet->ProtoPruner,
                           sizeof(ProtoSet->ProtoPruner[0][0][0]),
@@ -899,7 +906,7 @@ INT_TEMPLATES Classify::ReadIntTemplates(TFile *fp) {
         if (fp->FReadEndian(&ProtoSet->Protos[x].Configs,
                             sizeof(ProtoSet->Protos[x].Configs[0]),
                             WerdsPerConfigVec) != WerdsPerConfigVec)
-          cprintf("Bad read of inttemp!\n");
+          tprintf("Bad read of inttemp!\n");
       }
       Class->ProtoSets[j] = ProtoSet;
     }
@@ -933,12 +940,13 @@ INT_TEMPLATES Classify::ReadIntTemplates(TFile *fp) {
     }
   }
   if (version_id >= 4) {
-    this->fontinfo_table_.read(fp, NewPermanentTessCallback(read_info));
+    using namespace std::placeholders; // for _1, _2
+    this->fontinfo_table_.read(fp, std::bind(read_info, _1, _2));
     if (version_id >= 5) {
       this->fontinfo_table_.read(fp,
-                                 NewPermanentTessCallback(read_spacing_info));
+                                 std::bind(read_spacing_info, _1, _2));
     }
-    this->fontset_table_.read(fp, NewPermanentTessCallback(read_set));
+    this->fontset_table_.read(fp, std::bind(read_set, _1, _2));
   }
 
   // Clean up.
@@ -1022,7 +1030,7 @@ void Classify::WriteIntTemplates(FILE *File, INT_TEMPLATES Templates,
   int version_id = -5;  // When negated by the reader -1 becomes +1 etc.
 
   if (Templates->NumClasses != unicharset_size) {
-    cprintf("Warning: executing WriteIntTemplates() with %d classes in"
+    tprintf("Warning: executing WriteIntTemplates() with %d classes in"
             " Templates, while target_unicharset size is %d\n",
             Templates->NumClasses, unicharset_size);
   }
@@ -1067,13 +1075,12 @@ void Classify::WriteIntTemplates(FILE *File, INT_TEMPLATES Templates,
   }
 
   /* Write the fonts info tables */
-  this->fontinfo_table_.write(File, NewPermanentTessCallback(write_info));
+  using namespace std::placeholders; // for _1, _2
+  this->fontinfo_table_.write(File, std::bind(write_info, _1, _2));
   this->fontinfo_table_.write(File,
-                              NewPermanentTessCallback(write_spacing_info));
-  this->fontset_table_.write(File, NewPermanentTessCallback(write_set));
+                              std::bind(write_spacing_info, _1, _2));
+  this->fontset_table_.write(File, std::bind(write_set, _1, _2));
 }                                /* WriteIntTemplates */
-} // namespace tesseract
-
 
 /*-----------------------------------------------------------------------------
               Private Code
@@ -1241,7 +1248,6 @@ void FillPPLinearBits(uint32_t ParamTable[NUM_PP_BUCKETS][WERDS_PER_PP_VECTOR],
 
 /*---------------------------------------------------------------------------*/
 #ifndef GRAPHICS_DISABLED
-namespace tesseract {
 /**
  * This routine prompts the user with Prompt and waits
  * for the user to enter something in the debug window.
@@ -1300,7 +1306,7 @@ CLASS_ID Classify::GetClassToDebug(const char *Prompt, bool* adaptive_on,
           }
           for (int s = 0; s < shape_table_->NumShapes(); ++s) {
             if (shape_table_->GetShape(s).ContainsUnichar(unichar_id)) {
-              tprintf("%s\n", shape_table_->DebugStr(s).string());
+              tprintf("%s\n", shape_table_->DebugStr(s).c_str());
             }
           }
         } else {
@@ -1314,7 +1320,6 @@ CLASS_ID Classify::GetClassToDebug(const char *Prompt, bool* adaptive_on,
   return 0;
 }                                /* GetClassToDebug */
 
-}  // namespace tesseract
 #endif
 
 /**
@@ -1685,35 +1690,6 @@ void RenderIntProto(ScrollView *window,
 }                                /* RenderIntProto */
 #endif
 
-/**
- * This routine truncates Param to lie within the range
- * of Min-Max inclusive.  If a truncation is performed, and
- * Id is not null, an warning message is printed.
- *
- * @param Param   parameter value to be truncated
- * @param Min, Max  parameter limits (inclusive)
- * @param Id    string id of parameter for error messages
- *
- * Globals: none
- *
- * @return Truncated parameter.
- */
-int TruncateParam(float Param, int Min, int Max, char *Id) {
-  if (Param < Min) {
-    if (Id)
-      cprintf("Warning: Param %s truncated from %f to %d!\n",
-              Id, Param, Min);
-    Param = Min;
-  } else if (Param > Max) {
-    if (Id)
-      cprintf("Warning: Param %s truncated from %f to %d!\n",
-              Id, Param, Max);
-    Param = Max;
-  }
-  return static_cast<int>(std::floor(Param));
-}                                /* TruncateParam */
-
-
 #ifndef GRAPHICS_DISABLED
 /**
  * Initializes the int matcher window if it is not already
@@ -1763,4 +1739,6 @@ void InitFeatureDisplayWindowIfReqd() {
 ScrollView* CreateFeatureSpaceWindow(const char* name, int xpos, int ypos) {
   return new ScrollView(name, xpos, ypos, 520, 520, 260, 260, true);
 }
-#endif  // GRAPHICS_DISABLED
+#endif // !GRAPHICS_DISABLED
+
+} // namespace tesseract

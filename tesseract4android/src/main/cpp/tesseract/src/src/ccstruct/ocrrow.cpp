@@ -16,13 +16,15 @@
  *
  **********************************************************************/
 
-#include "ocrrow.h"
-#include "blobbox.h"
-
-// Include automatically generated configuration file if running autoconf.
+ // Include automatically generated configuration file if running autoconf.
 #ifdef HAVE_CONFIG_H
 #include "config_auto.h"
 #endif
+
+#include "ocrrow.h"
+#include "blobbox.h"
+
+namespace tesseract {
 
 ELISTIZE (ROW)
 /**********************************************************************
@@ -214,7 +216,7 @@ void ROW::plot(               //draw it
     word->plot (window);         //in rainbow colours
   }
 }
-#endif  // GRAPHICS_DISABLED
+#endif // !GRAPHICS_DISABLED
 
 /**********************************************************************
  * ROW::operator=
@@ -240,3 +242,5 @@ ROW & ROW::operator= (const ROW & source) {
   para_ = source.para_;
   return *this;
 }
+
+} // namespace tesseract

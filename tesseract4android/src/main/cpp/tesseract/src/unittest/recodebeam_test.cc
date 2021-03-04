@@ -9,30 +9,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+
+#include "include_gunit.h"
+#include "log.h"                        // for LOG
+
+#include "genericvector.h"
 #include "recodebeam.h"
 #include "matrix.h"
 #include "pageres.h"
 #include "ratngs.h"
-#include "genericvector.h"
-#include "helpers.h"
 #include "unicharcompress.h"
 #include "normstrngs.h"
 #include "unicharset_training_utils.h"
 
-#include "include_gunit.h"
-#include "log.h"                        // for LOG
+#include "helpers.h"
+
 #include "absl/strings/str_format.h"        // for absl::StrFormat
 
-using tesseract::CCUtil;
-using tesseract::Dict;
-using tesseract::PointerVector;
-using tesseract::RecodeBeamSearch;
-using tesseract::RecodedCharID;
-using tesseract::RecodeNode;
-using tesseract::TRand;
-using tesseract::UnicharCompress;
-
-namespace {
+namespace tesseract {
 
 // Number of characters to test beam search with.
 const int kNumChars = 100;
@@ -71,6 +65,7 @@ class RecodeBeamTest : public ::testing::Test {
  protected:
   void SetUp() {
     std::locale::global(std::locale(""));
+    file::MakeTmpdir();
   }
 
   RecodeBeamTest() : lstm_dict_(&ccutil_) {}
@@ -82,13 +77,10 @@ class RecodeBeamTest : public ::testing::Test {
                                                 "radical-stroke.txt");
     std::string unicharset_file =
         file::JoinPath(TESTDATA_DIR, unicharset_name);
-    std::string uni_data;
-    CHECK_OK(file::GetContents(unicharset_file, &uni_data, file::Defaults()));
     std::string radical_data;
     CHECK_OK(file::GetContents(radical_stroke_file, &radical_data,
                                file::Defaults()));
-    CHECK(ccutil_.unicharset.load_from_inmemory_file(uni_data.data(),
-                                                     uni_data.size()));
+    CHECK(ccutil_.unicharset.load_from_file(unicharset_file.c_str()));
     unichar_null_char_ = ccutil_.unicharset.has_special_codes()
                              ? UNICHAR_BROKEN
                              : ccutil_.unicharset.size();
@@ -137,7 +129,7 @@ class RecodeBeamTest : public ::testing::Test {
     beam_search.Decode(output, 3.5, -0.125, -25.0, nullptr);
     // Uncomment and/or change nullptr above to &ccutil_.unicharset to debug:
     // beam_search.DebugBeams(ccutil_.unicharset);
-    GenericVector<int> labels, xcoords;
+    std::vector<int> labels, xcoords;
     beam_search.ExtractBestPathAsLabels(&labels, &xcoords);
     LOG(INFO) << "Labels size = " << labels.size() << " coords "
               << xcoords.size() << "\n";
@@ -167,8 +159,8 @@ class RecodeBeamTest : public ::testing::Test {
     EXPECT_EQ(truth_utf8, decoded);
 
     // Check that ExtractBestPathAsUnicharIds does the same thing.
-    GenericVector<int> unichar_ids;
-    GenericVector<float> certainties, ratings;
+    std::vector<int> unichar_ids;
+    std::vector<float> certainties, ratings;
     beam_search.ExtractBestPathAsUnicharIds(false, &ccutil_.unicharset,
                                             &unichar_ids, &certainties,
                                             &ratings, &xcoords);
@@ -200,10 +192,10 @@ class RecodeBeamTest : public ::testing::Test {
         const WERD_RES* word = (*words)[w];
         if (w_decoded.size() < truth_utf8.size()) {
           if (!w_decoded.empty() && word->word->space()) w_decoded += " ";
-          w_decoded += word->best_choice->unichar_string().string();
+          w_decoded += word->best_choice->unichar_string().c_str();
         }
         LOG(INFO) << absl::StrFormat("Word:%d = %s, c=%g, r=%g, perm=%d", w,
-                                  word->best_choice->unichar_string().string(),
+                                  word->best_choice->unichar_string().c_str(),
                                   word->best_choice->certainty(),
                                   word->best_choice->rating(),
                                   word->best_choice->permuter()) << "\n";
@@ -261,7 +253,7 @@ class RecodeBeamTest : public ::testing::Test {
   int EncodeUTF8(const char* utf8_str, float score, int start_t, TRand* random,
                  GENERIC_2D_ARRAY<float>* outputs) {
     int t = start_t;
-    GenericVector<int> unichar_ids;
+    std::vector<int> unichar_ids;
     EXPECT_TRUE(ccutil_.unicharset.encode_string(utf8_str, true, &unichar_ids,
                                                  nullptr, nullptr));
     if (unichar_ids.empty() || utf8_str[0] == '\0') {
@@ -318,7 +310,6 @@ class RecodeBeamTest : public ::testing::Test {
       int end_t1 = EncodeUTF8(chars1[i], scores1[i], t, random, &outputs);
       // Advance t to the max end, setting everything else to the leftovers.
       int max_t = std::max(end_t1, end_t2);
-      int min_t = std::min(end_t1, end_t2);
       while (t < max_t) {
         double total_score = 0.0;
         for (int j = 0; j < num_codes; ++j) total_score += outputs(t, j);
@@ -467,7 +458,7 @@ TEST_F(RecodeBeamTest, DISABLED_ChiDictionary) {
                                      SYSTEM_DAWG_PERM};
   EXPECT_EQ(kNumWords, words.size());
   for (int w = 0; w < kNumWords && w < words.size(); ++w) {
-    EXPECT_STREQ(kWords[w], words[w]->best_choice->unichar_string().string());
+    EXPECT_STREQ(kWords[w], words[w]->best_choice->unichar_string().c_str());
     EXPECT_EQ(kWordPerms[w], words[w]->best_choice->permuter());
   }
 }

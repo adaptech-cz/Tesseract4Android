@@ -4,7 +4,6 @@
 //              place of a single large code for CJK, similarly for Indic,
 //              and dissection of ligatures for other scripts.
 // Author:      Ray Smith
-// Created:     Wed Mar 04 14:45:01 PST 2015
 //
 // (C) Copyright 2015, Google Inc.
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,11 +21,12 @@
 #ifndef TESSERACT_CCUTIL_UNICHARCOMPRESS_H_
 #define TESSERACT_CCUTIL_UNICHARCOMPRESS_H_
 
-#include <unordered_map>
 
+#include "genericvector.h" // GenericVector
 #include "serialis.h"
 #include "strngs.h"
 #include "unicharset.h"
+#include <unordered_map>
 
 namespace tesseract {
 
@@ -125,7 +125,7 @@ class RecodedCharID {
 // position). For non-CJK, the same code value CAN be used in multiple
 // positions, eg the ff ligature is converted to <f> <nullchar> <f>, where <f>
 // is the same code as is used for the single f.
-class UnicharCompress {
+class TESS_API UnicharCompress {
  public:
   UnicharCompress();
   UnicharCompress(const UnicharCompress& src);
@@ -153,7 +153,7 @@ class UnicharCompress {
   void SetupPassThrough(const UNICHARSET& unicharset);
   // Sets up an encoder directly using the given encoding vector, which maps
   // unichar_ids to the given codes.
-  void SetupDirect(const GenericVector<RecodedCharID>& codes);
+  void SetupDirect(const std::vector<RecodedCharID>& codes);
 
   // Returns the number of different values that can be used in a code, ie
   // 1 + the maximum value that will ever be used by an RecodedCharID code in
@@ -214,20 +214,19 @@ class UnicharCompress {
 
   // The encoder that maps a unichar-id to a sequence of small codes.
   // encoder_ is the only part that is serialized. The rest is computed on load.
-  GenericVector<RecodedCharID> encoder_;
+  std::vector<RecodedCharID> encoder_;
   // Decoder converts the output of encoder back to a unichar-id.
-  std::unordered_map<RecodedCharID, int, RecodedCharID::RecodedCharIDHash>
-      decoder_;
+  std::unordered_map<RecodedCharID, int, RecodedCharID::RecodedCharIDHash> decoder_;
   // True if the index is a valid single or start code.
   GenericVector<bool> is_valid_start_;
   // Maps a prefix code to a list of valid next codes.
   // The map owns the vectors.
-  std::unordered_map<RecodedCharID, GenericVectorEqEq<int>*,
+  std::unordered_map<RecodedCharID, GenericVector<int>*,
                      RecodedCharID::RecodedCharIDHash>
       next_codes_;
   // Maps a prefix code to a list of valid final codes.
   // The map owns the vectors.
-  std::unordered_map<RecodedCharID, GenericVectorEqEq<int>*,
+  std::unordered_map<RecodedCharID, GenericVector<int>*,
                      RecodedCharID::RecodedCharIDHash>
       final_codes_;
   // Max of any value in encoder_ + 1.

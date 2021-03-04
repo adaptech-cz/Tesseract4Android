@@ -16,8 +16,10 @@
 ///////////////////////////////////////////////////////////////////////
 
 #if !defined(__SSE4_1__)
-#error Implementation only for SSE 4.1 capable architectures
-#endif
+ #if defined(__i686__) || defined(__x86_64__)
+  #error Implementation only for SSE 4.1 capable architectures
+ #endif
+#else
 
 #include "intsimdmatrix.h"
 
@@ -72,7 +74,7 @@ static void PartialMatrixDotVector1(const int8_t* wi, const double* scales,
                                     double* v) {
   double total = IntDotProductSSE(u, wi, num_in);
   // Add in the bias and correct for integer values.
-  *v = (total / INT8_MAX + wi[num_in]) * *scales;
+  *v = (total + wi[num_in] * INT8_MAX) * *scales;
 }
 
 static void matrixDotVector(int dim1, int dim2, const int8_t* wi,
@@ -102,3 +104,5 @@ const IntSimdMatrix IntSimdMatrix::intSimdMatrixSSE = {
 };
 
 }  // namespace tesseract.
+
+#endif

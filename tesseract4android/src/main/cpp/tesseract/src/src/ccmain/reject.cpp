@@ -21,6 +21,8 @@
 #include "config_auto.h"
 #endif
 
+#include "reject.h"
+
 #ifdef DISABLED_LEGACY_ENGINE
 
 #include "tesseractclass.h"
@@ -37,16 +39,19 @@ int16_t Tesseract::safe_dict_word(const WERD_RES *werd_res) {
 #else
 
 #include "tessvars.h"
+#include "control.h"
+#include "docqual.h"
+#include "tesseractclass.h"
+
+#include "helpers.h"
+
+#include <algorithm>    // for std::sort
 #include <cctype>
 #include <cerrno>
 #include <cstring>
-#include "genericvector.h"
-#include "reject.h"
-#include "control.h"
-#include "docqual.h"
-#include "helpers.h"
+#include <vector>       // for std::vector
 
-#include "tesseractclass.h"
+namespace tesseract {
 
 CLISTIZEH (STRING) CLISTIZE (STRING)
 
@@ -56,10 +61,9 @@ CLISTIZEH (STRING) CLISTIZE (STRING)
  * Set the done flag based on the word acceptability criteria
  *************************************************************************/
 
-namespace tesseract {
 void Tesseract::set_done(WERD_RES *word, int16_t pass) {
   word->done = word->tess_accepted &&
-      (strchr(word->best_choice->unichar_string().string(), ' ') == nullptr);
+      (strchr(word->best_choice->unichar_string().c_str(), ' ') == nullptr);
   bool word_is_ambig = word->best_choice->dangerous_ambig_found();
   bool word_from_dict = word->best_choice->permuter() == SYSTEM_DAWG_PERM ||
       word->best_choice->permuter() == FREQ_DAWG_PERM ||
@@ -123,7 +127,7 @@ void Tesseract::make_reject_map(WERD_RES *word, ROW *row, int16_t pass) {
         word->reject_map.rej_word_not_tess_accepted ();
 
       if (rej_use_tess_blanks &&
-        (strchr (word->best_choice->unichar_string().string (), ' ') != nullptr))
+        (strchr (word->best_choice->unichar_string().c_str(), ' ') != nullptr))
         word->reject_map.rej_word_contains_blanks ();
 
       WERD_CHOICE* best_choice = word->best_choice;
@@ -133,8 +137,8 @@ void Tesseract::make_reject_map(WERD_RES *word, ROW *row, int16_t pass) {
              best_choice->permuter() == USER_DAWG_PERM) &&
             (!rej_use_sensible_wd ||
              acceptable_word_string(*word->uch_set,
-                                    best_choice->unichar_string().string(),
-                                    best_choice->unichar_lengths().string()) !=
+                                    best_choice->unichar_string().c_str(),
+                                    best_choice->unichar_lengths().c_str()) !=
                                         AC_UNACCEPTABLE)) {
           // PASSED TEST
         } else if (best_choice->permuter() == NUMBER_PERM) {
@@ -144,7 +148,7 @@ void Tesseract::make_reject_map(WERD_RES *word, ROW *row, int16_t pass) {
                  offset += best_choice->unichar_lengths()[i++]) {
               if (word->reject_map[i].accepted() &&
                   word->uch_set->get_isalpha(
-                      best_choice->unichar_string().string() + offset,
+                      best_choice->unichar_string().c_str() + offset,
                       best_choice->unichar_lengths()[i]))
                 word->reject_map[i].setrej_bad_permuter();
               // rej alpha
@@ -175,8 +179,6 @@ void Tesseract::make_reject_map(WERD_RES *word, ROW *row, int16_t pass) {
   flip_hyphens(word);
   check_debug_pt(word, 20);
 }
-}  // namespace tesseract
-
 
 void reject_blanks(WERD_RES *word) {
   int16_t i;
@@ -190,7 +192,6 @@ void reject_blanks(WERD_RES *word) {
   }
 }
 
-namespace tesseract {
 void Tesseract::reject_I_1_L(WERD_RES *word) {
   int16_t i;
   int16_t offset;
@@ -204,8 +205,6 @@ void Tesseract::reject_I_1_L(WERD_RES *word) {
     }
   }
 }
-}  // namespace tesseract
-
 
 void reject_poor_matches(WERD_RES *word) {
   float threshold = compute_reject_threshold(word->best_choice);
@@ -232,12 +231,12 @@ float compute_reject_threshold(WERD_CHOICE* word) {
   float gapstart;                // bottom of gap
 
   int blob_count = word->length();
-  GenericVector<float> ratings;
-  ratings.resize_no_init(blob_count);
+  std::vector<float> ratings;
+  ratings.reserve(blob_count);
   for (int i = 0; i < blob_count; ++i) {
-    ratings[i] = word->certainty(i);
+    ratings.push_back(word->certainty(i));
   }
-  ratings.sort();
+  std::sort(ratings.begin(), ratings.end());
   gapstart = ratings[0] - 1;     // all reject if none better
   if (blob_count >= 3) {
     for (int index = 0; index < blob_count - 1; index++) {
@@ -260,7 +259,6 @@ float compute_reject_threshold(WERD_CHOICE* word) {
  * If the word is perilously close to the edge of the image, reject those blobs
  * in the word which are too close to the edge as they could be clipped.
  *************************************************************************/
-namespace tesseract {
 void Tesseract::reject_edge_blobs(WERD_RES *word) {
   TBOX word_box = word->word->bounding_box();
   // Use the box_word as it is already denormed back to image coordinates.
@@ -306,14 +304,14 @@ bool Tesseract::one_ell_conflict(WERD_RES* word_res, bool update_map) {
   bool dict_word_ok;
   int dict_word_type;
 
-  word = word_res->best_choice->unichar_string().string ();
-  lengths = word_res->best_choice->unichar_lengths().string();
+  word = word_res->best_choice->unichar_string().c_str();
+  lengths = word_res->best_choice->unichar_lengths().c_str();
   word_len = strlen(lengths);
   /*
     If there are no occurrences of the conflict set characters then the word
     is OK.
   */
-  if (strpbrk(word, conflict_set_I_l_1.string ()) == nullptr)
+  if (strpbrk(word, conflict_set_I_l_1.c_str()) == nullptr)
     return false;
 
   /*
@@ -528,8 +526,8 @@ void Tesseract::dont_allow_1Il(WERD_RES *word) {
   int i = 0;
   int offset;
   int word_len = word->reject_map.length();
-  const char *s = word->best_choice->unichar_string().string();
-  const char *lengths = word->best_choice->unichar_lengths().string();
+  const char *s = word->best_choice->unichar_string().c_str();
+  const char *lengths = word->best_choice->unichar_lengths().c_str();
   bool accepted_1Il = false;
 
   for (i = 0, offset = 0; i < word_len;
@@ -596,7 +594,7 @@ bool Tesseract::repeated_nonalphanum_wd(WERD_RES* word, ROW* row) {
     if (word->best_choice->unichar_id(i) != uch_id) return false;
   }
 
-  word_char_quality(word, row, &char_quality, &accepted_char_quality);
+  word_char_quality(word, &char_quality, &accepted_char_quality);
 
   if ((word->best_choice->unichar_lengths().length () == char_quality) &&
     (char_quality == accepted_char_quality))

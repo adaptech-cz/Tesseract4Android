@@ -1,5 +1,4 @@
-/* -*-C-*-
- ********************************************************************************
+/******************************************************************************
  *
  * File:         helpers.h
  * Description:  General utility functions
@@ -16,29 +15,27 @@
  ** See the License for the specific language governing permissions and
  ** limitations under the License.
  *
- ********************************************************************************/
+ *****************************************************************************/
 
 #ifndef TESSERACT_CCUTIL_HELPERS_H_
 #define TESSERACT_CCUTIL_HELPERS_H_
 
 #include <cassert>
+#include <cmath>      // std::isfinite
 #include <cstdio>
 #include <cstring>
 #include <functional>
+#include <random>
 #include <string>
 
-// TODO(rays) Put the rest of the helpers in the namespace.
 namespace tesseract {
 
-// A simple linear congruential random number generator, using Knuth's
-// constants from:
-// http://en.wikipedia.org/wiki/Linear_congruential_generator.
+// A simple linear congruential random number generator.
 class TRand {
  public:
-  TRand() = default;
   // Sets the seed to the given value.
   void set_seed(uint64_t seed) {
-    seed_ = seed;
+    e.seed(seed);
   }
   // Sets the seed using a hash of a string.
   void set_seed(const std::string& str) {
@@ -48,8 +45,7 @@ class TRand {
 
   // Returns an integer in the range 0 to INT32_MAX.
   int32_t IntRand() {
-    Iterate();
-    return seed_ >> 33;
+    return e();
   }
   // Returns a floating point value in the range [-range, range].
   double SignedRand(double range) {
@@ -61,17 +57,8 @@ class TRand {
   }
 
  private:
-  // Steps the generator to the next value.
-  void Iterate() {
-    seed_ *= 6364136223846793005ULL;
-    seed_ += 1442695040888963407ULL;
-  }
-
-  // The current value of the seed.
-  uint64_t seed_{1};
+  std::minstd_rand e;
 };
-
-}  // namespace tesseract
 
 // Remove newline (if any) at the end of the string.
 inline void chomp_string(char* str) {
@@ -87,15 +74,6 @@ inline void SkipNewline(FILE* file) {
   if (fgetc(file) != '\n') {
     fseek(file, -1, SEEK_CUR);
   }
-}
-
-// Swaps the two args pointed to by the pointers.
-// Operator= and copy constructor must work on T.
-template <typename T>
-inline void Swap(T* p1, T* p2) {
-  T tmp(*p2);
-  *p2 = *p1;
-  *p1 = tmp;
 }
 
 // return the smallest multiple of block_size greater than or equal to n.
@@ -173,11 +151,13 @@ inline int DivRounded(int a, int b) {
 
 // Return a double cast to int with rounding.
 inline int IntCastRounded(double x) {
+  assert(std::isfinite(x));
   return x >= 0.0 ? static_cast<int>(x + 0.5) : -static_cast<int>(-x + 0.5);
 }
 
 // Return a float cast to int with rounding.
 inline int IntCastRounded(float x) {
+  assert(std::isfinite(x));
   return x >= 0.0F ? static_cast<int>(x + 0.5F) : -static_cast<int>(-x + 0.5F);
 }
 
@@ -207,5 +187,7 @@ inline void Reverse32(void* ptr) {
 inline void Reverse64(void* ptr) {
   ReverseN(ptr, 8);
 }
+
+}  // namespace tesseract
 
 #endif  // TESSERACT_CCUTIL_HELPERS_H_

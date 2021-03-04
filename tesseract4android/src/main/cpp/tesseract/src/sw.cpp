@@ -3,48 +3,28 @@ void build(Solution &s)
     auto &tess = s.addProject("google.tesseract", "master");
     tess += Git("https://github.com/tesseract-ocr/tesseract", "", "{v}");
 
+    auto cppstd = cpp17;
+
     auto &libtesseract = tess.addTarget<LibraryTarget>("libtesseract");
     {
         libtesseract.setChecks("libtesseract");
 
-        libtesseract.ExportAllSymbols = true;
         libtesseract.PackageDefinitions = true;
-        libtesseract +=
-            "src/api/.*\\.cpp"_rr,
-            "src/api/.*\\.h"_rr,
-            "src/api/tess_version.h.in",
-            "src/arch/.*\\.cpp"_rr,
-            "src/arch/.*\\.h"_rr,
-            "src/ccmain/.*\\.cpp"_rr,
-            "src/ccmain/.*\\.h"_rr,
-            "src/ccstruct/.*\\.cpp"_rr,
-            "src/ccstruct/.*\\.h"_rr,
-            "src/ccutil/.*\\.cpp"_rr,
-            "src/ccutil/.*\\.h"_rr,
-            "src/classify/.*\\.cpp"_rr,
-            "src/classify/.*\\.h"_rr,
-            "src/cutil/.*\\.cpp"_rr,
-            "src/cutil/.*\\.h"_rr,
-            "src/dict/.*\\.cpp"_rr,
-            "src/dict/.*\\.h"_rr,
-            "src/lstm/.*\\.cpp"_rr,
-            "src/lstm/.*\\.h"_rr,
-            "src/opencl/.*\\.cpp"_rr,
-            "src/opencl/.*\\.h"_rr,
-            "src/textord/.*\\.cpp"_rr,
-            "src/textord/.*\\.h"_rr,
-            "src/viewer/.*\\.cpp"_rr,
-            "src/viewer/.*\\.h"_rr,
-            "src/wordrec/.*\\.cpp"_rr,
-            "src/wordrec/.*\\.h"_rr;
 
-        libtesseract += "src/training/.*\\.h"_rr;
+        libtesseract += cppstd;
+
+        libtesseract += "TESS_API"_api;
+        libtesseract += "include/.*"_rr;
+        libtesseract += "src/.*"_rr;
+        libtesseract -= "src/lstm/.*\\.cc"_rr;
+        libtesseract -= "src/training/.*"_rr;
 
         libtesseract -=
             "src/api/tesseractmain.cpp",
             "src/viewer/svpaint.cpp";
 
-        libtesseract.Public +=
+        libtesseract.Public += "include"_idir;
+        libtesseract.Protected +=
             "src/opencl"_id,
             "src/ccmain"_id,
             "src/api"_id,
@@ -66,151 +46,279 @@ void build(Solution &s)
             libtesseract += "__SSE4_1__"_def;
             libtesseract.CompileOptions.push_back("-arch:AVX2");
 
-            libtesseract -=
-                "src/arch/dotproductfma.cpp";
+            // openmp
+            //if (libtesseract.getOptions()["openmp"] == "true")
+            if (0)
+            {
+                if (libtesseract.getCompilerType() == CompilerType::MSVC)
+                    libtesseract.CompileOptions.push_back("-openmp");
+                else
+                    libtesseract.CompileOptions.push_back("-fopenmp");
+                libtesseract += "_OPENMP=201107"_def;
+                if (libtesseract.getBuildSettings().Native.ConfigurationType == ConfigurationType::Debug)
+                    libtesseract += "vcompd.lib"_slib;
+                else
+                    libtesseract += "vcomp.lib"_slib;
+            }
         }
+
+        auto win_or_mingw =
+            libtesseract.getBuildSettings().TargetOS.Type == OSType::Windows ||
+            libtesseract.getBuildSettings().TargetOS.Type == OSType::Mingw
+            ;
+
+        // check fma flags
+        libtesseract -= "src/arch/dotproductfma.cpp";
+
+        if (libtesseract.getBuildSettings().TargetOS.Type != OSType::Windows)
+        {
+            libtesseract["src/arch/dotproductavx.cpp"].args.push_back("-mavx");
+            libtesseract["src/arch/dotproductsse.cpp"].args.push_back("-msse4.1");
+            libtesseract["src/arch/intsimdmatrixsse.cpp"].args.push_back("-msse4.1");
+            libtesseract["src/arch/intsimdmatrixavx2.cpp"].args.push_back("-mavx2");
+        }
+        if (!win_or_mingw)
+            libtesseract += "pthread"_slib;
 
         libtesseract.Public += "HAVE_CONFIG_H"_d;
         libtesseract.Public += "_SILENCE_STDEXT_HASH_DEPRECATION_WARNINGS=1"_d;
         libtesseract.Public += "HAVE_LIBARCHIVE"_d;
-        libtesseract.Interface += sw::Shared, "TESS_IMPORTS"_d;
-        libtesseract.Private += sw::Shared, "TESS_EXPORTS"_d;
 
         libtesseract.Public += "org.sw.demo.danbloomberg.leptonica"_dep;
         libtesseract.Public += "org.sw.demo.libarchive.libarchive"_dep;
 
-        if (libtesseract.getBuildSettings().TargetOS.Type == OSType::Windows)
+        if (win_or_mingw)
         {
             libtesseract.Public += "ws2_32.lib"_slib;
             libtesseract.Protected += "NOMINMAX"_def;
         }
 
+        if (libtesseract.getCompilerType() == CompilerType::MSVC)
+            libtesseract.Protected.CompileOptions.push_back("-utf-8");
+
         libtesseract.Variables["TESSERACT_MAJOR_VERSION"] = libtesseract.Variables["PACKAGE_MAJOR_VERSION"];
         libtesseract.Variables["TESSERACT_MINOR_VERSION"] = libtesseract.Variables["PACKAGE_MINOR_VERSION"];
         libtesseract.Variables["TESSERACT_MICRO_VERSION"] = libtesseract.Variables["PACKAGE_PATCH_VERSION"];
         libtesseract.Variables["TESSERACT_VERSION_STR"] = "master";
-        libtesseract.configureFile("src/api/tess_version.h.in", "tess_version.h");
-
-        // install
-        if (!libtesseract.DryRun)
-        {
-            const Files files
-            {
-                // from api/makefile.am
-                "src/api/apitypes.h",
-                "src/api/baseapi.h",
-                "src/api/capi.h",
-                "src/api/renderer.h",
-                "tess_version.h",
-
-                //from ccmain/makefile.am
-                "src/ccmain/thresholder.h",
-                "src/ccmain/ltrresultiterator.h",
-                "src/ccmain/pageiterator.h",
-                "src/ccmain/resultiterator.h",
-                "src/ccmain/osdetect.h",
-
-                //from ccstruct/makefile.am
-                "src/ccstruct/publictypes.h",
-
-                //from ccutil/makefile.am
-                "src/ccutil/genericvector.h",
-                "src/ccutil/helpers.h",
-                "src/ccutil/ocrclass.h",
-                "src/ccutil/platform.h",
-                "src/ccutil/serialis.h",
-                "src/ccutil/strngs.h",
-                "src/ccutil/unichar.h",
-            };
-
-            auto d = libtesseract.BinaryDir / "tesseract";
-            fs::create_directories(d);
-            for (auto f : files)
-            {
-                libtesseract.check_absolute(f);
-                fs::copy_file(f, d / f.filename(), fs::copy_options::update_existing);
-            }
-        }
+        libtesseract.configureFile("include/tesseract/version.h.in", "tesseract/version.h");
     }
 
     //
     auto &tesseract = tess.addExecutable("tesseract");
-    tesseract += "src/api/tesseractmain.cpp";
-    tesseract += libtesseract;
+    {
+        tesseract += cppstd;
+        tesseract += "src/api/tesseractmain.cpp";
+        tesseract += libtesseract;
+    }
+
+    auto &training = tess.addDirectory("training");
 
     //
-    auto &tessopt = tess.addStaticLibrary("tessopt");
-    tessopt += "src/training/tessopt.*"_rr;
-    tessopt.Public += libtesseract;
+    auto &common_training = training.addLibrary("common_training");
+    {
+        common_training += "TESS_COMMON_TRAINING_API"_api;
+        common_training += cppstd;
+        common_training += "src/training/common/.*"_rr;
+        common_training.Public += "src/training/common"_idir;
+        common_training.Public += libtesseract;
+    }
 
     //
-    auto &common_training = tess.addStaticLibrary("common_training");
-    common_training +=
-        "src/training/commandlineflags.cpp",
-        "src/training/commandlineflags.h",
-        "src/training/commontraining.cpp",
-        "src/training/commontraining.h",
-        "src/training/errorcounter.cpp",
-        "src/training/errorcounter.h",
-        "src/training/mastertrainer.cpp",
-        "src/training/mastertrainer.h";
-    common_training.Public += tessopt;
+    auto &unicharset_training = training.addLibrary("unicharset_training");
+    {
+        unicharset_training += "TESS_UNICHARSET_TRAINING_API"_api;
+        unicharset_training += cppstd;
+        unicharset_training += "src/training/unicharset/.*"_rr;
+        unicharset_training.Public += "src/training/unicharset"_idir;
+        unicharset_training.Public += common_training;
+        unicharset_training.Public += "org.sw.demo.unicode.icu.i18n"_dep;
+
+        auto win_or_mingw =
+          unicharset_training.getBuildSettings().TargetOS.Type == OSType::Windows ||
+          unicharset_training.getBuildSettings().TargetOS.Type == OSType::Mingw
+          ;
+        if (!win_or_mingw)
+          unicharset_training += "pthread"_slib;
+    }
 
     //
-    auto &unicharset_training = tess.addStaticLibrary("unicharset_training");
-    unicharset_training +=
-        "src/training/fileio.*"_rr,
-        "src/training/icuerrorcode.*"_rr,
-        "src/training/icuerrorcode.h",
-        "src/training/lang_model_helpers.*"_rr,
-        "src/training/lstmtester.*"_rr,
-        "src/training/normstrngs.*"_rr,
-        "src/training/unicharset_training_utils.*"_rr,
-        "src/training/validat.*"_rr;
-    unicharset_training.Public += common_training;
-    unicharset_training.Public += "org.sw.demo.unicode.icu.i18n"_dep;
-
-    //
-#define ADD_EXE(n, ...)               \
-    auto &n = tess.addExecutable(#n); \
-    n += "src/training/" #n ".*"_rr;  \
-    n.Public += __VA_ARGS__;          \
+#define ADD_EXE(n, ...)                     \
+    auto &n = training.addExecutable(#n);   \
+    n += cppstd;                            \
+    n += "src/training/" #n ".*"_rr;        \
+    n.Public += __VA_ARGS__;                \
     n
 
-    ADD_EXE(ambiguous_words, libtesseract);
+    ADD_EXE(ambiguous_words, common_training);
     ADD_EXE(classifier_tester, common_training);
     ADD_EXE(combine_lang_model, unicharset_training);
-    ADD_EXE(combine_tessdata, libtesseract);
+    ADD_EXE(combine_tessdata, common_training);
     ADD_EXE(cntraining, common_training);
-    ADD_EXE(dawg2wordlist, libtesseract);
+    ADD_EXE(dawg2wordlist, common_training);
     ADD_EXE(mftraining, common_training) += "src/training/mergenf.*"_rr;
     ADD_EXE(shapeclustering, common_training);
     ADD_EXE(unicharset_extractor, unicharset_training);
-    ADD_EXE(wordlist2dawg, libtesseract);
+    ADD_EXE(wordlist2dawg, common_training);
     ADD_EXE(lstmeval, unicharset_training);
     ADD_EXE(lstmtraining, unicharset_training);
     ADD_EXE(set_unicharset_properties, unicharset_training);
+    ADD_EXE(merge_unicharsets, common_training);
 
-    ADD_EXE(text2image, unicharset_training);
-    text2image +=
-        "src/training/boxchar.cpp",
-        "src/training/boxchar.h",
-        "src/training/degradeimage.cpp",
-        "src/training/degradeimage.h",
-        "src/training/icuerrorcode.h",
-        "src/training/ligature_table.cpp",
-        "src/training/ligature_table.h",
-        "src/training/normstrngs.cpp",
-        "src/training/normstrngs.h",
-        "src/training/pango_font_info.cpp",
-        "src/training/pango_font_info.h",
-        "src/training/stringrenderer.cpp",
-        "src/training/stringrenderer.h",
-        "src/training/text2image.cpp",
-        "src/training/tlog.cpp",
-        "src/training/tlog.h",
-        "src/training/util.h";
-    text2image.Public += "org.sw.demo.gnome.pango.pangocairo"_dep;
+    //
+    auto &pango_training = training.addLibrary("pango_training");
+    {
+        pango_training += "TESS_PANGO_TRAINING_API"_api;
+        pango_training += cppstd;
+        pango_training += "src/training/pango/.*"_rr;
+        pango_training.Public += "src/training/pango"_idir;
+        pango_training.Public += unicharset_training;
+        pango_training.Public += "org.sw.demo.gnome.pango.pangocairo"_dep;
+    }
+
+    ADD_EXE(text2image, pango_training);
+    {
+        text2image += cppstd;
+        text2image +=
+            "src/training/degradeimage.cpp",
+            "src/training/degradeimage.h",
+            "src/training/text2image.cpp"
+            ;
+    }
+
+    if (!s.getExternalVariables()["with-tests"])
+        return;
+
+    // tests
+    {
+        auto &test = tess.addDirectory("test");
+        test.Scope = TargetScope::Test;
+
+        String skipped_tests_str;
+        if (s.getExternalVariables()["skip-tests"])
+            skipped_tests_str = s.getExternalVariables()["skip-tests"].getValue();
+        auto skipped_tests = split_string(skipped_tests_str, ",");
+
+        auto add_test = [&test, &s, &cppstd, &libtesseract, &pango_training, &skipped_tests](const String &name) -> decltype(auto)
+        {
+            auto &t = test.addTarget<ExecutableTarget>(name);
+            t += cppstd;
+            t += FileRegex("unittest", name + "_test.*", false);
+
+            t += "SW_TESTING"_def;
+
+            auto datadir = test.SourceDir / "tessdata_unittest";
+            if (s.getExternalVariables()["test-data-dir"])
+                datadir = fs::current_path() / s.getExternalVariables()["test-data-dir"].getValue();
+            t += Definition("TESSBIN_DIR=\"" + ""s + "\"");
+
+            t += Definition("TESTING_DIR=\"" + to_printable_string(normalize_path(test.SourceDir / "test/testing")) + "\"");
+            t += Definition("TESTDATA_DIR=\"" + to_printable_string(normalize_path(test.SourceDir / "test/testdata")) + "\"");
+
+            t += Definition("LANGDATA_DIR=\"" + to_printable_string(normalize_path(datadir / "langdata_lstm")) + "\"");
+            t += Definition("TESSDATA_DIR=\"" + to_printable_string(normalize_path(datadir / "tessdata")) + "\"");
+            t += Definition("TESSDATA_BEST_DIR=\"" + to_printable_string(normalize_path(datadir / "tessdata_best")) + "\"");
+
+            // we push all deps to all tests simplify things
+            t += pango_training;
+            t += "org.sw.demo.google.googletest.gmock.main"_dep;
+            t += "org.sw.demo.google.googletest.gtest.main"_dep;
+            t += "org.sw.demo.google.abseil"_dep;
+
+            if (t.getCompilerType() == CompilerType::MSVC)
+                t.CompileOptions.push_back("-utf-8");
+
+            auto win_or_mingw =
+              t.getBuildSettings().TargetOS.Type == OSType::Windows ||
+              t.getBuildSettings().TargetOS.Type == OSType::Mingw
+              ;
+            if (!win_or_mingw)
+              t += "pthread"_slib;
+
+            auto tst = libtesseract.addTest(t, name);
+            for (auto &st : skipped_tests)
+            {
+                std::regex r(st);
+                if (std::regex_match(name, r))
+                {
+                    tst.skip(true);
+                    break;
+                }
+            }
+
+            return t;
+        };
+
+        Strings tests
+        {
+            "apiexample",
+            "applybox",
+            "baseapi",
+            "baseapi_thread",
+            "bitvector",
+            "capiexample",
+            "capiexample_c",
+            "cleanapi",
+            "colpartition",
+            "commandlineflags",
+            "denorm",
+            "equationdetect",
+            "fileio",
+            "heap",
+            "imagedata",
+            "indexmapbidi",
+            "intfeaturemap",
+            "intsimdmatrix",
+            "lang_model",
+            "layout",
+            "ligature_table",
+            "linlsq",
+            "list",
+            "lstm_recode",
+            "lstm_squashed",
+            "lstm",
+            "lstmtrainer",
+            "loadlang",
+            "mastertrainer",
+            "matrix",
+            "networkio",
+            "normstrngs",
+            "nthitem",
+            "osd",
+            "pagesegmode",
+            "pango_font_info",
+            "paragraphs",
+            "params_model",
+            "progress",
+            "qrsequence",
+            "recodebeam",
+            "rect",
+            "resultiterator",
+            "scanutils",
+            "shapetable",
+            "stats",
+            "stringrenderer",
+            "stridemap",
+            "tablefind",
+            "tablerecog",
+            "tabvector",
+            "tatweel",
+            "textlineprojection",
+            "tfile",
+            "unichar",
+            "unicharcompress",
+            "unicharset",
+            "validate_grapheme",
+            "validate_indic",
+            "validate_khmer",
+            "validate_myanmar",
+            "validator",
+        };
+        for (auto t : tests)
+            add_test(t);
+        auto &dt = add_test("dawg");
+        dt += Definition("wordlist2dawg_prog=\"" + to_printable_string(normalize_path(wordlist2dawg.getOutputFile())) + "\"");
+        dt += Definition("dawg2wordlist_prog=\"" + to_printable_string(normalize_path(dawg2wordlist.getOutputFile())) + "\"");
+    }
 }
 
 void check(Checker &c)
@@ -219,29 +327,21 @@ void check(Checker &c)
     s.checkFunctionExists("getline");
     s.checkIncludeExists("dlfcn.h");
     s.checkIncludeExists("inttypes.h");
-    s.checkIncludeExists("limits.h");
-    s.checkIncludeExists("malloc.h");
     s.checkIncludeExists("memory.h");
-    s.checkIncludeExists("stdbool.h");
     s.checkIncludeExists("stdint.h");
     s.checkIncludeExists("stdlib.h");
     s.checkIncludeExists("string.h");
-    s.checkIncludeExists("sys/ipc.h");
-    s.checkIncludeExists("sys/shm.h");
     s.checkIncludeExists("sys/stat.h");
     s.checkIncludeExists("sys/types.h");
-    s.checkIncludeExists("sys/wait.h");
     s.checkIncludeExists("tiffio.h");
     s.checkIncludeExists("unistd.h");
     s.checkTypeSize("long long int");
-    s.checkTypeSize("mbstate_t");
-    s.checkTypeSize("off_t");
     s.checkTypeSize("size_t");
     s.checkTypeSize("void *");
     s.checkTypeSize("wchar_t");
-    s.checkTypeSize("_Bool");
     {
         auto &c = s.checkSymbolExists("snprintf");
         c.Parameters.Includes.push_back("stdio.h");
     }
 }
+

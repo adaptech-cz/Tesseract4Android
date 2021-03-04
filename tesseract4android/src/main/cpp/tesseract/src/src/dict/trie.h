@@ -1,5 +1,4 @@
-/* -*-C-*-
- ********************************************************************************
+/******************************************************************************
  *
  * File:        trie.h
  * Description: Functions to build a trie data structure.
@@ -16,12 +15,15 @@
  ** See the License for the specific language governing permissions and
  ** limitations under the License.
  *
- *********************************************************************************/
+ *****************************************************************************/
 #ifndef TRIE_H
 #define TRIE_H
 
 #include "dawg.h"
+
 #include "genericvector.h"
+
+namespace tesseract {
 
 class UNICHARSET;
 
@@ -45,15 +47,13 @@ struct TRIE_NODE_RECORD {
 };
 using TRIE_NODES = GenericVector<TRIE_NODE_RECORD *> ;
 
-namespace tesseract {
-
 /**
  * Concrete class for Trie data structure that allows to store a list of
  * words (extends Dawg base class) as well as dynamically add new words.
  * This class stores a vector of pointers to TRIE_NODE_RECORDs, each of
  * which has a vector of forward and backward edges.
  */
-class Trie : public Dawg {
+class TESS_API Trie : public Dawg {
  public:
   enum RTLReversePolicy {
     RRP_DO_NO_REVERSE,
@@ -174,11 +174,11 @@ class Trie : public Dawg {
   // Reads a list of words from the given file.
   // Returns false on error.
   bool read_word_list(const char *filename,
-                      GenericVector<STRING>* words);
+                      std::vector<STRING>* words);
   // Adds a list of words previously read using read_word_list to the trie
   // using the given unicharset and reverse_policy to convert to unichar-ids.
   // Returns false on error.
-  bool add_word_list(const GenericVector<STRING> &words,
+  bool add_word_list(const std::vector<STRING> &words,
                      const UNICHARSET &unicharset,
                      Trie::RTLReversePolicy reverse_policy);
 
@@ -198,7 +198,7 @@ class Trie : public Dawg {
   // To denote a character class use one of:
   // \c - unichar for which UNICHARSET::get_isalpha() is true (character)
   // \d - unichar for which UNICHARSET::get_isdigit() is true
-  // \n - unichar for which UNICHARSET::get_isdigit() and
+  // \n - unichar for which UNICHARSET::get_isdigit() or
   //      UNICHARSET::isalpha() are true
   // \p - unichar for which UNICHARSET::get_ispunct() is true
   // \a - unichar for which UNICHARSET::get_islower() is true
@@ -426,6 +426,7 @@ class Trie : public Dawg {
   UNICHAR_ID upper_pattern_;
   bool initialized_patterns_;
 };
+
 }  // namespace tesseract
 
 #endif

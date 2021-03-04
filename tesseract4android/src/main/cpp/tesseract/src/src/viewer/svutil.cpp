@@ -25,6 +25,7 @@
 #endif
 
 #include "svutil.h"
+
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -42,7 +43,6 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <netinet/in.h>
-#include <pthread.h>
 #include <semaphore.h>
 #include <csignal>
 #include <sys/select.h>
@@ -53,62 +53,15 @@
 #include <unistd.h>
 #endif
 
-SVMutex::SVMutex() {
-#ifdef _WIN32
-  mutex_ = CreateMutex(0, FALSE, 0);
-#else
-  pthread_mutex_init(&mutex_, nullptr);
-#endif
-}
-
-void SVMutex::Lock() {
-#ifdef _WIN32
-  WaitForSingleObject(mutex_, INFINITE);
-#else
-  pthread_mutex_lock(&mutex_);
-#endif
-}
-
-void SVMutex::Unlock() {
-#ifdef _WIN32
-  ReleaseMutex(mutex_);
-#else
-  pthread_mutex_unlock(&mutex_);
-#endif
-}
-
-// Create new thread.
-void SVSync::StartThread(void* (*func)(void*), void* arg) {
-#ifdef _WIN32
-  LPTHREAD_START_ROUTINE f = (LPTHREAD_START_ROUTINE)func;
-  DWORD threadid;
-  CreateThread(nullptr,     // default security attributes
-               0,           // use default stack size
-               f,           // thread function
-               arg,         // argument to thread function
-               0,           // use default creation flags
-               &threadid);  // returns the thread identifier
-#else
-  pthread_t helper;
-  pthread_attr_t attr;
-  pthread_attr_init(&attr);
-  pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-  pthread_create(&helper, &attr, func, arg);
-#endif
-}
+#if defined(_WIN32) && !defined(__GNUC__)
+#define strtok_r(str, delim, saveptr) strtok_s(str, delim, saveptr)
+#endif /* _WIN32 && !__GNUC__ */
 
 #ifndef GRAPHICS_DISABLED
 
-const int kMaxMsgSize = 4096;
+namespace tesseract {
 
-// Signals a thread to exit.
-void SVSync::ExitThread() {
-#ifdef _WIN32
-  // ExitThread(0);
-#else
-  pthread_exit(nullptr);
-#endif
-}
+const int kMaxMsgSize = 4096;
 
 // Starts a new process.
 void SVSync::StartProcess(const char* executable, const char* args) {
@@ -201,37 +154,32 @@ void SVSemaphore::Wait() {
 
 // Place a message in the message buffer (and flush it).
 void SVNetwork::Send(const char* msg) {
-  mutex_send_.Lock();
+  std::lock_guard<std::mutex> guard(mutex_send_);
   msg_buffer_out_.append(msg);
-  mutex_send_.Unlock();
 }
 
 // Send the whole buffer.
 void SVNetwork::Flush() {
-  mutex_send_.Lock();
+  std::lock_guard<std::mutex> guard(mutex_send_);
   while (!msg_buffer_out_.empty()) {
     int i = send(stream_, msg_buffer_out_.c_str(), msg_buffer_out_.length(), 0);
     msg_buffer_out_.erase(0, i);
   }
-  mutex_send_.Unlock();
 }
 
 // Receive a message from the server.
 // This will always return one line of char* (denoted by \n).
 char* SVNetwork::Receive() {
   char* result = nullptr;
-#if defined(_WIN32) || defined(__CYGWIN__)
-  if (has_content) { result = strtok (nullptr, "\n"); }
-#else
-  if (buffer_ptr_ != nullptr) { result = strtok_r(nullptr, "\n", &buffer_ptr_); }
-#endif
+  if (buffer_ptr_ != nullptr) {
+    result = strtok_r(nullptr, "\n", &buffer_ptr_);
+  }
 
   // This means there is something left in the buffer and we return it.
   if (result != nullptr) { return result;
   // Otherwise, we read from the stream_.
   } else {
     buffer_ptr_ = nullptr;
-    has_content = false;
 
     // The timeout length is not really important since we are looping anyway
     // until a new message is delivered.
@@ -255,13 +203,8 @@ char* SVNetwork::Receive() {
     // Server quit (0) or error (-1).
     if (i <= 0) { return nullptr; }
     msg_buffer_in_[i] = '\0';
-    has_content = true;
-#ifdef _WIN32
-    return strtok(msg_buffer_in_, "\n");
-#else
     // Setup a new string tokenizer.
     return strtok_r(msg_buffer_in_, "\n", &buffer_ptr_);
-#endif
   }
 }
 
@@ -296,7 +239,7 @@ static std::string ScrollViewCommand(std::string scrollview_path) {
   // this unnecessary.
   // Also the path has to be separated by ; on windows and : otherwise.
 #ifdef _WIN32
-  const char cmd_template[] = "-Djava.library.path=%s -jar %s/ScrollView.jar";
+  const char cmd_template[] = "-Djava.library.path=\"%s\" -jar \"%s/ScrollView.jar\"";
 
 #else
   const char cmd_template[] =
@@ -321,7 +264,6 @@ SVNetwork::SVNetwork(const char* hostname, int port) {
   msg_buffer_in_ = new char[kMaxMsgSize + 1];
   msg_buffer_in_[0] = '\0';
 
-  has_content = false;
   buffer_ptr_ = nullptr;
 
   struct addrinfo *addr_info = nullptr;
@@ -397,4 +339,6 @@ SVNetwork::~SVNetwork() {
   delete[] msg_buffer_in_;
 }
 
-#endif  // GRAPHICS_DISABLED
+} // namespace tesseract
+
+#endif // !GRAPHICS_DISABLED

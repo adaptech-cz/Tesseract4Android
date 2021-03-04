@@ -1,10 +1,7 @@
-// Copyright 2011 Google Inc. All Rights Reserved.
-// Author: rays@google.com (Ray Smith)
 ///////////////////////////////////////////////////////////////////////
 // File:        tessclassifier.cpp
 // Description: Tesseract implementation of a ShapeClassifier.
 // Author:      Ray Smith
-// Created:     Tue Nov 22 14:16:25 PST 2011
 //
 // (C) Copyright 2011, Google Inc.
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,7 +27,7 @@ namespace tesseract {
 // See ShapeClassifier for a full description.
 int TessClassifier::UnicharClassifySample(
     const TrainingSample& sample, Pix* page_pix, int debug,
-    UNICHAR_ID keep_this, GenericVector<UnicharRating>* results) {
+    UNICHAR_ID keep_this, std::vector<UnicharRating>* results) {
   const int old_matcher_level = classify_->matcher_debug_level;
   const int old_matcher_flags = classify_->matcher_debug_flags;
   const int old_classify_level = classify_->classify_debug_level;
@@ -77,8 +74,10 @@ int TessClassifier::DisplayClassifyAs(
     tprintf("No built-in templates for class/shape %d\n", shape_id);
     return index;
   }
+#ifndef GRAPHICS_DISABLED
   classify_->ShowBestMatchFor(shape_id, sample.features(),
                               sample.num_features());
+#endif
   return index;
 }
 

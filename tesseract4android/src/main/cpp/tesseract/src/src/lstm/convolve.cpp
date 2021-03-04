@@ -4,7 +4,6 @@
 //              and pulls in random data to fill out-of-input inputs.
 //              Output is therefore same size as its input, but deeper.
 // Author:      Ray Smith
-// Created:     Tue Mar 18 16:56:06 PST 2014
 //
 // (C) Copyright 2014, Google Inc.
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +17,10 @@
 // limitations under the License.
 ///////////////////////////////////////////////////////////////////////
 
+#ifdef HAVE_CONFIG_H
+#include "config_auto.h"
+#endif
+
 #include "convolve.h"
 
 #include "networkscratch.h"
@@ -25,7 +28,7 @@
 
 namespace tesseract {
 
-Convolve::Convolve(const STRING& name, int ni, int half_x, int half_y)
+Convolve::Convolve(const std::string& name, int ni, int half_x, int half_y)
   : Network(NT_CONVOLVE, name, ni, ni * (2*half_x + 1) * (2*half_y + 1)),
     half_x_(half_x), half_y_(half_y) {
 }
@@ -76,7 +79,9 @@ void Convolve::Forward(bool debug, const NetworkIO& input,
       }
     }
   } while (dest_index.Increment());
+#ifndef GRAPHICS_DISABLED
   if (debug) DisplayForward(*output);
+#endif
 }
 
 // Runs backward propagation of errors on the deltas line.

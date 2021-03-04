@@ -2,7 +2,6 @@
 // File:        lstm.cpp
 // Description: Long-term-short-term-memory Recurrent neural network.
 // Author:      Ray Smith
-// Created:     Wed May 01 17:43:06 PST 2013
 //
 // (C) Copyright 2013, Google Inc.
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,6 +15,10 @@
 // limitations under the License.
 ///////////////////////////////////////////////////////////////////////
 
+#ifdef HAVE_CONFIG_H
+#include "config_auto.h"
+#endif
+
 #include "lstm.h"
 
 #ifdef _OPENMP
@@ -23,6 +26,7 @@
 #endif
 #include <cstdio>
 #include <cstdlib>
+#include <sstream>    // for std::ostringstream
 
 #if !defined(__GNUC__) && defined(_MSC_VER)
 #include <intrin.h>     // _BitScanReverse
@@ -96,7 +100,7 @@ static inline uint32_t ceil_log2(uint32_t n)
   return (n == (1u << l2)) ? l2 : l2 + 1;
 }
 
-LSTM::LSTM(const STRING& name, int ni, int ns, int no, bool two_dimensional,
+LSTM::LSTM(const std::string& name, int ni, int ns, int no, bool two_dimensional,
            NetworkType type)
     : Network(type, name, ni, no),
       na_(ni + ns),
@@ -194,9 +198,9 @@ void LSTM::ConvertToInt() {
 void LSTM::DebugWeights() {
   for (int w = 0; w < WT_COUNT; ++w) {
     if (w == GFS && !Is2D()) continue;
-    STRING msg = name_;
-    msg.add_str_int(" Gate weights ", w);
-    gate_weights_[w].Debug2D(msg.string());
+    std::ostringstream msg;
+    msg << name_ << " Gate weights " << w;
+    gate_weights_[w].Debug2D(msg.str().c_str());
   }
   if (softmax_ != nullptr) {
     softmax_->DebugWeights();
@@ -261,7 +265,10 @@ void LSTM::Forward(bool debug, const NetworkIO& input,
   ResizeForward(input);
   // Temporary storage of forward computation for each gate.
   NetworkScratch::FloatVec temp_lines[WT_COUNT];
-  for (auto & temp_line : temp_lines) temp_line.Init(ns_, scratch);
+  int ro = ns_;
+  if (source_.int_mode() && IntSimdMatrix::intSimdMatrix)
+    ro = IntSimdMatrix::intSimdMatrix->RoundOutputs(ro);
+  for (auto & temp_line : temp_lines) temp_line.Init(ns_, ro, scratch);
   // Single timestep buffers for the current/recurrent output and state.
   NetworkScratch::FloatVec curr_state, curr_output;
   curr_state.Init(ns_, scratch);
@@ -426,14 +433,16 @@ void LSTM::Forward(bool debug, const NetworkIO& input,
     }
   } while (src_index.Increment());
 #if DEBUG_DETAIL > 0
-  tprintf("Source:%s\n", name_.string());
+  tprintf("Source:%s\n", name_.c_str());
   source_.Print(10);
-  tprintf("State:%s\n", name_.string());
+  tprintf("State:%s\n", name_.c_str());
   state_.Print(10);
-  tprintf("Output:%s\n", name_.string());
+  tprintf("Output:%s\n", name_.c_str());
   output->Print(10);
 #endif
+#ifndef GRAPHICS_DISABLED
   if (debug) DisplayForward(*output);
+#endif
 }
 
 // Runs backward propagation of errors on the deltas line.
@@ -441,7 +450,9 @@ void LSTM::Forward(bool debug, const NetworkIO& input,
 bool LSTM::Backward(bool debug, const NetworkIO& fwd_deltas,
                     NetworkScratch* scratch,
                     NetworkIO* back_deltas) {
+#ifndef GRAPHICS_DISABLED
   if (debug) DisplayBackward(fwd_deltas);
+#endif
   back_deltas->ResizeToMap(fwd_deltas.int_mode(), input_map_, ni_);
   // ======Scratch space.======
   // Output errors from deltas with recurrence from sourceerr.
@@ -489,7 +500,7 @@ bool LSTM::Backward(bool debug, const NetworkIO& fwd_deltas,
   }
   double state_clip = Is2D() ? 9.0 : 4.0;
 #if DEBUG_DETAIL > 1
-  tprintf("fwd_deltas:%s\n", name_.string());
+  tprintf("fwd_deltas:%s\n", name_.c_str());
   fwd_deltas.Print(10);
 #endif
   StrideMap::Index dest_index(input_map_);
@@ -639,7 +650,7 @@ bool LSTM::Backward(bool debug, const NetworkIO& fwd_deltas,
   } while (dest_index.Decrement());
 #if DEBUG_DETAIL > 2
   for (int w = 0; w < WT_COUNT; ++w) {
-    tprintf("%s gate errors[%d]\n", name_.string(), w);
+    tprintf("%s gate errors[%d]\n", name_.c_str(), w);
     gate_errors_t[w].get()->PrintUnTransposed(10);
   }
 #endif
@@ -699,7 +710,7 @@ void LSTM::CountAlternators(const Network& other, double* same,
 
 // Prints the weights for debug purposes.
 void LSTM::PrintW() {
-  tprintf("Weight state:%s\n", name_.string());
+  tprintf("Weight state:%s\n", name_.c_str());
   for (int w = 0; w < WT_COUNT; ++w) {
     if (w == GFS && !Is2D()) continue;
     tprintf("Gate %d, inputs\n", w);
@@ -725,7 +736,7 @@ void LSTM::PrintW() {
 
 // Prints the weight deltas for debug purposes.
 void LSTM::PrintDW() {
-  tprintf("Delta state:%s\n", name_.string());
+  tprintf("Delta state:%s\n", name_.c_str());
   for (int w = 0; w < WT_COUNT; ++w) {
     if (w == GFS && !Is2D()) continue;
     tprintf("Gate %d, inputs\n", w);

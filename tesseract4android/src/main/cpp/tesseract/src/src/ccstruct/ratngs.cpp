@@ -2,7 +2,6 @@
  * File: ratngs.cpp  (Formerly ratings.c)
  * Description: Code to manipulate the BLOB_CHOICE and WERD_CHOICE classes.
  * Author: Ray Smith
- * Created: Thu Apr 23 13:23:29 BST 1992
  *
  * (C) Copyright 1992, Hewlett-Packard Ltd.
  ** Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,23 +16,22 @@
  *
  **********************************************************************/
 
-
 #ifdef HAVE_CONFIG_H
 #include "config_auto.h"
 #endif
 
 #include "ratngs.h"
 
-#include <algorithm>
-#include <string>
 #include "blobs.h"
-#include "callcpp.h"
-#include "genericvector.h"
 #include "matrix.h"
 #include "normalis.h"  // kBlnBaselineOffset.
 #include "unicharset.h"
 
-using tesseract::ScriptPos;
+#include <algorithm>
+#include <string>
+#include <vector>
+
+namespace tesseract {
 
 ELISTIZE(BLOB_CHOICE)
 ELISTIZE(WERD_CHOICE)
@@ -199,8 +197,6 @@ const char *WERD_CHOICE::permuter_name(uint8_t permuter) {
   return kPermuterTypeNames[permuter];
 }
 
-namespace tesseract {
-
 const char *ScriptPosToString(enum ScriptPos script_pos) {
   switch (script_pos) {
     case SP_NORMAL: return "NORM";
@@ -211,8 +207,6 @@ const char *ScriptPosToString(enum ScriptPos script_pos) {
   return "SP_UNKNOWN";
 }
 
-}  // namespace tesseract.
-
 /**
  * WERD_CHOICE::WERD_CHOICE
  *
@@ -222,14 +216,14 @@ const char *ScriptPosToString(enum ScriptPos script_pos) {
 WERD_CHOICE::WERD_CHOICE(const char *src_string,
                          const UNICHARSET &unicharset)
     : unicharset_(&unicharset){
-  GenericVector<UNICHAR_ID> encoding;
-  GenericVector<char> lengths;
+  std::vector<UNICHAR_ID> encoding;
+  std::vector<char> lengths;
   std::string cleaned = unicharset.CleanupString(src_string);
   if (unicharset.encode_string(cleaned.c_str(), true, &encoding, &lengths,
                                nullptr)) {
     lengths.push_back('\0');
     STRING src_lengths = &lengths[0];
-    this->init(cleaned.c_str(), src_lengths.string(), 0.0, 0.0, NO_PERM);
+    this->init(cleaned.c_str(), src_lengths.c_str(), 0.0, 0.0, NO_PERM);
   } else {  // There must have been an invalid unichar in the string.
     this->init(8);
     this->make_bad();
@@ -458,7 +452,7 @@ void WERD_CHOICE::string_and_lengths(STRING *word_str,
     const char *ch = unicharset_->id_to_unichar_ext(unichar_ids_[i]);
     *word_str += ch;
     if (word_lengths_str != nullptr) {
-      *word_lengths_str += strlen(ch);
+      *word_lengths_str += (char)strlen(ch);
     }
   }
 }
@@ -587,7 +581,7 @@ void WERD_CHOICE::SetScriptPositions(bool small_caps, TWERD* word, int debug) {
     if (debug >= 2) {
       tprintf("Most characters of %s are subscript or superscript.\n"
               "That seems wrong, so I'll assume we got the baseline wrong\n",
-              unichar_string().string());
+              unichar_string().c_str());
     }
     for (int i = 0; i < length_; i++) {
       ScriptPos sp = script_pos_[i];
@@ -601,7 +595,7 @@ void WERD_CHOICE::SetScriptPositions(bool small_caps, TWERD* word, int debug) {
 
   if ((debug >= 1 && position_counts[tesseract::SP_NORMAL] < length_) ||
       debug >= 2) {
-    tprintf("SetScriptPosition on %s\n", unichar_string().string());
+    tprintf("SetScriptPosition on %s\n", unichar_string().c_str());
     int chunk_index = 0;
     for (int blob_index = 0; blob_index < length_; ++blob_index) {
       if (debug >= 2 || script_pos_[blob_index] != tesseract::SP_NORMAL) {
@@ -760,17 +754,18 @@ void WERD_CHOICE::print_state(const char *msg) const {
   tprintf("\n");
 }
 
+#ifndef GRAPHICS_DISABLED
+
 // Displays the segmentation state of *this (if not the same as the last
 // one displayed) and waits for a click in the window.
 void WERD_CHOICE::DisplaySegmentation(TWERD* word) {
-#ifndef GRAPHICS_DISABLED
   // Number of different colors to draw with.
   const int kNumColors = 6;
   static ScrollView *segm_window = nullptr;
   // Check the state against the static prev_drawn_state.
-  static GenericVector<int> prev_drawn_state;
+  static std::vector<int> prev_drawn_state;
   bool already_done = prev_drawn_state.size() == length_;
-  if (!already_done) prev_drawn_state.init_to_size(length_, 0);
+  if (!already_done) prev_drawn_state.resize(length_);
   for (int i = 0; i < length_; ++i) {
     if (prev_drawn_state[i] != state_[i]) {
       already_done = false;
@@ -801,10 +796,10 @@ void WERD_CHOICE::DisplaySegmentation(TWERD* word) {
   segm_window->ZoomToRectangle(bbox.left(), bbox.top(),
                                bbox.right(), bbox.bottom());
   segm_window->Update();
-  window_wait(segm_window);
-#endif
+  segm_window->Wait();
 }
 
+#endif // !GRAPHICS_DISABLED
 
 bool EqualIgnoringCaseAndTerminalPunct(const WERD_CHOICE &word1,
                                        const WERD_CHOICE &word2) {
@@ -853,3 +848,5 @@ void print_ratings_list(const char *msg,
   tprintf("\n");
   fflush(stdout);
 }
+
+} // namespace tesseract

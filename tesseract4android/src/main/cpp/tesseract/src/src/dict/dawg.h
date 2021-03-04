@@ -1,5 +1,4 @@
-/* -*-C-*-
- ********************************************************************************
+/******************************************************************************
  *
  * File:         dawg.h
  * Description:  Definition of a class that represents Directed Acyclic Word
@@ -17,7 +16,7 @@
  ** See the License for the specific language governing permissions and
  ** limitations under the License.
  *
- *********************************************************************************/
+ *****************************************************************************/
 
 #ifndef DICT_DAWG_H_
 #define DICT_DAWG_H_
@@ -27,11 +26,11 @@
 ----------------------------------------------------------------------*/
 
 #include <cinttypes>            // for PRId64
+#include <functional>           // for std::function
 #include <memory>
 #include "elst.h"
 #include "params.h"
 #include "ratngs.h"
-#include "tesscallback.h"
 
 #ifndef __GNUC__
 #ifdef _WIN32
@@ -41,9 +40,8 @@
 #define NO_EDGE                (int64_t) 0xffffffffffffffffll
 #endif /*__GNUC__*/
 
-/*----------------------------------------------------------------------
-              T y p e s
-----------------------------------------------------------------------*/
+namespace tesseract {
+
 class UNICHARSET;
 
 using EDGE_RECORD = uint64_t;
@@ -51,8 +49,6 @@ using EDGE_ARRAY = EDGE_RECORD *;
 using EDGE_REF = int64_t;
 using NODE_REF = int64_t;
 using NODE_MAP = EDGE_REF *;
-
-namespace tesseract {
 
 struct NodeChild {
   UNICHAR_ID unichar_id;
@@ -112,7 +108,7 @@ static const char kWildcard[] = "*";
 /// (since they use only the public methods of SquishedDawg and Trie
 /// classes that are inherited from the Dawg base class).
 //
-class Dawg {
+class TESS_API Dawg {
  public:
   /// Magic number to determine endianness when reading the Dawg from file.
   static const int16_t kDawgMagicNumber = 42;
@@ -142,13 +138,13 @@ class Dawg {
 
   // For each word in the Dawg, call the given (permanent) callback with the
   // text (UTF-8) version of the word.
-  void iterate_words(const UNICHARSET &unicharset,
-                     TessCallback1<const WERD_CHOICE *> *cb) const;
+  void iterate_words(const UNICHARSET& unicharset,
+                     std::function<void(const WERD_CHOICE*)> cb) const;
 
   // For each word in the Dawg, call the given (permanent) callback with the
   // text (UTF-8) version of the word.
-  void iterate_words(const UNICHARSET &unicharset,
-                     TessCallback1<const char *> *cb) const;
+  void iterate_words(const UNICHARSET& unicharset,
+                     std::function<void(const char*)> cb) const;
 
   // Pure virtual function that should be implemented by the derived classes.
 
@@ -289,9 +285,9 @@ class Dawg {
                    NODE_REF node, UNICHAR_ID wildcard) const;
 
   // Recursively iterate over all words in a dawg (see public iterate_words).
-  void iterate_words_rec(const WERD_CHOICE &word_so_far,
+  void iterate_words_rec(const WERD_CHOICE& word_so_far,
                          NODE_REF to_explore,
-                         TessCallback1<const WERD_CHOICE *> *cb) const;
+                         std::function<void(const WERD_CHOICE*)> cb) const;
 
   // Member Variables.
   STRING lang_;
@@ -302,12 +298,12 @@ class Dawg {
   // #define NEXT_EDGE_MASK (int64_t) 0xfffffff800000000i64
   // #define FLAGS_MASK     (int64_t) 0x0000000700000000i64
   // #define LETTER_MASK    (int64_t) 0x00000000ffffffffi64
-  uint64_t next_node_mask_;
-  uint64_t flags_mask_;
-  uint64_t letter_mask_;
+  uint64_t next_node_mask_ = 0;
+  uint64_t flags_mask_ = 0;
+  uint64_t letter_mask_ = 0;
   int unicharset_size_;
-  int flag_start_bit_;
-  int next_node_start_bit_;
+  int flag_start_bit_ = 0;
+  int next_node_start_bit_ = 0;
   // Level of debug statements to print to stdout.
   int debug_level_;
 };
@@ -374,16 +370,13 @@ struct DawgPosition {
 
 class DawgPositionVector : public GenericVector<DawgPosition> {
  public:
-  /// Overload clear() in order to avoid allocating/deallocating memory
-  /// when clearing the vector and re-inserting entries into it later.
-  void clear() { size_used_ = 0; }
   /// Adds an entry for the given dawg_index with the given node to the vec.
   /// Returns false if the same entry already exists in the vector,
   /// true otherwise.
   inline bool add_unique(const DawgPosition &new_pos,
                          bool debug,
                          const char *debug_msg) {
-    for (int i = 0; i < size_used_; ++i) {
+    for (int i = 0; i < size(); ++i) {
       if (data_[i] == new_pos) return false;
     }
     push_back(new_pos);
@@ -404,7 +397,7 @@ class DawgPositionVector : public GenericVector<DawgPosition> {
 /// is stored as a contiguous EDGE_ARRAY (read from file or given as an
 /// argument to the constructor).
 //
-class SquishedDawg : public Dawg {
+class TESS_API SquishedDawg : public Dawg {
  public:
   SquishedDawg(DawgType type, const STRING &lang, PermuterType perm,
                int debug_level)

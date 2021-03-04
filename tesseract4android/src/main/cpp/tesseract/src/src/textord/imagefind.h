@@ -27,16 +27,16 @@
 struct Boxa;
 struct Pix;
 struct Pixa;
-class TBOX;
-class FCOORD;
-class TO_BLOCK;
-class BLOBNBOX_LIST;
 
 namespace tesseract {
 
 class ColPartitionGrid;
 class ColPartition_LIST;
 class TabFind;
+class TBOX;
+class FCOORD;
+class TO_BLOCK;
+class BLOBNBOX_LIST;
 
 // The ImageFind class is a simple static function wrapper class that
 // exposes the FindImages function and some useful helper functions.
@@ -50,7 +50,7 @@ class ImageFind {
   static Pix* FindImages(Pix* pix, DebugPixa* pixa_debug);
 
   // Generates a Boxa, Pixa pair from the input binary (image mask) pix,
-  // analgous to pixConnComp, except that connected components which are nearly
+  // analogous to pixConnComp, except that connected components which are nearly
   // rectangular are replaced with solid rectangles.
   // The returned boxa, pixa may be nullptr, meaning no images found.
   // If not nullptr, they must be destroyed by the caller.

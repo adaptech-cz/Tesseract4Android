@@ -18,14 +18,13 @@
 #ifndef   STOPPER_H
 #define   STOPPER_H
 
-/*----------------------------------------------------------------------------
-          Include Files and Type Defines
-----------------------------------------------------------------------------*/
-
-#include "genericvector.h"
 #include "params.h"
 #include "ratngs.h"
-#include "unichar.h"
+
+#include "genericvector.h"
+#include <tesseract/unichar.h>
+
+namespace tesseract {
 
 class WERD_CHOICE;
 
@@ -46,5 +45,6 @@ struct DANGERR_INFO {
 
 using DANGERR = GenericVector<DANGERR_INFO>;
 
+} // namespace tesseract
 
 #endif

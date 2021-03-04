@@ -13,18 +13,16 @@
 #include "include_gunit.h"
 #include "normstrngs.h"
 #include "normstrngs_test.h"
-#include "strngs.h"
-#include "unichar.h"
-#if defined(HAS_UNILIB_H)
-#include "unilib.h"
+#include <tesseract/unichar.h>
+#ifdef INCLUDE_TENSORFLOW
+#include "util/utf8/unilib.h"           // for UniLib
 #endif
 
 #include "include_gunit.h"
 
 namespace tesseract {
-namespace {
 
-#if defined(HAS_UNILIB_H)
+#if defined(MISSING_CODE)
 static std::string EncodeAsUTF8(const char32 ch32) {
   UNICHAR uni_ch(ch32);
   return std::string(uni_ch.utf8(), uni_ch.utf8_len());
@@ -114,13 +112,13 @@ TEST(NormstrngsTest, DetectsCorrectText) {
 }
 
 TEST(NormstrngsTest, DetectsIncorrectText) {
-  for (size_t i = 0; i < ARRAYSIZE(kBadlyFormedHinWords); ++i) {
+  for (size_t i = 0; i < countof(kBadlyFormedHinWords); ++i) {
     EXPECT_FALSE(NormalizeUTF8String(UnicodeNormMode::kNFKC, OCRNorm::kNone,
                                      GraphemeNorm::kNormalize,
                                      kBadlyFormedHinWords[i], nullptr))
         << kBadlyFormedHinWords[i];
   }
-  for (size_t i = 0; i < ARRAYSIZE(kBadlyFormedThaiWords); ++i) {
+  for (size_t i = 0; i < countof(kBadlyFormedThaiWords); ++i) {
     EXPECT_FALSE(NormalizeUTF8String(UnicodeNormMode::kNFKC, OCRNorm::kNone,
                                      GraphemeNorm::kNormalize,
                                      kBadlyFormedThaiWords[i], nullptr))
@@ -363,23 +361,25 @@ TEST(NormstrngsTest, SpanUTF8NotWhitespace) {
   EXPECT_EQ(12, SpanUTF8NotWhitespace(kMixedText));
 }
 
-#if defined(HAS_UNILIB_H)
-// Test that the method clones the util/utf8/public/unilib definition of
+// Test that the method clones the util/utf8/unilib definition of
 // interchange validity.
 TEST(NormstrngsTest, IsInterchangeValid) {
+#ifdef INCLUDE_TENSORFLOW
   const int32_t kMinUnicodeValue = 33;
   const int32_t kMaxUnicodeValue = 0x10FFFF;
   for (int32_t ch = kMinUnicodeValue; ch <= kMaxUnicodeValue; ++ch) {
     SCOPED_TRACE(absl::StrFormat("Failed at U+%x", ch));
     EXPECT_EQ(UniLib::IsInterchangeValid(ch), IsInterchangeValid(ch));
   }
-}
+#else
+  GTEST_SKIP();
 #endif
+}
 
-#if defined(HAS_UNILIB_H)
-// Test that the method clones the util/utf8/public/unilib definition of
+// Test that the method clones the util/utf8/unilib definition of
 // 7-bit ASCII interchange validity.
 TEST(NormstrngsTest, IsInterchangeValid7BitAscii) {
+#if defined(MISSING_CODE) && defined(INCLUDE_TENSORFLOW)
   const int32_t kMinUnicodeValue = 33;
   const int32_t kMaxUnicodeValue = 0x10FFFF;
   for (int32_t ch = kMinUnicodeValue; ch <= kMaxUnicodeValue; ++ch) {
@@ -388,10 +388,13 @@ TEST(NormstrngsTest, IsInterchangeValid7BitAscii) {
     EXPECT_EQ(UniLib::IsInterchangeValid7BitAscii(str),
               IsInterchangeValid7BitAscii(ch));
   }
-}
+#else
+  // Skipped because of missing UniLib::IsInterchangeValid7BitAscii.
+  GTEST_SKIP();
 #endif
+}
 
-// Test that the method clones the util/utf8/public/unilib definition of
+// Test that the method clones the util/utf8/unilib definition of
 // fullwidth-halfwidth .
 TEST(NormstrngsTest, FullwidthToHalfwidth) {
   // U+FF21 -> U+0041 (Latin capital letter A)
@@ -401,7 +404,8 @@ TEST(NormstrngsTest, FullwidthToHalfwidth) {
   // U+FFE6 -> U+20A9 (won sign)
   EXPECT_EQ(0x20A9, FullwidthToHalfwidth(0xFFE6));
 
-#if defined(HAS_UNILIB_H)
+#if defined(MISSING_CODE) && defined(INCLUDE_TENSORFLOW)
+  // Skipped because of missing UniLib::FullwidthToHalfwidth.
   const int32_t kMinUnicodeValue = 33;
   const int32_t kMaxUnicodeValue = 0x10FFFF;
   for (int32_t ch = kMinUnicodeValue; ch <= kMaxUnicodeValue; ++ch) {
@@ -415,5 +419,4 @@ TEST(NormstrngsTest, FullwidthToHalfwidth) {
 #endif
 }
 
-}  // namespace
 }  // namespace tesseract

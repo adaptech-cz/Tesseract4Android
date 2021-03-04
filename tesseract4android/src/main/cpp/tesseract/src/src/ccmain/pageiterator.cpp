@@ -3,7 +3,6 @@
 // Description: Iterator for tesseract page structure that avoids using
 //              tesseract internal data structures.
 // Author:      Ray Smith
-// Created:     Fri Feb 26 14:32:09 PST 2010
 //
 // (C) Copyright 2010, Google Inc.
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,8 +17,8 @@
 //
 ///////////////////////////////////////////////////////////////////////
 
-#include "pageiterator.h"
-#include "allheaders.h"
+#include <tesseract/pageiterator.h>
+#include <allheaders.h>
 #include "helpers.h"
 #include "pageres.h"
 #include "tesseractclass.h"
@@ -355,7 +354,8 @@ bool PageIterator::Empty(PageIteratorLevel level) const {
   return false;
 }
 
-/** Returns the type of the current block. See apitypes.h for PolyBlockType. */
+/** Returns the type of the current block.
+ *  See tesseract/publictypes.h for PolyBlockType. */
 PolyBlockType PageIterator::BlockType() const {
   if (it_->block() == nullptr || it_->block()->block == nullptr)
     return PT_UNKNOWN;  // Already at the end!
@@ -599,7 +599,7 @@ void PageIterator::BeginWord(int offset) {
     if (word_res->box_word != nullptr) {
       if (word_res->box_word->length() != word_length_) {
         tprintf("Corrupted word! best_choice[len=%d] = %s, box_word[len=%d]: ",
-                word_length_, word_res->best_choice->unichar_string().string(),
+                word_length_, word_res->best_choice->unichar_string().c_str(),
                 word_res->box_word->length());
         word_res->box_word->bounding_box().print();
       }

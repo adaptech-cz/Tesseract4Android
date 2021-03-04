@@ -16,25 +16,31 @@
  *
  **********************************************************************/
 
+ // Include automatically generated configuration file if running autoconf.
+#ifdef HAVE_CONFIG_H
+#include "config_auto.h"
+#endif
+
 #include "coutln.h"
-#include <algorithm>      // for max, min
-#include <cmath>          // for abs
-#include <cstdlib>        // for abs
-#include <cstring>        // for memset, memcpy, memmove
-#include "allheaders.h"   // for pixSetPixel, pixGetData, pixRasterop, pixGe...
+
 #include "arrayaccess.h"  // for GET_DATA_BYTE
 #include "blobs.h"        // for TPOINT
 #include "crakedge.h"     // for CRACKEDGE
 #include "environ.h"      // for l_uint32
 #include "errcode.h"      // for ASSERT_HOST
-#include "helpers.h"      // for ClipToRange, IntCastRounded, Modulo
 #include "normalis.h"     // for DENORM
+
+#include "helpers.h"      // for ClipToRange, IntCastRounded, Modulo
+
+#include <allheaders.h>   // for pixSetPixel, pixGetData, pixRasterop, pixGe...
 #include "pix.h"          // for Pix (ptr only), PIX_DST, PIX_NOT
 
-// Include automatically generated configuration file if running autoconf.
-#ifdef HAVE_CONFIG_H
-#include "config_auto.h"
-#endif
+#include <algorithm>      // for max, min
+#include <cmath>          // for abs
+#include <cstdlib>        // for abs
+#include <cstring>        // for memset, memcpy, memmove
+
+namespace tesseract {
 
 ELISTIZE (C_OUTLINE)
 ICOORD C_OUTLINE::step_coords[4] = {
@@ -215,13 +221,15 @@ C_OUTLINE::C_OUTLINE(C_OUTLINE* srcline, FCOORD rotation) : offsets(nullptr) {
       }
     }
     ASSERT_HOST (destpos.x () == start.x () && destpos.y () == start.y ());
-    dirdiff = step_dir (destindex - 1) - step_dir (0);
-    while ((dirdiff == 64 || dirdiff == -64) && destindex > 1) {
+    while (destindex > 1) {
+      dirdiff = step_dir(destindex - 1) - step_dir(0);
+      if (dirdiff != 64 && dirdiff != -64) {
+        break;
+      }
       start += step (0);
       destindex -= 2;
       for (int i = 0; i < destindex; ++i)
         set_step(i, step_dir(i + 1));
-      dirdiff = step_dir (destindex - 1) - step_dir (0);
     }
     if (destindex >= 4)
       break;
@@ -1011,18 +1019,21 @@ C_OUTLINE& C_OUTLINE::operator=(const C_OUTLINE& source) {
   box = source.box;
   start = source.start;
   free(steps);
-  stepcount = source.stepcount;
-  steps = static_cast<uint8_t *>(malloc(step_mem()));
-  memmove (steps, source.steps, step_mem());
-  if (!children.empty ())
-    children.clear ();
+  steps = nullptr;
+  if (!children.empty()) {
+    children.clear();
+  }
   children.deep_copy(&source.children, &deep_copy);
   delete [] offsets;
-  if (source.offsets != nullptr) {
-    offsets = new EdgeOffset[stepcount];
-    memcpy(offsets, source.offsets, stepcount * sizeof(*offsets));
-  } else {
-    offsets = nullptr;
+  offsets = nullptr;
+  stepcount = source.stepcount;
+  if (stepcount > 0) {
+    steps = static_cast<uint8_t *>(malloc(step_mem()));
+    memmove(steps, source.steps, step_mem());
+    if (source.offsets != nullptr) {
+      offsets = new EdgeOffset[stepcount];
+      memcpy(offsets, source.offsets, stepcount * sizeof(*offsets));
+    }
   }
   return *this;
 }
@@ -1049,3 +1060,5 @@ void C_OUTLINE::increment_step(int s, int increment, ICOORD* pos,
 ICOORD C_OUTLINE::chain_step(int chaindir) {
   return step_coords[chaindir % 4];
 }
+
+} // namespace tesseract

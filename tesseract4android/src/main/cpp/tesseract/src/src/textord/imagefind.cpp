@@ -22,18 +22,19 @@
 #endif
 
 #include "imagefind.h"
+
 #include "colpartitiongrid.h"
 #include "linlsq.h"
 #include "statistc.h"
 #include "params.h"
 
-#include "allheaders.h"
+#include <allheaders.h>
 
 #include <algorithm>
 
-static INT_VAR(textord_tabfind_show_images, false, "Show image blobs");
-
 namespace tesseract {
+
+static INT_VAR(textord_tabfind_show_images, false, "Show image blobs");
 
 // Fraction of width or height of on pixels that can be discarded from a
 // roughly rectangular image.
@@ -145,7 +146,7 @@ Pix* ImageFind::FindImages(Pix* pix, DebugPixa* pixa_debug) {
 }
 
 // Generates a Boxa, Pixa pair from the input binary (image mask) pix,
-// analgous to pixConnComp, except that connected components which are nearly
+// analogous to pixConnComp, except that connected components which are nearly
 // rectangular are replaced with solid rectangles.
 // The returned boxa, pixa may be nullptr, meaning no images found.
 // If not nullptr, they must be destroyed by the caller.
@@ -1354,11 +1355,12 @@ void ImageFind::FindImagePartitions(Pix* image_pix, const FCOORD& rotation,
   boxaDestroy(&boxa);
   pixaDestroy(&pixa);
   DeleteSmallImages(part_grid);
+#ifndef GRAPHICS_DISABLED
   if (textord_tabfind_show_images) {
     ScrollView* images_win_ = part_grid->MakeWindow(1000, 400, "With Images");
     part_grid->DisplayBoxes(images_win_);
   }
+#endif
 }
-
 
 }  // namespace tesseract.

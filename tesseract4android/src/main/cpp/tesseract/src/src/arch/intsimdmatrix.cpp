@@ -2,7 +2,6 @@
 // File:        intsimdmatrix.cpp
 // Description: Base class for 8-bit int SIMD matrix multipliers.
 // Author:      Ray Smith
-// Created:     Tue Aug 15 08:01:32 PST 2017
 //
 // (C) Copyright 2017, Google Inc.
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,7 +16,6 @@
 ///////////////////////////////////////////////////////////////////////
 
 #include "intsimdmatrix.h"
-#include "genericvector.h"      // for GenericVector
 #include "matrix.h"             // for GENERIC_2D_ARRAY
 #include "simddetect.h"         // for SIMDDetect
 
@@ -27,12 +25,13 @@ const IntSimdMatrix* IntSimdMatrix::intSimdMatrix = nullptr;
 
 // Computes a reshaped copy of the weight matrix w.
 void IntSimdMatrix::Init(const GENERIC_2D_ARRAY<int8_t>& w,
-                         std::vector<int8_t>& shaped_w) const {
+                         std::vector<int8_t>& shaped_w,
+                         int32_t& rounded_num_out) const {
   const int num_out = w.dim1();
   const int num_in = w.dim2() - 1;
   // The rounded-up sizes of the reshaped weight matrix, excluding biases.
   int rounded_num_in = Roundup(num_in, num_inputs_per_group_);
-  int rounded_num_out = RoundOutputs(num_out);
+  rounded_num_out = RoundOutputs(num_out);
   // Add the bias and compute the required size.
   shaped_w.resize((rounded_num_in + 1) * rounded_num_out, 0);
   int shaped_index = 0;
@@ -77,7 +76,7 @@ void IntSimdMatrix::Init(const GENERIC_2D_ARRAY<int8_t>& w,
 // u is imagined to have an extra element at the end with value 1, to
 // implement the bias, but it doesn't actually have it.
 void IntSimdMatrix::MatrixDotVector(const GENERIC_2D_ARRAY<int8_t>& w,
-                                    const GenericVector<double>& scales,
+                                    const std::vector<double>& scales,
                                     const int8_t* u, double* v) {
   int num_out = w.dim1();
   int num_in = w.dim2() - 1;
@@ -87,7 +86,7 @@ void IntSimdMatrix::MatrixDotVector(const GENERIC_2D_ARRAY<int8_t>& w,
     int total = 0;
     for (int j = 0; j < num_in; ++j) total += wi[j] * u[j];
     // Add in the bias and correct for integer values.
-    v[i] = (static_cast<double>(total) / INT8_MAX + wi[num_in]) * scales[i];
+    v[i] = (total + wi[num_in] * INT8_MAX) * scales[i];
   }
 }
 

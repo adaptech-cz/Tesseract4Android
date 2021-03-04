@@ -2,7 +2,6 @@
 // File:        linerec.cpp
 // Description: Top-level line-based recognition module for Tesseract.
 // Author:      Ray Smith
-// Created:     Thu May 02 09:47:06 PST 2013
 //
 // (C) Copyright 2013, Google Inc.
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,13 +17,11 @@
 
 #include "tesseractclass.h"
 
-#include "allheaders.h"
+#include <allheaders.h>
 #include "boxread.h"
-#include "imagedata.h"
-#ifndef ANDROID_BUILD
+#include "imagedata.h"      // for ImageData
 #include "lstmrecognizer.h"
 #include "recodebeam.h"
-#endif
 #include "pageres.h"
 #include "tprintf.h"
 
@@ -41,7 +38,7 @@ const float kWorstDictCertainty = -25.0f;
 // Breaks the page into lines, according to the boxes, and writes them to a
 // serialized DocumentData based on output_basename.
 // Return true if successful, false if an error occurred.
-bool Tesseract::TrainLineRecognizer(const STRING& input_imagename,
+bool Tesseract::TrainLineRecognizer(const char* input_imagename,
                                     const STRING& output_basename,
                                     BLOCK_LIST *block_list) {
   STRING lstmf_name = output_basename + ".lstmf";
@@ -53,18 +50,18 @@ bool Tesseract::TrainLineRecognizer(const STRING& input_imagename,
       return false;
     }
   }
-  GenericVector<TBOX> boxes;
-  GenericVector<STRING> texts;
+  std::vector<TBOX> boxes;
+  std::vector<STRING> texts;
   // Get the boxes for this page, if there are any.
   if (!ReadAllBoxes(applybox_page, false, input_imagename, &boxes, &texts, nullptr,
                     nullptr) ||
       boxes.empty()) {
-    tprintf("Failed to read boxes from %s\n", input_imagename.c_str());
+    tprintf("Failed to read boxes from %s\n", input_imagename);
     return false;
   }
   TrainFromBoxes(boxes, texts, block_list, &images);
   if (images.PagesSize() == 0) {
-    tprintf("Failed to read pages from %s\n", input_imagename.c_str());
+    tprintf("Failed to read pages from %s\n", input_imagename);
     return false;
   }
   images.Shuffle();
@@ -78,8 +75,8 @@ bool Tesseract::TrainLineRecognizer(const STRING& input_imagename,
 // Generates training data for training a line recognizer, eg LSTM.
 // Breaks the boxes into lines, normalizes them, converts to ImageData and
 // appends them to the given training_data.
-void Tesseract::TrainFromBoxes(const GenericVector<TBOX>& boxes,
-                               const GenericVector<STRING>& texts,
+void Tesseract::TrainFromBoxes(const std::vector<TBOX>& boxes,
+                               const std::vector<STRING>& texts,
                                BLOCK_LIST *block_list,
                                DocumentData* training_data) {
   int box_count = boxes.size();
@@ -117,7 +114,7 @@ void Tesseract::TrainFromBoxes(const GenericVector<TBOX>& boxes,
     }
     ImageData* imagedata = nullptr;
     if (best_block == nullptr) {
-      tprintf("No block overlapping textline: %s\n", line_str.string());
+      tprintf("No block overlapping textline: %s\n", line_str.c_str());
     } else {
       imagedata = GetLineData(line_box, boxes, texts, start_box, end_box,
                               *best_block);
@@ -134,8 +131,8 @@ void Tesseract::TrainFromBoxes(const GenericVector<TBOX>& boxes,
 // and ground truth boxes/truth text if available in the input.
 // The image is not normalized in any way.
 ImageData* Tesseract::GetLineData(const TBOX& line_box,
-                                  const GenericVector<TBOX>& boxes,
-                                  const GenericVector<STRING>& texts,
+                                  const std::vector<TBOX>& boxes,
+                                  const std::vector<STRING>& texts,
                                   int start_box, int end_box,
                                   const BLOCK& block) {
   TBOX revised_box;
@@ -146,8 +143,8 @@ ImageData* Tesseract::GetLineData(const TBOX& line_box,
   // Copy the boxes and shift them so they are relative to the image.
   FCOORD block_rotation(block.re_rotation().x(), -block.re_rotation().y());
   ICOORD shift = -revised_box.botleft();
-  GenericVector<TBOX> line_boxes;
-  GenericVector<STRING> line_texts;
+  std::vector<TBOX> line_boxes;
+  std::vector<STRING> line_texts;
   for (int b = start_box; b < end_box; ++b) {
     TBOX box = boxes[b];
     box.rotate(block_rotation);
@@ -155,8 +152,8 @@ ImageData* Tesseract::GetLineData(const TBOX& line_box,
     line_boxes.push_back(box);
     line_texts.push_back(texts[b]);
   }
-  GenericVector<int> page_numbers;
-  page_numbers.init_to_size(line_boxes.size(), applybox_page);
+  std::vector<int> page_numbers;
+  page_numbers.resize(line_boxes.size(), applybox_page);
   image_data->AddBoxes(line_boxes, line_texts, page_numbers);
   return image_data;
 }
@@ -197,8 +194,8 @@ ImageData* Tesseract::GetRectImage(const TBOX& box, const BLOCK& block,
   Box* clip_box = boxCreate(revised_box->left(), height - revised_box->top(),
                             revised_box->width(), revised_box->height());
   Pix* box_pix = pixClipRectangle(pix, clip_box, nullptr);
-  if (box_pix == nullptr) return nullptr;
   boxDestroy(&clip_box);
+  if (box_pix == nullptr) return nullptr;
   if (num_rotations > 0) {
     Pix* rot_pix = pixRotateOrth(box_pix, num_rotations);
     pixDestroy(&box_pix);
@@ -223,7 +220,6 @@ ImageData* Tesseract::GetRectImage(const TBOX& box, const BLOCK& block,
   return new ImageData(vertical_text, box_pix);
 }
 
-#ifndef ANDROID_BUILD
 // Recognizes a word or group of words, converting to WERD_RES in *words.
 // Analogous to classify_word_pass1, but can handle a group of words as well.
 void Tesseract::LSTMRecognizeWord(const BLOCK& block, ROW *row, WERD_RES *word,
@@ -248,7 +244,8 @@ void Tesseract::LSTMRecognizeWord(const BLOCK& block, ROW *row, WERD_RES *word,
   bool do_invert = tessedit_do_invert;
   lstm_recognizer_->RecognizeLine(*im_data, do_invert, classify_debug_level > 0,
                                   kWorstDictCertainty / kCertaintyScale,
-                                  word_box, words, lstm_choice_mode);
+                                  word_box, words, lstm_choice_mode,
+                                  lstm_choice_iterations);
   delete im_data;
   SearchWords(words);
 }
@@ -306,6 +303,5 @@ void Tesseract::SearchWords(PointerVector<WERD_RES>* words) {
     }
   }
 }
-#endif  // ANDROID_BUILD
 
 }  // namespace tesseract.

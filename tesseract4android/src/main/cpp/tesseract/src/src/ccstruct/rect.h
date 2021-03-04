@@ -20,18 +20,22 @@
 #ifndef RECT_H
 #define RECT_H
 
-#include <algorithm>           // for std::max, std::min
-#include <cmath>               // for std::ceil, std::floor
-#include <cstdint>             // for INT16_MAX
-#include <cstdio>              // for FILE
-#include "platform.h"          // for DLLSYM
 #include "points.h"            // for ICOORD, FCOORD
 #include "scrollview.h"        // for ScrollView, ScrollView::Color
 #include "tprintf.h"           // for tprintf
 
+#include <tesseract/export.h>          // for DLLSYM
+
+#include <algorithm>           // for std::max, std::min
+#include <cmath>               // for std::ceil, std::floor
+#include <cstdint>             // for INT16_MAX
+#include <cstdio>              // for FILE
+
+namespace tesseract {
+
 class STRING;
 
-class DLLSYM TBOX  {  // bounding box
+class TESS_API TBOX  {  // bounding box
   public:
     TBOX ():       // empty constructor making a null box
     bot_left (INT16_MAX, INT16_MAX), top_right (-INT16_MAX, -INT16_MAX) {
@@ -41,8 +45,15 @@ class DLLSYM TBOX  {  // bounding box
         const ICOORD pt1,   // one corner
         const ICOORD pt2);  // the other corner
 
-    TBOX(                    // constructor
-        int16_t left, int16_t bottom, int16_t right, int16_t top);
+    //*********************************************************************
+    // TBOX::TBOX()  Constructor from 4 integer values.
+    //  Note: It is caller's responsibility to provide values
+    //        in the right order.
+    //*********************************************************************
+    TBOX(                    //constructor
+        int16_t left, int16_t bottom, int16_t right, int16_t top)
+        : bot_left(left, bottom), top_right(right, top) {
+    }
 
     TBOX(  // box around FCOORD
         const FCOORD pt);
@@ -490,5 +501,7 @@ inline double TBOX::y_overlap_fraction(const TBOX& other) const {
     return std::max(0.0, static_cast<double>(high - low) / height);
   }
 }
+
+}  // namespace tesseract
 
 #endif

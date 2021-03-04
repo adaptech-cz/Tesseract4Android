@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////
 // File:        unicity_table.h
 // Description: a class to uniquify objects, manipulating them using integers
-// ids.
+//              ids.
 // Author:      Samuel Charron
 //
 // (C) Copyright 2006, Google Inc.
@@ -20,9 +20,13 @@
 #ifndef TESSERACT_CCUTIL_UNICITY_TABLE_H_
 #define TESSERACT_CCUTIL_UNICITY_TABLE_H_
 
-#include "tesscallback.h"
 #include "errcode.h"
+
 #include "genericvector.h"
+
+#include <functional>           // for std::function
+
+namespace tesseract {
 
 // A class to uniquify objects, manipulating them using integers ids.
 // T requirements:
@@ -32,7 +36,6 @@
 template <typename T>
 class UnicityTable {
  public:
-  UnicityTable();
   /// Clear the structures and deallocate internal structures.
   ~UnicityTable();
 
@@ -65,11 +68,9 @@ class UnicityTable {
 
   /// Add a callback to be called to delete the elements when the table took
   /// their ownership.
-  void set_clear_callback(TessCallback1<T>* cb);
-
-  /// Add a callback to be called to compare the elements when needed (contains,
-  /// get_id, ...)
-  void set_compare_callback(TessResultCallback2<bool, T const &, T const &>* cb);
+  void set_clear_callback(std::function<void(T)> cb) {
+    table_.set_clear_callback(cb);
+  }
 
   /// Clear the table, calling the callback function if any.
   /// All the owned Callbacks are also deleted.
@@ -85,30 +86,16 @@ class UnicityTable {
   /// The Callback given must be permanent since they will be called more than
   /// once. The given callback will be deleted at the end.
   /// Returns false on read/write error.
-  bool write(FILE* f, TessResultCallback2<bool, FILE*, T const &>* cb) const;
-  bool read(tesseract::TFile* f,
-            TessResultCallback2<bool, tesseract::TFile*, T*>* cb);
+  bool write(FILE* f, std::function<bool(FILE*, const T&)> cb) const {
+    return table_.write(f, cb);
+  }
+  bool read(tesseract::TFile* f, std::function<bool(tesseract::TFile*, T*)> cb) {
+    return table_.read(f, cb);
+  }
 
  private:
   GenericVector<T> table_;
-  // Mutable because Run method is not const
-  mutable TessResultCallback2<bool, T const &, T const &>* compare_cb_;
 };
-
-template <typename T>
-class UnicityTableEqEq : public UnicityTable<T> {
- public:
-  UnicityTableEqEq() {
-    UnicityTable<T>::set_compare_callback(
-        NewPermanentTessCallback(tesseract::cmp_eq<T>));
-  }
-};
-
-template <typename T>
-UnicityTable<T>::UnicityTable() :
-  compare_cb_(nullptr) {
-}
-
 
 template <typename T>
 UnicityTable<T>::~UnicityTable() {
@@ -160,24 +147,10 @@ template <typename T>
 int UnicityTable<T>::push_back(T object) {
   int idx = get_id(object);
   if (idx == -1) {
-    idx = table_.push_back(object);
+    table_.push_back(object);
+    idx = size();
   }
   return idx;
-}
-
-// Add a callback to be called to delete the elements when the table took
-// their ownership.
-template <typename T>
-void UnicityTable<T>::set_clear_callback(TessCallback1<T>* cb) {
-  table_.set_clear_callback(cb);
-}
-
-// Add a callback to be called to delete the elements when the table took
-// their ownership.
-template <typename T>
-void UnicityTable<T>::set_compare_callback(TessResultCallback2<bool, T const &, T const &>* cb) {
-  table_.set_compare_callback(cb);
-  compare_cb_ = cb;
 }
 
 // Clear the table, calling the callback function if any.
@@ -186,23 +159,13 @@ void UnicityTable<T>::clear() {
   table_.clear();
 }
 
-template <typename T>
-bool UnicityTable<T>::write(
-    FILE* f, TessResultCallback2<bool, FILE*, T const &>* cb) const {
-  return table_.write(f, cb);
-}
-
-template <typename T>
-bool UnicityTable<T>::read(
-    tesseract::TFile* f, TessResultCallback2<bool, tesseract::TFile*, T*>* cb) {
-  return table_.read(f, cb);
-}
-
 // This method clear the current object, then, does a shallow copy of
 // its argument, and finally invalidate its argument.
 template <typename T>
 void UnicityTable<T>::move(UnicityTable<T>* from) {
   table_.move(&from->table_);
 }
+
+} // namespace tesseract
 
 #endif  // TESSERACT_CCUTIL_UNICITY_TABLE_H_

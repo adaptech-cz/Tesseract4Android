@@ -1,11 +1,8 @@
-// Copyright 2011 Google Inc. All Rights Reserved.
-// Author: rays@google.com (Ray Smith)
 ///////////////////////////////////////////////////////////////////////
 // File:        shapeclassifier.h
 // Description: Base interface class for classifiers that return a
 //              shape index.
 // Author:      Ray Smith
-// Created:     Tue Sep 13 11:26:32 PDT 2011
 //
 // (C) Copyright 2011, Google Inc.
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,14 +20,14 @@
 #ifndef TESSERACT_CLASSIFY_SHAPECLASSIFIER_H_
 #define TESSERACT_CLASSIFY_SHAPECLASSIFIER_H_
 
-#include "unichar.h"
+#include <tesseract/unichar.h>
 
-template <typename T> class GenericVector;
 struct Pix;
-class ScrollView;
-class UNICHARSET;
 
 namespace tesseract {
+
+class ScrollView;
+class UNICHARSET;
 
 template <typename T> class PointerVector;
 struct ShapeRating;
@@ -40,7 +37,7 @@ class TrainingSampleSet;
 struct UnicharRating;
 
 // Interface base class for classifiers that produce ShapeRating results.
-class ShapeClassifier {
+class TESS_API ShapeClassifier {
  public:
   virtual ~ShapeClassifier() = default;
 
@@ -66,12 +63,12 @@ class ShapeClassifier {
   // be overridden by a classifier in order for it to do anything.
   virtual int UnicharClassifySample(const TrainingSample& sample, Pix* page_pix,
                                     int debug, UNICHAR_ID keep_this,
-                                    GenericVector<UnicharRating>* results);
+                                    std::vector<UnicharRating>* results);
 
  protected:
   virtual int ClassifySample(const TrainingSample& sample, Pix* page_pix,
                              int debug, UNICHAR_ID keep_this,
-                             GenericVector<ShapeRating>* results);
+                             std::vector<ShapeRating>* results);
 
  public:
   // Returns the shape that contains unichar_id that has the best result.
@@ -93,8 +90,8 @@ class ShapeClassifier {
   // the user has finished with debugging the sample.
   // Probably doesn't need to be overridden if the subclass provides
   // DisplayClassifyAs.
-  virtual void DebugDisplay(const TrainingSample& sample, Pix* page_pix,
-                            UNICHAR_ID unichar_id);
+  void DebugDisplay(const TrainingSample& sample, Pix* page_pix,
+                    UNICHAR_ID unichar_id);
 
 
   // Displays classification as the given unichar_id. Creates as many windows
@@ -109,14 +106,14 @@ class ShapeClassifier {
   // Prints debug information on the results. context is some introductory/title
   // message.
   virtual void UnicharPrintResults(
-      const char* context, const GenericVector<UnicharRating>& results) const;
+      const char* context, const std::vector<UnicharRating>& results) const;
   virtual void PrintResults(const char* context,
-                            const GenericVector<ShapeRating>& results) const;
+                            const std::vector<ShapeRating>& results) const;
 
  protected:
   // Removes any result that has all its unichars covered by a better choice,
   // regardless of font.
-  void FilterDuplicateUnichars(GenericVector<ShapeRating>* results) const;
+  void FilterDuplicateUnichars(std::vector<ShapeRating>* results) const;
 };
 
 }  // namespace tesseract.

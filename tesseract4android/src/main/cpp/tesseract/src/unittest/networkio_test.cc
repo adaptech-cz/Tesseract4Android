@@ -1,14 +1,22 @@
-#include "tesseract/lstm/networkio.h"
-#include "tesseract/lstm/stridemap.h"
+// (C) Copyright 2017, Google Inc.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
-using tesseract::FD_BATCH;
-using tesseract::FD_HEIGHT;
-using tesseract::FD_WIDTH;
-using tesseract::FlexDimensions;
-using tesseract::NetworkIO;
-using tesseract::StrideMap;
+#include "include_gunit.h"
+#include "networkio.h"
+#include "stridemap.h"
+#ifdef INCLUDE_TENSORFLOW
+#include <tensorflow/compiler/xla/array2d.h> // for xla::Array2D
+#endif
 
-namespace {
+namespace tesseract {
 
 class NetworkioTest : public ::testing::Test {
  protected:
@@ -16,10 +24,11 @@ class NetworkioTest : public ::testing::Test {
     std::locale::global(std::locale(""));
   }
 
+#ifdef INCLUDE_TENSORFLOW
   // Sets up an Array2d object of the given size, initialized to increasing
   // values starting with start.
-  std::unique_ptr<Array2D<int>> SetupArray(int ysize, int xsize, int start) {
-    std::unique_ptr<Array2D<int>> a(new Array2D<int>(ysize, xsize));
+  std::unique_ptr<xla::Array2D<int>> SetupArray(int ysize, int xsize, int start) {
+    std::unique_ptr<xla::Array2D<int>> a(new xla::Array2D<int>(ysize, xsize));
     int value = start;
     for (int y = 0; y < ysize; ++y) {
       for (int x = 0; x < xsize; ++x) {
@@ -30,11 +39,11 @@ class NetworkioTest : public ::testing::Test {
   }
   // Sets up a NetworkIO with a batch of 2 "images" of known values.
   void SetupNetworkIO(NetworkIO* nio) {
-    std::vector<std::unique_ptr<Array2D<int>>> arrays;
+    std::vector<std::unique_ptr<xla::Array2D<int>>> arrays;
     arrays.push_back(SetupArray(3, 4, 0));
     arrays.push_back(SetupArray(4, 5, 12));
     std::vector<std::pair<int, int>> h_w_sizes;
-    for (int i = 0; i < arrays.size(); ++i) {
+    for (size_t i = 0; i < arrays.size(); ++i) {
       h_w_sizes.emplace_back(arrays[i].get()->height(),
                              arrays[i].get()->width());
     }
@@ -50,11 +59,13 @@ class NetworkioTest : public ::testing::Test {
       nio->SetPixel(index.t(), 1, 128 - value, 0.0f, 128.0f);
     } while (index.Increment());
   }
+#endif
 };
 
 // Tests that the initialization via SetPixel works and the resize correctly
 // fills with zero where image sizes don't match.
 TEST_F(NetworkioTest, InitWithZeroFill) {
+#ifdef INCLUDE_TENSORFLOW
   NetworkIO nio;
   nio.Resize2d(true, 32, 2);
   int width = nio.Width();
@@ -86,10 +97,15 @@ TEST_F(NetworkioTest, InitWithZeroFill) {
   } while (index.Increment());
   EXPECT_EQ(pos, 32);
   EXPECT_EQ(next_t, 40);
+#else
+  LOG(INFO) << "Skip test because of missing xla::Array2D";
+  GTEST_SKIP();
+#endif
 }
 
 // Tests that CopyWithYReversal works.
 TEST_F(NetworkioTest, CopyWithYReversal) {
+#ifdef INCLUDE_TENSORFLOW
   NetworkIO nio;
   SetupNetworkIO(&nio);
   NetworkIO copy;
@@ -118,10 +134,15 @@ TEST_F(NetworkioTest, CopyWithYReversal) {
   } while (index.Increment());
   EXPECT_EQ(pos, 32);
   EXPECT_EQ(next_t, 40);
+#else
+  LOG(INFO) << "Skip test because of missing xla::Array2D";
+  GTEST_SKIP();
+#endif
 }
 
 // Tests that CopyWithXReversal works.
 TEST_F(NetworkioTest, CopyWithXReversal) {
+#ifdef INCLUDE_TENSORFLOW
   NetworkIO nio;
   SetupNetworkIO(&nio);
   NetworkIO copy;
@@ -150,10 +171,15 @@ TEST_F(NetworkioTest, CopyWithXReversal) {
   } while (index.Increment());
   EXPECT_EQ(pos, 32);
   EXPECT_EQ(next_t, 40);
+#else
+  LOG(INFO) << "Skip test because of missing xla::Array2D";
+  GTEST_SKIP();
+#endif
 }
 
 // Tests that CopyWithXYTranspose works.
 TEST_F(NetworkioTest, CopyWithXYTranspose) {
+#ifdef INCLUDE_TENSORFLOW
   NetworkIO nio;
   SetupNetworkIO(&nio);
   NetworkIO copy;
@@ -182,6 +208,10 @@ TEST_F(NetworkioTest, CopyWithXYTranspose) {
   } while (index.Increment());
   EXPECT_EQ(pos, 32);
   EXPECT_EQ(next_t, 40);
+#else
+  LOG(INFO) << "Skip test because of missing xla::Array2D";
+  GTEST_SKIP();
+#endif
 }
 
 }  // namespace

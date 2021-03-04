@@ -72,11 +72,11 @@ TabFind::TabFind(int gridsize, const ICOORD& bleft, const ICOORD& tright,
   width_cb_ = nullptr;
   v_it_.add_list_after(vlines);
   SetVerticalSkewAndParallelize(vertical_x, vertical_y);
-  width_cb_ = NewPermanentTessCallback(this, &TabFind::CommonWidth);
+  using namespace std::placeholders;  // for _1
+  width_cb_ = std::bind(&TabFind::CommonWidth, this, _1);
 }
 
 TabFind::~TabFind() {
-  delete width_cb_;
 }
 
 ///////////////// PUBLIC functions (mostly used by TabVector). //////////////
@@ -443,7 +443,7 @@ bool TabFind::FindTabVectors(TabVector_LIST* hlines,
     DisplayTabs("FinalTabs", tab_win);
     tab_win = DisplayTabVectors(tab_win);
   }
-  #endif  // GRAPHICS_DISABLED
+  #endif // !GRAPHICS_DISABLED
   return true;
 }
 
@@ -481,7 +481,7 @@ void TabFind::TidyBlobs(TO_BLOCK* block) {
     block->plot_graded_blobs(rej_win);
     block->plot_noise_blobs(rej_win);
     rej_win->Update();
-    #endif  // GRAPHICS_DISABLED
+    #endif // !GRAPHICS_DISABLED
   }
   block->DeleteUnownedNoise();
 }
@@ -494,8 +494,9 @@ void TabFind::SetupTabSearch(int x, int y, int* min_key, int* max_key) {
   *max_key = std::max(key1, key2);
 }
 
-ScrollView* TabFind::DisplayTabVectors(ScrollView* tab_win) {
 #ifndef GRAPHICS_DISABLED
+
+ScrollView* TabFind::DisplayTabVectors(ScrollView* tab_win) {
   // For every vector, display it.
   TabVector_IT it(&vectors_);
   for (it.mark_cycle_pt(); !it.cycled_list(); it.forward()) {
@@ -503,9 +504,10 @@ ScrollView* TabFind::DisplayTabVectors(ScrollView* tab_win) {
     vector->Display(tab_win);
   }
   tab_win->Update();
-#endif
   return tab_win;
 }
+
+#endif
 
 // PRIVATE CODE.
 //
@@ -515,10 +517,12 @@ ScrollView* TabFind::FindInitialTabVectors(BLOBNBOX_LIST* image_blobs,
                                            int min_gutter_width,
                                            double tabfind_aligned_gap_fraction,
                                            TO_BLOCK* block) {
+#ifndef GRAPHICS_DISABLED
   if (textord_tabfind_show_initialtabs) {
     ScrollView* line_win = MakeWindow(0, 0, "VerticalLines");
     line_win = DisplayTabVectors(line_win);
   }
+#endif
   // Prepare the grid.
   if (image_blobs != nullptr)
     InsertBlobsToGrid(true, false, image_blobs, this);
@@ -530,16 +534,19 @@ ScrollView* TabFind::FindInitialTabVectors(BLOBNBOX_LIST* image_blobs,
   TabVector::MergeSimilarTabVectors(vertical_skew_, &vectors_, this);
   SortVectors();
   EvaluateTabs();
+#ifndef GRAPHICS_DISABLED
   if (textord_tabfind_show_initialtabs && initial_win != nullptr)
     initial_win = DisplayTabVectors(initial_win);
+#endif
   MarkVerticalText();
   return initial_win;
 }
 
+#ifndef GRAPHICS_DISABLED
+
 // Helper displays all the boxes in the given vector on the given window.
 static void DisplayBoxVector(const GenericVector<BLOBNBOX*>& boxes,
                              ScrollView* win) {
-  #ifndef GRAPHICS_DISABLED
   for (int i = 0; i < boxes.size(); ++i) {
     TBOX box = boxes[i]->bounding_box();
     int left_x = box.left();
@@ -551,8 +558,9 @@ static void DisplayBoxVector(const GenericVector<BLOBNBOX*>& boxes,
     win->Rectangle(left_x, bottom_y, right_x, top_y);
   }
   win->Update();
-  #endif  // GRAPHICS_DISABLED
 }
+
+#endif // !GRAPHICS_DISABLED
 
 // For each box in the grid, decide whether it is a candidate tab-stop,
 // and if so add it to the left/right tab boxes.
@@ -588,7 +596,7 @@ ScrollView* TabFind::FindTabBoxes(int min_gutter_width,
     DisplayBoxVector(right_tab_boxes_, tab_win);
     tab_win = DisplayTabs("Tabs", tab_win);
   }
-  #endif  // GRAPHICS_DISABLED
+  #endif // !GRAPHICS_DISABLED
   return tab_win;
 }
 
@@ -952,7 +960,7 @@ void TabFind::ComputeColumnWidths(ScrollView* tab_win,
   #ifndef GRAPHICS_DISABLED
   if (tab_win != nullptr)
     tab_win->Pen(ScrollView::WHITE);
-  #endif  // GRAPHICS_DISABLED
+  #endif // !GRAPHICS_DISABLED
   // Accumulate column sections into a STATS
   int col_widths_size = (tright_.x() - bleft_.x()) / kColumnWidthFactor;
   STATS col_widths(0, col_widths_size + 1);
@@ -961,7 +969,7 @@ void TabFind::ComputeColumnWidths(ScrollView* tab_win,
   if (tab_win != nullptr) {
     tab_win->Update();
   }
-  #endif  // GRAPHICS_DISABLED
+  #endif // !GRAPHICS_DISABLED
   if (textord_debug_tabfind > 1)
     col_widths.print();
   // Now make a list of column widths.

@@ -25,33 +25,41 @@
 #ifndef TESSERACT_CCMAIN_TESSERACTCLASS_H_
 #define TESSERACT_CCMAIN_TESSERACTCLASS_H_
 
-#include <cstdint>                  // for int16_t, int32_t, uint16_t
-#include <cstdio>                   // for FILE
-#include "allheaders.h"             // for pixDestroy, pixGetWidth, pixGetHe...
+#ifdef HAVE_CONFIG_H
+#include "config_auto.h" // DISABLED_LEGACY_ENGINE
+#endif
+
 #include "control.h"                // for ACCEPTABLE_WERD_TYPE
 #include "debugpixa.h"              // for DebugPixa
 #include "devanagari_processing.h"  // for ShiroRekhaSplitter
 #ifndef DISABLED_LEGACY_ENGINE
 #include "docqual.h"                // for GARBAGE_LEVEL
 #endif
-#include "genericvector.h"          // for GenericVector, PointerVector
 #include "pageres.h"                // for WERD_RES (ptr only), PAGE_RES (pt...
 #include "params.h"                 // for BOOL_VAR_H, BoolParam, DoubleParam
 #include "points.h"                 // for FCOORD
-#include "publictypes.h"            // for OcrEngineMode, PageSegMode, OEM_L...
 #include "ratngs.h"                 // for ScriptPos, WERD_CHOICE (ptr only)
-#include "strngs.h"                 // for STRING
 #include "tessdatamanager.h"        // for TessdataManager
 #include "textord.h"                // for Textord
-#include "unichar.h"                // for UNICHAR_ID
 #include "wordrec.h"                // for Wordrec
+
+#include "genericvector.h"          // for GenericVector, PointerVector
+#include <tesseract/publictypes.h>            // for OcrEngineMode, PageSegMode, OEM_L...
+#include "strngs.h"                 // for STRING
+#include <tesseract/unichar.h>                // for UNICHAR_ID
+
+#include <allheaders.h>             // for pixDestroy, pixGetWidth, pixGetHe...
+
+#include <cstdint>                  // for int16_t, int32_t, uint16_t
+#include <cstdio>                   // for FILE
+
+namespace tesseract {
 
 class BLOCK_LIST;
 class ETEXT_DESC;
 struct OSResults;
 class PAGE_RES;
 class PAGE_RES_IT;
-struct Pix;
 class ROW;
 class SVMenuNode;
 class TBOX;
@@ -59,6 +67,13 @@ class TO_BLOCK_LIST;
 class WERD;
 class WERD_CHOICE;
 class WERD_RES;
+
+class ColumnFinder;
+class DocumentData;
+class EquationDetect;
+class ImageData;
+class LSTMRecognizer;
+class Tesseract;
 
 // Top-level class for all tesseract global instance data.
 // This class either holds or points to all data used by an instance
@@ -76,8 +91,6 @@ class WERD_RES;
 //
 //             CCUtil (ccutil/ccutil.h)
 //                         ^      Members include: UNICHARSET
-//            CUtil (cutil/cutil_class.h)
-//                         ^       Members include: TBLOB*, TEXTBLOCK*
 //           CCStruct (ccstruct/ccstruct.h)
 //                         ^       Members include: Image
 //           Classify (classify/classify.h)
@@ -89,7 +102,7 @@ class WERD_RES;
 //
 // Other important classes:
 //
-//  TessBaseAPI (api/baseapi.h)
+//  TessBaseAPI (tesseract/baseapi.h)
 //                                 Members include: BLOCK_LIST*, PAGE_RES*,
 //                                 Tesseract*, ImageThresholder*
 //  Dict (dict/dict.h)
@@ -100,15 +113,6 @@ class WERD_RES;
 // the type is defined so for instance:
 // BOOL_VAR_H(textord_show_blobs, false, "Display unsorted blobs");
 // goes inside the Textord class, not the cc_util class.
-
-namespace tesseract {
-
-class ColumnFinder;
-class DocumentData;
-class EquationDetect;
-class ImageData;
-class LSTMRecognizer;
-class Tesseract;
 
 // A collection of various variables for statistics and debugging.
 struct TesseractStats {
@@ -171,7 +175,7 @@ struct WordData {
 using WordRecognizer = void (Tesseract::*)(const WordData&, WERD_RES**,
                                            PointerVector<WERD_RES>*);
 
-class Tesseract : public Wordrec {
+class TESS_API Tesseract : public Wordrec {
  public:
   Tesseract();
   ~Tesseract() override;
@@ -319,7 +323,7 @@ class Tesseract : public Wordrec {
   void PrepareForTessOCR(BLOCK_LIST* block_list, Tesseract* osd_tess,
                          OSResults* osr);
 
-  int SegmentPage(const STRING* input_file, BLOCK_LIST* blocks,
+  int SegmentPage(const char* input_file, BLOCK_LIST* blocks,
                   Tesseract* osd_tess, OSResults* osr);
   void SetupWordScripts(BLOCK_LIST* blocks);
   int AutoPageSeg(PageSegMode pageseg_mode, BLOCK_LIST* blocks,
@@ -330,28 +334,28 @@ class Tesseract : public Wordrec {
       OSResults* osr, TO_BLOCK_LIST* to_blocks, Pix** photo_mask_pix,
       Pix** music_mask_pix);
   // par_control.cpp
-  void PrerecAllWordsPar(const GenericVector<WordData>& words);
+  void PrerecAllWordsPar(const std::vector<WordData>& words);
 
   //// linerec.cpp
   // Generates training data for training a line recognizer, eg LSTM.
   // Breaks the page into lines, according to the boxes, and writes them to a
   // serialized DocumentData based on output_basename.
   // Return true if successful, false if an error occurred.
-  bool TrainLineRecognizer(const STRING& input_imagename,
+  bool TrainLineRecognizer(const char* input_imagename,
                            const STRING& output_basename,
                            BLOCK_LIST* block_list);
   // Generates training data for training a line recognizer, eg LSTM.
   // Breaks the boxes into lines, normalizes them, converts to ImageData and
   // appends them to the given training_data.
-  void TrainFromBoxes(const GenericVector<TBOX>& boxes,
-                      const GenericVector<STRING>& texts,
+  void TrainFromBoxes(const std::vector<TBOX>& boxes,
+                      const std::vector<STRING>& texts,
                       BLOCK_LIST* block_list, DocumentData* training_data);
 
   // Returns an Imagedata containing the image of the given textline,
   // and ground truth boxes/truth text if available in the input.
   // The image is not normalized in any way.
-  ImageData* GetLineData(const TBOX& line_box, const GenericVector<TBOX>& boxes,
-                         const GenericVector<STRING>& texts, int start_box,
+  ImageData* GetLineData(const TBOX& line_box, const std::vector<TBOX>& boxes,
+                         const std::vector<STRING>& texts, int start_box,
                          int end_box, const BLOCK& block);
   // Helper gets the image of a rectangle, using the block.re_rotation() if
   // needed to get to the image, and rotating the result back to horizontal
@@ -376,12 +380,12 @@ class Tesseract : public Wordrec {
   // Sets up the words ready for whichever engine is to be run
   void SetupAllWordsPassN(int pass_n, const TBOX* target_word_box,
                           const char* word_config, PAGE_RES* page_res,
-                          GenericVector<WordData>* words);
+                          std::vector<WordData>* words);
   // Sets up the single word ready for whichever engine is to be run.
   void SetupWordPassN(int pass_n, WordData* word);
   // Runs word recognition on all the words.
   bool RecogAllWordsPassN(int pass_n, ETEXT_DESC* monitor, PAGE_RES_IT* pr_it,
-                          GenericVector<WordData>* words);
+                          std::vector<WordData>* words);
   bool recog_all_words(PAGE_RES* page_res, ETEXT_DESC* monitor,
                        const TBOX* target_word_box, const char* word_config,
                        int dopasses);
@@ -424,10 +428,10 @@ class Tesseract : public Wordrec {
                                    PAGE_RES_IT* pr_it, C_BLOB* blob,
                                    const GenericVector<C_OUTLINE*>& outlines,
                                    int num_outlines,
-                                   GenericVector<bool>* ok_outlines);
+                                   std::vector<bool>* ok_outlines);
   // Classifies the given blob plus the outlines flagged by ok_outlines, undoes
   // the inclusion of the outlines, and returns the certainty of the raw choice.
-  float ClassifyBlobPlusOutlines(const GenericVector<bool>& ok_outlines,
+  float ClassifyBlobPlusOutlines(const std::vector<bool>& ok_outlines,
                                  const GenericVector<C_OUTLINE*>& outlines,
                                  int pass_n, PAGE_RES_IT* pr_it, C_BLOB* blob,
                                  STRING* best_str);
@@ -506,8 +510,8 @@ class Tesseract : public Wordrec {
   // See init_tesseract_internal for args.
   int init_tesseract(const char* arg0, const char* textbase,
                      const char* language, OcrEngineMode oem, char** configs,
-                     int configs_size, const GenericVector<STRING>* vars_vec,
-                     const GenericVector<STRING>* vars_values,
+                     int configs_size, const std::vector<std::string>* vars_vec,
+                     const std::vector<std::string>* vars_values,
                      bool set_only_init_params, TessdataManager* mgr);
   int init_tesseract(const char* datapath, const char* language,
                      OcrEngineMode oem) {
@@ -534,8 +538,8 @@ class Tesseract : public Wordrec {
   int init_tesseract_internal(const char* arg0, const char* textbase,
                               const char* language, OcrEngineMode oem,
                               char** configs, int configs_size,
-                              const GenericVector<STRING>* vars_vec,
-                              const GenericVector<STRING>* vars_values,
+                              const std::vector<std::string>* vars_vec,
+                              const std::vector<std::string>* vars_values,
                               bool set_only_init_params, TessdataManager* mgr);
 
   // Set the universal_id member of each font to be unique among all
@@ -551,19 +555,19 @@ class Tesseract : public Wordrec {
   bool init_tesseract_lang_data(const char* arg0, const char* textbase,
                                 const char* language, OcrEngineMode oem,
                                 char** configs, int configs_size,
-                                const GenericVector<STRING>* vars_vec,
-                                const GenericVector<STRING>* vars_values,
+                                const std::vector<std::string>* vars_vec,
+                                const std::vector<std::string>* vars_values,
                                 bool set_only_init_params,
                                 TessdataManager* mgr);
 
-  void ParseLanguageString(const char* lang_str, GenericVector<STRING>* to_load,
-                           GenericVector<STRING>* not_to_load);
+  void ParseLanguageString(const char* lang_str, std::vector<std::string>* to_load,
+                           std::vector<std::string>* not_to_load);
 
   //// pgedit.h //////////////////////////////////////////////////////////
   SVMenuNode* build_menu_new();
 #ifndef GRAPHICS_DISABLED
   void pgeditor_main(int width, int height, PAGE_RES* page_res);
-#endif                       // GRAPHICS_DISABLED
+#endif // !GRAPHICS_DISABLED
   void process_image_event(  // action in image win
       const SVEvent& event);
   bool process_cmd_win_event(  // UI command semantics
@@ -579,7 +583,7 @@ class Tesseract : public Wordrec {
   bool word_set_display(PAGE_RES_IT* pr_it);
   // #ifndef GRAPHICS_DISABLED
   bool word_dumper(PAGE_RES_IT* pr_it);
-  // #endif  // GRAPHICS_DISABLED
+  // #endif // !GRAPHICS_DISABLED
   void blob_feature_display(PAGE_RES* page_res, const TBOX& selection_box);
   //// reject.h //////////////////////////////////////////////////////////
   // make rej map for word
@@ -649,10 +653,10 @@ class Tesseract : public Wordrec {
   void quality_based_rejection(PAGE_RES_IT& page_res_it, bool good_quality_doc);
   void convert_bad_unlv_chs(WERD_RES* word_res);
   void tilde_delete(PAGE_RES_IT& page_res_it);
-  int16_t word_blob_quality(WERD_RES* word, ROW* row);
-  void word_char_quality(WERD_RES* word, ROW* row, int16_t* match_count,
+  int16_t word_blob_quality(WERD_RES* word);
+  void word_char_quality(WERD_RES* word, int16_t* match_count,
                          int16_t* accepted_match_count);
-  void unrej_good_chs(WERD_RES* word, ROW* row);
+  void unrej_good_chs(WERD_RES* word);
   int16_t count_outline_errs(char c, int16_t outline_count);
   int16_t word_outline_errs(WERD_RES* word);
 #ifndef DISABLED_LEGACY_ENGINE
@@ -675,7 +679,7 @@ class Tesseract : public Wordrec {
   bool tess_acceptable_word(WERD_RES* word);
 
   //// applybox.cpp //////////////////////////////////////////////////////
-  // Applies the box file based on the image name fname, and resegments
+  // Applies the box file based on the image name filename, and resegments
   // the words in the block_list (page), with:
   // blob-mode: one blob per line in the box file, words as input.
   // word/line-mode: one blob per space-delimited unit after the #, and one word
@@ -695,7 +699,7 @@ class Tesseract : public Wordrec {
   // Instead, the correct_text member of WERD_RES is set, and this may be later
   // converted to a best_choice using CorrectClassifyWords. CorrectClassifyWords
   // is not required before calling ApplyBoxTraining.
-  PAGE_RES* ApplyBoxes(const STRING& fname, bool find_segmentation,
+  PAGE_RES* ApplyBoxes(const char* filename, bool find_segmentation,
                        BLOCK_LIST* block_list);
 
   // Any row xheight that is significantly different from the median is set
@@ -704,12 +708,12 @@ class Tesseract : public Wordrec {
 
   // Builds a PAGE_RES from the block_list in the way required for ApplyBoxes:
   // All fuzzy spaces are removed, and all the words are maximally chopped.
-  PAGE_RES* SetupApplyBoxes(const GenericVector<TBOX>& boxes,
+  PAGE_RES* SetupApplyBoxes(const std::vector<TBOX>& boxes,
                             BLOCK_LIST* block_list);
   // Tests the chopper by exhaustively running chop_one_blob.
   // The word_res will contain filled chopped_word, seam_array, denorm,
   // box_word and best_state for the maximally chopped word.
-  void MaximallyChopWord(const GenericVector<TBOX>& boxes, BLOCK* block,
+  void MaximallyChopWord(const std::vector<TBOX>& boxes, BLOCK* block,
                          ROW* row, WERD_RES* word_res);
   // Gather consecutive blobs that match the given box into the best_state
   // and corresponding correct_text.
@@ -798,7 +802,7 @@ class Tesseract : public Wordrec {
   INT_VAR_H(tessedit_pageseg_mode, PSM_SINGLE_BLOCK,
             "Page seg mode: 0=osd only, 1=auto+osd, 2=auto, 3=col, 4=block,"
             " 5=line, 6=word, 7=char"
-            " (Values from PageSegMode enum in publictypes.h)");
+            " (Values from PageSegMode enum in tesseract/publictypes.h)");
   INT_VAR_H(tessedit_ocr_engine_mode, tesseract::OEM_DEFAULT,
             "Which OCR engine(s) to run (Tesseract, LSTM, both). Defaults"
             " to loading and running the most accurate available.");
@@ -1081,16 +1085,26 @@ class Tesseract : public Wordrec {
   INT_VAR_H(lstm_choice_mode, 0,
             "Allows to include alternative symbols choices in the hOCR "
             "output. "
-            "Valid input values are 0, 1, 2 and 3. 0 is the default value. "
+            "Valid input values are 0, 1 and 2. 0 is the default value. "
             "With 1 the alternative symbol choices per timestep are included. "
-            "With 2 the alternative symbol choices are accumulated per "
-            "character. ");
+            "With 2 the alternative symbol choices are extracted from the CTC "
+            "process instead of the lattice. The choices are mapped per "
+            "character.");
+  INT_VAR_H(lstm_choice_iterations, 5,
+            "Sets the number of cascading iterations for the Beamsearch in "
+            "lstm_choice_mode. Note that lstm_choice_mode must be set to "
+            "a value greater than 0 to produce results.");
+  double_VAR_H(lstm_rating_coefficient, 5,
+               "Sets the rating coefficient for the lstm choices. The smaller "
+               "the coefficient, the better are the ratings for each choice "
+               "and less information is lost due to the cut off at 0. The "
+               "standard value is 5.");
   BOOL_VAR_H(pageseg_apply_music_mask, true,
              "Detect music staff and remove intersecting components");
 
   //// ambigsrecog.cpp /////////////////////////////////////////////////////////
-  FILE* init_recog_training(const STRING& fname);
-  void recog_training_segmented(const STRING& fname, PAGE_RES* page_res,
+  FILE* init_recog_training(const char* filename);
+  void recog_training_segmented(const char* filename, PAGE_RES* page_res,
                                 volatile ETEXT_DESC* monitor,
                                 FILE* output_file);
   void ambigs_classify_and_output(const char* label, PAGE_RES_IT* pr_it,
@@ -1130,7 +1144,7 @@ class Tesseract : public Wordrec {
   FCOORD reskew_;
   TesseractStats stats_;
   // Sub-languages to be tried in addition to this.
-  GenericVector<Tesseract*> sub_langs_;
+  std::vector<Tesseract*> sub_langs_;
   // Most recently used Tesseract out of this and sub_langs_. The default
   // language for the next word.
   Tesseract* most_recently_used_;

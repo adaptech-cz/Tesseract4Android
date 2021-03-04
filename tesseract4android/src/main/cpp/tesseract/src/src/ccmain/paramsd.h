@@ -27,15 +27,15 @@
 #include "scrollview.h"  // for ScrollView (ptr only), SVEvent (ptr only)
 #include "strngs.h"      // for STRING
 
+namespace tesseract {
+
 class SVMenuNode;
 
-namespace tesseract {
-  class BoolParam;
-  class DoubleParam;
-  class IntParam;
-  class StringParam;
-  class Tesseract;
-}
+class BoolParam;
+class DoubleParam;
+class IntParam;
+class StringParam;
+class Tesseract;
 
 // A list of all possible parameter types used.
 enum ParamType {
@@ -128,5 +128,7 @@ class ParamsEditor : public SVEventHandler {
   ScrollView* sv_window_;
 };
 
-#endif  // GRAPHICS_DISABLED
+} // namespace tesseract
+
+#endif // !GRAPHICS_DISABLED
 #endif  // TESSERACT_CCMAIN_PARAMSD_H_

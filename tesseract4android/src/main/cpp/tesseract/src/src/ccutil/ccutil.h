@@ -24,6 +24,10 @@
 #include <semaphore.h>
 #endif
 
+#ifdef HAVE_CONFIG_H
+#include "config_auto.h" // DISABLED_LEGACY_ENGINE
+#endif
+
 #ifndef DISABLED_LEGACY_ENGINE
 #include "ambigs.h"
 #endif
@@ -37,23 +41,7 @@
 
 namespace tesseract {
 
-class CCUtilMutex {
- public:
-  CCUtilMutex();
-
-  void Lock();
-
-  void Unlock();
- private:
-#ifdef _WIN32
-  HANDLE mutex_;
-#else
-  pthread_mutex_t mutex_;
-#endif
-};
-
-
-class CCUtil {
+class TESS_API CCUtil {
  public:
   CCUtil();
   virtual ~CCUtil();
