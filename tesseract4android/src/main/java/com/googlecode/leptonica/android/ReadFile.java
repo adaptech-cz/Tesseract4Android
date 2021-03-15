@@ -77,6 +77,8 @@ public class ReadFile {
 			throw new IllegalArgumentException("Image width must be greater than 0");
 		if (height <= 0)
 			throw new IllegalArgumentException("Image height must be greater than 0");
+		if ((long) width * (long) height > Integer.MAX_VALUE)
+			throw new IllegalArgumentException("Array dimensions too large");
 		if (pixelData.length < width * height)
 			throw new IllegalArgumentException("Array length does not match dimensions");
 
