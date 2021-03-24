@@ -46,9 +46,9 @@
  *
  *      Operations for handling identification results
  *         static L_RCHA      *rchaCreate()
- *         l_int32            *rchaDestroy()
+ *         void                rchaDestroy()
  *         static L_RCH       *rchCreate()
- *         l_int32            *rchDestroy()
+ *         void                rchDestroy()
  *         l_int32             rchaExtract()
  *         l_int32             rchExtract()
  *         static l_int32      transferRchToRcha()
@@ -833,8 +833,8 @@ PIX        *pixt, *pixt1, *pixt2;
     }
 
     if (debugflag > 0) {
-        lept_mkdir("lept/recog");
         char  buf[128];
+        lept_mkdir("lept/recog");
         pixt1 = fpixDisplayMaxDynamicRange(fpix);
         pixt2 = pixExpandReplicate(pixt1, 5);
         snprintf(buf, sizeof(buf), "/tmp/lept/recog/junkbs_%d.png", debugflag);
@@ -1191,7 +1191,6 @@ L_RCHA  *rcha;
     numaDestroy(&rcha->nawidth);
     LEPT_FREE(rcha);
     *prcha = NULL;
-    return;
 }
 
 
@@ -1258,7 +1257,6 @@ L_RCH  *rch;
     LEPT_FREE(rch->text);
     LEPT_FREE(rch);
     *prch = NULL;
-    return;
 }
 
 

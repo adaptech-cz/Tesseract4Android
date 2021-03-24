@@ -2,13 +2,14 @@ apply plugin: 'com.android.library'
 
 android {
 	compileSdkVersion 28
+	// TODO: We can set specific NDK version we want to use, see https://developer.android.com/studio/projects/install-ndk#specific-version
+	// ndkVersion "major.minor.build"
 	defaultConfig {
 		minSdkVersion 16
 		targetSdkVersion 28
-		// TODO: We can set specific NDK version we want to use, see https://developer.android.com/studio/projects/install-ndk#specific-version
-		ndkVersion "22.0.7026061"
-		versionCode 4
-		versionName "2.1.0"
+		versionCode 5
+		versionName "2.1.1"
+
 		testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 		externalNativeBuild {
 			cmake {
@@ -48,9 +49,9 @@ android {
 dependencies {
 	implementation fileTree(include: ['*.jar'], dir: 'libs')
 	implementation 'androidx.annotation:annotation:1.1.0'
-	testImplementation 'junit:junit:4.13'
-	androidTestImplementation 'androidx.test.ext:junit:1.1.1'
-	androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+	testImplementation 'junit:junit:4.13.1'
+	androidTestImplementation 'androidx.test.ext:junit:1.1.2'
+	androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
 }
 
 apply from: '../publish.gradle'

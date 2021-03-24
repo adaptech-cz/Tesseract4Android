@@ -95,7 +95,7 @@
  *       with Windows DLLs
  *           FILE      *lept_fopen()
  *           l_int32    lept_fclose()
- *           void       lept_calloc()
+ *           void      *lept_calloc()
  *           void       lept_free()
  *
  *       Multi-platform file system operations in temp directories
@@ -1286,8 +1286,8 @@ l_int32  i, j, found, lastpos;
  *
  * <pre>
  * Notes:
- *      (1) If newsize <=0, just frees input data and nulls ptr
- *      (2) If input data is null, just callocs new memory
+ *      (1) If newsize == 0, frees input data and nulls ptr
+ *      (2) If input data is null, only callocs new memory
  *      (3) This differs from realloc in that it always allocates
  *          new memory (if newsize > 0) and initializes it to 0,
  *          it requires the amount of old data to be copied,
@@ -1296,11 +1296,11 @@ l_int32  i, j, found, lastpos;
  * </pre>
  */
 void *
-reallocNew(void   **pindata,
-           l_int32  oldsize,
-           l_int32  newsize)
+reallocNew(void  **pindata,
+           size_t  oldsize,
+           size_t  newsize)
 {
-l_int32  minsize;
+size_t   minsize;
 void    *indata;
 void    *newdata;
 
@@ -1310,7 +1310,7 @@ void    *newdata;
         return ERROR_PTR("input data not defined", procName, NULL);
     indata = *pindata;
 
-    if (newsize <= 0) {   /* nonstandard usage */
+    if (newsize == 0) {   /* nonstandard usage */
         if (indata) {
             LEPT_FREE(indata);
             *pindata = NULL;
@@ -1331,7 +1331,6 @@ void    *newdata;
     memcpy(newdata, indata, minsize);
     LEPT_FREE(indata);
     *pindata = NULL;
-
     return newdata;
 }
 
@@ -1644,6 +1643,8 @@ l_int64  pos, nbytes;
         return ERROR_INT("seek position must be > 0", procName, 0);
     fseek(fp, 0, SEEK_END);   /* EOF */
     nbytes = ftell(fp);
+    if (nbytes < 0)
+        return ERROR_INT("nbytes is < 0", procName, 0);
     fseek(fp, pos, SEEK_SET);        /* back to initial position */
     return nbytes;
 }
@@ -2079,7 +2080,6 @@ lept_free(void *ptr)
 {
     if (!ptr) return;
     LEPT_FREE(ptr);
-    return;
 }
 
 
@@ -2274,16 +2274,16 @@ char  *realdir;
         *pexists = 1;
     }
 #else  /* _WIN32 */
+    {
     l_uint32  attributes;
     attributes = GetFileAttributes(realdir);
     if (attributes != INVALID_FILE_ATTRIBUTES &&
-        (attributes & FILE_ATTRIBUTE_DIRECTORY)) {
+        (attributes & FILE_ATTRIBUTE_DIRECTORY))
         *pexists = 1;
     }
 #endif  /* _WIN32 */
 
     LEPT_FREE(realdir);
-    return;
 }
 
 

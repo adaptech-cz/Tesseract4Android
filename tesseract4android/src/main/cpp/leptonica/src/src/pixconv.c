@@ -1410,9 +1410,7 @@ PIXCMAP   *cmap;
  *          the color in the colormap that represents all pixels in
  *          one of those octcubes is given by the first pixel that
  *          falls into that octcube.
- *      (3) If there are more than 256 colors, we use adaptive octree
- *          color quantization.
- *      (4) Dithering gives better visual results on images where
+ *      (3) Dithering gives better visual results on images where
  *          there is a color wash (a slow variation of color), but it
  *          is about twice as slow and results in significantly larger
  *          files when losslessly compressed (e.g., into png).
@@ -1442,26 +1440,25 @@ PIX     *pixd;
          * first pixel that lands there. */
     na = pixOctcubeHistogram(pixs, 4, &ncolors);
 
-        /* If there are too many occupied leaf octcubes to be
-         * represented directly in a colormap, fall back to octree
-         * quantization, optionally with dithering. */
-    if (ncolors > 256) {
+        /* If 256 or fewer occupied leaf octcubes, quantize to those octcubes */
+    if (ncolors <= 256) {
+        pixd = pixFewColorsOctcubeQuant2(pixs, 4, na, ncolors, NULL);
+        pixCopyInputFormat(pixd, pixs);
         numaDestroy(&na);
-        if (ditherflag)
-            L_INFO("More than 256 colors; using octree quant with dithering\n",
-                   procName);
-        else
-            L_INFO("More than 256 colors; using octree quant; no dithering\n",
-                   procName);
-        return pixOctreeColorQuant(pixs, 240, ditherflag);
+        return pixd;
     }
 
-        /* There are not more than 256 occupied leaf octcubes.
-         * Quantize to those octcubes. */
-    pixd = pixFewColorsOctcubeQuant2(pixs, 4, na, ncolors, NULL);
-    pixCopyInputFormat(pixd, pixs);
+        /* There are too many occupied leaf octcubes to be represented
+         * directly in a colormap.  Fall back to octree quantization,
+         * optionally with dithering. */
     numaDestroy(&na);
-    return pixd;
+    if (ditherflag)
+        L_INFO("More than 256 colors; using octree quant with dithering\n",
+               procName);
+    else
+        L_INFO("More than 256 colors; using octree quant; no dithering\n",
+               procName);
+    return pixOctreeColorQuant(pixs, 240, ditherflag);
 }
 
 
@@ -1772,7 +1769,6 @@ PIX       *pixd;
 }
 
 
-
 /*---------------------------------------------------------------------------*
  *                Conversion from grayscale to false color
  *---------------------------------------------------------------------------*/
@@ -1796,11 +1792,9 @@ PIX *
 pixConvertGrayToFalseColor(PIX       *pixs,
                            l_float32  gamma)
 {
-l_int32    d, i, rval, bval, gval;
-l_int32   *curve;
-l_float32  invgamma, x;
-PIX       *pixd;
-PIXCMAP   *cmap;
+l_int32   d;
+PIX      *pixd;
+PIXCMAP  *cmap;
 
     PROCNAME("pixConvertGrayToFalseColor");
 
@@ -1820,46 +1814,11 @@ PIXCMAP   *cmap;
     }
     if (!pixd)
         return (PIX *)ERROR_PTR("pixd not made", procName, NULL);
-    cmap = pixcmapCreate(8);
+
+    cmap = pixcmapGrayToFalseColor(gamma);
     pixSetColormap(pixd, cmap);
     pixCopyResolution(pixd, pixs);
     pixCopyInputFormat(pixd, pixs);
-
-        /* Generate curve for transition part of color map */
-    curve = (l_int32 *)LEPT_CALLOC(64, sizeof(l_int32));
-    if (gamma == 0.0) gamma = 1.0;
-    invgamma = 1. / gamma;
-    for (i = 0; i < 64; i++) {
-        x = (l_float32)i / 64.;
-        curve[i] = (l_int32)(255. * powf(x, invgamma) + 0.5);
-    }
-
-    for (i = 0; i < 256; i++) {
-        if (i < 32) {
-            rval = 0;
-            gval = 0;
-            bval = curve[i + 32];
-        } else if (i < 96) {   /* 32 - 95 */
-            rval = 0;
-            gval = curve[i - 32];
-            bval = 255;
-        } else if (i < 160) {  /* 96 - 159 */
-            rval = curve[i - 96];
-            gval = 255;
-            bval = curve[159 - i];
-        } else if (i < 224) {  /* 160 - 223 */
-            rval = 255;
-            gval = curve[223 - i];
-            bval = 0;
-        } else {  /* 224 - 255 */
-            rval = curve[287 - i];
-            gval = 0;
-            bval = 0;
-        }
-        pixcmapAddColor(cmap, rval, gval, bval);
-    }
-
-    LEPT_FREE(curve);
     return pixd;
 }
 
@@ -2472,7 +2431,7 @@ pixConvert2To8(PIX     *pixs,
                l_int32  cmapflag)
 {
 l_int32    w, h, i, j, nbytes, wpls, wpld, dibit, byte;
-l_uint8    val[4];
+l_uint32   val[4];
 l_uint32   index;
 l_uint32  *tab, *datas, *datad, *lines, *lined;
 PIX       *pixd;
@@ -2714,7 +2673,7 @@ PIX       *pixt, *pixd;
 /*!
  * \brief   pixConvertTo2()
  *
- * \param[in]    pixs   1, 2, 4, 8, 32 bpp; colormap OK but will be removed
+ * \param[in]    pixs   1, 2, 4, 8, 24, 32 bpp; colormap OK but will be removed
  * \return  pixd   2 bpp, or NULL on error
  *
  * <pre>
@@ -2737,8 +2696,8 @@ PIX     *pix1, *pix2, *pix3, *pixd;
     if (!pixs)
         return (PIX *)ERROR_PTR("pixs not defined", procName, NULL);
     d = pixGetDepth(pixs);
-    if (d != 1 && d != 2 && d != 4 && d != 8 && d != 32)
-        return (PIX *)ERROR_PTR("depth not {1,2,4,8,32}", procName, NULL);
+    if (d != 1 && d != 2 && d != 4 && d != 8 && d != 24 && d != 32)
+        return (PIX *)ERROR_PTR("depth not {1,2,4,8,24,32}", procName, NULL);
 
     if (pixGetColormap(pixs) != NULL) {
         pix1 = pixRemoveColormap(pixs, REMOVE_CMAP_TO_GRAYSCALE);
@@ -2746,7 +2705,7 @@ PIX     *pix1, *pix2, *pix3, *pixd;
     } else {
         pix1 = pixCopy(NULL, pixs);
     }
-    if (d == 32)
+    if (d == 24 || d == 32)
         pix2 = pixConvertTo8(pix1, FALSE);
     else
         pix2 = pixClone(pix1);
@@ -2822,7 +2781,7 @@ PIX       *pixs, *pixd;
 /*!
  * \brief   pixConvertTo4()
  *
- * \param[in]    pixs   1, 2, 4, 8, 32 bpp; colormap OK but will be removed
+ * \param[in]    pixs   1, 2, 4, 8, 24, 32 bpp; colormap OK but will be removed
  * \return  pixd   4 bpp, or NULL on error
  *
  * <pre>
@@ -2845,8 +2804,8 @@ PIX     *pix1, *pix2, *pix3, *pixd;
     if (!pixs)
         return (PIX *)ERROR_PTR("pixs not defined", procName, NULL);
     d = pixGetDepth(pixs);
-    if (d != 1 && d != 2 && d != 4 && d != 8 && d != 32)
-        return (PIX *)ERROR_PTR("depth not {1,2,4,8,32}", procName, NULL);
+    if (d != 1 && d != 2 && d != 4 && d != 8 && d != 24 && d != 32)
+        return (PIX *)ERROR_PTR("depth not {1,2,4,8,24,32}", procName, NULL);
 
     if (pixGetColormap(pixs) != NULL) {
         pix1 = pixRemoveColormap(pixs, REMOVE_CMAP_TO_GRAYSCALE);
@@ -2854,7 +2813,7 @@ PIX     *pix1, *pix2, *pix3, *pixd;
     } else {
         pix1 = pixCopy(NULL, pixs);
     }
-    if (d == 32)
+    if (d == 24 || d == 32)
         pix2 = pixConvertTo8(pix1, FALSE);
     else
         pix2 = pixClone(pix1);
@@ -2928,7 +2887,7 @@ PIX       *pixs, *pixd;
 /*!
  * \brief   pixConvertTo1Adaptive()
  *
- * \param[in]    pixs       1, 2, 4, 8, 16 or 32 bpp
+ * \param[in]    pixs       1, 2, 4, 8, 16, 24 or 32 bpp
  * \return  pixd 1 bpp, or NULL on error
  *
  * <pre>
@@ -2950,8 +2909,8 @@ PIXCMAP  *cmap;
     if (!pixs)
         return (PIX *)ERROR_PTR("pixs not defined", procName, NULL);
     d = pixGetDepth(pixs);
-    if (d != 1 && d != 2 && d != 4 && d != 8 && d != 16 && d != 32)
-        return (PIX *)ERROR_PTR("depth not {1,2,4,8,16,32}", procName, NULL);
+    if (d != 1 && d != 2 && d != 4 && d != 8 && d != 16 && d != 24 && d != 32)
+        return (PIX *)ERROR_PTR("depth not {1,2,4,8,16,24,32}", procName, NULL);
 
     cmap = pixGetColormap(pixs);
     if (d == 1) {
@@ -2984,7 +2943,7 @@ PIXCMAP  *cmap;
 /*!
  * \brief   pixConvertTo1()
  *
- * \param[in]    pixs       1, 2, 4, 8, 16 or 32 bpp
+ * \param[in]    pixs       1, 2, 4, 8, 16, 24 or 32 bpp
  * \param[in]    threshold  for final binarization, relative to 8 bpp
  * \return  pixd 1 bpp, or NULL on error
  *
@@ -3010,8 +2969,8 @@ PIXCMAP  *cmap;
     if (!pixs)
         return (PIX *)ERROR_PTR("pixs not defined", procName, NULL);
     d = pixGetDepth(pixs);
-    if (d != 1 && d != 2 && d != 4 && d != 8 && d != 16 && d != 32)
-        return (PIX *)ERROR_PTR("depth not {1,2,4,8,16,32}", procName, NULL);
+    if (d != 1 && d != 2 && d != 4 && d != 8 && d != 16 && d != 24 && d != 32)
+        return (PIX *)ERROR_PTR("depth not {1,2,4,8,16,24,32}", procName, NULL);
 
     cmap = pixGetColormap(pixs);
     if (d == 1) {
@@ -3042,8 +3001,8 @@ PIXCMAP  *cmap;
 /*!
  * \brief   pixConvertTo1BySampling()
  *
- * \param[in]    pixs       1, 2, 4, 8, 16 or 32 bpp
- * \param[in]    factor     submsampling factor; integer >= 1
+ * \param[in]    pixs       1, 2, 4, 8, 16, 24 or 32 bpp
+ * \param[in]    factor     subsampling factor; integer >= 1
  * \param[in]    threshold  for final binarization, relative to 8 bpp
  * \return  pixd 1 bpp, or NULL on error
  *
@@ -3071,7 +3030,6 @@ PIX       *pixt, *pixd;
     scalefactor = 1. / (l_float32)factor;
     pixt = pixScaleBySampling(pixs, scalefactor, scalefactor);
     pixd = pixConvertTo1(pixt, threshold);
-
     pixDestroy(&pixt);
     return pixd;
 }
@@ -3083,7 +3041,7 @@ PIX       *pixt, *pixd;
 /*!
  * \brief   pixConvertTo8()
  *
- * \param[in]    pixs      1, 2, 4, 8, 16 or 32 bpp
+ * \param[in]    pixs      1, 2, 4, 8, 16, 24 or 32 bpp
  * \param[in]    cmapflag  TRUE if pixd is to have a colormap; FALSE otherwise
  * \return  pixd 8 bpp, or NULL on error
  *
@@ -3100,9 +3058,9 @@ PIX       *pixt, *pixd;
  *          ~ 2 bpp: 4 bpp:  even increments over dynamic range
  *          ~ 8 bpp: lossless if cmap matches cmapflag
  *          ~ 16 bpp: use most significant byte
- *      (4) If 32 bpp RGB, this is converted to gray.  If you want
- *          to do color quantization, you must specify the type
- *          explicitly, using the color quantization code.
+ *      (4) If 24 bpp or 32 bpp RGB, this is converted to gray.
+ *          For color quantization, you must specify the type explicitly,
+ *          using the color quantization code.
  * </pre>
  */
 PIX *
@@ -3110,7 +3068,7 @@ pixConvertTo8(PIX     *pixs,
               l_int32  cmapflag)
 {
 l_int32   d;
-PIX      *pixd;
+PIX      *pix1, *pixd;
 PIXCMAP  *cmap;
 
     PROCNAME("pixConvertTo8");
@@ -3118,8 +3076,8 @@ PIXCMAP  *cmap;
     if (!pixs)
         return (PIX *)ERROR_PTR("pixs not defined", procName, NULL);
     d = pixGetDepth(pixs);
-    if (d != 1 && d != 2 && d != 4 && d != 8 && d != 16 && d != 32)
-        return (PIX *)ERROR_PTR("depth not {1,2,4,8,16,32}", procName, NULL);
+    if (d != 1 && d != 2 && d != 4 && d != 8 && d != 16 && d != 24 && d != 32)
+        return (PIX *)ERROR_PTR("depth not {1,2,4,8,16,24,32}", procName, NULL);
 
     if (d == 1) {
         if (cmapflag)
@@ -3145,6 +3103,13 @@ PIXCMAP  *cmap;
         pixd = pixConvert16To8(pixs, L_MS_BYTE);
         if (cmapflag)
             pixAddGrayColormap8(pixd);
+        return pixd;
+    } else if (d == 24) {
+        pix1 = pixConvert24To32(pixs);
+        pixd = pixConvertRGBToLuminance(pix1);
+        if (cmapflag)
+            pixAddGrayColormap8(pixd);
+        pixDestroy(&pix1);
         return pixd;
     } else { /* d == 32 */
         pixd = pixConvertRGBToLuminance(pixs);

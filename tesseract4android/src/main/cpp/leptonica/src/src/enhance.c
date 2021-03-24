@@ -356,10 +356,11 @@ PIX   *pixalpha;
  * <pre>
  * Notes:
  *      (1) The map is returned as a numa; values are clipped to [0, 255].
- *      (2) To force all intensities into a range within fraction delta
+ *      (2) For a linear mapping, set gamma = 1.0.
+ *      (3) To force all intensities into a range within fraction delta
  *          of white, use: minval = -256 * (1 - delta) / delta
  *                         maxval = 255
- *      (3) To force all intensities into a range within fraction delta
+ *      (4) To force all intensities into a range within fraction delta
  *          of black, use: minval = 0
  *                         maxval = 256 * (1 - delta) / delta
  * </pre>
@@ -1002,7 +1003,7 @@ pixUnsharpMasking(PIX       *pixs,
                   l_float32  fract)
 {
 l_int32  d;
-PIX     *pixt, *pixd, *pixr, *pixrs, *pixg, *pixgs, *pixb, *pixbs;
+PIX     *pix1, *pixd, *pixr, *pixrs, *pixg, *pixgs, *pixb, *pixbs;
 
     PROCNAME("pixUnsharpMasking");
 
@@ -1017,21 +1018,21 @@ PIX     *pixt, *pixd, *pixr, *pixrs, *pixg, *pixgs, *pixb, *pixbs;
         return pixUnsharpMaskingFast(pixs, halfwidth, fract, L_BOTH_DIRECTIONS);
 
         /* Remove colormap; clone if possible; result is either 8 or 32 bpp */
-    if ((pixt = pixConvertTo8Or32(pixs, L_CLONE, 0)) == NULL)
-        return (PIX *)ERROR_PTR("pixt not made", procName, NULL);
+    if ((pix1 = pixConvertTo8Or32(pixs, L_CLONE, 0)) == NULL)
+        return (PIX *)ERROR_PTR("pix1 not made", procName, NULL);
 
         /* Sharpen */
-    d = pixGetDepth(pixt);
+    d = pixGetDepth(pix1);
     if (d == 8) {
-        pixd = pixUnsharpMaskingGray(pixt, halfwidth, fract);
+        pixd = pixUnsharpMaskingGray(pix1, halfwidth, fract);
     } else {  /* d == 32 */
-        pixr = pixGetRGBComponent(pixs, COLOR_RED);
+        pixr = pixGetRGBComponent(pix1, COLOR_RED);
         pixrs = pixUnsharpMaskingGray(pixr, halfwidth, fract);
         pixDestroy(&pixr);
-        pixg = pixGetRGBComponent(pixs, COLOR_GREEN);
+        pixg = pixGetRGBComponent(pix1, COLOR_GREEN);
         pixgs = pixUnsharpMaskingGray(pixg, halfwidth, fract);
         pixDestroy(&pixg);
-        pixb = pixGetRGBComponent(pixs, COLOR_BLUE);
+        pixb = pixGetRGBComponent(pix1, COLOR_BLUE);
         pixbs = pixUnsharpMaskingGray(pixb, halfwidth, fract);
         pixDestroy(&pixb);
         pixd = pixCreateRGBImage(pixrs, pixgs, pixbs);
@@ -1039,10 +1040,10 @@ PIX     *pixt, *pixd, *pixr, *pixrs, *pixg, *pixgs, *pixb, *pixbs;
         pixDestroy(&pixgs);
         pixDestroy(&pixbs);
         if (pixGetSpp(pixs) == 4)
-            pixScaleAndTransferAlpha(pixd, pixs, 1.0, 1.0);
+            pixCopyRGBComponent(pixd, pixs, L_ALPHA_CHANNEL);
     }
 
-    pixDestroy(&pixt);
+    pixDestroy(&pix1);
     return pixd;
 }
 
@@ -1205,7 +1206,7 @@ PIX     *pixt, *pixd, *pixr, *pixrs, *pixg, *pixgs, *pixb, *pixbs;
         pixDestroy(&pixb);
         pixd = pixCreateRGBImage(pixrs, pixgs, pixbs);
         if (pixGetSpp(pixs) == 4)
-            pixScaleAndTransferAlpha(pixd, pixs, 1.0, 1.0);
+            pixCopyRGBComponent(pixd, pixs, L_ALPHA_CHANNEL);
         pixDestroy(&pixrs);
         pixDestroy(&pixgs);
         pixDestroy(&pixbs);
@@ -1554,11 +1555,12 @@ FPIX       *fpix;
  *             pixEqualizeTRC(pixs, pixs, ...);
  *          To get a new image, set pixd == null:
  *             pixd = pixEqualizeTRC(NULL, pixs, ...);
- *      (1) Use fract > 0.0 to increase hue value; < 0.0 to decrease it.
+ *      (2) Use fract > 0.0 to increase hue value; < 0.0 to decrease it.
  *          1.0 (or -1.0) represents a 360 degree rotation; i.e., no change.
- *      (2) If no modification is requested (fract = -1.0 or 0 or 1.0),
+ *      (3) If no modification is requested (fract = -1.0 or 0 or 1.0),
  *          return a copy unless in-place, in which case this is a no-op.
- *      (3) See discussion of color-modification methods, in coloring.c.
+ *      (4) This leaves saturation and intensity invariant.
+ *      (5) See discussion of color-modification methods, in coloring.c.
  * </pre>
  */
 PIX  *
@@ -1607,7 +1609,7 @@ l_uint32  *data, *line;
         }
     }
     if (pixGetSpp(pixs) == 4)
-        pixScaleAndTransferAlpha(pixd, pixs, 1.0, 1.0);
+        pixCopyRGBComponent(pixd, pixs, L_ALPHA_CHANNEL);
 
     return pixd;
 }
@@ -1631,7 +1633,8 @@ l_uint32  *data, *line;
  *          saturation to 0 (255).
  *      (2) If fract = 0, no modification is requested; return a copy
  *          unless in-place, in which case this is a no-op.
- *      (3) See discussion of color-modification methods, in coloring.c.
+ *      (3) This leaves hue and intensity invariant.
+ *      (4) See discussion of color-modification methods, in coloring.c.
  * </pre>
  */
 PIX  *
@@ -1675,7 +1678,7 @@ l_uint32  *data, *line;
         }
     }
     if (pixGetSpp(pixs) == 4)
-        pixScaleAndTransferAlpha(pixd, pixs, 1.0, 1.0);
+        pixCopyRGBComponent(pixd, pixs, L_ALPHA_CHANNEL);
 
     return pixd;
 }
@@ -1747,7 +1750,8 @@ l_uint32  *data, *line;
  *          v-parameter to 0 (255).
  *      (2) If fract = 0, no modification is requested; return a copy
  *          unless in-place, in which case this is a no-op.
- *      (3) See discussion of color-modification methods, in coloring.c.
+ *      (3) This leaves hue and saturation invariant.
+ *      (4) See discussion of color-modification methods, in coloring.c.
  * </pre>
  */
 PIX  *
@@ -1791,7 +1795,7 @@ l_uint32  *data, *line;
         }
     }
     if (pixGetSpp(pixs) == 4)
-        pixScaleAndTransferAlpha(pixd, pixs, 1.0, 1.0);
+        pixCopyRGBComponent(pixd, pixs, L_ALPHA_CHANNEL);
 
     return pixd;
 }

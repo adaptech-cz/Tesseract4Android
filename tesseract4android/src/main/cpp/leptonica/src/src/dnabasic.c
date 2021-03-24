@@ -154,8 +154,8 @@
 #include "allheaders.h"
 
     /* Bounds on initial array size */
-static const l_uint32  MaxArraySize = 100000000;  /* dna */
-static const l_uint32  MaxPtrArraySize = 10000;   /* dnaa */
+static const l_uint32  MaxDoubleArraySize = 100000000;   /* for dna */
+static const l_uint32  MaxPtrArraySize = 1000000;   /* for dnaa */
 static const l_int32  InitialArraySize = 50;      /*!< n'importe quoi */
 
     /* Static functions */
@@ -178,7 +178,7 @@ L_DNA  *da;
 
     PROCNAME("l_dnaCreate");
 
-    if (n <= 0 || n > MaxArraySize)
+    if (n <= 0 || n > MaxDoubleArraySize)
         n = InitialArraySize;
 
     da = (L_DNA *)LEPT_CALLOC(1, sizeof(L_DNA));
@@ -345,9 +345,7 @@ L_DNA  *da;
             LEPT_FREE(da->array);
         LEPT_FREE(da);
     }
-
     *pda = NULL;
-    return;
 }
 
 
@@ -466,19 +464,31 @@ l_int32  n;
  *
  * \param[in]    da
  * \return  0 if OK, 1 on error
+ *
+ * <pre>
+ * Notes:
+ *      (1) The max number of doubles is 100M.
+ * </pre>
  */
 static l_int32
 l_dnaExtendArray(L_DNA  *da)
 {
+size_t  oldsize, newsize;
+
     PROCNAME("l_dnaExtendArray");
 
     if (!da)
         return ERROR_INT("da not defined", procName, 1);
+    if (da->nalloc > MaxDoubleArraySize)  /* belt & suspenders */
+        return ERROR_INT("da has too many ptrs", procName, 1);
+    oldsize = da->nalloc * sizeof(l_float64);
+    newsize = 2 * oldsize;
+    if (newsize > 8 * MaxDoubleArraySize)
+        return ERROR_INT("newsize > 800 MB; too large", procName, 1);
 
     if ((da->array = (l_float64 *)reallocNew((void **)&da->array,
-                                sizeof(l_float64) * da->nalloc,
-                                2 * sizeof(l_float64) * da->nalloc)) == NULL)
-            return ERROR_INT("new ptr array not returned", procName, 1);
+                                             oldsize, newsize)) == NULL)
+        return ERROR_INT("new ptr array not returned", procName, 1);
 
     da->nalloc *= 2;
     return 0;
@@ -1012,6 +1022,7 @@ L_DNA  *da;
  * <pre>
  * Notes:
  *      (1) fscanf takes %lf to read a double; fprintf takes %f to write it.
+ *      (2) It is OK for the dna to be empty.
  * </pre>
  */
 L_DNA *
@@ -1033,11 +1044,12 @@ L_DNA     *da;
         return (L_DNA *)ERROR_PTR("invalid l_dna version", procName, NULL);
     if (fscanf(fp, "Number of numbers = %d\n", &n) != 1)
         return (L_DNA *)ERROR_PTR("invalid number of numbers", procName, NULL);
+    if (n < 0)
+        return (L_DNA *)ERROR_PTR("num doubles < 0", procName, NULL);
+    if (n > MaxDoubleArraySize)
+        return (L_DNA *)ERROR_PTR("too many doubles", procName, NULL);
+    if (n == 0) L_INFO("the dna is empty\n", procName);
 
-    if (n > MaxArraySize) {
-        L_ERROR("n = %d > %d\n", procName, n, MaxArraySize);
-        return NULL;
-    }
     if ((da = l_dnaCreate(n)) == NULL)
         return (L_DNA *)ERROR_PTR("da not made", procName, NULL);
     for (i = 0; i < n; i++) {
@@ -1255,8 +1267,6 @@ L_DNAA  *daa;
     LEPT_FREE(daa->dna);
     LEPT_FREE(daa);
     *pdaa = NULL;
-
-    return;
 }
 
 
@@ -1311,19 +1321,32 @@ L_DNA   *dac;
  *
  * \param[in]    daa
  * \return  0 if OK, 1 on error
+ *
+ * <pre>
+ * Notes:
+ *      (1) Doubles the number of dna ptrs.
+ *      (2) The max size of the dna array is 1M ptrs.
+ * </pre>
  */
 static l_int32
 l_dnaaExtendArray(L_DNAA  *daa)
 {
+size_t  oldsize, newsize;
+
     PROCNAME("l_dnaaExtendArray");
 
     if (!daa)
         return ERROR_INT("daa not defined", procName, 1);
+    if (daa->nalloc > MaxPtrArraySize)  /* belt & suspenders */
+        return ERROR_INT("daa has too many ptrs", procName, 1);
+    oldsize = daa->nalloc * sizeof(L_DNA *);
+    newsize = 2 * oldsize;
+    if (newsize > 8 * MaxPtrArraySize)
+        return ERROR_INT("newsize > 8 MB; too large", procName, 1);
 
     if ((daa->dna = (L_DNA **)reallocNew((void **)&daa->dna,
-                              sizeof(L_DNA *) * daa->nalloc,
-                              2 * sizeof(L_DNA *) * daa->nalloc)) == NULL)
-            return ERROR_INT("new ptr array not returned", procName, 1);
+                                         oldsize, newsize)) == NULL)
+        return ERROR_INT("new ptr array not returned", procName, 1);
 
     daa->nalloc *= 2;
     return 0;
@@ -1574,6 +1597,11 @@ L_DNAA  *daa;
  *
  * \param[in]    fp   file stream
  * \return  daa, or NULL on error
+ *
+ * <pre>
+ * Notes:
+ *      (1) It is OK for the dnaa to be empty.
+ * </pre>
  */
 L_DNAA *
 l_dnaaReadStream(FILE  *fp)
@@ -1594,14 +1622,14 @@ L_DNAA    *daa;
         return (L_DNAA *)ERROR_PTR("invalid l_dnaa version", procName, NULL);
     if (fscanf(fp, "Number of L_Dna = %d\n\n", &n) != 1)
         return (L_DNAA *)ERROR_PTR("invalid number of l_dna", procName, NULL);
+    if (n < 0)
+        return (L_DNAA *)ERROR_PTR("num l_dna <= 0", procName, NULL);
+    if (n > MaxPtrArraySize)
+        return (L_DNAA *)ERROR_PTR("too many l_dna", procName, NULL);
+    if (n == 0) L_INFO("the dnaa is empty\n", procName);
 
-    if (n > MaxPtrArraySize) {
-        L_ERROR("n = %d > %d\n", procName, n, MaxPtrArraySize);
-        return NULL;
-    }
     if ((daa = l_dnaaCreate(n)) == NULL)
         return (L_DNAA *)ERROR_PTR("daa not made", procName, NULL);
-
     for (i = 0; i < n; i++) {
         if (fscanf(fp, "L_Dna[%d]:", &index) != 1) {
             l_dnaaDestroy(&daa);

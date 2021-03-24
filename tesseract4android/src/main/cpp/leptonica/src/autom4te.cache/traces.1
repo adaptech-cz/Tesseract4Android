@@ -1,15 +1,3 @@
-m4trace:/usr/share/aclocal/ax_split_version.m4:27: -1- AC_DEFUN([AX_SPLIT_VERSION], [
-    AC_REQUIRE([AC_PROG_SED])
-    AX_MAJOR_VERSION=`echo "$VERSION" | $SED 's/\([[^.]][[^.]]*\).*/\1/'`
-    AX_MINOR_VERSION=`echo "$VERSION" | $SED 's/[[^.]][[^.]]*.\([[^.]][[^.]]*\).*/\1/'`
-    AX_POINT_VERSION=`echo "$VERSION" | $SED 's/[[^.]][[^.]]*.[[^.]][[^.]]*.\(.*\)/\1/'`
-    AC_MSG_CHECKING([Major version])
-    AC_MSG_RESULT([$AX_MAJOR_VERSION])
-    AC_MSG_CHECKING([Minor version])
-    AC_MSG_RESULT([$AX_MINOR_VERSION])
-    AC_MSG_CHECKING([Point version])
-    AC_MSG_RESULT([$AX_POINT_VERSION])
-])
 m4trace:/usr/share/aclocal/ltargz.m4:12: -1- AC_DEFUN([LT_FUNC_ARGZ], [
 AC_CHECK_HEADERS([argz.h], [], [], [AC_INCLUDES_DEFAULT])
 
@@ -833,10 +821,10 @@ AS_VAR_IF([$1], [""], [$5], [$4])dnl
 m4trace:/usr/share/aclocal-1.16/amversion.m4:14: -1- AC_DEFUN([AM_AUTOMAKE_VERSION], [am__api_version='1.16'
 dnl Some users find AM_AUTOMAKE_VERSION and mistake it for a way to
 dnl require some minimum version.  Point them to the right macro.
-m4_if([$1], [1.16.1], [],
+m4_if([$1], [1.16.2], [],
       [AC_FATAL([Do not call $0, use AM_INIT_AUTOMAKE([$1]).])])dnl
 ])
-m4trace:/usr/share/aclocal-1.16/amversion.m4:33: -1- AC_DEFUN([AM_SET_CURRENT_AUTOMAKE_VERSION], [AM_AUTOMAKE_VERSION([1.16.1])dnl
+m4trace:/usr/share/aclocal-1.16/amversion.m4:33: -1- AC_DEFUN([AM_SET_CURRENT_AUTOMAKE_VERSION], [AM_AUTOMAKE_VERSION([1.16.2])dnl
 m4_ifndef([AC_AUTOCONF_VERSION],
   [m4_copy([m4_PACKAGE_VERSION], [AC_AUTOCONF_VERSION])])dnl
 _AM_AUTOCONF_VERSION(m4_defn([AC_AUTOCONF_VERSION]))])
@@ -1045,7 +1033,9 @@ m4trace:/usr/share/aclocal-1.16/depout.m4:11: -1- AC_DEFUN([_AM_OUTPUT_DEPENDENC
   done
   if test $am_rc -ne 0; then
     AC_MSG_FAILURE([Something went wrong bootstrapping makefile fragments
-    for automatic dependency tracking.  Try re-running configure with the
+    for automatic dependency tracking.  If GNU make was not used, consider
+    re-running the configure script with MAKE="gmake" (or whatever is
+    necessary).  You can also try re-running configure with the
     '--disable-dependency-tracking' option to at least be able to build
     the package (albeit without support for automatic dependency tracking).])
   fi
@@ -1056,7 +1046,7 @@ m4trace:/usr/share/aclocal-1.16/depout.m4:11: -1- AC_DEFUN([_AM_OUTPUT_DEPENDENC
   rm -f conftest-deps.mk
 }
 ])
-m4trace:/usr/share/aclocal-1.16/depout.m4:62: -1- AC_DEFUN([AM_OUTPUT_DEPENDENCY_COMMANDS], [AC_CONFIG_COMMANDS([depfiles],
+m4trace:/usr/share/aclocal-1.16/depout.m4:64: -1- AC_DEFUN([AM_OUTPUT_DEPENDENCY_COMMANDS], [AC_CONFIG_COMMANDS([depfiles],
      [test x"$AMDEP_TRUE" != x"" || _AM_OUTPUT_DEPENDENCY_COMMANDS],
      [AMDEP_TRUE="$AMDEP_TRUE" MAKE="${MAKE-make}"])])
 m4trace:/usr/share/aclocal-1.16/init.m4:29: -1- AC_DEFUN([AM_INIT_AUTOMAKE], [AC_PREREQ([2.65])dnl
@@ -1564,6 +1554,18 @@ m4_if([$1], [v7],
 
 AC_SUBST([am__tar])
 AC_SUBST([am__untar])
+])
+m4trace:m4/ax_split_version.m4:27: -1- AC_DEFUN([AX_SPLIT_VERSION], [
+    AC_REQUIRE([AC_PROG_SED])
+    AX_MAJOR_VERSION=`echo "$VERSION" | $SED 's/\([[^.]][[^.]]*\).*/\1/'`
+    AX_MINOR_VERSION=`echo "$VERSION" | $SED 's/[[^.]][[^.]]*.\([[^.]][[^.]]*\).*/\1/'`
+    AX_POINT_VERSION=`echo "$VERSION" | $SED 's/[[^.]][[^.]]*.[[^.]][[^.]]*.\(.*\)/\1/'`
+    AC_MSG_CHECKING([Major version])
+    AC_MSG_RESULT([$AX_MAJOR_VERSION])
+    AC_MSG_CHECKING([Minor version])
+    AC_MSG_RESULT([$AX_MINOR_VERSION])
+    AC_MSG_CHECKING([Point version])
+    AC_MSG_RESULT([$AX_POINT_VERSION])
 ])
 m4trace:m4/libtool.m4:61: -1- AC_DEFUN([LT_INIT], [AC_PREREQ([2.62])dnl We use AC_PATH_PROGS_FEATURE_CHECK
 AC_REQUIRE([AC_CONFIG_AUX_DIR_DEFAULT])dnl
@@ -2387,26 +2389,26 @@ m4trace:m4/libtool.m4:3870: -1- AU_DEFUN([AC_CHECK_LIBM], [m4_if($#, 0, [LT_LIB_
 m4trace:m4/libtool.m4:3870: -1- AC_DEFUN([AC_CHECK_LIBM], [AC_DIAGNOSE([obsolete], [The macro `AC_CHECK_LIBM' is obsolete.
 You should run autoupdate.])dnl
 m4_if($#, 0, [LT_LIB_M], [LT_LIB_M($@)])])
-m4trace:m4/libtool.m4:8141: -1- AC_DEFUN([LT_PROG_GCJ], [m4_ifdef([AC_PROG_GCJ], [AC_PROG_GCJ],
+m4trace:m4/libtool.m4:8147: -1- AC_DEFUN([LT_PROG_GCJ], [m4_ifdef([AC_PROG_GCJ], [AC_PROG_GCJ],
   [m4_ifdef([A][M_PROG_GCJ], [A][M_PROG_GCJ],
     [AC_CHECK_TOOL(GCJ, gcj,)
       test set = "${GCJFLAGS+set}" || GCJFLAGS="-g -O2"
       AC_SUBST(GCJFLAGS)])])[]dnl
 ])
-m4trace:m4/libtool.m4:8150: -1- AU_DEFUN([LT_AC_PROG_GCJ], [m4_if($#, 0, [LT_PROG_GCJ], [LT_PROG_GCJ($@)])])
-m4trace:m4/libtool.m4:8150: -1- AC_DEFUN([LT_AC_PROG_GCJ], [AC_DIAGNOSE([obsolete], [The macro `LT_AC_PROG_GCJ' is obsolete.
+m4trace:m4/libtool.m4:8156: -1- AU_DEFUN([LT_AC_PROG_GCJ], [m4_if($#, 0, [LT_PROG_GCJ], [LT_PROG_GCJ($@)])])
+m4trace:m4/libtool.m4:8156: -1- AC_DEFUN([LT_AC_PROG_GCJ], [AC_DIAGNOSE([obsolete], [The macro `LT_AC_PROG_GCJ' is obsolete.
 You should run autoupdate.])dnl
 m4_if($#, 0, [LT_PROG_GCJ], [LT_PROG_GCJ($@)])])
-m4trace:m4/libtool.m4:8157: -1- AC_DEFUN([LT_PROG_GO], [AC_CHECK_TOOL(GOC, gccgo,)
+m4trace:m4/libtool.m4:8163: -1- AC_DEFUN([LT_PROG_GO], [AC_CHECK_TOOL(GOC, gccgo,)
 ])
-m4trace:m4/libtool.m4:8164: -1- AC_DEFUN([LT_PROG_RC], [AC_CHECK_TOOL(RC, windres,)
+m4trace:m4/libtool.m4:8170: -1- AC_DEFUN([LT_PROG_RC], [AC_CHECK_TOOL(RC, windres,)
 ])
-m4trace:m4/libtool.m4:8169: -1- AU_DEFUN([LT_AC_PROG_RC], [m4_if($#, 0, [LT_PROG_RC], [LT_PROG_RC($@)])])
-m4trace:m4/libtool.m4:8169: -1- AC_DEFUN([LT_AC_PROG_RC], [AC_DIAGNOSE([obsolete], [The macro `LT_AC_PROG_RC' is obsolete.
+m4trace:m4/libtool.m4:8175: -1- AU_DEFUN([LT_AC_PROG_RC], [m4_if($#, 0, [LT_PROG_RC], [LT_PROG_RC($@)])])
+m4trace:m4/libtool.m4:8175: -1- AC_DEFUN([LT_AC_PROG_RC], [AC_DIAGNOSE([obsolete], [The macro `LT_AC_PROG_RC' is obsolete.
 You should run autoupdate.])dnl
 m4_if($#, 0, [LT_PROG_RC], [LT_PROG_RC($@)])])
-m4trace:m4/libtool.m4:8289: -1- AU_DEFUN([LT_AC_PROG_SED], [m4_if($#, 0, [AC_PROG_SED], [AC_PROG_SED($@)])])
-m4trace:m4/libtool.m4:8289: -1- AC_DEFUN([LT_AC_PROG_SED], [AC_DIAGNOSE([obsolete], [The macro `LT_AC_PROG_SED' is obsolete.
+m4trace:m4/libtool.m4:8295: -1- AU_DEFUN([LT_AC_PROG_SED], [m4_if($#, 0, [AC_PROG_SED], [AC_PROG_SED($@)])])
+m4trace:m4/libtool.m4:8295: -1- AC_DEFUN([LT_AC_PROG_SED], [AC_DIAGNOSE([obsolete], [The macro `LT_AC_PROG_SED' is obsolete.
 You should run autoupdate.])dnl
 m4_if($#, 0, [AC_PROG_SED], [AC_PROG_SED($@)])])
 m4trace:m4/ltoptions.m4:14: -1- AC_DEFUN([LTOPTIONS_VERSION], [m4_if([1])])
@@ -2700,7 +2702,7 @@ m4trace:configure.ac:8: -1- m4_pattern_allow([^HAVE_DLFCN_H$])
 m4trace:configure.ac:10: -1- AM_INIT_AUTOMAKE
 m4trace:configure.ac:10: -1- m4_pattern_allow([^AM_[A-Z]+FLAGS$])
 m4trace:configure.ac:10: -1- AM_SET_CURRENT_AUTOMAKE_VERSION
-m4trace:configure.ac:10: -1- AM_AUTOMAKE_VERSION([1.16.1])
+m4trace:configure.ac:10: -1- AM_AUTOMAKE_VERSION([1.16.2])
 m4trace:configure.ac:10: -1- _AM_AUTOCONF_VERSION([2.69])
 m4trace:configure.ac:10: -1- m4_pattern_allow([^INSTALL_PROGRAM$])
 m4trace:configure.ac:10: -1- m4_pattern_allow([^INSTALL_SCRIPT$])

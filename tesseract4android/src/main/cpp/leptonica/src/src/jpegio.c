@@ -90,11 +90,12 @@
  *
  *    How to avoid subsampling the chroma channels
  *    --------------------------------------------
- *    When writing, you can avoid subsampling the U,V (chroma)
- *    channels.  This gives higher quality for the color, which is
- *    important for some situations.  The default subsampling is 2x2 on
- *    both channels.  Before writing, call pixSetChromaSampling(pix, 0)
- *    to prevent chroma subsampling.
+ *    By default, the U,V (chroma) channels use 2x2 subsampling (aka 4.2.0).
+ *    Higher quality for color, using full resolution (4.4.4) for the chroma,
+ *    is obtained by setting a field in the pix before writing:
+ *        pixSetChromaSampling(pix, L_NO_CHROMA_SAMPLING_JPEG);
+ *    The field can be reset for default 4.2.0 subsampling with
+ *        pixSetChromaSampling(pix, 0);
  *
  *    How to extract just the luminance channel in reading RGB
  *    --------------------------------------------------------
@@ -115,15 +116,6 @@
  *    we write data to a temp file and read it back for operations
  *    between pix and compressed-data, such as pixReadMemJpeg() and
  *    pixWriteMemJpeg().
- *
- *    Vestigial code: parsing the jpeg file for header metadata
- *    ---------------------------------------------------------
- *    For extracting header metadata, we previously parsed the file, looking
- *    for specific markers.  This is error-prone because of non-standard
- *    jpeg files, and we now use readHeaderJpeg() and readHeaderMemJpeg().
- *    The vestigial code is retained in jpegio_notused.c to help you
- *    understand a bit about how to parse jpeg markers.  It is not compiled
- *    into the library.
  * </pre>
  */
 
@@ -347,6 +339,7 @@ jmp_buf                        jmpbuf;  /* must be local to the function */
     pixSetInputFormat(pix, IFF_JFIF_JPEG);
     if (!rowbuffer || !pix) {
         LEPT_FREE(rowbuffer);
+        rowbuffer = NULL;
         pixDestroy(&pix);
         jpeg_destroy_decompress(&cinfo);
         return (PIX *)ERROR_PTR("rowbuffer or pix not made", procName, NULL);
@@ -394,6 +387,7 @@ jmp_buf                        jmpbuf;  /* must be local to the function */
             pixDestroy(&pix);
             jpeg_destroy_decompress(&cinfo);
             LEPT_FREE(rowbuffer);
+            rowbuffer = NULL;
             return (PIX *)ERROR_PTR("bad data", procName, NULL);
         }
 
@@ -477,6 +471,7 @@ jmp_buf                        jmpbuf;  /* must be local to the function */
     jpeg_finish_decompress(&cinfo);
     jpeg_destroy_decompress(&cinfo);
     LEPT_FREE(rowbuffer);
+    rowbuffer = NULL;
 
     if (nwarn > 0) {
         if (hint & L_JPEG_FAIL_ON_BAD_DATA) {
@@ -966,6 +961,7 @@ jmp_buf                      jmpbuf;  /* must be local to the function */
 
     pixDestroy(&pix);
     LEPT_FREE(rowbuffer);
+    rowbuffer = NULL;
     jpeg_destroy_compress(&cinfo);
     return 0;
 }
@@ -1222,7 +1218,6 @@ jpeg_error_catch_all_1(j_common_ptr cinfo)
     (*cinfo->err->output_message) (cinfo);
     jpeg_destroy(cinfo);
     longjmp(*pjmpbuf, 1);
-    return;
 }
 
 /*!
@@ -1242,7 +1237,6 @@ struct callback_data  *pcb_data;
     (*cinfo->err->output_message) (cinfo);
     jpeg_destroy(cinfo);
     longjmp(pcb_data->jmpbuf, 1);
-    return;
 }
 
 /* This function was borrowed from libjpeg */

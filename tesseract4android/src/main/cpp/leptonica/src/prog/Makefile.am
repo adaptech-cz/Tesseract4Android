@@ -12,26 +12,27 @@ AUTO_REG_PROGS = adaptmap_reg adaptnorm_reg affine_reg alphaops_reg \
 	binmorph1_reg binmorph3_reg blackwhite_reg \
 	blend1_reg blend2_reg blend3_reg blend4_reg blend5_reg \
 	boxa1_reg boxa2_reg boxa3_reg boxa4_reg bytea_reg \
-	ccthin1_reg ccthin2_reg \
-	checkerboard_reg cmapquant_reg \
-	colorcontent_reg coloring_reg colorize_reg \
+	ccbord_reg ccthin1_reg ccthin2_reg \
+	checkerboard_reg circle_reg cmapquant_reg \
+	colorcontent_reg colorfill_reg \
+	coloring_reg colorize_reg \
 	colormask_reg colormorph_reg colorquant_reg \
 	colorseg_reg colorspace_reg compare_reg \
 	compfilter_reg conncomp_reg conversion_reg \
-	convolve_reg dewarp_reg distance_reg \
+	convolve_reg crop_reg dewarp_reg distance_reg \
 	dither_reg dna_reg dwamorph1_reg edge_reg enhance_reg \
 	equal_reg expand_reg extrema_reg \
 	falsecolor_reg fhmtauto_reg \
 	findcorners_reg findpattern_reg \
 	fpix1_reg fpix2_reg genfonts_reg \
 	grayfill_reg graymorph1_reg graymorph2_reg \
-	grayquant_reg hardlight_reg heap_reg \
+	grayquant_reg hardlight_reg hash_reg heap_reg \
 	insert_reg ioformats_reg iomisc_reg italic_reg \
 	jbclass_reg jpegio_reg \
 	kernel_reg label_reg lineremoval_reg \
 	locminmax_reg logicops_reg lowaccess_reg lowsat_reg \
 	maze_reg mtiff_reg multitype_reg \
-	nearline_reg newspaper_reg numa1_reg numa2_reg \
+	nearline_reg newspaper_reg numa1_reg numa2_reg numa3_reg \
 	overlap_reg pageseg_reg paint_reg paintmask_reg \
 	pdfio1_reg pdfio2_reg pdfseg_reg \
 	pixa1_reg pixa2_reg pixadisp_reg pixcomp_reg \
@@ -83,8 +84,7 @@ OTHER_PROGS = adaptmap_dark \
 	colorsegtest comparepages comparepixa \
 	comparetest concatpdf \
 	contrasttest converttogray \
-	cornertest corrupttest \
-	croptest croptext deskew_it \
+	cornertest corrupttest croptext deskew_it \
 	dewarprules dewarptest1 dewarptest2 \
 	dewarptest3 dewarptest4 dewarptest5 \
 	digitprep1 displayboxa displayboxes_on_pixa \
@@ -93,9 +93,9 @@ OTHER_PROGS = adaptmap_dark \
 	findpattern1 findpattern2 findpattern3 \
 	flipselgen fmorphautogen \
 	fpixcontours gammatest graphicstest graymorphtest \
-	hashtest histotest histoduptest htmlviewer \
+	histotest histoduptest htmlviewer \
 	jbcorrelation jbrankhaus jbwords \
-	listtest livre_adapt livre_hmt \
+	listtest lightcolortest livre_adapt livre_hmt \
 	livre_makefigs livre_orient \
 	livre_pageseg livre_seedgen livre_tophat \
 	maketile maptest messagetest misctest1 \
@@ -104,7 +104,8 @@ OTHER_PROGS = adaptmap_dark \
 	pagesegtest1 pagesegtest2 \
 	partifytest partitiontest percolatetest \
 	pixaatest pixafileinfo plottest \
-	printimage printsplitimage printtiff rbtreetest \
+	printimage printsplitimage printtiff \
+	rasteroptest rbtreetest \
 	recog_bootnum1 recog_bootnum2 recog_bootnum3 \
 	recogsort recogtest1 recogtest2 recogtest3 \
 	recogtest4 recogtest5 recogtest6 recogtest7 \

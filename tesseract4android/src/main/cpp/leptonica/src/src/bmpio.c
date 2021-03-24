@@ -288,7 +288,10 @@ PIXCMAP   *cmap;
         for (i = 0; i < cmap->n; i++)   /* set all colors opaque */
             pixcmapSetAlpha (cmap, i, 255);
     }
-    pixSetColormap(pix, cmap);
+    if (pixSetColormap(pix, cmap)) {
+        pixDestroy(&pix);
+        return (PIX *)ERROR_PTR("invalid colormap", procName, NULL);
+    }
 
         /* Acquire the image data.  Image origin for bmp is at lower right. */
     fdata = (l_uint8 *)cdata + offset;  /* start of the bmp image data */
@@ -366,17 +369,15 @@ PIXCMAP   *cmap;
         pixFlipTB(pix, pix);
 
         /* ----------------------------------------------
-         * The bmp colormap determines the values of black
-         * and white pixels for binary in the following way:
-         * (a) white = 0 [255], black = 1 [0]
-         *      255, 255, 255, 255, 0, 0, 0, 255
-         * (b) black = 0 [0], white = 1 [255]
-         *      0, 0, 0, 255, 255, 255, 255, 255
-         * We have no need for a 1 bpp pix with a colormap!
-         * Note: the alpha component here is 255 (opaque)
+         * We do not use 1 bpp pix with colormaps in leptonica.
+         * The colormap must be removed in such a way that the pixel
+         * values are not changed.  If the values are only black and
+         * white, return a 1 bpp image; if gray, return an 8 bpp pix;
+         * otherwise, return a 32 bpp rgb pix.
          * ---------------------------------------------- */
     if (depth == 1 && cmap) {
-        pix1 = pixRemoveColormap(pix, REMOVE_CMAP_TO_BINARY);
+        L_INFO("removing opaque cmap from 1 bpp\n", procName);
+        pix1 = pixRemoveColormap(pix, REMOVE_CMAP_BASED_ON_SRC);
         pixDestroy(&pix);
         pix = pix1;  /* rename */
     }
@@ -449,8 +450,7 @@ l_uint8     pel[4];
 l_uint8    *cta = NULL;     /* address of the bmp color table array */
 l_uint8    *fdata, *data, *fmdata;
 l_int32     cmaplen;      /* number of bytes in the bmp colormap */
-l_int32     ncolors, val, stepsize;
-l_int32     w, h, d, fdepth, xres, yres;
+l_int32     ncolors, val, stepsize, w, h, d, fdepth, xres, yres, valid;
 l_int32     pixWpl, pixBpl, extrabytes, fBpl, fWpl, i, j, k;
 l_int32     heapcm;  /* extra copy of cta on the heap ? 1 : 0 */
 l_uint32    offbytes, fimagebytes;
@@ -477,6 +477,13 @@ RGBA_QUAD  *pquad;
         return ERROR_INT("&fsize not defined", procName, 1 );
     if (!pixs)
         return ERROR_INT("pixs not defined", procName, 1);
+
+        /* Verify validity of colormap */
+    if ((cmap = pixGetColormap(pixs)) != NULL) {
+        pixcmapIsValid(cmap, pixs, &valid);
+        if (!valid)
+            return ERROR_INT("colormap is not valid", procName, 1);
+    }
 
     pixGetDimensions(pixs, &w, &h, &d);
     if (d == 2) {

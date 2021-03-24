@@ -210,7 +210,7 @@
 #include <math.h>
 #include "allheaders.h"
 
-static const l_int32  L_BUF_SIZE = 512;
+#define L_BUF_SIZE 512
 
     /* For jbClassifyRankHaus(): size of border added around
      * pix of each c.c., to allow further processing.  This
@@ -1533,8 +1533,7 @@ PIX      *pix1, *pix2;
 
     if (pixadb) {
         lept_mkdir("lept/jb");
-        {GPLOT *gplot;
-         NUMA  *naseq;
+        {NUMA  *naseq;
          PIX   *pix3, *pix4;
             L_INFO("Best dilation: %d\n", procName, L_MAX(3, ibest + 1));
             naseq = numaMakeSequence(1, 1, numaGetCount(nacc));
@@ -1848,7 +1847,6 @@ JBCLASSER  *classer;
     ptaDestroy(&classer->ptall);
     LEPT_FREE(classer);
     *pclasser = NULL;
-    return;
 }
 
 
@@ -1928,7 +1926,6 @@ JBDATA  *data;
     ptaDestroy(&data->ptaul);
     LEPT_FREE(data);
     *pdata = NULL;
-    return;
 }
 
 

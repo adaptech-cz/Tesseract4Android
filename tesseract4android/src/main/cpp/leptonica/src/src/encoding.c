@@ -77,7 +77,7 @@ static const l_uint32  power85[5] = {1,
                                      85 * 85 * 85,
                                      85 * 85 * 85 * 85};
 
-static l_int32 convertChunkToAscii85(const l_uint8 *inarray, l_int32 insize,
+static l_int32 convertChunkToAscii85(const l_uint8 *inarray, size_t insize,
                                      l_int32 *pindex, char *outbuf,
                                      l_int32 *pnbout);
 
@@ -339,13 +339,14 @@ byteConvert4to3(l_uint8  *in4,
  * </pre>
  */
 char *
-encodeAscii85(const l_uint8 *inarray,
-              l_int32        insize,
-              l_int32       *poutsize)
+encodeAscii85(const l_uint8  *inarray,
+              size_t          insize,
+              size_t         *poutsize)
 {
-char    *chara;
-char     outbuf[8];
-l_int32  maxsize, i, index, outindex, linecount, nbout, eof;
+    char    *chara;
+    char     outbuf[8];
+    l_int32  maxsize, i, index, linecount, nbout, eof;
+    size_t   outindex;
 
     PROCNAME("encodeAscii85");
 
@@ -409,7 +410,7 @@ l_int32  maxsize, i, index, outindex, linecount, nbout, eof;
  */
 static l_int32
 convertChunkToAscii85(const l_uint8 *inarray,
-                      l_int32        insize,
+                      size_t         insize,
                       l_int32       *pindex,
                       char          *outbuf,
                       l_int32       *pnbout)
@@ -474,8 +475,8 @@ l_int32   eof, index, nread, nbout, i;
  */
 l_uint8 *
 decodeAscii85(const char *inarray,
-              l_int32     insize,
-              l_int32    *poutsize)
+              size_t      insize,
+              size_t     *poutsize)
 {
 char        inc;
 const char *pin;

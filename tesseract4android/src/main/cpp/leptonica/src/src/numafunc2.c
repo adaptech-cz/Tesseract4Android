@@ -2590,8 +2590,8 @@ numaFindLocForThreshold(NUMA       *na,
                         l_int32    *pthresh,
                         l_float32  *pfract)
 {
-l_int32     i, n, start, found, index, minloc;
-l_float32   val, pval, startval, jval, minval, sum, partsum;
+l_int32     i, n, start, index, minloc;
+l_float32   val, pval, jval, minval, sum, partsum;
 l_float32  *fa;
 
     PROCNAME("numaFindLocForThreshold");
@@ -2620,7 +2620,6 @@ l_float32  *fa;
         /* Look for the low point in the valley */
     start = i;
     pval = fa[start];
-    found = FALSE;  /* signal for passing the min between peaks */
     for (i = start + 1; i < n; i++) {
         val = fa[i];
         if (val <= pval) {  /* going down */
@@ -2632,7 +2631,6 @@ l_float32  *fa;
                 pval = jval;
                 i = index;
             } else {  /* really going up; passed the min */
-                found = TRUE;
                 break;
             }
         }
@@ -2759,7 +2757,7 @@ NUMA      *nat;
  * \param[in]    estthresh    estimated pixel threshold for crossing:
  *                            e.g., for images, white <--> black; typ. ~120
  * \param[out]   pbestthresh  robust estimate of threshold to use
- * \return  0 if OK, 1 on error
+ * \return  0 if OK, 1 on error or warning
  *
  * <pre>
  * Notes:
@@ -2774,6 +2772,7 @@ NUMA      *nat;
  *         in the center of this stable plateau of crossings.
  *         This can then be used with numaCrossingsByThreshold()
  *         to get a good estimate of crossing locations.
+ *     (3) If the count of nay is less than 2, a warning is issued.
  * </pre>
  */
 l_ok
@@ -2794,6 +2793,10 @@ NUMA      *nat, *nac;
     *pbestthresh = 0.0;
     if (!nay)
         return ERROR_INT("nay not defined", procName, 1);
+    if (numaGetCount(nay) < 2) {
+        L_WARNING("nay count < 2; no threshold crossing\n", procName);
+        return 1;
+    }
 
         /* Compute the number of crossings for different thresholds */
     nat = numaCreate(41);
@@ -2903,6 +2906,7 @@ NUMA      *nad;
         return (NUMA *)ERROR_PTR("nax and nay sizes differ", procName, NULL);
 
     nad = numaCreate(0);
+    if (n < 2) return nad;
     numaGetFValue(nay, 0, &yval1);
     numaGetParameters(nay, &startx, &delx);
     if (nax)

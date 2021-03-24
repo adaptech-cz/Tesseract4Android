@@ -44,7 +44,17 @@ jlong Java_com_googlecode_leptonica_android_ReadFile_nativeReadBytes8(JNIEnv *en
                                                                       jbyteArray data, jint w,
                                                                       jint h) {
   PIX *pix = pixCreateNoInit((l_int32) w, (l_int32) h, 8);
+  if (!pix) {
+    LOGE("Failed to create pix object with w=%d, h=%d", w, h);
+    return 0;
+  }
+
   l_uint8 **lineptrs = pixSetupByteProcessing(pix, nullptr, nullptr);
+  if (!lineptrs) {
+    LOGE("Failed to prepare pix for byte processing");
+    return 0;
+  }
+
   jbyte *data_buffer = env->GetByteArrayElements(data, nullptr);
   l_uint8 *byte_buffer = (l_uint8 *) data_buffer;
 

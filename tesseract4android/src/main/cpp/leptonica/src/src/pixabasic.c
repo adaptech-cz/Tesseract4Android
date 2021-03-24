@@ -84,7 +84,7 @@
  *
  *      Pixaa addition
  *           l_int32   pixaaAddPixa()
- *           l_int32   pixaaExtendArray()
+ *           static l_int32   pixaaExtendArray()
  *           l_int32   pixaaAddPix()
  *           l_int32   pixaaAddBox()
  *
@@ -139,12 +139,15 @@
 #include <string.h>
 #include "allheaders.h"
 
-    /* Bounds on initial array size */
-static const l_uint32  MaxPtrArraySize = 100000;
-static const l_int32 InitialPtrArraySize = 20;      /*!< n'importe quoi */
+    /* Bounds on array sizes */
+static const size_t  MaxInitPtrArraySize = 100000;
+static const size_t  MaxPixaPtrArraySize = 5000000;
+static const size_t  MaxPixaaPtrArraySize = 1000000;
+static const size_t  InitialPtrArraySize = 20;      /*!< n'importe quoi */
 
     /* Static functions */
 static l_int32 pixaExtendArray(PIXA  *pixa);
+static l_int32 pixaaExtendArray(PIXAA *paa);
 
 /*---------------------------------------------------------------------*
  *                    Pixa creation, destruction, copy                 *
@@ -167,7 +170,7 @@ PIXA  *pixa;
 
     PROCNAME("pixaCreate");
 
-    if (n <= 0 || n > MaxPtrArraySize)
+    if (n <= 0 || n > MaxInitPtrArraySize)
         n = InitialPtrArraySize;
 
     pixa = (PIXA *)LEPT_CALLOC(1, sizeof(PIXA));
@@ -432,7 +435,6 @@ PIXA    *pixa;
     }
 
     *ppixa = NULL;
-    return;
 }
 
 
@@ -572,6 +574,7 @@ pixaAddBox(PIXA    *pixa,
  * <pre>
  * Notes:
  *      (1) Doubles the size of the pixa and boxa ptr arrays.
+ *      (2) The max number of pix in the array is 5 million.
  * </pre>
  */
 static l_int32
@@ -590,31 +593,41 @@ pixaExtendArray(PIXA  *pixa)
  * \brief   pixaExtendArrayToSize()
  *
  * \param[in]    pixa
- * \param[in]    size
+ * \param[in]    size     number of pix ptrs in new array
  * \return  0 if OK; 1 on error
  *
  * <pre>
  * Notes:
  *      (1) If necessary, reallocs new pixa and boxa ptrs arrays to %size.
  *          The pixa and boxa ptr arrays must always be equal in size.
+ *      (2) The max number of pix ptrs is 5M.
  * </pre>
  */
 l_ok
-pixaExtendArrayToSize(PIXA    *pixa,
-                      l_int32  size)
+pixaExtendArrayToSize(PIXA   *pixa,
+                      size_t  size)
 {
+size_t  oldsize, newsize;
+
     PROCNAME("pixaExtendArrayToSize");
 
     if (!pixa)
         return ERROR_INT("pixa not defined", procName, 1);
-
-    if (size > pixa->nalloc) {
-        if ((pixa->pix = (PIX **)reallocNew((void **)&pixa->pix,
-                                 sizeof(PIX *) * pixa->nalloc,
-                                 size * sizeof(PIX *))) == NULL)
-            return ERROR_INT("new ptr array not returned", procName, 1);
-        pixa->nalloc = size;
+    if (pixa->nalloc > MaxPixaPtrArraySize)  /* belt & suspenders */
+        return ERROR_INT("pixa has too many ptrs", procName, 1);
+    if (size > MaxPixaPtrArraySize)
+        return ERROR_INT("size > 5M ptrs; too large", procName, 1);
+    if (size <= pixa->nalloc) {
+        L_INFO("size too small; no extension\n", procName);
+        return 0;
     }
+
+    oldsize = pixa->nalloc * sizeof(PIX *);
+    newsize = size * sizeof(PIX *);
+    if ((pixa->pix = (PIX **)reallocNew((void **)&pixa->pix,
+                                         oldsize, newsize)) == NULL)
+        return ERROR_INT("new ptr array not returned", procName, 1);
+    pixa->nalloc = size;
     return boxaExtendArrayToSize(pixa->boxa, size);
 }
 
@@ -1828,7 +1841,7 @@ PIXAA  *paa;
 
     PROCNAME("pixaaCreate");
 
-    if (n <= 0 || n > MaxPtrArraySize)
+    if (n <= 0 || n > MaxInitPtrArraySize)
         n = InitialPtrArraySize;
 
     paa = (PIXAA *)LEPT_CALLOC(1, sizeof(PIXAA));
@@ -1946,11 +1959,8 @@ PIXAA   *paa;
         pixaDestroy(&paa->pixa[i]);
     LEPT_FREE(paa->pixa);
     boxaDestroy(&paa->boxa);
-
     LEPT_FREE(paa);
     *ppaa = NULL;
-
-    return;
 }
 
 
@@ -2010,21 +2020,33 @@ PIXA    *pixac;
  *
  * \param[in]    paa
  * \return  0 if OK; 1 on error
+ *
+ * <pre>
+ * Notes:
+ *      (1) The max number of pixa ptrs is 1M.
+ * </pre>
  */
-l_ok
+static l_int32
 pixaaExtendArray(PIXAA  *paa)
 {
+size_t  oldsize, newsize;
+
     PROCNAME("pixaaExtendArray");
 
     if (!paa)
         return ERROR_INT("paa not defined", procName, 1);
+    if (paa->nalloc > MaxPixaaPtrArraySize)  /* belt & suspenders */
+        return ERROR_INT("paa has too many ptrs", procName, 1);
+    oldsize = paa->nalloc * sizeof(PIXA *);
+    newsize = 2 * oldsize;
+    if (newsize > 8 * MaxPixaaPtrArraySize)
+        return ERROR_INT("newsize > 8 MB; too large", procName, 1);
 
     if ((paa->pixa = (PIXA **)reallocNew((void **)&paa->pixa,
-                             sizeof(PIXA *) * paa->nalloc,
-                             2 * sizeof(PIXA *) * paa->nalloc)) == NULL)
+                                         oldsize, newsize)) == NULL)
         return ERROR_INT("new ptr array not returned", procName, 1);
 
-    paa->nalloc = 2 * paa->nalloc;
+    paa->nalloc *= 2;
     return 0;
 }
 
@@ -2601,6 +2623,7 @@ PIXA  *pixa;
  * Notes:
  *      (1) The pix are stored in the file as png.
  *          If the png library is not linked, this will fail.
+ *      (2) It is OK for the pixa to be empty.
  * </pre>
  */
 PIXA *
@@ -2627,6 +2650,11 @@ PIXA    *pixa;
         return (PIXA *)ERROR_PTR("invalid pixa version", procName, NULL);
     if (fscanf(fp, "Number of pix = %d\n", &n) != 1)
         return (PIXA *)ERROR_PTR("not a pixa file", procName, NULL);
+    if (n < 0)
+        return (PIXA *)ERROR_PTR("num pix ptrs < 0", procName, NULL);
+    if (n > MaxPixaPtrArraySize)
+        return (PIXA *)ERROR_PTR("too many pix ptrs", procName, NULL);
+    if (n == 0) L_INFO("the pixa is empty\n", procName);
 
     if ((boxa = boxaReadStream(fp)) == NULL)
         return (PIXA *)ERROR_PTR("boxa not made", procName, NULL);
@@ -3010,6 +3038,7 @@ PIXAA  *paa;
  * Notes:
  *      (1) The pix are stored in the file as png.
  *          If the png library is not linked, this will fail.
+ *      (2) It is OK for the pixaa to be empty.
  * </pre>
  */
 PIXAA *
@@ -3036,6 +3065,11 @@ PIXAA   *paa;
         return (PIXAA *)ERROR_PTR("invalid pixaa version", procName, NULL);
     if (fscanf(fp, "Number of pixa = %d\n", &n) != 1)
         return (PIXAA *)ERROR_PTR("not a pixaa file", procName, NULL);
+    if (n < 0)
+        return (PIXAA *)ERROR_PTR("num pixa ptrs < 0", procName, NULL);
+    if (n > MaxPixaaPtrArraySize)
+        return (PIXAA *)ERROR_PTR("too many pixa ptrs", procName, NULL);
+    if (n == 0) L_INFO("the pixaa is empty\n", procName);
 
     if ((paa = pixaaCreate(n)) == NULL)
         return (PIXAA *)ERROR_PTR("paa not made", procName, NULL);

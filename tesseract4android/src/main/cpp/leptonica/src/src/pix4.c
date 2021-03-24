@@ -44,6 +44,7 @@
  *           NUMA       *pixGetCmapHistogram()
  *           NUMA       *pixGetCmapHistogramMasked()
  *           NUMA       *pixGetCmapHistogramInRect()
+ *           l_int32     pixCountRGBColorsByHash()
  *           l_int32     pixCountRGBColors()
  *           L_AMAP     *pixGetColorAmapHistogram()
  *           l_int32     amapGetCountForColor()
@@ -61,6 +62,7 @@
  *           l_int32     pixGetRangeValues()
  *           l_int32     pixGetExtremeValue()
  *           l_int32     pixGetMaxValueInRect()
+ *           l_int32     pixGetMaxColorIndex()
  *           l_int32     pixGetBinnedComponentRange()
  *           l_int32     pixGetRankColorArray()
  *           l_int32     pixGetBinnedColor()
@@ -826,6 +828,41 @@ NUMA       *na;
 
 
 /*!
+ * \brief   pixCountRGBColorsByHash()
+ *
+ * \param[in]    pixs       rgb or rgba
+ * \param[out]   pncolors   number of colors found
+ * \return  0 if OK, 1 on error
+ *
+ * <pre>
+ * Notes:
+ *      (1) This is about 3x faster than pixCountRGBColors(),
+ *          which uses an ordered map.
+ * </pre>
+ */
+l_ok
+pixCountRGBColorsByHash(PIX      *pixs,
+                        l_int32  *pncolors)
+{
+L_DNA  *da1, *da2;
+
+    PROCNAME("pixCountRGBColorsByHash");
+
+    if (!pncolors)
+        return ERROR_INT("&ncolors not defined", procName, 1);
+    *pncolors = 0;
+    if (!pixs || pixGetDepth(pixs) != 32)
+        return ERROR_INT("pixs not defined or not 32 bpp", procName, 1);
+    da1 = pixConvertDataToDna(pixs);
+    l_dnaRemoveDupsByHash(da1, &da2, NULL);
+    *pncolors = l_dnaGetCount(da2);
+    l_dnaDestroy(&da1);
+    l_dnaDestroy(&da2);
+    return 0;
+}
+
+
+/*!
  * \brief   pixCountRGBColors()
  *
  * \param[in]    pixs       rgb or rgba
@@ -836,6 +873,7 @@ NUMA       *na;
  * <pre>
  * Notes:
  *      (1) If %factor == 1, this gives the exact number of colors.
+ *      (2) This is about 3x slower than pixCountRGBColorsByHash().
  * </pre>
  */
 l_ok
@@ -849,6 +887,7 @@ L_AMAP  *amap;
 
     if (!pncolors)
         return ERROR_INT("&ncolors not defined", procName, 1);
+    *pncolors = 0;
     if (!pixs || pixGetDepth(pixs) != 32)
         return ERROR_INT("pixs not defined or not 32 bpp", procName, 1);
     if (factor <= 0)
@@ -1388,6 +1427,7 @@ pixGetAverageMaskedRGB(PIX        *pixs,
                        l_float32  *pgval,
                        l_float32  *pbval)
 {
+l_int32   empty;
 PIX      *pixt;
 PIXCMAP  *cmap;
 
@@ -1410,6 +1450,11 @@ PIXCMAP  *cmap;
     if (type != L_MEAN_ABSVAL && type != L_ROOT_MEAN_SQUARE &&
         type != L_STANDARD_DEVIATION && type != L_VARIANCE)
         return ERROR_INT("invalid measure type", procName, 1);
+    if (pixm) {
+        pixZero(pixm, &empty);
+        if (empty)
+            return ERROR_INT("empty mask", procName, 1);
+    }
 
     if (prval) {
         if (cmap)
@@ -1482,7 +1527,7 @@ pixGetAverageMasked(PIX        *pixs,
                     l_int32     type,
                     l_float32  *pval)
 {
-l_int32    i, j, w, h, d, wm, hm, wplg, wplm, val, count;
+l_int32    i, j, w, h, d, wm, hm, wplg, wplm, val, count, empty;
 l_uint32  *datag, *datam, *lineg, *linem;
 l_float64  sumave, summs, ave, meansq, var;
 PIX       *pixg;
@@ -1504,6 +1549,11 @@ PIX       *pixg;
     if (type != L_MEAN_ABSVAL && type != L_ROOT_MEAN_SQUARE &&
         type != L_STANDARD_DEVIATION && type != L_VARIANCE)
         return ERROR_INT("invalid measure type", procName, 1);
+    if (pixm) {
+        pixZero(pixm, &empty);
+        if (empty)
+            return ERROR_INT("empty mask", procName, 1);
+    }
 
     if (pixGetColormap(pixs))
         pixg = pixRemoveColormap(pixs, REMOVE_CMAP_TO_GRAYSCALE);
@@ -2363,6 +2413,66 @@ l_uint32  *data, *line;
 
 
 /*!
+ * \brief   pixGetMaxColorIndex()
+ *
+ * \param[in]    pixs          1, 2, 4 or 8 bpp colormapped
+ * \param[out]   pmaxindex     max colormap index value
+ * \return  0 if OK, 1 on error
+ */
+l_ok
+pixGetMaxColorIndex(PIX      *pixs,
+                    l_int32  *pmaxindex)
+{
+l_int32    i, j, w, h, d, wpl, val, max, maxval, empty;
+l_uint32  *data, *line;
+
+    PROCNAME("pixGetMaxColorIndex");
+
+    if (!pmaxindex)
+        return ERROR_INT("&maxindex not defined", procName, 1);
+    *pmaxindex = 0;
+    if (!pixs)
+        return ERROR_INT("pixs not defined", procName, 1);
+    pixGetDimensions(pixs, &w, &h, &d);
+    if (d != 1 && d != 2 && d != 4 && d != 8)
+        return ERROR_INT("invalid pixs depth; not in (1,2,4,8}", procName, 1);
+
+    wpl = pixGetWpl(pixs);
+    data = pixGetData(pixs);
+    max = 0;
+    maxval = (1 << d) - 1;
+    if (d == 1) {
+        pixZero(pixs, &empty);
+        if (!empty) max = 1;
+        *pmaxindex = max;
+        return 0;
+    }
+    for (i = 0; i < h; i++) {
+        line = data + i * wpl;
+        if (d == 2) {
+            for (j = 0; j < w; j++) {
+                val = GET_DATA_DIBIT(line, j);
+                if (val > max) max = val;
+            }
+        } else if (d == 4) {
+            for (j = 0; j < w; j++) {
+                val = GET_DATA_QBIT(line, j);
+                if (val > max) max = val;
+            }
+        } else if (d == 8) {
+            for (j = 0; j < w; j++) {
+                val = GET_DATA_BYTE(line, j);
+                if (val > max) max = val;
+            }
+        }
+        if (max == maxval) break;
+    }
+    *pmaxindex = max;
+    return 0;
+}
+
+
+/*!
  * \brief   pixGetBinnedComponentRange()
  *
  * \param[in]    pixs      32 bpp rgb
@@ -2773,9 +2883,17 @@ cleanup_arrays:
  * \param[in]   ncolors   size of array
  * \param[in]   side      size of each color square; suggest 200
  * \param[in]   ncols     number of columns in output color matrix
- * \param[in]   fontsize  to label each square with text.  Valid set is
- *                        {4,6,8,10,12,14,16,18,20}.  Use 0 to disable.
+ * \param[in]   fontsize  to label each square with text.
+ *                        Valid set is {4,6,8,10,12,14,16,18,20}.
+ *                        Suggest 6 for 200x200 square. Use 0 to disable.
  * \return  pixd color array, or NULL on error
+ *
+ * <pre>
+ * Notes:
+ *      (1) This generates an array of labeled color squares from an
+ *          array of color values.
+ *      (2) To make a single color square, use pixMakeColorSquare().
+ * </pre>
  */
 PIX *
 pixDisplayColorArray(l_uint32  *carray,

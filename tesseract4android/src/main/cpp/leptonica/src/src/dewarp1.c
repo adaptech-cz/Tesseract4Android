@@ -490,8 +490,6 @@ dewarpCreateRef(l_int32  pageno,
 {
 L_DEWARP  *dew;
 
-    PROCNAME("dewarpCreateRef");
-
     dew = (L_DEWARP *)LEPT_CALLOC(1, sizeof(L_DEWARP));
     dew->pageno = pageno;
     dew->hasref = 1;
@@ -531,7 +529,6 @@ L_DEWARP  *dew;
     numaDestroy(&dew->nacurves);
     LEPT_FREE(dew);
     *pdew = NULL;
-    return;
 }
 
 
@@ -748,7 +745,6 @@ L_DEWARPA  *dewa;
     LEPT_FREE(dewa->dewarpcache);
     LEPT_FREE(dewa);
     *pdewa = NULL;
-    return;
 }
 
 
@@ -1055,13 +1051,13 @@ dewarpaUseBothArrays(L_DEWARPA  *dewa,
  *          'useboth' is set, this will count the number of text
  *          columns.  If the number is larger than 1, this will
  *          prevent the application of horizontal disparity arrays
- *          if they exist.  Note that the default value of check_columns
- *          if 0 (FALSE).
- *      (2) This field is set to 0 by default.  For horizontal disparity
- *          correction to take place on a single column of text, you must have:
+ *          if they exist.
+ *      (2) The check_columns field is set to TRUE by default.
+ *          For horizontal disparity correction to take place on a
+ *          single column of text, you must have:
  *           - a valid horizontal disparity array
  *           - useboth = 1 (TRUE)
- *          If there are multiple columns, additionally
+ *          If there are multiple columns, in addition you need
  *           - check_columns = 0 (FALSE)
  *
  * </pre>
@@ -1493,6 +1489,10 @@ NUMA       *namodels;
 
     if (fscanf(fp, "ndewarp = %d, maxpage = %d\n", &ndewarp, &maxpage) != 2)
         return (L_DEWARPA *)ERROR_PTR("read fail for maxpage+", procName, NULL);
+    if (ndewarp < 1)
+        return (L_DEWARPA *)ERROR_PTR("pages not >= 1", procName, NULL);
+    if (ndewarp > MaxPtrArraySize)
+        return (L_DEWARPA *)ERROR_PTR("too many pages", procName, NULL);
     if (fscanf(fp,
                "sampling = %d, redfactor = %d, minlines = %d, maxdist = %d\n",
                &sampling, &redfactor, &minlines, &maxdist) != 4)
@@ -1507,9 +1507,6 @@ NUMA       *namodels;
         return (L_DEWARPA *)ERROR_PTR("read fail for edgecurv", procName, NULL);
     if (fscanf(fp, "fullmodel = %d\n", &useboth) != 1)
         return (L_DEWARPA *)ERROR_PTR("read fail for useboth", procName, NULL);
-
-    if (ndewarp > MaxPtrArraySize)
-        return (L_DEWARPA *)ERROR_PTR("too many pages", procName, NULL);
 
     dewa = dewarpaCreate(maxpage + 1, sampling, redfactor, minlines, maxdist);
     dewa->maxpage = maxpage;

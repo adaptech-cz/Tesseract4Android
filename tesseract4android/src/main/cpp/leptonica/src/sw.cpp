@@ -1,4 +1,3 @@
-#pragma optimize("", off)
 void build(Solution &s)
 {
     auto add_deps = [](auto &t)
@@ -12,19 +11,20 @@ void build(Solution &s)
         t += "HAVE_LIBWEBP_ANIM"_d;
         t += "HAVE_LIBZ"_d;
 
-        t += "org.sw.demo.gif-5"_dep;
-        t += "org.sw.demo.jpeg-9"_dep;
-        t += "org.sw.demo.uclouvain.openjpeg.openjp2-2"_dep;
-        t += "org.sw.demo.glennrp.png-1"_dep;
-        t += "org.sw.demo.tiff-4"_dep;
+        t += "org.sw.demo.gif"_dep;
+        t += "org.sw.demo.jpeg"_dep;
+        t += "org.sw.demo.uclouvain.openjpeg.openjp2"_dep;
+        t += "org.sw.demo.glennrp.png"_dep;
+        t += "org.sw.demo.tiff"_dep;
         t += "org.sw.demo.webmproject.webp"_dep;
     };
 
-    auto &leptonica = s.addTarget<LibraryTarget>("danbloomberg.leptonica", "1.79.0");
+    auto &leptonica = s.addTarget<LibraryTarget>("danbloomberg.leptonica", "1.80.0");
     leptonica += Git("https://github.com/DanBloomberg/leptonica");
 
     {
         leptonica.setChecks("leptonica");
+        leptonica.ApiName = "LEPT_DLL";
 
         leptonica +=
             "src/.*\\.c"_rr,
@@ -38,8 +38,6 @@ void build(Solution &s)
 
         leptonica += "LIBJP2K_HEADER=\"openjpeg.h\""_d;
         leptonica.Public += "HAVE_CONFIG_H"_d;
-        leptonica += sw::Shared, "LIBLEPT_EXPORTS"_d;
-        leptonica.Interface += sw::Shared, "LIBLEPT_IMPORTS"_d;
 
         if (leptonica.Variables["WORDS_BIGENDIAN"] == 1)
             leptonica.Variables["ENDIANNESS"] = "L_BIG_ENDIAN";
@@ -51,32 +49,20 @@ void build(Solution &s)
         leptonica.configureFile("src/endianness.h.in", "endianness.h");
         leptonica.writeFileOnce("config_auto.h");
 
-        if (leptonica.getCompilerType() == CompilerType::MSVC)
-        {
-            for (auto *f : leptonica.gatherSourceFiles())
-                f->BuildAs = NativeSourceFile::CPP;
-        }
-
-        if (leptonica.getBuildSettings().TargetOS.Type == OSType::Windows)
+        if (leptonica.getBuildSettings().TargetOS.Type == OSType::Windows ||
+            leptonica.getBuildSettings().TargetOS.Type == OSType::Mingw)
             leptonica += "User32.lib"_slib, "Gdi32.lib"_slib;
     }
 
     auto &progs = leptonica.addDirectory("progs");
-    if (s.DryRun)
-        progs.Scope = TargetScope::Test;
-
     {
         auto add_prog = [&s, &progs, &leptonica, &add_deps](const String &name, const Files &files) -> decltype(auto)
         {
             auto &t = progs.addExecutable(name);
+            t.Scope = TargetScope::Test;
             t.setRootDirectory("prog");
             t += files;
             t += leptonica;
-            if (leptonica.getCompilerType() == CompilerType::MSVC)
-            {
-                for (auto *f : t.gatherSourceFiles())
-                    f->BuildAs = NativeSourceFile::CPP;
-            }
             add_deps(t);
             return t;
         };
@@ -109,11 +95,14 @@ void build(Solution &s)
             {"boxa3_reg", {"boxa3_reg.c"}},
             {"boxa4_reg", {"boxa4_reg.c"}},
             {"bytea_reg", {"bytea_reg.c"}},
+            {"ccbord_reg", {"ccbord_reg.c"}},
             {"ccthin1_reg", {"ccthin1_reg.c"}},
             {"ccthin2_reg", {"ccthin2_reg.c"}},
             {"checkerboard_reg", {"checkerboard_reg.c"}},
+            {"circle_reg", {"circle_reg.c"}},
             {"cmapquant_reg", {"cmapquant_reg.c"}},
             {"colorcontent_reg", {"colorcontent_reg.c"}},
+            {"colorfill_reg", {"colorfill_reg.c"}},
             {"coloring_reg", {"coloring_reg.c"}},
             {"colorize_reg", {"colorize_reg.c"}},
             {"colormask_reg", {"colormask_reg.c"}},
@@ -126,6 +115,7 @@ void build(Solution &s)
             {"conncomp_reg", {"conncomp_reg.c"}},
             {"conversion_reg", {"conversion_reg.c"}},
             {"convolve_reg", {"convolve_reg.c"}},
+            {"crop_reg", {"crop_reg.c"}},
             {"dewarp_reg", {"dewarp_reg.c"}},
             {"distance_reg", {"distance_reg.c"}},
             {"dither_reg", {"dither_reg.c"}},
@@ -153,6 +143,7 @@ void build(Solution &s)
             {"graymorph2_reg", {"graymorph2_reg.c"}},
             {"grayquant_reg", {"grayquant_reg.c"}},
             {"hardlight_reg", {"hardlight_reg.c"}},
+            {"hash_reg", {"hash_reg.c"}},
             {"heap_reg", {"heap_reg.c"}},
             {"insert_reg", {"insert_reg.c"}},
             {"ioformats_reg", {"ioformats_reg.c"}},
@@ -175,6 +166,7 @@ void build(Solution &s)
             {"newspaper_reg", {"newspaper_reg.c"}},
             {"numa1_reg", {"numa1_reg.c"}},
             {"numa2_reg", {"numa2_reg.c"}},
+            {"numa3_reg", {"numa3_reg.c"}},
             {"overlap_reg", {"overlap_reg.c"}},
             {"pageseg_reg", {"pageseg_reg.c"}},
             {"paintmask_reg", {"paintmask_reg.c"}},
@@ -259,7 +251,6 @@ void build(Solution &s)
             {"converttops", {"converttops.c"}},
             {"cornertest", {"cornertest.c"}},
             {"corrupttest", {"corrupttest.c"}},
-            {"croptest", {"croptest.c"}},
             {"croptext", {"croptext.c"}},
             {"deskew_it", {"deskew_it.c"}},
             {"dewarprules", {"dewarprules.c"}},
@@ -288,7 +279,6 @@ void build(Solution &s)
             {"gammatest", {"gammatest.c"}},
             {"graphicstest", {"graphicstest.c"}},
             {"graymorphtest", {"graymorphtest.c"}},
-            {"hashtest", {"hashtest.c"}},
             {"histotest", {"histotest.c"}},
             {"histoduptest", {"histoduptest.c"}},
             {"htmlviewer", {"htmlviewer.c"}},
@@ -296,6 +286,7 @@ void build(Solution &s)
             {"jbcorrelation", {"jbcorrelation.c"}},
             {"jbrankhaus", {"jbrankhaus.c"}},
             {"jbwords", {"jbwords.c"}},
+            {"lightcolortest", {"lightcolortest.c"}},
             {"listtest", {"listtest.c"}},
             {"livre_adapt", {"livre_adapt.c"}},
             {"livre_hmt", {"livre_hmt.c"}},
@@ -325,6 +316,7 @@ void build(Solution &s)
             {"printimage", {"printimage.c"}},
             {"printsplitimage", {"printsplitimage.c"}},
             {"printtiff", {"printtiff.c"}},
+            {"rasteroptest", {"rasteroptest.c"}},
             {"rbtreetest", {"rbtreetest.c"}},
             {"recog_bootnum1", {"recog_bootnum1.c"}},
             {"recog_bootnum2", {"recog_bootnum2.c"}},
