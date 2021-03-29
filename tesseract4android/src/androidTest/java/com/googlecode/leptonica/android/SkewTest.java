@@ -41,6 +41,27 @@ public class SkewTest {
 	}
 
 	private void testFindSkew(String text, int width, int height, float skew) {
+		Pix pixs = createTextPix(text, width, height, skew);
+
+		Pix pixd;
+		if (pixs.getDepth() != 4 || pixs.getDepth() != 8) {
+			Pix pix8 = Convert.convertTo8(pixs);
+			pixd = GrayQuant.pixThresholdToBinary(pix8, 1);
+			pix8.recycle();
+		} else {
+			pixd = GrayQuant.pixThresholdToBinary(pixs, 1);
+		}
+
+		float measuredSkew = -Skew.findSkew(pixd);
+		float tol = 1f;
+		boolean isInRange = skew - tol < measuredSkew && measuredSkew < skew + tol;
+		assertTrue("Skew has incorrect value.", isInRange);
+
+		pixs.recycle();
+		pixd.recycle();
+	}
+
+	private Pix createTextPix(String text, int width, int height, float skew) {
 		Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 		Paint paint = new Paint();
 		Canvas canvas = new Canvas(bmp);
@@ -57,25 +78,36 @@ public class SkewTest {
 
 		Pix pixs = ReadFile.readBitmap(bmp);
 
+		bmp.recycle();
+
 		assertNotNull(pixs);
 
-		Pix pixd;
-		//noinspection ConstantConditions
-		if (pixs.getDepth() != 4 || pixs.getDepth() != 8) {
-			Pix pix8 = Convert.convertTo8(pixs);
-			pixd = GrayQuant.pixThresholdToBinary(pix8, 1);
-			pix8.recycle();
-		} else {
-			pixd = GrayQuant.pixThresholdToBinary(pixs, 1);
-		}
+		return pixs;
+	}
 
-		float measuredSkew = -Skew.findSkew(pixd);
+	@Test
+	public void testDeskew() {
+		testDeskew(SENTENCE, 640, 480, -15.0f);
+		testDeskew(SENTENCE, 640, 480, 0.0f);
+		testDeskew(SENTENCE, 640, 480, 15.0f);
+	}
+
+	private void testDeskew(String text, int width, int height, float skew) {
+		Pix pixs = createTextPix(text, width, height, skew);
+
+		float[] result = new float[2];
+
+		Pix pixd = Skew.deskew(pixs, result);
+		assertNotNull(pixd);
+
+		float measuredSkew = -result[0];
+		float confidence = result[1];
 		float tol = 1f;
-		boolean isInRange = skew - tol < measuredSkew && measuredSkew < skew + tol;
-		assertTrue("Skew has incorrect value.", isInRange);
+		boolean isInRange = confidence >= 3 && skew - tol < measuredSkew && measuredSkew < skew + tol;
+
+		assertTrue("Deskew returned wrong skew or confidence.", isInRange);
 
 		pixs.recycle();
 		pixd.recycle();
-		bmp.recycle();
 	}
 }

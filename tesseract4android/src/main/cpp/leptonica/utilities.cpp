@@ -267,6 +267,40 @@ jfloat Java_com_googlecode_leptonica_android_Skew_nativeFindSkew(JNIEnv *env, jc
 }
 
 /**********
+ * Deskew *
+ **********/
+
+jlong Java_com_googlecode_leptonica_android_Skew_nativeDeskew(JNIEnv *env, jclass clazz,
+                                                              jlong nativePix,
+                                                              jint sweepReduction,
+                                                              jfloat sweepRange,
+                                                              jfloat sweepDelta,
+                                                              jint searchReduction,
+                                                              jint threshold,
+                                                              jfloatArray result) {
+  PIX *pixs = (PIX *) nativePix;
+  PIX *pixd;
+
+  if (result == nullptr) {
+      pixd = pixDeskewGeneral(pixs, sweepReduction, sweepRange, sweepDelta, searchReduction,
+                              threshold, nullptr, nullptr);
+  } else {
+      l_float32 angle, conf;
+      pixd = pixDeskewGeneral(pixs, sweepReduction, sweepRange, sweepDelta, searchReduction,
+                              threshold, &angle, &conf);
+
+      jfloat *resultArray = env->GetFloatArrayElements(result, nullptr);
+
+      resultArray[0] = angle;
+      resultArray[1] = conf;
+
+      env->ReleaseFloatArrayElements(result, resultArray, 0);
+  }
+
+  return jlong(pixd);
+}
+
+/**********
  * Rotate *
  **********/
 

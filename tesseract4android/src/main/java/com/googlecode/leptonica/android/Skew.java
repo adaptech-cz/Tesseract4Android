@@ -102,11 +102,74 @@ public class Skew {
 				sweepReduction, searchReduction, searchMinDelta);
 	}
 
+	/**
+	 * Finds the skew angle and deskews the image using default parameters.
+	 * <p>
+	 * Notes:
+	 * <ol>
+	 * <li>If the angle is large enough and there is sufficient confidence,
+	 * it returns a deskewed image; otherwise, it returns a clone.
+	 * </ol>
+	 *
+	 * @param pixs   Input pix (any depth).
+	 * @param result (Optional) A float array with at least two elements.
+	 *               At [0] will be angle required to deskew, in degrees;
+	 *               At [1] will be confidence as a ratio of max/min scores.
+	 * @return the deskewed pix, or <code>null</code> on error
+	 */
+	public static Pix deskew(Pix pixs, float[] result) {
+		return deskew(pixs, 0, SWEEP_RANGE, SWEEP_DELTA, 0, 0, result);
+	}
+
+	/**
+	 * Finds the skew angle and deskews the image. Optionally gets the used angle and confidence.
+	 * <p>
+	 * Notes:
+	 * <ol>
+	 * <li>This binarizes if necessary and finds the skew angle. If the
+	 * angle is large enough and there is sufficient confidence,
+	 * it returns a deskewed image; otherwise, it returns a clone.
+	 * <li>Typical values at 300 ppi for redSearch are 2 and 4.
+	 * At 75 ppi, one should use redSearch = 1.
+	 * </ol>
+	 *
+	 * @param pixs            Input pix (any depth).
+	 * @param sweepReduction  For linear search: reduction factor = 1, 2 or 4;
+	 *                        use 0 for default.
+	 * @param sweepRange      In degrees in each direction from 0;
+	 *                        use 0.0 for default.
+	 * @param sweepDelta      In degrees; use 0.0 for default.
+	 * @param searchReduction For binary search: reduction factor = 1, 2 or 4;
+	 *                        use 0 for default.
+	 * @param threshold       For binarizing the image; use 0 for default.
+	 * @param result          (Optional) A float array with at least two elements.
+	 *                        At [0] will be angle required to deskew, in degrees;
+	 *                        At [1] will be confidence as a ratio of max/min scores.
+	 * @return the deskewed pix, or NULL on error
+	 */
+	public static Pix deskew(Pix pixs, int sweepReduction, float sweepRange, float sweepDelta,
+							 int searchReduction, int threshold, float[] result) {
+		if (pixs == null)
+			throw new IllegalArgumentException("Source pix must be non-null");
+
+		long nativePix = nativeDeskew(pixs.getNativePix(), sweepReduction, sweepRange, sweepDelta,
+				searchReduction, threshold, result);
+
+		if (nativePix == 0)
+			throw new RuntimeException("Failed to deskew pix");
+
+		return new Pix(nativePix);
+	}
+
 	// ***************
 	// * NATIVE CODE *
 	// ***************
 
 	private static native float nativeFindSkew(long nativePix, float sweepRange, float sweepDelta,
 											   int sweepReduction, int searchReduction, float searchMinDelta);
+
+	private static native long nativeDeskew(long nativePix, int sweepReduction, float sweepRange,
+											float sweepDelta, int searchReduction, int threshold,
+											float[] result);
 
 }
