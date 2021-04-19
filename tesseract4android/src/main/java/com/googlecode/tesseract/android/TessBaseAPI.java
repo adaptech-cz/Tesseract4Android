@@ -31,6 +31,8 @@ import com.googlecode.leptonica.android.ReadFile;
 
 import java.io.File;
 import java.lang.annotation.Retention;
+import java.util.Collections;
+import java.util.Map;
 
 import static java.lang.annotation.RetentionPolicy.SOURCE;
 
@@ -360,11 +362,6 @@ public class TessBaseAPI {
 	 * <p>
 	 * <b>WARNING:</b> On changing languages, all Tesseract parameters are reset
 	 * back to their default values. (Which may vary between languages.)
-	 * <p>
-	 * If you have a rare need to set a Variable that controls initialization
-	 * for a second call to Init you should explicitly call End() and then use
-	 * SetVariable before Init. This is only a very rare use case, since there
-	 * are very few uses that require any parameters to be set before Init.
 	 *
 	 * @param datapath the parent directory of tessdata ending in a forward
 	 *                 slash
@@ -387,6 +384,23 @@ public class TessBaseAPI {
 	 * @see #init(String, String)
 	 */
 	public boolean init(String datapath, String language, @OcrEngineMode int ocrEngineMode) {
+		return init(datapath, language, ocrEngineMode, Collections.emptyMap());
+	}
+
+	/**
+	 * Initializes the Tesseract engine with the specified language model(s). Returns
+	 * <code>true</code> on success.
+	 *
+	 * @param datapath      the parent directory of tessdata ending in a forward
+	 *                      slash
+	 * @param language      an ISO 639-3 string representing the language(s)
+	 * @param ocrEngineMode the OCR engine mode to be set
+	 * @param config        variables to be set at initialization; can be empty
+	 * @return <code>true</code> on success
+	 * @see #init(String, String)
+	 */
+	public boolean init(String datapath, String language, @OcrEngineMode int ocrEngineMode,
+						Map<String, String> config) {
 		if (datapath == null)
 			throw new IllegalArgumentException("Data path must not be null!");
 		if (!datapath.endsWith(File.separator))
@@ -400,7 +414,26 @@ public class TessBaseAPI {
 		if (!tessdata.exists() || !tessdata.isDirectory())
 			throw new IllegalArgumentException("Data path must contain subfolder tessdata!");
 
-		boolean success = nativeInitOem(mNativeData, datapath + "tessdata", language, ocrEngineMode);
+		boolean success;
+
+		if (config.isEmpty()) {
+			success = nativeInitOem(mNativeData, datapath + "tessdata", language, ocrEngineMode);
+		} else {
+			int size = config.size();
+
+			String[] vars = new String[size];
+			String[] varsValues = new String[size];
+
+			int i = 0;
+			for (Map.Entry<String, String> entry : config.entrySet()) {
+				vars[i] = entry.getKey();
+				varsValues[i] = entry.getValue();
+				i++;
+			}
+
+			success = nativeInitParams(mNativeData, datapath + "tessdata", language, ocrEngineMode,
+					vars, varsValues);
+		}
 
 		if (success) {
 			mRecycled = false;
@@ -997,6 +1030,9 @@ public class TessBaseAPI {
 	private native boolean nativeInit(long mNativeData, String datapath, String language);
 
 	private native boolean nativeInitOem(long mNativeData, String datapath, String language, int mode);
+
+	private native boolean nativeInitParams(long mNativeData, String datapath, String language,
+											int mode, String[] vars, String[] varsValues);
 
 	private native String nativeGetInitLanguagesAsString(long mNativeData);
 

@@ -43,7 +43,9 @@ import org.junit.Test;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Semaphore;
 
 import static org.junit.Assert.assertEquals;
@@ -414,6 +416,35 @@ public class TessBaseAPITest {
 
 		// Attempt to shut down the API.
 		baseApi.end();
+	}
+
+	@Test
+	public void testInit_config() {
+		final String inputText = "hello";
+		final Bitmap bmp = getTextImage(inputText, 640, 480);
+
+		// Ensure that setting the blacklist variable works.
+		final String blacklistedCharacter = inputText.substring(1, 2);
+
+		// Attempt to initialize the API.
+		final TessBaseAPI baseApi = new TessBaseAPI();
+
+		Map<String, String> config = new HashMap<>();
+		config.put(TessBaseAPI.VAR_CHAR_BLACKLIST, blacklistedCharacter);
+
+		boolean result = baseApi.init(TESSBASE_PATH, DEFAULT_LANGUAGE,
+				TessBaseAPI.OEM_TESSERACT_ONLY, config);
+
+		assertTrue("Init was unsuccessful.", result);
+
+		baseApi.setPageSegMode(TessBaseAPI.PageSegMode.PSM_SINGLE_LINE);
+		baseApi.setImage(bmp);
+		final String outputText = baseApi.getUTF8Text();
+		assertFalse("Found a blacklisted character.", outputText.contains(blacklistedCharacter));
+
+		// Attempt to shut down the API.
+		baseApi.end();
+		bmp.recycle();
 	}
 
 	@Test

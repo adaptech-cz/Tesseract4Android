@@ -193,6 +193,54 @@ jboolean Java_com_googlecode_tesseract_android_TessBaseAPI_nativeInitOem(JNIEnv 
   return res;
 }
 
+jboolean Java_com_googlecode_tesseract_android_TessBaseAPI_nativeInitParams(JNIEnv *env,
+                                                                            jobject thiz,
+                                                                            jlong mNativeData,
+                                                                            jstring dir,
+                                                                            jstring lang,
+                                                                            jint mode,
+                                                                            jobjectArray vars,
+                                                                            jobjectArray varsValues) {
+
+  native_data_t *nat = (native_data_t*) mNativeData;
+
+  const char *c_dir = env->GetStringUTFChars(dir, NULL);
+  const char *c_lang = env->GetStringUTFChars(lang, NULL);
+
+  GenericVector<STRING> vars_vec, vars_values;
+
+  jsize size = env->GetArrayLength(vars);
+
+  for (int i = 0; i < size; i++) {
+    jstring var = (jstring) env->GetObjectArrayElement(vars, i);
+    jstring value = (jstring) env->GetObjectArrayElement(varsValues, i);
+
+    const char *c_var = env->GetStringUTFChars(var, NULL);
+    const char *c_value = env->GetStringUTFChars(value, NULL);
+
+    vars_vec.push_back(STRING(c_var));
+    vars_values.push_back(STRING(c_value));
+
+    env->ReleaseStringUTFChars(var, c_var);
+    env->ReleaseStringUTFChars(value, c_value);
+  }
+
+  jboolean res = JNI_TRUE;
+
+  if (nat->api.Init(c_dir, c_lang, (tesseract::OcrEngineMode) mode,
+          nullptr, 0, &vars_vec, &vars_values, false)) {
+    LOGE("Could not initialize Tesseract API with language=%s!", c_lang);
+    res = JNI_FALSE;
+  } else {
+    LOGI("Initialized Tesseract API with language=%s", c_lang);
+  }
+
+  env->ReleaseStringUTFChars(dir, c_dir);
+  env->ReleaseStringUTFChars(lang, c_lang);
+
+  return res;
+}
+
 jstring Java_com_googlecode_tesseract_android_TessBaseAPI_nativeGetInitLanguagesAsString(JNIEnv *env,
                                                                                          jobject thiz,
                                                                                          jlong mNativeData) {
