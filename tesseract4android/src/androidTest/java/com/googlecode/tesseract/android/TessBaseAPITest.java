@@ -119,7 +119,7 @@ public class TessBaseAPITest {
 		assertNotNull("No ChoiceIterator values found.", choicesAndConfidences);
 
 		// Attempt to shut down the API.
-		baseApi.end();
+		baseApi.recycle();
 		bmp.recycle();
 	}
 
@@ -188,12 +188,12 @@ public class TessBaseAPITest {
 		assertNull("Received non-null result after clear().", text);
 
 		// Attempt to shut down the API.
-		baseApi.end();
+		baseApi.recycle();
 		bmp.recycle();
 	}
 
 	@Test
-	public void testEnd() {
+	public void testRecycle() {
 		final String inputText = "hello";
 		final Bitmap bmp = getTextImage(inputText, 640, 480);
 
@@ -205,8 +205,8 @@ public class TessBaseAPITest {
 		baseApi.setPageSegMode(TessBaseAPI.PageSegMode.PSM_SINGLE_LINE);
 		baseApi.setImage(bmp);
 
-		// Ensure that getUTF8Text() fails after end() is called.
-		baseApi.end();
+		// Ensure that getUTF8Text() fails after recycle() is called.
+		baseApi.recycle();
 		try {
 			baseApi.getUTF8Text();
 			fail("IllegalStateException not thrown");
@@ -216,17 +216,15 @@ public class TessBaseAPITest {
 			bmp.recycle();
 		}
 
-		// Ensure that reinitializing the API is successful.
-		success = baseApi.init(TESSBASE_PATH, DEFAULT_LANGUAGE);
-		assertTrue("API failed to initialize after end()", success);
-
-		// Ensure setImage() does not throw an exception.
-		final Bitmap bmp2 = getTextImage(inputText, 640, 480);
-		baseApi.setImage(bmp2);
-
-		// Attempt to shut down the API.
-		baseApi.end();
-		bmp2.recycle();
+		// Ensure that init() fails after recycle() is called.
+		try {
+			baseApi.init(TESSBASE_PATH, DEFAULT_LANGUAGE);
+			fail("IllegalStateException not thrown");
+		} catch (IllegalStateException e) {
+			// Continue
+		} finally {
+			bmp.recycle();
+		}
 	}
 
 	@Test
@@ -265,7 +263,7 @@ public class TessBaseAPITest {
 		assertEquals(inputText, outputText);
 
 		// Attempt to shut down the API.
-		baseApi.end();
+		baseApi.recycle();
 		bmp.recycle();
 	}
 
@@ -281,7 +279,7 @@ public class TessBaseAPITest {
 		assertEquals("Got incorrect init languages value.", lang, DEFAULT_LANGUAGE);
 
 		// Attempt to shut down the API.
-		baseApi.end();
+		baseApi.recycle();
 	}
 
 	@Test
@@ -302,7 +300,7 @@ public class TessBaseAPITest {
 		assertEquals(bmp.getHeight(), pixd.getHeight());
 
 		// Attempt to shut down the API.
-		baseApi.end();
+		baseApi.recycle();
 		bmp.recycle();
 		pixd.recycle();
 	}
@@ -390,7 +388,7 @@ public class TessBaseAPITest {
 		assertTrue("Result bounding box Rect is incorrect.", validBoundingRect);
 
 		// Attempt to shut down the API.
-		baseApi.end();
+		baseApi.recycle();
 		bmp.recycle();
 	}
 
@@ -401,8 +399,12 @@ public class TessBaseAPITest {
 		boolean success = baseApi.init(TESSBASE_PATH, DEFAULT_LANGUAGE);
 		assertTrue(success);
 
+		// Attempt to initialize the API again.
+		success = baseApi.init(TESSBASE_PATH, DEFAULT_LANGUAGE);
+		assertTrue(success);
+
 		// Attempt to shut down the API.
-		baseApi.end();
+		baseApi.recycle();
 	}
 
 	@Test
@@ -415,7 +417,7 @@ public class TessBaseAPITest {
 		assertTrue("Init was unsuccessful.", result);
 
 		// Attempt to shut down the API.
-		baseApi.end();
+		baseApi.recycle();
 	}
 
 	@Test
@@ -443,7 +445,7 @@ public class TessBaseAPITest {
 		assertFalse("Found a blacklisted character.", outputText.contains(blacklistedCharacter));
 
 		// Attempt to shut down the API.
-		baseApi.end();
+		baseApi.recycle();
 		bmp.recycle();
 	}
 
@@ -478,7 +480,7 @@ public class TessBaseAPITest {
 		assertTrue(notifier.receivedProgress);
 
 		// Attempt to shut down the API.
-		baseApi.end();
+		baseApi.recycle();
 		bmp.recycle();
 	}
 
@@ -550,7 +552,7 @@ public class TessBaseAPITest {
 		assertTrue(notifier.receivedProgress);
 
 		// Attempt to shut down the API.
-		baseApi.end();
+		baseApi.recycle();
 		bmp.recycle();
 	}
 
@@ -597,7 +599,7 @@ public class TessBaseAPITest {
 		baseApi.setImage(bmp);
 
 		// Attempt to shut down the API.
-		baseApi.end();
+		baseApi.recycle();
 		bmp.recycle();
 	}
 
@@ -619,7 +621,7 @@ public class TessBaseAPITest {
 		baseApi.setImage(file);
 
 		// Attempt to shut down the API.
-		baseApi.end();
+		baseApi.recycle();
 		bmp.recycle();
 	}
 
@@ -635,7 +637,7 @@ public class TessBaseAPITest {
 		baseApi.setImage(pix);
 
 		// Attempt to shut down the API.
-		baseApi.end();
+		baseApi.recycle();
 		pix.recycle();
 	}
 
@@ -657,7 +659,7 @@ public class TessBaseAPITest {
 				baseApi.getPageSegMode(), newPageSegMode);
 
 		// Attempt to shut down the API.
-		baseApi.end();
+		baseApi.recycle();
 	}
 
 	@Test
@@ -705,7 +707,7 @@ public class TessBaseAPITest {
 		assertEquals("Found incorrect text.", rightInput, rightResult);
 
 		// Attempt to shut down the API.
-		baseApi.end();
+		baseApi.recycle();
 		bmp.recycle();
 	}
 
@@ -729,7 +731,7 @@ public class TessBaseAPITest {
 		assertFalse("Found a blacklisted character.", outputText.contains(blacklistedCharacter));
 
 		// Attempt to shut down the API.
-		baseApi.end();
+		baseApi.recycle();
 		bmp.recycle();
 	}
 
@@ -780,7 +782,7 @@ public class TessBaseAPITest {
 		// getHOCRText() finishes execution on the AsyncTask thread and cause an exception
 		progressSem.acquire();
 
-		baseApi.end();
+		baseApi.recycle();
 		bmp.recycle();
 	}
 
@@ -816,7 +818,7 @@ public class TessBaseAPITest {
 		}
 
 		// Attempt to shut down the API.
-		baseApi.end();
+		baseApi.recycle();
 		bmp.recycle();
 	}
 
@@ -829,6 +831,6 @@ public class TessBaseAPITest {
 		assertNotNull("Version returned null", version);
 
 		// Attempt to shut down the API.
-		baseApi.end();
+		baseApi.recycle();
 	}
 }

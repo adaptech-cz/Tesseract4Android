@@ -20,6 +20,7 @@ package com.googlecode.tesseract.android;
 
 import android.graphics.Bitmap;
 import android.graphics.Rect;
+import android.util.Log;
 
 import androidx.annotation.IntDef;
 import androidx.annotation.Keep;
@@ -58,6 +59,8 @@ public class TessBaseAPI {
 
 		nativeClassInit();
 	}
+
+	private static final String TAG = TessBaseAPI.class.getSimpleName();
 
 	/**
 	 * Page segmentation mode.
@@ -307,7 +310,7 @@ public class TessBaseAPI {
 	/**
 	 * Constructs an instance of TessBaseAPI.
 	 * <p>
-	 * When the instance of TessBaseAPI is no longer needed, its {@link #end}
+	 * When the instance of TessBaseAPI is no longer needed, its {@link #recycle}
 	 * method must be invoked to dispose of it.
 	 */
 	public TessBaseAPI() {
@@ -322,7 +325,7 @@ public class TessBaseAPI {
 	 * Constructs an instance of TessBaseAPI with a callback method for
 	 * receiving progress updates during OCR.
 	 * <p>
-	 * When the instance of TessBaseAPI is no longer needed, its {@link #end}
+	 * When the instance of TessBaseAPI is no longer needed, its {@link #recycle}
 	 * method must be invoked to dispose of it.
 	 *
 	 * @param progressNotifier Callback to receive progress notifications
@@ -401,6 +404,9 @@ public class TessBaseAPI {
 	 */
 	public boolean init(String datapath, String language, @OcrEngineMode int ocrEngineMode,
 						Map<String, String> config) {
+		if (mRecycled)
+			throw new IllegalStateException();
+
 		if (datapath == null)
 			throw new IllegalArgumentException("Data path must not be null!");
 		if (!datapath.endsWith(File.separator))
@@ -414,10 +420,8 @@ public class TessBaseAPI {
 		if (!tessdata.exists() || !tessdata.isDirectory())
 			throw new IllegalArgumentException("Data path must contain subfolder tessdata!");
 
-		boolean success;
-
 		if (config.isEmpty()) {
-			success = nativeInitOem(mNativeData, datapath + "tessdata", language, ocrEngineMode);
+			return nativeInitOem(mNativeData, datapath + "tessdata", language, ocrEngineMode);
 		} else {
 			int size = config.size();
 
@@ -431,15 +435,9 @@ public class TessBaseAPI {
 				i++;
 			}
 
-			success = nativeInitParams(mNativeData, datapath + "tessdata", language, ocrEngineMode,
+			return nativeInitParams(mNativeData, datapath + "tessdata", language, ocrEngineMode,
 					vars, varsValues);
 		}
-
-		if (success) {
-			mRecycled = false;
-		}
-
-		return success;
 	}
 
 	/**
@@ -471,17 +469,26 @@ public class TessBaseAPI {
 	}
 
 	/**
-	 * Closes down tesseract and free up all memory. End() is equivalent to
-	 * destructing and reconstructing your TessBaseAPI.
-	 * <p>
-	 * Once End() has been used, none of the other API functions may be used
-	 * other than Init and anything declared above it in the class definition.
+	 * Closes down tesseract and free up all memory. No other methods may be used anymore.
 	 */
-	public void end() {
+	public void recycle() {
 		if (!mRecycled) {
-			nativeEnd(mNativeData);
+			nativeRecycle(mNativeData);
+			mNativeData = 0;
 
 			mRecycled = true;
+		}
+	}
+
+	@Override
+	protected void finalize() throws Throwable {
+		try {
+			if (!mRecycled) {
+				Log.w(TAG, "TessBaseAPI was not terminated using recycle()");
+				recycle();
+			}
+		} finally {
+			super.finalize();
 		}
 	}
 
@@ -498,9 +505,6 @@ public class TessBaseAPI {
 	 * <p>
 	 * Or <code>setVariable("classify_bln_numeric_mode", "1");</code> to set
 	 * numeric-only mode.
-	 * <p>
-	 * setVariable may be used before init, but settings will revert to
-	 * defaults on end().
 	 * <p>
 	 * Note: Must be called after init(). Only works for non-init variables.
 	 *
@@ -913,6 +917,9 @@ public class TessBaseAPI {
 	 * @return the version identifier
 	 */
 	public String getVersion() {
+		if (mRecycled)
+			throw new IllegalStateException();
+
 		return nativeGetVersion(mNativeData);
 	}
 
@@ -963,6 +970,9 @@ public class TessBaseAPI {
 	 * @return {@code true} on success. {@code false} on failure
 	 */
 	public boolean beginDocument(TessPdfRenderer tessPdfRenderer, String title) {
+		if (mRecycled)
+			throw new IllegalStateException();
+
 		return nativeBeginDocument(tessPdfRenderer.getNativePdfRenderer(),
 				title);
 	}
@@ -975,6 +985,9 @@ public class TessBaseAPI {
 	 * @see #beginDocument(TessPdfRenderer, String)
 	 */
 	public boolean beginDocument(TessPdfRenderer tessPdfRenderer) {
+		if (mRecycled)
+			throw new IllegalStateException();
+
 		return nativeBeginDocument(tessPdfRenderer.getNativePdfRenderer(), "");
 	}
 
@@ -986,6 +999,9 @@ public class TessBaseAPI {
 	 * @return {@code true} on success. {@code false} on failure
 	 */
 	public boolean endDocument(TessPdfRenderer tessPdfRenderer) {
+		if (mRecycled)
+			throw new IllegalStateException();
+
 		return nativeEndDocument(tessPdfRenderer.getNativePdfRenderer());
 	}
 
@@ -999,11 +1015,17 @@ public class TessBaseAPI {
 	 */
 	public boolean addPageToDocument(Pix imageToProcess, String imageToWrite,
 									 TessPdfRenderer tessPdfRenderer) {
+		if (mRecycled)
+			throw new IllegalStateException();
+
 		return nativeAddPageToDocument(mNativeData, imageToProcess.getNativePix(),
 				imageToWrite, tessPdfRenderer.getNativePdfRenderer());
 	}
 
 	/*package*/ long getNativeData() {
+		if (mRecycled)
+			throw new IllegalStateException();
+
 		return mNativeData;
 	}
 
@@ -1022,10 +1044,9 @@ public class TessBaseAPI {
 	private native long nativeConstruct();
 
 	/**
-	 * Calls End() and finalizes native data. Must be called on object
-	 * destruction.
+	 * Calls End() and finalizes native data. Must be called on object destruction.
 	 */
-	private native void nativeEnd(long mNativeData);
+	private native void nativeRecycle(long mNativeData);
 
 	private native boolean nativeInit(long mNativeData, String datapath, String language);
 

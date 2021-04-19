@@ -442,9 +442,9 @@ void Java_com_googlecode_tesseract_android_TessBaseAPI_nativeClear(JNIEnv *env,
   nat->pix = NULL;
 }
 
-void Java_com_googlecode_tesseract_android_TessBaseAPI_nativeEnd(JNIEnv *env,
-                                                                 jobject thiz,
-                                                                 jlong mNativeData) {
+void Java_com_googlecode_tesseract_android_TessBaseAPI_nativeRecycle(JNIEnv *env,
+                                                                     jobject thiz,
+                                                                     jlong mNativeData) {
 
   native_data_t *nat = (native_data_t*) mNativeData;
 
@@ -459,6 +459,8 @@ void Java_com_googlecode_tesseract_android_TessBaseAPI_nativeEnd(JNIEnv *env,
     pixDestroy(&nat->pix);
   nat->data = NULL;
   nat->pix = NULL;
+
+  delete nat;
 }
 
 void Java_com_googlecode_tesseract_android_TessBaseAPI_nativeSetDebug(JNIEnv *env,

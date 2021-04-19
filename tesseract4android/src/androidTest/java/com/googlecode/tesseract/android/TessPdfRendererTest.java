@@ -66,7 +66,7 @@ public class TessPdfRendererTest {
 				+ pdfBasename);
 
 		pdfRenderer.recycle();
-		baseApi.end();
+		baseApi.recycle();
 	}
 
 	/**
@@ -117,7 +117,7 @@ public class TessPdfRendererTest {
 		assertTrue(pdf.length() > 0);
 
 		pdfRenderer.recycle();
-		baseApi.end();
+		baseApi.recycle();
 		pixOne.recycle();
 		pixTwo.recycle();
 	}
