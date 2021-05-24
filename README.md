@@ -1,3 +1,5 @@
+[![](https://jitpack.io/v/adaptech-cz/tesseract4android.svg)](https://jitpack.io/#adaptech-cz/tesseract4android)
+
 # Tesseract4Android
 
 Fork of tess-two rewritten from scratch to build with CMake and support latest Android Studio and Tesseract OCR.
@@ -23,11 +25,22 @@ copied to the Android device to a directory named `tessdata`.
 
 ## Usage
 
-To use Tesseract4Android in your project add dependency to your `build.gradle` file:
+You can get compiled version of Tesseract4Android from JitPack.io.
 
-    dependencies {
-        implementation 'cz.adaptech.android:tesseract4android:2.1.1'
-    }
+1. Add the JitPack repository to your project root `build.gradle` file at the end of repositories:
+
+       allprojects {
+           repositories {
+               ...
+               maven { url 'https://jitpack.io' }
+           }
+       }
+
+2. Add the dependency to your app module `build.gradle` file:
+
+       dependencies {
+           implementation 'com.github.adaptech-cz:tesseract4android:2.1.1'
+       }
 
 ## Building
 
