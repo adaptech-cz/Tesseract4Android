@@ -43,7 +43,7 @@ See [Tesseract Training](https://tesseract-ocr.github.io/tessdoc/Training-Tesser
 Tesseract was originally developed at Hewlett-Packard Laboratories Bristol and
 at Hewlett-Packard Co, Greeley Colorado between 1985 and 1994, with some
 more changes made in 1996 to port to Windows, and some C++izing in 1998.
-In 2005 Tesseract was open sourced by HP. Since 2006 it is developed by Google.
+In 2005 Tesseract was open sourced by HP. From 2006 until November 2018 it was developed by Google.
 
 The latest (LSTM based) stable version is **[4.1.1](https://github.com/tesseract-ocr/tesseract/releases/tag/4.1.1)**, released on December 26, 2019.
 Latest source code is available from [master branch on GitHub](https://github.com/tesseract-ocr/tesseract/tree/master).
@@ -61,13 +61,7 @@ and **[Change Log](https://github.com/tesseract-ocr/tesseract/blob/master/Change
 You can either [Install Tesseract via pre-built binary package](https://tesseract-ocr.github.io/tessdoc/Home.html)
 or [build it from source](https://tesseract-ocr.github.io/tessdoc/Compiling.html).
 
-Supported Compilers are:
-
-* GCC 4.8 and above
-* Clang 3.4 and above
-* MSVC 2015, 2017, 2019
-
-Other compilers might work, but are not officially supported.
+C++17 support is required for building.
 
 ## Running Tesseract
 
@@ -94,11 +88,11 @@ Before you submit an issue, please review **[the guidelines for this repository]
 
 For support, first read the [documentation](https://tesseract-ocr.github.io/tessdoc/),
 particularly the [FAQ](https://tesseract-ocr.github.io/tessdoc/FAQ.html) to see if your problem is addressed there.
-If not, search the [Tesseract user forum](https://groups.google.com/d/forum/tesseract-ocr), the [Tesseract developer forum](https://groups.google.com/d/forum/tesseract-dev) and [past issues](https://github.com/tesseract-ocr/tesseract/issues), and if you still can't find what you need, ask for support in the mailing-lists.
+If not, search the [Tesseract user forum](https://groups.google.com/g/tesseract-ocr), the [Tesseract developer forum](https://groups.google.com/g/tesseract-dev) and [past issues](https://github.com/tesseract-ocr/tesseract/issues), and if you still can't find what you need, ask for support in the mailing-lists.
 
 Mailing-lists:
-* [tesseract-ocr](https://groups.google.com/d/forum/tesseract-ocr) - For tesseract users.
-* [tesseract-dev](https://groups.google.com/d/forum/tesseract-dev) - For tesseract developers.
+* [tesseract-ocr](https://groups.google.com/g/tesseract-ocr) - For tesseract users.
+* [tesseract-dev](https://groups.google.com/g/tesseract-dev) - For tesseract developers.
 
 Please report an issue only for a **bug**, not for asking questions.
 

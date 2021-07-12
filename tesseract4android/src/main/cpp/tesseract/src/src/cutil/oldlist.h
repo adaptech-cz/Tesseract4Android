@@ -64,6 +64,8 @@
 
 #include <tesseract/export.h>
 
+#include <cstddef> // for size_t
+
 namespace tesseract {
 
 /*----------------------------------------------------------------------
@@ -72,21 +74,12 @@ namespace tesseract {
 
 #define NIL_LIST static_cast<LIST>(nullptr)
 
-using int_compare = int (*)(void*, void*);
-using void_dest = void (*)(void*);
-
-struct list_rec {
-  list_rec* node;
-  list_rec* next;
-};
-using LIST = list_rec*;
+using int_compare = int (*)(void *, void *);
+using void_dest = void (*)(void *);
 
 /*----------------------------------------------------------------------
                   M a c r o s
 ----------------------------------------------------------------------*/
-/* Predefinitions */
-#define list_rest(l) ((l) ? (l)->next : NIL_LIST)
-#define first_node(l) ((l) ? (l)->node : NIL_LIST)
 
 /**********************************************************************
  *  i t e r a t e
@@ -95,7 +88,7 @@ using LIST = list_rec*;
  *  minus the head.  Continue until the list is NIL_LIST.
  **********************************************************************/
 
-#define iterate(l) for (; (l) != NIL_LIST; (l) = list_rest(l))
+#define iterate(l) for (; (l) != nullptr; (l) = (l)->list_rest())
 
 /**********************************************************************
  *  s e t   r e s t
@@ -107,12 +100,35 @@ using LIST = list_rec*;
 
 #define set_rest(l, cell) ((l)->next = (cell))
 
+struct list_rec {
+  list_rec *node;
+  list_rec *next;
+
+  list_rec *first_node() {
+    return node;
+  }
+
+  list_rec *list_rest() {
+    return next;
+  }
+
+  //********************************************************************
+  // Recursively count the elements in  a list.  Return the count.
+  //********************************************************************
+  size_t size() {
+    auto var_list = this;
+    size_t n = 0;
+    iterate(var_list) n++;
+    return n;
+  }
+};
+using LIST = list_rec *;
+
 /*----------------------------------------------------------------------
           Public Function Prototypes
 ----------------------------------------------------------------------*/
-int count(LIST var_list);
 
-LIST delete_d(LIST list, void* key, int_compare is_equal);
+LIST delete_d(LIST list, void *key, int_compare is_equal);
 
 TESS_API
 LIST destroy(LIST list);
@@ -124,12 +140,12 @@ LIST last(LIST var_list);
 LIST pop(LIST list);
 
 TESS_API
-LIST push(LIST list, void* element);
+LIST push(LIST list, void *element);
 
 TESS_API
-LIST push_last(LIST list, void* item);
+LIST push_last(LIST list, void *item);
 
-LIST search(LIST list, void* key, int_compare is_equal);
+LIST search(LIST list, void *key, int_compare is_equal);
 
 } // namespace tesseract
 

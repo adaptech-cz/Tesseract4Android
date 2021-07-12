@@ -24,14 +24,15 @@
 #include <memory>
 #include <string>
 #ifdef INCLUDE_TENSORFLOW
-#include <tensorflow/core/lib/core/threadpool.h>
+#  include <tensorflow/core/lib/core/threadpool.h>
 #endif
-#include "absl/strings/ascii.h"         // for absl::StripAsciiWhitespace
 #include <allheaders.h>
-#include "include_gunit.h"
 #include <tesseract/baseapi.h>
+#include "absl/strings/ascii.h" // for absl::StripAsciiWhitespace
 #include "commandlineflags.h"
+#include "include_gunit.h"
 #include "log.h"
+#include "image.h"
 
 // Run with Tesseract instances.
 BOOL_PARAM_FLAG(test_tesseract, true, "Test tesseract instances");
@@ -46,25 +47,23 @@ BOOL_PARAM_FLAG(test_cube, true, "Test Cube instances");
 INT_PARAM_FLAG(reps, 1, "Num of parallel test repetitions to run.");
 
 INT_PARAM_FLAG(max_concurrent_instances, 0,
-             "Maximum number of instances to run in parallel at any given "
-             "instant. The number of concurrent instances cannot exceed "
-             "reps * number_of_langs_tested, which is also the default value.");
+               "Maximum number of instances to run in parallel at any given "
+               "instant. The number of concurrent instances cannot exceed "
+               "reps * number_of_langs_tested, which is also the default value.");
 
 namespace tesseract {
 
-static const char* kTessLangs[] = {"eng", "vie", nullptr};
-static const char* kTessImages[] = {"HelloGoogle.tif", "viet.tif", nullptr};
-static const char* kTessTruthText[] = {"Hello Google", "\x74\x69\xe1\xba\xbf\x6e\x67",
-                                nullptr};
+static const char *kTessLangs[] = {"eng", "vie", nullptr};
+static const char *kTessImages[] = {"HelloGoogle.tif", "viet.tif", nullptr};
+static const char *kTessTruthText[] = {"Hello Google", "\x74\x69\xe1\xba\xbf\x6e\x67", nullptr};
 
-static const char* kCubeLangs[] = {"hin", "ara", nullptr};
-static const char* kCubeImages[] = {"raaj.tif", "arabic.tif", nullptr};
-static const char* kCubeTruthText[] = {
-    "\xe0\xa4\xb0\xe0\xa4\xbe\xe0\xa4\x9c",
-    "\xd8\xa7\xd9\x84\xd8\xb9\xd8\xb1\xd8\xa8\xd9\x8a", nullptr};
+static const char *kCubeLangs[] = {"hin", "ara", nullptr};
+static const char *kCubeImages[] = {"raaj.tif", "arabic.tif", nullptr};
+static const char *kCubeTruthText[] = {"\xe0\xa4\xb0\xe0\xa4\xbe\xe0\xa4\x9c",
+                                       "\xd8\xa7\xd9\x84\xd8\xb9\xd8\xb1\xd8\xa8\xd9\x8a", nullptr};
 
 class BaseapiThreadTest : public ::testing::Test {
- protected:
+protected:
   static void SetUpTestCase() {
     CHECK(FLAGS_test_tesseract || FLAGS_test_cube)
         << "Need to test at least one of Tesseract/Cube!";
@@ -73,9 +72,9 @@ class BaseapiThreadTest : public ::testing::Test {
     if (FLAGS_test_tesseract) {
       int i = 0;
       while (kTessLangs[i] && kTessTruthText[i] && kTessImages[i]) {
-        langs_.push_back(kTessLangs[i]);
-        gt_text_.push_back(kTessTruthText[i]);
-        image_files.push_back(kTessImages[i]);
+        langs_.emplace_back(kTessLangs[i]);
+        gt_text_.emplace_back(kTessTruthText[i]);
+        image_files.emplace_back(kTessImages[i]);
         ++i;
       }
       LOG(INFO) << "Testing Tesseract on " << i << " languages.";
@@ -83,9 +82,9 @@ class BaseapiThreadTest : public ::testing::Test {
     if (FLAGS_test_cube) {
       int i = 0;
       while (kCubeLangs[i] && kCubeTruthText[i] && kCubeImages[i]) {
-        langs_.push_back(kCubeLangs[i]);
-        gt_text_.push_back(kCubeTruthText[i]);
-        image_files.push_back(kCubeImages[i]);
+        langs_.emplace_back(kCubeLangs[i]);
+        gt_text_.emplace_back(kCubeTruthText[i]);
+        image_files.emplace_back(kCubeImages[i]);
         ++i;
       }
       LOG(INFO) << "Testing Cube on " << i << " languages.";
@@ -99,35 +98,37 @@ class BaseapiThreadTest : public ::testing::Test {
     const int n = num_langs_ * FLAGS_reps;
     for (int i = 0; i < n; ++i) {
       std::string path = TESTING_DIR "/" + image_files[i % num_langs_];
-      Pix* new_pix = pixRead(path.c_str());
+      Image new_pix = pixRead(path.c_str());
       QCHECK(new_pix != nullptr) << "Could not read " << path;
       pix_.push_back(new_pix);
     }
 
 #ifdef INCLUDE_TENSORFLOW
-    pool_size_ = (FLAGS_max_concurrent_instances < 1)
-                     ? num_langs_ * FLAGS_reps
-                     : FLAGS_max_concurrent_instances;
+    pool_size_ = (FLAGS_max_concurrent_instances < 1) ? num_langs_ * FLAGS_reps
+                                                      : FLAGS_max_concurrent_instances;
 #endif
   }
 
   static void TearDownTestCase() {
-    for (auto& pix : pix_) {
-      pixDestroy(&pix);
+    for (auto &pix : pix_) {
+      pix.destroy();
     }
   }
 
 #ifdef INCLUDE_TENSORFLOW
   void ResetPool() {
-    pool_.reset(new tensorflow::thread::ThreadPool(tensorflow::Env::Default(), "tessthread", pool_size_));
+    pool_.reset(
+        new tensorflow::thread::ThreadPool(tensorflow::Env::Default(), "tessthread", pool_size_));
   }
 
-  void WaitForPoolWorkers() { pool_.reset(nullptr); }
+  void WaitForPoolWorkers() {
+    pool_.reset(nullptr);
+  }
 
   std::unique_ptr<tensorflow::thread::ThreadPool> pool_;
   static int pool_size_;
 #endif
-  static std::vector<Pix*> pix_;
+  static std::vector<Image > pix_;
   static std::vector<std::string> langs_;
   static std::vector<std::string> gt_text_;
   static int num_langs_;
@@ -137,27 +138,27 @@ class BaseapiThreadTest : public ::testing::Test {
 #ifdef INCLUDE_TENSORFLOW
 int BaseapiThreadTest::pool_size_;
 #endif
-std::vector<Pix*> BaseapiThreadTest::pix_;
+std::vector<Image > BaseapiThreadTest::pix_;
 std::vector<std::string> BaseapiThreadTest::langs_;
 std::vector<std::string> BaseapiThreadTest::gt_text_;
 int BaseapiThreadTest::num_langs_;
 
-static void InitTessInstance(TessBaseAPI* tess, const std::string& lang) {
+static void InitTessInstance(TessBaseAPI *tess, const std::string &lang) {
   CHECK(tess != nullptr);
   EXPECT_EQ(0, tess->Init(TESSDATA_DIR, lang.c_str()));
 }
 
-static void GetCleanedText(TessBaseAPI* tess, Pix* pix, std::string* ocr_text) {
+static void GetCleanedText(TessBaseAPI *tess, Image pix, std::string *ocr_text) {
   tess->SetImage(pix);
-  char* result = tess->GetUTF8Text();
+  char *result = tess->GetUTF8Text();
   *ocr_text = result;
   delete[] result;
   absl::StripAsciiWhitespace(ocr_text);
 }
 
-static void VerifyTextResult(TessBaseAPI* tess, Pix* pix, const std::string& lang,
-                             const std::string& expected_text) {
-  TessBaseAPI* tess_local = nullptr;
+static void VerifyTextResult(TessBaseAPI *tess, Image pix, const std::string &lang,
+                             const std::string &expected_text) {
+  TessBaseAPI *tess_local = nullptr;
   if (tess) {
     tess_local = tess;
   } else {
@@ -167,7 +168,9 @@ static void VerifyTextResult(TessBaseAPI* tess, Pix* pix, const std::string& lan
   std::string ocr_text;
   GetCleanedText(tess_local, pix, &ocr_text);
   EXPECT_STREQ(expected_text.c_str(), ocr_text.c_str());
-  if (tess_local != tess) delete tess_local;
+  if (tess_local != tess) {
+    delete tess_local;
+  }
 }
 
 // Check that Tesseract/Cube produce the correct results in single-threaded
@@ -178,8 +181,7 @@ TEST_F(BaseapiThreadTest, TestBasicSanity) {
     InitTessInstance(&tess, langs_[i]);
     std::string ocr_text;
     GetCleanedText(&tess, pix_[i], &ocr_text);
-    CHECK(strcmp(gt_text_[i].c_str(), ocr_text.c_str()) == 0)
-        << "Failed with lang = " << langs_[i];
+    CHECK(strcmp(gt_text_[i].c_str(), ocr_text.c_str()) == 0) << "Failed with lang = " << langs_[i];
   }
 }
 
@@ -208,8 +210,8 @@ TEST_F(BaseapiThreadTest, TestRecognition) {
 
   ResetPool();
   for (int i = 0; i < n; ++i) {
-    pool_->Schedule(std::bind(VerifyTextResult, &tess[i], pix_[i],
-      langs_[i % num_langs_], gt_text_[i % num_langs_]));
+    pool_->Schedule(std::bind(VerifyTextResult, &tess[i], pix_[i], langs_[i % num_langs_],
+                              gt_text_[i % num_langs_]));
   }
   WaitForPoolWorkers();
 #endif
@@ -220,10 +222,10 @@ TEST_F(BaseapiThreadTest, TestAll) {
   const int n = num_langs_ * FLAGS_reps;
   ResetPool();
   for (int i = 0; i < n; ++i) {
-    pool_->Schedule(std::bind(VerifyTextResult, nullptr, pix_[i],
-      langs_[i % num_langs_], gt_text_[i % num_langs_]));
+    pool_->Schedule(std::bind(VerifyTextResult, nullptr, pix_[i], langs_[i % num_langs_],
+                              gt_text_[i % num_langs_]));
   }
   WaitForPoolWorkers();
 #endif
 }
-}  // namespace
+} // namespace tesseract

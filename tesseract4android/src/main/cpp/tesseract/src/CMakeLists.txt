@@ -112,35 +112,7 @@ endif()
 
 include(CheckCXXCompilerFlag)
 
-# Check for C++ standard to use
-get_property(known_features GLOBAL PROPERTY CMAKE_CXX_KNOWN_FEATURES)
-if (cxx_std_17 IN_LIST known_features)
-    set(CMAKE_CXX_STANDARD 17)
-elseif (cxx_std_14 IN_LIST known_features)
-    set(CMAKE_CXX_STANDARD 14)
-else()  # minimum required standard
-    set(CMAKE_CXX_STANDARD 11)
-endif()
-
-if ("${CMAKE_CXX17_STANDARD_COMPILE_OPTION}" STREQUAL "")
-    set(CMAKE_CXX_STANDARD 14)
-endif()
-if ("${CMAKE_CXX14_STANDARD_COMPILE_OPTION}" STREQUAL "")
-    set(CMAKE_CXX_STANDARD 11)
-endif()
-
-# Avoid using experimental c++1y (c++1z) standard even if the compiler announces cxx14 (cxx17)
-# in CMAKE_CXX_KNOWN_FEATURES and CMAKE_CXX_COMPILE_FEATURES
-# It is the case of clang 3.9, 4.0 (announces c++1z) and gcc 4.8 (announces c++1y)
-if ("${CMAKE_CXX17_STANDARD_COMPILE_OPTION}" STREQUAL "-std=c++1z")
-  set(CMAKE_CXX_STANDARD 14)
-endif()
-if ("${CMAKE_CXX14_STANDARD_COMPILE_OPTION}" STREQUAL "-std=c++1y")
-  set(CMAKE_CXX_STANDARD 11)
-endif()
-# temporarily
 set(CMAKE_CXX_STANDARD 17)
-
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -160,27 +132,19 @@ endif()
 
 CHECK_CXX_COMPILER_FLAG("-march=native" COMPILER_SUPPORTS_MARCH_NATIVE)
 if(COMPILER_SUPPORTS_MARCH_NATIVE)
-    set(MARCH_NATIVE_FLAGS "${MARCH_NATIVE_FLAGS} -march=native -mtune=native")
+    set(MARCH_NATIVE_FLAGS "${MARCH_NATIVE_FLAGS} -march=native")
+    if(NOT CLANG AND MSVC)
+        # clang-cl does not know this argument
+        set(MARCH_NATIVE_FLAGS "${MARCH_NATIVE_FLAGS} -mtune=native")
+    endif()
     set(MARCH_NATIVE_OPT ON)
 endif()
 
-# Flags for SIMD support
-set(HAVE_AVX FALSE)
-set(HAVE_AVX2 FALSE)
-set(HAVE_FMA FALSE)
-set(HAVE_SSE4_1 FALSE)
+message("CMAKE_SYSTEM_PROCESSOR=<${CMAKE_SYSTEM_PROCESSOR}>")
+
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86|AMD64")
+
 set(HAVE_NEON FALSE)
-
-if (CMAKE_SYSTEM_PROCESSOR MATCHES "arm64|aarch64.*|AARCH64.*")
- set(AARCH64 TRUE)
-endif()
-
-if(AARCH64)
-
-add_definitions("-DHAVE_NEON")
-set(HAVE_NEON TRUE)
-
-else()
 
 CHECK_CXX_COMPILER_FLAG("-mavx" HAVE_AVX)
 if(HAVE_AVX)
@@ -206,15 +170,6 @@ if(HAVE_SSE4_1)
     add_definitions("-DHAVE_SSE4_1")
 endif()
 
-if(NOT APPLE)
-    # NEON support relies on getauxval, which is not available on OSX, only on Linux and Android
-    CHECK_CXX_COMPILER_FLAG("-mfpu=neon" HAVE_NEON)
-    if(HAVE_NEON)
-        set(NEON_COMPILE_FLAGS "-mfpu=neon")
-        add_definitions("-DHAVE_NEON")
-    endif()
-endif(NOT APPLE)
-
 if(MSVC)
     if(NOT HAVE_AVX)
         set(AVX_COMPILE_FLAGS "/arch:AVX")
@@ -236,9 +191,42 @@ if(MSVC)
         set(HAVE_SSE4_1 ON)
         add_definitions("-DHAVE_SSE4_1")
     endif()
+    # clang with MSVC compatibility
+    if(CLANG)
+       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-microsoft-unqualified-friend")
+       if(HAVE_FMA)
+           set(FMA_COMPILE_FLAGS "-mfma ${FMA_COMPILE_FLAGS}")
+       endif(HAVE_FMA)
+       if(HAVE_SSE4_1)
+           set(SSE4_1_COMPILE_FLAGS "-msse4.1 ${SSE4_1_COMPILE_FLAGS}")
+       endif(HAVE_SSE4_1)
+    endif(CLANG)
 endif(MSVC)
 
-endif(AARCH64)
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64|aarch64.*|AARCH64.*")
+
+set(HAVE_AVX FALSE)
+set(HAVE_AVX2 FALSE)
+set(HAVE_FMA FALSE)
+set(HAVE_SSE4_1 FALSE)
+
+add_definitions("-DHAVE_NEON")
+set(HAVE_NEON TRUE)
+
+else()
+
+set(HAVE_AVX FALSE)
+set(HAVE_AVX2 FALSE)
+set(HAVE_FMA FALSE)
+set(HAVE_SSE4_1 FALSE)
+
+CHECK_CXX_COMPILER_FLAG("-mfpu=neon" HAVE_NEON)
+if(HAVE_NEON)
+    set(NEON_COMPILE_FLAGS "-mfpu=neon")
+    add_definitions("-DHAVE_NEON")
+endif()
+
+endif(CMAKE_SYSTEM_PROCESSOR MATCHES "x86|AMD64")
 
 # auto optimize - used only for information about available vectors
 include(OptimizeForArchitecture)
@@ -258,6 +246,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR MINGW)
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -DDEBUG -pedantic -Og")
 elseif(MSVC)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+    add_definitions(-D_CRT_NONSTDC_NO_DEPRECATE)  # strdup
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /utf-8")
     if (NOT CLANG)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
@@ -276,6 +265,9 @@ if(CLANG)  # clang all platforms
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -DDEBUG -pedantic -O0")
 endif()
 
+if (OPENMP_BUILD AND MSVC AND "${MSVC_VERSION}" LESS 1929)
+    set(OPENMP_BUILD OFF)
+endif()
 if (OPENMP_BUILD)
     find_package(OpenMP QUIET)
     if (OpenMP_FOUND)
@@ -299,6 +291,10 @@ if (OPENMP_BUILD)
         endif()
         set(OpenMP_FOUND 1)
         add_definitions(-D_OPENMP=201107)  # 3.1 version is supported from Clang 3.8.0
+    endif()
+    if (MSVC)
+        string(REPLACE "/openmp" "/openmp:llvm" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+        string(REPLACE "-openmp" "/openmp:llvm" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
     endif()
 endif()
 
@@ -527,7 +523,6 @@ if (DISABLED_LEGACY_ENGINE)
         src/classify/intproto.cpp
         src/classify/kdtree.cpp
         src/classify/mf.cpp
-        src/classify/mfdefs.cpp
         src/classify/mfoutline.cpp
         src/classify/mfx.cpp
         src/classify/normfeat.cpp
@@ -733,7 +728,6 @@ install(FILES
     include/tesseract/renderer.h
     ${CMAKE_CURRENT_BINARY_DIR}/include/tesseract/version.h
 
-    include/tesseract/thresholder.h
     include/tesseract/ltrresultiterator.h
     include/tesseract/pageiterator.h
     include/tesseract/resultiterator.h

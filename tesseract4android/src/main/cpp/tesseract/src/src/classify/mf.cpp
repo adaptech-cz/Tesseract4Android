@@ -2,7 +2,6 @@
  ** Filename:    mf.c
  ** Purpose:     Micro-feature interface to flexible feature extractor.
  ** Author:      Dan Johnson
- ** History:     Thu May 24 09:08:38 1990, DSJ, Created.
  **
  ** (c) Copyright Hewlett-Packard Company, 1988.
  ** Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,44 +38,35 @@ namespace tesseract {
  * @param cn_denorm  control parameter to feature extractor.
  * @return Micro-features for Blob.
  */
-FEATURE_SET ExtractMicros(TBLOB* Blob, const DENORM& cn_denorm) {
-  int NumFeatures;
-  MICROFEATURES Features, OldFeatures;
-  FEATURE_SET FeatureSet;
-  FEATURE Feature;
-  MICROFEATURE OldFeature;
-
-  OldFeatures = BlobMicroFeatures(Blob, cn_denorm);
-  if (OldFeatures == nullptr)
+FEATURE_SET ExtractMicros(TBLOB *Blob, const DENORM &cn_denorm) {
+  auto features = BlobMicroFeatures(Blob, cn_denorm);
+  if (features.empty()) {
     return nullptr;
-  NumFeatures = count (OldFeatures);
-  FeatureSet = NewFeatureSet (NumFeatures);
+  }
+  int n = 0;
+  for (auto &f : features) {
+    ++n;
+  }
+  auto FeatureSet = new FEATURE_SET_STRUCT(n);
 
-  Features = OldFeatures;
-  iterate(Features) {
-    OldFeature = reinterpret_cast<MICROFEATURE>first_node (Features);
-    Feature = NewFeature (&MicroFeatureDesc);
-    Feature->Params[MFDirection] = OldFeature[ORIENTATION];
-    Feature->Params[MFXPosition] = OldFeature[XPOSITION];
-    Feature->Params[MFYPosition] = OldFeature[YPOSITION];
-    Feature->Params[MFLength] = OldFeature[MFLENGTH];
-
-    // Bulge features are deprecated and should not be used.  Set to 0.
-    Feature->Params[MFBulge1] = 0.0f;
-    Feature->Params[MFBulge2] = 0.0f;
+  for (auto &f : features) {
+    auto Feature = new FEATURE_STRUCT(&MicroFeatureDesc);
+    for (int i = 0; i < (int)MicroFeatureParameter::MFCount; ++i)
+      Feature->Params[i] = f[i];
+    // Bulge features are deprecated and should not be used. Set to 0.
+    Feature->Params[(int)MicroFeatureParameter::MFBulge1] = 0.0f;
+    Feature->Params[(int)MicroFeatureParameter::MFBulge2] = 0.0f;
 
 #ifndef _WIN32
     // Assert that feature parameters are well defined.
-    int i;
-    for (i = 0; i < Feature->Type->NumParams; i++) {
+    for (int i = 0; i < Feature->Type->NumParams; i++) {
       ASSERT_HOST(!std::isnan(Feature->Params[i]));
     }
 #endif
 
     AddFeature(FeatureSet, Feature);
   }
-  FreeMicroFeatures(OldFeatures);
   return FeatureSet;
-}                                /* ExtractMicros */
+} /* ExtractMicros */
 
 } // namespace tesseract

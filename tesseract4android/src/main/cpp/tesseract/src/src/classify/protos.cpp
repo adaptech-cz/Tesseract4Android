@@ -18,22 +18,22 @@
 /*----------------------------------------------------------------------
               I n c l u d e s
 ----------------------------------------------------------------------*/
-#define _USE_MATH_DEFINES       // for M_PI
+#define _USE_MATH_DEFINES // for M_PI
 
 #include "protos.h"
 
-#include "tprintf.h"
 #include "classify.h"
-#include "params.h"
 #include "intproto.h"
+#include "params.h"
+#include "tprintf.h"
 
-#include <cmath>                // for M_PI
+#include <cmath> // for M_PI
 #include <cstdio>
 
 namespace tesseract {
 
-#define PROTO_INCREMENT   32
-#define CONFIG_INCREMENT  16
+#define PROTO_INCREMENT 32
+#define CONFIG_INCREMENT 16
 
 /*----------------------------------------------------------------------
               F u n c t i o n s
@@ -57,23 +57,19 @@ int AddConfigToClass(CLASS_TYPE Class) {
 
   if (Class->NumConfigs >= Class->MaxNumConfigs) {
     /* add configs in CONFIG_INCREMENT chunks at a time */
-    NewNumConfigs = (((Class->MaxNumConfigs + CONFIG_INCREMENT) /
-      CONFIG_INCREMENT) * CONFIG_INCREMENT);
+    NewNumConfigs =
+        (((Class->MaxNumConfigs + CONFIG_INCREMENT) / CONFIG_INCREMENT) * CONFIG_INCREMENT);
 
-    Class->Configurations =
-      static_cast<CONFIGS>(realloc (Class->Configurations,
-      sizeof (BIT_VECTOR) * NewNumConfigs));
-
+    Class->Configurations.resize(NewNumConfigs);
     Class->MaxNumConfigs = NewNumConfigs;
   }
   NewConfig = Class->NumConfigs++;
   Config = NewBitVector(MAX_NUM_PROTOS);
   Class->Configurations[NewConfig] = Config;
-  zero_all_bits (Config, WordsInVectorOfSize(MAX_NUM_PROTOS));
+  zero_all_bits(Config, WordsInVectorOfSize(MAX_NUM_PROTOS));
 
   return (NewConfig);
 }
-
 
 /**
  * @name AddProtoToClass
@@ -86,12 +82,10 @@ int AddConfigToClass(CLASS_TYPE Class) {
 int AddProtoToClass(CLASS_TYPE Class) {
   if (Class->NumProtos >= Class->MaxNumProtos) {
     /* add protos in PROTO_INCREMENT chunks at a time */
-    int NewNumProtos = (((Class->MaxNumProtos + PROTO_INCREMENT) /
-      PROTO_INCREMENT) * PROTO_INCREMENT);
+    int NewNumProtos =
+        (((Class->MaxNumProtos + PROTO_INCREMENT) / PROTO_INCREMENT) * PROTO_INCREMENT);
 
-    Class->Prototypes = static_cast<PROTO>(realloc (Class->Prototypes,
-      sizeof (PROTO_STRUCT) *
-      NewNumProtos));
+    Class->Prototypes.resize(NewNumProtos);
 
     Class->MaxNumProtos = NewNumProtos;
     ASSERT_HOST(NewNumProtos <= MAX_NUM_PROTOS);
@@ -101,23 +95,21 @@ int AddProtoToClass(CLASS_TYPE Class) {
   return (NewProto);
 }
 
-
 /**********************************************************************
  * FillABC
  *
  * Fill in Protos A, B, C fields based on the X, Y, Angle fields.
  **********************************************************************/
-void FillABC(PROTO Proto) {
+void FillABC(PROTO_STRUCT *Proto) {
   float Slope, Intercept, Normalizer;
 
   Slope = tan(Proto->Angle * 2.0 * M_PI);
   Intercept = Proto->Y - Slope * Proto->X;
-  Normalizer = 1.0 / sqrt (Slope * Slope + 1.0);
+  Normalizer = 1.0 / sqrt(Slope * Slope + 1.0);
   Proto->A = Slope * Normalizer;
   Proto->B = -Normalizer;
   Proto->C = Intercept * Normalizer;
 }
-
 
 /**********************************************************************
  * FreeClass
@@ -131,21 +123,15 @@ void FreeClass(CLASS_TYPE Class) {
   }
 }
 
-
 /**********************************************************************
  * FreeClassFields
  *
  * Deallocate the memory consumed by subfields of the specified class.
  **********************************************************************/
 void FreeClassFields(CLASS_TYPE Class) {
-  int i;
-
   if (Class) {
-    if (Class->MaxNumProtos > 0) free(Class->Prototypes);
-    if (Class->MaxNumConfigs > 0) {
-      for (i = 0; i < Class->NumConfigs; i++)
-        FreeBitVector (Class->Configurations[i]);
-      free(Class->Configurations);
+    for (int i = 0; i < Class->NumConfigs; i++) {
+      FreeBitVector(Class->Configurations[i]);
     }
   }
 }
@@ -161,18 +147,13 @@ CLASS_TYPE NewClass(int NumProtos, int NumConfigs) {
 
   Class = new CLASS_STRUCT;
 
-  if (NumProtos > 0)
-    Class->Prototypes = static_cast<PROTO>(malloc (NumProtos * sizeof (PROTO_STRUCT)));
-
-  if (NumConfigs > 0)
-    Class->Configurations = static_cast<CONFIGS>(malloc (NumConfigs *
-      sizeof (BIT_VECTOR)));
+  Class->Prototypes.resize(NumProtos);
+  Class->Configurations.resize(NumConfigs);
   Class->MaxNumProtos = NumProtos;
   Class->MaxNumConfigs = NumConfigs;
   Class->NumProtos = 0;
   Class->NumConfigs = 0;
   return (Class);
-
 }
 
 } // namespace tesseract

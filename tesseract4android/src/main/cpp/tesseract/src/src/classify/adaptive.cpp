@@ -2,7 +2,6 @@
  ** Filename:    adaptive.c
  ** Purpose:     Adaptive matcher.
  ** Author:      Dan Johnson
- ** History:     Fri Mar  8 10:00:21 1991, DSJ, Created.
  **
  ** (c) Copyright Hewlett-Packard Company, 1988.
  ** Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,190 +38,107 @@ namespace tesseract {
  *
  * @note Globals: none
  */
-void AddAdaptedClass(ADAPT_TEMPLATES Templates,
-                     ADAPT_CLASS Class,
-                     CLASS_ID ClassId) {
-  INT_CLASS IntClass;
+void AddAdaptedClass(ADAPT_TEMPLATES_STRUCT *Templates, ADAPT_CLASS_STRUCT *Class, CLASS_ID ClassId) {
+  assert(Templates != nullptr);
+  assert(Class != nullptr);
+  assert(LegalClassId(ClassId));
+  assert(UnusedClassIdIn(Templates->Templates, ClassId));
+  assert(Class->NumPermConfigs == 0);
 
-  assert (Templates != nullptr);
-  assert (Class != nullptr);
-  assert (LegalClassId (ClassId));
-  assert (UnusedClassIdIn (Templates->Templates, ClassId));
-  assert (Class->NumPermConfigs == 0);
+  auto IntClass = new INT_CLASS_STRUCT(1, 1);
+  AddIntClass(Templates->Templates, ClassId, IntClass);
 
-  IntClass = NewIntClass (1, 1);
-  AddIntClass (Templates->Templates, ClassId, IntClass);
-
-  assert (Templates->Class[ClassId] == nullptr);
+  assert(Templates->Class[ClassId] == nullptr);
   Templates->Class[ClassId] = Class;
 
-}                                /* AddAdaptedClass */
-
-
-/*---------------------------------------------------------------------------*/
-/**
- * This routine frees all memory consumed by a temporary
- * configuration.
- *
- * @param Config  config to be freed
- *
- * @note Globals: none
- */
-void FreeTempConfig(TEMP_CONFIG Config) {
-  assert (Config != nullptr);
-  FreeBitVector (Config->Protos);
-  free(Config);
-}                                /* FreeTempConfig */
+} /* AddAdaptedClass */
 
 /*---------------------------------------------------------------------------*/
-void FreeTempProto(void *arg) {
-  auto proto = static_cast<PROTO>(arg);
 
-  free(proto);
+PERM_CONFIG_STRUCT::~PERM_CONFIG_STRUCT() {
+  delete[] Ambigs;
 }
 
-static void FreePermConfig(PERM_CONFIG Config) {
-  assert(Config != nullptr);
-  delete [] Config->Ambigs;
-  free(Config);
-}
+ADAPT_CLASS_STRUCT::ADAPT_CLASS_STRUCT() {
+  NumPermConfigs = 0;
+  MaxNumTimesSeen = 0;
+  TempProtos = NIL_LIST;
 
-/*---------------------------------------------------------------------------*/
-/**
- * This operation allocates and initializes a new adapted
- * class data structure and returns a ptr to it.
- *
- * @return Ptr to new class data structure.
- *
- * @note Globals: none
- */
-ADAPT_CLASS NewAdaptedClass() {
-  ADAPT_CLASS Class;
+  PermProtos = NewBitVector(MAX_NUM_PROTOS);
+  PermConfigs = NewBitVector(MAX_NUM_CONFIGS);
+  zero_all_bits(PermProtos, WordsInVectorOfSize(MAX_NUM_PROTOS));
+  zero_all_bits(PermConfigs, WordsInVectorOfSize(MAX_NUM_CONFIGS));
 
-  Class = static_cast<ADAPT_CLASS>(malloc (sizeof (ADAPT_CLASS_STRUCT)));
-  Class->NumPermConfigs = 0;
-  Class->MaxNumTimesSeen = 0;
-  Class->TempProtos = NIL_LIST;
-
-  Class->PermProtos = NewBitVector (MAX_NUM_PROTOS);
-  Class->PermConfigs = NewBitVector (MAX_NUM_CONFIGS);
-  zero_all_bits (Class->PermProtos, WordsInVectorOfSize (MAX_NUM_PROTOS));
-  zero_all_bits (Class->PermConfigs, WordsInVectorOfSize (MAX_NUM_CONFIGS));
-
-  for (int i = 0; i < MAX_NUM_CONFIGS; i++)
-    TempConfigFor (Class, i) = nullptr;
-
-  return (Class);
-
-}                                /* NewAdaptedClass */
-
-
-/*-------------------------------------------------------------------------*/
-void free_adapted_class(ADAPT_CLASS adapt_class) {
   for (int i = 0; i < MAX_NUM_CONFIGS; i++) {
-    if (ConfigIsPermanent (adapt_class, i)
-      && PermConfigFor (adapt_class, i) != nullptr)
-      FreePermConfig (PermConfigFor (adapt_class, i));
-    else if (!ConfigIsPermanent (adapt_class, i)
-      && TempConfigFor (adapt_class, i) != nullptr)
-      FreeTempConfig (TempConfigFor (adapt_class, i));
+    TempConfigFor(this, i) = nullptr;
   }
-  FreeBitVector (adapt_class->PermProtos);
-  FreeBitVector (adapt_class->PermConfigs);
-  destroy_nodes (adapt_class->TempProtos, FreeTempProto);
-  free(adapt_class);
 }
 
+ADAPT_CLASS_STRUCT::~ADAPT_CLASS_STRUCT() {
+  for (int i = 0; i < MAX_NUM_CONFIGS; i++) {
+    if (ConfigIsPermanent(this, i) && PermConfigFor(this, i) != nullptr) {
+      delete PermConfigFor(this, i);
+    } else if (!ConfigIsPermanent(this, i) && TempConfigFor(this, i) != nullptr) {
+      delete TempConfigFor(this, i);
+    }
+  }
+  FreeBitVector(PermProtos);
+  FreeBitVector(PermConfigs);
+  auto list = TempProtos;
+  while (list != nullptr) {
+    delete reinterpret_cast<TEMP_PROTO_STRUCT *>(list->node);
+    list = pop(list);
+  }
+}
 
-/*---------------------------------------------------------------------------*/
-/**
- * Allocates memory for adapted templates.
- * each char in unicharset to the newly created templates
- *
- * @param InitFromUnicharset if true, add an empty class for
- * @return Ptr to new adapted templates.
- *
- * @note Globals: none
- */
-ADAPT_TEMPLATES Classify::NewAdaptedTemplates(bool InitFromUnicharset) {
-  ADAPT_TEMPLATES Templates;
-
-  Templates = static_cast<ADAPT_TEMPLATES>(malloc (sizeof (ADAPT_TEMPLATES_STRUCT)));
-
-  Templates->Templates = NewIntTemplates ();
-  Templates->NumPermClasses = 0;
-  Templates->NumNonEmptyClasses = 0;
+/// Constructor for adapted templates.
+/// Add an empty class for each char in unicharset to the newly created templates.
+ADAPT_TEMPLATES_STRUCT::ADAPT_TEMPLATES_STRUCT(UNICHARSET &unicharset) {
+  Templates = new INT_TEMPLATES_STRUCT;
+  NumPermClasses = 0;
+  NumNonEmptyClasses = 0;
 
   /* Insert an empty class for each unichar id in unicharset */
   for (int i = 0; i < MAX_NUM_CLASSES; i++) {
-    Templates->Class[i] = nullptr;
-    if (InitFromUnicharset && i < unicharset.size()) {
-      AddAdaptedClass(Templates, NewAdaptedClass(), i);
+    Class[i] = nullptr;
+    if (i < unicharset.size()) {
+      AddAdaptedClass(this, new ADAPT_CLASS_STRUCT, i);
     }
   }
+}
 
-  return (Templates);
-
-}                                /* NewAdaptedTemplates */
+ADAPT_TEMPLATES_STRUCT::~ADAPT_TEMPLATES_STRUCT() {
+  for (int i = 0; i < (Templates)->NumClasses; i++) {
+    delete Class[i];
+  }
+  delete Templates;
+}
 
 // Returns FontinfoId of the given config of the given adapted class.
-int Classify::GetFontinfoId(ADAPT_CLASS Class, uint8_t ConfigId) {
-  return (ConfigIsPermanent(Class, ConfigId) ?
-      PermConfigFor(Class, ConfigId)->FontinfoId :
-      TempConfigFor(Class, ConfigId)->FontinfoId);
+int Classify::GetFontinfoId(ADAPT_CLASS_STRUCT *Class, uint8_t ConfigId) {
+  return (ConfigIsPermanent(Class, ConfigId) ? PermConfigFor(Class, ConfigId)->FontinfoId
+                                             : TempConfigFor(Class, ConfigId)->FontinfoId);
 }
 
-/*----------------------------------------------------------------------------*/
-void free_adapted_templates(ADAPT_TEMPLATES templates) {
+/// This constructor allocates and returns a new temporary config.
+///
+/// @param MaxProtoId  max id of any proto in new config
+/// @param FontinfoId font information from pre-trained templates
+TEMP_CONFIG_STRUCT::TEMP_CONFIG_STRUCT(int maxProtoId, int fontinfoId) {
+  int NumProtos = maxProtoId + 1;
 
-  if (templates != nullptr) {
-    for (int i = 0; i < (templates->Templates)->NumClasses; i++)
-      free_adapted_class (templates->Class[i]);
-    free_int_templates (templates->Templates);
-    free(templates);
-  }
+  Protos = NewBitVector(NumProtos);
+
+  NumTimesSeen = 1;
+  MaxProtoId = maxProtoId;
+  ProtoVectorSize = WordsInVectorOfSize(NumProtos);
+  zero_all_bits(Protos, ProtoVectorSize);
+  FontinfoId = fontinfoId;
 }
 
-
-/*---------------------------------------------------------------------------*/
-/**
- * This routine allocates and returns a new temporary config.
- *
- * @param MaxProtoId  max id of any proto in new config
- * @param FontinfoId font information from pre-trained templates
- * @return Ptr to new temp config.
- *
- * @note Globals: none
- */
-TEMP_CONFIG NewTempConfig(int MaxProtoId, int FontinfoId) {
-  int NumProtos = MaxProtoId + 1;
-
-  auto Config = static_cast<TEMP_CONFIG>(malloc(sizeof(TEMP_CONFIG_STRUCT)));
-  Config->Protos = NewBitVector (NumProtos);
-
-  Config->NumTimesSeen = 1;
-  Config->MaxProtoId = MaxProtoId;
-  Config->ProtoVectorSize = WordsInVectorOfSize (NumProtos);
-  zero_all_bits (Config->Protos, Config->ProtoVectorSize);
-  Config->FontinfoId = FontinfoId;
-
-  return (Config);
-
-}                                /* NewTempConfig */
-
-
-/*---------------------------------------------------------------------------*/
-/**
- * This routine allocates and returns a new temporary proto.
- *
- * @return Ptr to new temporary proto.
- *
- * @note Globals: none
- */
-TEMP_PROTO NewTempProto() {
-  return static_cast<TEMP_PROTO>(malloc(sizeof(TEMP_PROTO_STRUCT)));
-}                                /* NewTempProto */
-
+TEMP_CONFIG_STRUCT::~TEMP_CONFIG_STRUCT() {
+  FreeBitVector(Protos);
+}
 
 /*---------------------------------------------------------------------------*/
 /**
@@ -234,31 +150,28 @@ TEMP_PROTO NewTempProto() {
  *
  * @note Globals: none
  */
-void Classify::PrintAdaptedTemplates(FILE *File, ADAPT_TEMPLATES Templates) {
-  INT_CLASS IClass;
-  ADAPT_CLASS AClass;
+void Classify::PrintAdaptedTemplates(FILE *File, ADAPT_TEMPLATES_STRUCT *Templates) {
+  INT_CLASS_STRUCT *IClass;
+  ADAPT_CLASS_STRUCT *AClass;
 
-  fprintf (File, "\n\nSUMMARY OF ADAPTED TEMPLATES:\n\n");
-  fprintf (File, "Num classes = %d;  Num permanent classes = %d\n\n",
-           Templates->NumNonEmptyClasses, Templates->NumPermClasses);
-  fprintf (File, "   Id  NC NPC  NP NPP\n");
-  fprintf (File, "------------------------\n");
+  fprintf(File, "\n\nSUMMARY OF ADAPTED TEMPLATES:\n\n");
+  fprintf(File, "Num classes = %d;  Num permanent classes = %d\n\n", Templates->NumNonEmptyClasses,
+          Templates->NumPermClasses);
+  fprintf(File, "   Id  NC NPC  NP NPP\n");
+  fprintf(File, "------------------------\n");
 
   for (int i = 0; i < (Templates->Templates)->NumClasses; i++) {
     IClass = Templates->Templates->Class[i];
     AClass = Templates->Class[i];
-    if (!IsEmptyAdaptedClass (AClass)) {
-      fprintf (File, "%5d  %s %3d %3d %3d %3d\n",
-        i, unicharset.id_to_unichar(i),
-      IClass->NumConfigs, AClass->NumPermConfigs,
-      IClass->NumProtos,
-      IClass->NumProtos - count (AClass->TempProtos));
+    if (!IsEmptyAdaptedClass(AClass)) {
+      fprintf(File, "%5d  %s %3d %3d %3d %3zd\n", i, unicharset.id_to_unichar(i), IClass->NumConfigs,
+              AClass->NumPermConfigs, IClass->NumProtos,
+              IClass->NumProtos - AClass->TempProtos->size());
     }
   }
-  fprintf (File, "\n");
+  fprintf(File, "\n");
 
-}                                /* PrintAdaptedTemplates */
-
+} /* PrintAdaptedTemplates */
 
 /*---------------------------------------------------------------------------*/
 /**
@@ -270,45 +183,44 @@ void Classify::PrintAdaptedTemplates(FILE *File, ADAPT_TEMPLATES Templates) {
  *
  * @note Globals: none
  */
-ADAPT_CLASS ReadAdaptedClass(TFile *fp) {
+ADAPT_CLASS_STRUCT *ReadAdaptedClass(TFile *fp) {
   int NumTempProtos;
   int NumConfigs;
   int i;
-  ADAPT_CLASS Class;
+  ADAPT_CLASS_STRUCT *Class;
 
   /* first read high level adapted class structure */
-  Class = static_cast<ADAPT_CLASS>(malloc (sizeof (ADAPT_CLASS_STRUCT)));
+  Class = new ADAPT_CLASS_STRUCT;
   fp->FRead(Class, sizeof(ADAPT_CLASS_STRUCT), 1);
 
   /* then read in the definitions of the permanent protos and configs */
-  Class->PermProtos = NewBitVector (MAX_NUM_PROTOS);
-  Class->PermConfigs = NewBitVector (MAX_NUM_CONFIGS);
-  fp->FRead(Class->PermProtos, sizeof(uint32_t),
-            WordsInVectorOfSize(MAX_NUM_PROTOS));
-  fp->FRead(Class->PermConfigs, sizeof(uint32_t),
-            WordsInVectorOfSize(MAX_NUM_CONFIGS));
+  Class->PermProtos = NewBitVector(MAX_NUM_PROTOS);
+  Class->PermConfigs = NewBitVector(MAX_NUM_CONFIGS);
+  fp->FRead(Class->PermProtos, sizeof(uint32_t), WordsInVectorOfSize(MAX_NUM_PROTOS));
+  fp->FRead(Class->PermConfigs, sizeof(uint32_t), WordsInVectorOfSize(MAX_NUM_CONFIGS));
 
   /* then read in the list of temporary protos */
   fp->FRead(&NumTempProtos, sizeof(int), 1);
   Class->TempProtos = NIL_LIST;
   for (i = 0; i < NumTempProtos; i++) {
-    auto TempProto = static_cast<TEMP_PROTO>(malloc(sizeof(TEMP_PROTO_STRUCT)));
+    auto TempProto = new TEMP_PROTO_STRUCT;
     fp->FRead(TempProto, sizeof(TEMP_PROTO_STRUCT), 1);
-    Class->TempProtos = push_last (Class->TempProtos, TempProto);
+    Class->TempProtos = push_last(Class->TempProtos, TempProto);
   }
 
   /* then read in the adapted configs */
   fp->FRead(&NumConfigs, sizeof(int), 1);
-  for (i = 0; i < NumConfigs; i++)
-    if (test_bit (Class->PermConfigs, i))
+  for (i = 0; i < NumConfigs; i++) {
+    if (test_bit(Class->PermConfigs, i)) {
       Class->Config[i].Perm = ReadPermConfig(fp);
-    else
+    } else {
       Class->Config[i].Temp = ReadTempConfig(fp);
+    }
+  }
 
   return (Class);
 
-}                                /* ReadAdaptedClass */
-
+} /* ReadAdaptedClass */
 
 /*---------------------------------------------------------------------------*/
 /**
@@ -320,11 +232,10 @@ ADAPT_CLASS ReadAdaptedClass(TFile *fp) {
  *
  * @note Globals: none
  */
-ADAPT_TEMPLATES Classify::ReadAdaptedTemplates(TFile *fp) {
-  ADAPT_TEMPLATES Templates;
+ADAPT_TEMPLATES_STRUCT *Classify::ReadAdaptedTemplates(TFile *fp) {
+  auto Templates = new ADAPT_TEMPLATES_STRUCT;
 
   /* first read the high level adaptive template struct */
-  Templates = static_cast<ADAPT_TEMPLATES>(malloc (sizeof (ADAPT_TEMPLATES_STRUCT)));
   fp->FRead(Templates, sizeof(ADAPT_TEMPLATES_STRUCT), 1);
 
   /* then read in the basic integer templates */
@@ -336,7 +247,7 @@ ADAPT_TEMPLATES Classify::ReadAdaptedTemplates(TFile *fp) {
   }
   return (Templates);
 
-}                                /* ReadAdaptedTemplates */
+} /* ReadAdaptedTemplates */
 
 /*---------------------------------------------------------------------------*/
 /**
@@ -348,8 +259,8 @@ ADAPT_TEMPLATES Classify::ReadAdaptedTemplates(TFile *fp) {
  *
  * @note Globals: none
  */
-PERM_CONFIG ReadPermConfig(TFile *fp) {
-  auto Config = static_cast<PERM_CONFIG>(malloc(sizeof(PERM_CONFIG_STRUCT)));
+PERM_CONFIG_STRUCT *ReadPermConfig(TFile *fp) {
+  auto Config = new PERM_CONFIG_STRUCT;
   uint8_t NumAmbigs;
   fp->FRead(&NumAmbigs, sizeof(NumAmbigs), 1);
   Config->Ambigs = new UNICHAR_ID[NumAmbigs + 1];
@@ -359,8 +270,7 @@ PERM_CONFIG ReadPermConfig(TFile *fp) {
 
   return (Config);
 
-}                                /* ReadPermConfig */
-
+} /* ReadPermConfig */
 
 /*---------------------------------------------------------------------------*/
 /**
@@ -372,17 +282,16 @@ PERM_CONFIG ReadPermConfig(TFile *fp) {
  *
  * @note Globals: none
  */
-TEMP_CONFIG ReadTempConfig(TFile *fp) {
-  auto Config = static_cast<TEMP_CONFIG>(malloc(sizeof(TEMP_CONFIG_STRUCT)));
+TEMP_CONFIG_STRUCT *ReadTempConfig(TFile *fp) {
+  auto Config = new TEMP_CONFIG_STRUCT;
   fp->FRead(Config, sizeof(TEMP_CONFIG_STRUCT), 1);
 
-  Config->Protos = NewBitVector (Config->ProtoVectorSize * BITSINLONG);
+  Config->Protos = NewBitVector(Config->ProtoVectorSize * BITSINLONG);
   fp->FRead(Config->Protos, sizeof(uint32_t), Config->ProtoVectorSize);
 
   return (Config);
 
-}                                /* ReadTempConfig */
-
+} /* ReadTempConfig */
 
 /*---------------------------------------------------------------------------*/
 /**
@@ -395,39 +304,34 @@ TEMP_CONFIG ReadTempConfig(TFile *fp) {
  *
  * @note Globals: none
  */
-void WriteAdaptedClass(FILE *File, ADAPT_CLASS Class, int NumConfigs) {
-  int NumTempProtos;
-  LIST TempProtos;
-  int i;
-
+void WriteAdaptedClass(FILE *File, ADAPT_CLASS_STRUCT *Class, int NumConfigs) {
   /* first write high level adapted class structure */
   fwrite(Class, sizeof(ADAPT_CLASS_STRUCT), 1, File);
 
   /* then write out the definitions of the permanent protos and configs */
-  fwrite(Class->PermProtos, sizeof(uint32_t),
-    WordsInVectorOfSize(MAX_NUM_PROTOS), File);
-  fwrite(Class->PermConfigs, sizeof(uint32_t),
-    WordsInVectorOfSize(MAX_NUM_CONFIGS), File);
+  fwrite(Class->PermProtos, sizeof(uint32_t), WordsInVectorOfSize(MAX_NUM_PROTOS), File);
+  fwrite(Class->PermConfigs, sizeof(uint32_t), WordsInVectorOfSize(MAX_NUM_CONFIGS), File);
 
   /* then write out the list of temporary protos */
-  NumTempProtos = count (Class->TempProtos);
-  fwrite(&NumTempProtos, sizeof(int), 1, File);
-  TempProtos = Class->TempProtos;
-  iterate (TempProtos) {
-    void* proto = first_node(TempProtos);
+  uint32_t NumTempProtos = Class->TempProtos->size();
+  fwrite(&NumTempProtos, sizeof(NumTempProtos), 1, File);
+  auto TempProtos = Class->TempProtos;
+  iterate(TempProtos) {
+    void *proto = TempProtos->node;
     fwrite(proto, sizeof(TEMP_PROTO_STRUCT), 1, File);
   }
 
   /* then write out the adapted configs */
   fwrite(&NumConfigs, sizeof(int), 1, File);
-  for (i = 0; i < NumConfigs; i++)
-    if (test_bit (Class->PermConfigs, i))
-      WritePermConfig (File, Class->Config[i].Perm);
-    else
-      WriteTempConfig (File, Class->Config[i].Temp);
+  for (int i = 0; i < NumConfigs; i++) {
+    if (test_bit(Class->PermConfigs, i)) {
+      WritePermConfig(File, Class->Config[i].Perm);
+    } else {
+      WriteTempConfig(File, Class->Config[i].Temp);
+    }
+  }
 
-}                                /* WriteAdaptedClass */
-
+} /* WriteAdaptedClass */
 
 /*---------------------------------------------------------------------------*/
 /**
@@ -438,22 +342,20 @@ void WriteAdaptedClass(FILE *File, ADAPT_CLASS Class, int NumConfigs) {
  *
  * @note Globals: none
  */
-void Classify::WriteAdaptedTemplates(FILE *File, ADAPT_TEMPLATES Templates) {
+void Classify::WriteAdaptedTemplates(FILE *File, ADAPT_TEMPLATES_STRUCT *Templates) {
   int i;
 
   /* first write the high level adaptive template struct */
   fwrite(Templates, sizeof(ADAPT_TEMPLATES_STRUCT), 1, File);
 
   /* then write out the basic integer templates */
-  WriteIntTemplates (File, Templates->Templates, unicharset);
+  WriteIntTemplates(File, Templates->Templates, unicharset);
 
   /* then write out the adaptive info for each class */
   for (i = 0; i < (Templates->Templates)->NumClasses; i++) {
-    WriteAdaptedClass (File, Templates->Class[i],
-      Templates->Templates->Class[i]->NumConfigs);
+    WriteAdaptedClass(File, Templates->Class[i], Templates->Templates->Class[i]->NumConfigs);
   }
-}                                /* WriteAdaptedTemplates */
-
+} /* WriteAdaptedTemplates */
 
 /*---------------------------------------------------------------------------*/
 /**
@@ -465,17 +367,18 @@ void Classify::WriteAdaptedTemplates(FILE *File, ADAPT_TEMPLATES Templates) {
  *
  * @note Globals: none
  */
-void WritePermConfig(FILE *File, PERM_CONFIG Config) {
+void WritePermConfig(FILE *File, PERM_CONFIG_STRUCT *Config) {
   uint8_t NumAmbigs = 0;
 
-  assert (Config != nullptr);
-  while (Config->Ambigs[NumAmbigs] > 0) ++NumAmbigs;
+  assert(Config != nullptr);
+  while (Config->Ambigs[NumAmbigs] > 0) {
+    ++NumAmbigs;
+  }
 
   fwrite(&NumAmbigs, sizeof(uint8_t), 1, File);
   fwrite(Config->Ambigs, sizeof(UNICHAR_ID), NumAmbigs, File);
   fwrite(&(Config->FontinfoId), sizeof(int), 1, File);
-}                                /* WritePermConfig */
-
+} /* WritePermConfig */
 
 /*---------------------------------------------------------------------------*/
 /**
@@ -487,12 +390,12 @@ void WritePermConfig(FILE *File, PERM_CONFIG Config) {
  *
  * @note Globals: none
  */
-void WriteTempConfig(FILE *File, TEMP_CONFIG Config) {
-  assert (Config != nullptr);
+void WriteTempConfig(FILE *File, TEMP_CONFIG_STRUCT *Config) {
+  assert(Config != nullptr);
 
-  fwrite(Config, sizeof (TEMP_CONFIG_STRUCT), 1, File);
-  fwrite(Config->Protos, sizeof (uint32_t), Config->ProtoVectorSize, File);
+  fwrite(Config, sizeof(TEMP_CONFIG_STRUCT), 1, File);
+  fwrite(Config->Protos, sizeof(uint32_t), Config->ProtoVectorSize, File);
 
-}                                /* WriteTempConfig */
+} /* WriteTempConfig */
 
 } // namespace tesseract

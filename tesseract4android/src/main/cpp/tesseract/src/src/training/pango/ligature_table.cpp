@@ -21,14 +21,14 @@
 
 #include "ligature_table.h"
 
+#include <tesseract/unichar.h>
 #include "pango_font_info.h"
 #include "tlog.h"
-#include <tesseract/unichar.h>
 #include "unicharset.h"
-#include "unicode/errorcode.h"  // from libicu
-#include "unicode/normlzr.h"    // from libicu
-#include "unicode/unistr.h"     // from libicu
-#include "unicode/utypes.h"     // from libicu
+#include "unicode/errorcode.h" // from libicu
+#include "unicode/normlzr.h"   // from libicu
+#include "unicode/unistr.h"    // from libicu
+#include "unicode/utypes.h"    // from libicu
 
 #include <utility>
 
@@ -43,13 +43,13 @@ static std::string EncodeAsUTF8(const char32 ch32) {
 // from. Note that this range does not contain the custom ligatures that we
 // encode in the private use area.
 const int kMinLigature = 0xfb00;
-const int kMaxLigature = 0xfb17;  // Don't put the wide Hebrew letters in.
+const int kMaxLigature = 0xfb17; // Don't put the wide Hebrew letters in.
 
 /* static */
 std::unique_ptr<LigatureTable> LigatureTable::instance_;
 
 /* static */
-LigatureTable* LigatureTable::Get() {
+LigatureTable *LigatureTable::Get() {
   if (instance_ == nullptr) {
     instance_.reset(new LigatureTable());
     instance_->Init();
@@ -57,8 +57,8 @@ LigatureTable* LigatureTable::Get() {
   return instance_.get();
 }
 
-LigatureTable::LigatureTable() : min_lig_length_(0), max_lig_length_(0),
-                                 min_norm_length_(0), max_norm_length_(0) {}
+LigatureTable::LigatureTable()
+    : min_lig_length_(0), max_lig_length_(0), min_norm_length_(0), max_norm_length_(0) {}
 
 void LigatureTable::Init() {
   if (norm_to_lig_table_.empty()) {
@@ -69,46 +69,50 @@ void LigatureTable::Init() {
       icu::UnicodeString unicode_lig8(static_cast<UChar32>(lig));
       icu::UnicodeString normed8_result;
       icu::ErrorCode status;
-      icu::Normalizer::normalize(unicode_lig8, UNORM_NFKC, 0, normed8_result,
-                                 status);
+      icu::Normalizer::normalize(unicode_lig8, UNORM_NFKC, 0, normed8_result, status);
       std::string normed8;
       normed8_result.toUTF8String(normed8);
       // The icu::Normalizer maps the "LONG S T" ligature to "st". Correct that
       // here manually so that AddLigatures() will work as desired.
-      if (lig8 == "\uFB05")
+      if (lig8 == "\uFB05") {
         normed8 = "ſt";
+      }
       int lig_length = lig8.length();
       int norm_length = normed8.size();
       if (normed8 != lig8 && lig_length > 1 && norm_length > 1) {
         norm_to_lig_table_[normed8] = lig8;
         lig_to_norm_table_[lig8] = normed8;
-        if (min_lig_length_ == 0 || lig_length < min_lig_length_)
+        if (min_lig_length_ == 0 || lig_length < min_lig_length_) {
           min_lig_length_ = lig_length;
-        if (lig_length > max_lig_length_)
+        }
+        if (lig_length > max_lig_length_) {
           max_lig_length_ = lig_length;
-        if (min_norm_length_ == 0 || norm_length < min_norm_length_)
+        }
+        if (min_norm_length_ == 0 || norm_length < min_norm_length_) {
           min_norm_length_ = norm_length;
-        if (norm_length > max_norm_length_)
+        }
+        if (norm_length > max_norm_length_) {
           max_norm_length_ = norm_length;
+        }
       }
     }
     // Add custom extra ligatures.
     for (int i = 0; UNICHARSET::kCustomLigatures[i][0] != nullptr; ++i) {
-      norm_to_lig_table_[UNICHARSET::kCustomLigatures[i][0]] =
-          UNICHARSET::kCustomLigatures[i][1];
+      norm_to_lig_table_[UNICHARSET::kCustomLigatures[i][0]] = UNICHARSET::kCustomLigatures[i][1];
       int norm_length = strlen(UNICHARSET::kCustomLigatures[i][0]);
-      if (min_norm_length_ == 0 || norm_length < min_norm_length_)
+      if (min_norm_length_ == 0 || norm_length < min_norm_length_) {
         min_norm_length_ = norm_length;
-      if (norm_length > max_norm_length_)
+      }
+      if (norm_length > max_norm_length_) {
         max_norm_length_ = norm_length;
+      }
 
-      lig_to_norm_table_[UNICHARSET::kCustomLigatures[i][1]] =
-          UNICHARSET::kCustomLigatures[i][0];
+      lig_to_norm_table_[UNICHARSET::kCustomLigatures[i][1]] = UNICHARSET::kCustomLigatures[i][0];
     }
   }
 }
 
-std::string LigatureTable::RemoveLigatures(const std::string& str) const {
+std::string LigatureTable::RemoveLigatures(const std::string &str) const {
   std::string result;
   UNICHAR::const_iterator it_begin = UNICHAR::begin(str.c_str(), str.length());
   UNICHAR::const_iterator it_end = UNICHAR::end(str.c_str(), str.length());
@@ -117,7 +121,7 @@ std::string LigatureTable::RemoveLigatures(const std::string& str) const {
   for (UNICHAR::const_iterator it = it_begin; it != it_end; ++it) {
     len = it.get_utf8(tmp);
     tmp[len] = '\0';
-    LigHash::const_iterator lig_it = lig_to_norm_table_.find(tmp);
+    auto lig_it = lig_to_norm_table_.find(tmp);
     if (lig_it != lig_to_norm_table_.end()) {
       result += lig_it->second;
     } else {
@@ -127,7 +131,7 @@ std::string LigatureTable::RemoveLigatures(const std::string& str) const {
   return result;
 }
 
-std::string LigatureTable::RemoveCustomLigatures(const std::string& str) const {
+std::string LigatureTable::RemoveCustomLigatures(const std::string &str) const {
   std::string result;
   UNICHAR::const_iterator it_begin = UNICHAR::begin(str.c_str(), str.length());
   UNICHAR::const_iterator it_end = UNICHAR::end(str.c_str(), str.length());
@@ -138,8 +142,7 @@ std::string LigatureTable::RemoveCustomLigatures(const std::string& str) const {
     len = it.get_utf8(tmp);
     tmp[len] = '\0';
     norm_ind = -1;
-    for (int i = 0;
-         UNICHARSET::kCustomLigatures[i][0] != nullptr && norm_ind < 0; ++i) {
+    for (int i = 0; UNICHARSET::kCustomLigatures[i][0] != nullptr && norm_ind < 0; ++i) {
       if (!strcmp(tmp, UNICHARSET::kCustomLigatures[i][1])) {
         norm_ind = i;
       }
@@ -153,8 +156,7 @@ std::string LigatureTable::RemoveCustomLigatures(const std::string& str) const {
   return result;
 }
 
-std::string LigatureTable::AddLigatures(const std::string& str,
-                                        const PangoFontInfo* font) const {
+std::string LigatureTable::AddLigatures(const std::string &str, const PangoFontInfo *font) const {
   std::string result;
   int len = str.size();
   int step = 0;
@@ -164,20 +166,19 @@ std::string LigatureTable::AddLigatures(const std::string& str,
     for (int liglen = max_norm_length_; liglen >= min_norm_length_; --liglen) {
       if (i + liglen <= len) {
         std::string lig_cand = str.substr(i, liglen);
-        LigHash::const_iterator it = norm_to_lig_table_.find(lig_cand);
+        auto it = norm_to_lig_table_.find(lig_cand);
         if (it != norm_to_lig_table_.end()) {
-          tlog(3, "Considering %s -> %s\n", lig_cand.c_str(),
-               it->second.c_str());
+          tlog(3, "Considering %s -> %s\n", lig_cand.c_str(), it->second.c_str());
           if (font) {
             // Test for renderability.
-            if (!font->CanRenderString(it->second.data(), it->second.length()))
-              continue;  // Not renderable
+            if (!font->CanRenderString(it->second.data(), it->second.length())) {
+              continue; // Not renderable
+            }
           }
           // Found a match so convert it.
           step = liglen;
           result += it->second;
-          tlog(2, "Substituted %s -> %s\n", lig_cand.c_str(),
-               it->second.c_str());
+          tlog(2, "Substituted %s -> %s\n", lig_cand.c_str(), it->second.c_str());
           break;
         }
       }
@@ -191,4 +192,4 @@ std::string LigatureTable::AddLigatures(const std::string& str,
   return result;
 }
 
-}  // namespace tesseract
+} // namespace tesseract

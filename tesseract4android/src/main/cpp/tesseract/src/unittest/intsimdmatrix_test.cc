@@ -15,10 +15,10 @@
 ///////////////////////////////////////////////////////////////////////
 
 #include "intsimdmatrix.h"
-#include <memory>
-#include <vector>
 #include <gtest/gtest.h>
 #include <gtest/internal/gtest-port.h>
+#include <memory>
+#include <vector>
 #include "include_gunit.h"
 #include "matrix.h"
 #include "simddetect.h"
@@ -27,8 +27,8 @@
 namespace tesseract {
 
 class IntSimdMatrixTest : public ::testing::Test {
- protected:
-  void SetUp() {
+protected:
+  void SetUp() override {
     std::locale::global(std::locale(""));
   }
 
@@ -43,7 +43,7 @@ class IntSimdMatrixTest : public ::testing::Test {
     return a;
   }
   // Makes a random input vector of the given size, with rounding up.
-  std::vector<int8_t> RandomVector(int size, const IntSimdMatrix& matrix) {
+  std::vector<int8_t> RandomVector(int size, const IntSimdMatrix &matrix) {
     int rounded_size = matrix.RoundInputs(size);
     std::vector<int8_t> v(rounded_size, 0);
     for (int i = 0; i < size; ++i) {
@@ -60,7 +60,7 @@ class IntSimdMatrixTest : public ::testing::Test {
     return v;
   }
   // Tests a range of sizes and compares the results against the generic version.
-  void ExpectEqualResults(const IntSimdMatrix& matrix) {
+  void ExpectEqualResults(const IntSimdMatrix &matrix) {
     double total = 0.0;
     for (int num_out = 1; num_out < 130; ++num_out) {
       for (int num_in = 1; num_in < 130; ++num_in) {
@@ -68,20 +68,19 @@ class IntSimdMatrixTest : public ::testing::Test {
         std::vector<int8_t> u = RandomVector(num_in, matrix);
         std::vector<double> scales = RandomScales(num_out);
         int ro = num_out;
-        if (IntSimdMatrix::intSimdMatrix)
+        if (IntSimdMatrix::intSimdMatrix) {
           ro = IntSimdMatrix::intSimdMatrix->RoundOutputs(ro);
-        std::vector<double> base_result(ro);
-        base_result.resize(num_out);
+        }
+        std::vector<double> base_result(num_out);
         IntSimdMatrix::MatrixDotVector(w, scales, u.data(), base_result.data());
         std::vector<double> test_result(ro);
-        test_result.resize(num_out);
         std::vector<int8_t> shaped_wi;
         int32_t rounded_num_out;
         matrix.Init(w, shaped_wi, rounded_num_out);
-        scales.reserve(rounded_num_out);
+        scales.resize(rounded_num_out);
         if (matrix.matrixDotVectorFunction) {
-          matrix.matrixDotVectorFunction(w.dim1(), w.dim2(), &shaped_wi[0],
-                                         &scales[0], &u[0], &test_result[0]);
+          matrix.matrixDotVectorFunction(w.dim1(), w.dim2(), &shaped_wi[0], &scales[0], &u[0],
+                                         &test_result[0]);
         } else {
           IntSimdMatrix::MatrixDotVector(w, scales, u.data(), test_result.data());
         }
@@ -132,4 +131,4 @@ TEST_F(IntSimdMatrixTest, AVX2) {
 #endif
 }
 
-}  // namespace tesseract
+} // namespace tesseract

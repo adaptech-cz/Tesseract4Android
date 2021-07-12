@@ -15,95 +15,97 @@
 #define TESSERACT_TRAINING_COMMONTRAINING_H_
 
 #ifdef HAVE_CONFIG_H
-#include "config_auto.h"
+#  include "config_auto.h"
 #endif
 
-#include "export.h"
 #include "commandlineflags.h"
+#include "export.h"
 #include "tprintf.h"
 
 #include <tesseract/baseapi.h>
 
 #include <memory>
 
-TESS_COMMON_TRAINING_API
-void ParseArguments(int* argc, char*** argv);
-
 namespace tesseract {
+
+TESS_COMMON_TRAINING_API
+void ParseArguments(int *argc, char ***argv);
 
 // Check whether the shared tesseract library is the right one.
 // This function must be inline because otherwise it would be part of
 // the shared library, so it could not compare the versions.
-static inline void CheckSharedLibraryVersion()
-{
+static inline void CheckSharedLibraryVersion() {
 #ifdef HAVE_CONFIG_H
   if (!!strcmp(TESSERACT_VERSION_STR, TessBaseAPI::Version())) {
-    tprintf("ERROR: shared library version mismatch (was %s, expected %s\n"
-            "Did you use a wrong shared tesseract library?\n",
-            TessBaseAPI::Version(), TESSERACT_VERSION_STR);
+    tprintf(
+        "ERROR: shared library version mismatch (was %s, expected %s\n"
+        "Did you use a wrong shared tesseract library?\n",
+        TessBaseAPI::Version(), TESSERACT_VERSION_STR);
     exit(1);
   }
 #endif
 }
 
-}  // namespace tesseract
+} // namespace tesseract
 
 #ifndef DISABLED_LEGACY_ENGINE
 
-#include "cluster.h"
-#include "featdefs.h"
-#include "intproto.h"
-#include "oldlist.h"
+#  include "cluster.h"
+#  include "featdefs.h"
+#  include "intproto.h"
+#  include "oldlist.h"
 
 namespace tesseract {
+
 class Classify;
 class MasterTrainer;
 class ShapeTable;
-}
 
 //////////////////////////////////////////////////////////////////////////////
 // Globals ///////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
 TESS_COMMON_TRAINING_API
-extern tesseract::FEATURE_DEFS_STRUCT feature_defs;
+extern FEATURE_DEFS_STRUCT feature_defs;
 
 // Must be defined in the file that "implements" commonTraining facilities.
 TESS_COMMON_TRAINING_API
-extern tesseract::CLUSTERCONFIG Config;
+extern CLUSTERCONFIG Config;
 
 //////////////////////////////////////////////////////////////////////////////
 // Structs ///////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
-typedef struct
-{
-  char  *Label;
-  int   SampleCount;
-  int   font_sample_count;
-  tesseract::LIST  List;
-}
-LABELEDLISTNODE, *LABELEDLIST;
+struct LABELEDLISTNODE {
+  /// This constructor allocates a new, empty labeled list and gives
+  /// it the specified label.
+  /// @param Label label for new list
+  LABELEDLISTNODE(const char *label) : Label(label) {
+  }
+  std::string Label;
+  int SampleCount = 0;
+  int font_sample_count = 0;
+  LIST List = nullptr;
+};
+using LABELEDLIST = LABELEDLISTNODE *;
 
-typedef struct
-{
-  char* Label;
-  int   NumMerged[MAX_NUM_PROTOS];
+struct MERGE_CLASS_NODE {
+  MERGE_CLASS_NODE(const char * label) : Label(label), Class(NewClass(MAX_NUM_PROTOS, MAX_NUM_CONFIGS)) {
+  }
+  std::string Label;
+  int NumMerged[MAX_NUM_PROTOS];
   tesseract::CLASS_TYPE Class;
-}MERGE_CLASS_NODE;
-using MERGE_CLASS = MERGE_CLASS_NODE*;
-
+};
+using MERGE_CLASS = MERGE_CLASS_NODE *;
 
 //////////////////////////////////////////////////////////////////////////////
 // Functions /////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
-namespace tesseract {
-
 // Helper loads shape table from the given file.
-ShapeTable* LoadShapeTable(const STRING& file_prefix);
+ShapeTable *LoadShapeTable(const std::string &file_prefix);
 // Helper to write the shape_table.
 TESS_COMMON_TRAINING_API
-void WriteShapeTable(const STRING& file_prefix, const ShapeTable& shape_table);
+void WriteShapeTable(const std::string &file_prefix, const ShapeTable &shape_table);
 
 // Creates a MasterTraininer and loads the training data into it:
 // Initializes feature_defs and IntegerFX.
@@ -119,107 +121,69 @@ void WriteShapeTable(const STRING& file_prefix, const ShapeTable& shape_table);
 // If shape_table is not nullptr, but failed to load, make a fake flat one,
 // as shape clustering was not run.
 TESS_COMMON_TRAINING_API
-std::unique_ptr<MasterTrainer> LoadTrainingData(int argc, const char* const * argv,
-                                bool replication,
-                                ShapeTable** shape_table,
-                                STRING* file_prefix);
-
-}  // namespace tesseract.
+std::unique_ptr<MasterTrainer> LoadTrainingData(int argc, const char *const *argv, bool replication,
+                                                ShapeTable **shape_table, std::string &file_prefix);
 
 TESS_COMMON_TRAINING_API
-const char *GetNextFilename(int argc, const char* const * argv, int &tessoptind);
+const char *GetNextFilename(int argc, const char *const *argv, int &tessoptind);
 
-LABELEDLIST FindList(
-    tesseract::LIST        List,
-    char        *Label);
+LABELEDLIST FindList(tesseract::LIST List, const std::string &Label);
 
 TESS_COMMON_TRAINING_API
-LABELEDLIST NewLabeledList(
-    const char  *Label);
-
-TESS_COMMON_TRAINING_API
-void ReadTrainingSamples(const tesseract::FEATURE_DEFS_STRUCT& feature_defs,
+void ReadTrainingSamples(const tesseract::FEATURE_DEFS_STRUCT &feature_defs,
                          const char *feature_name, int max_samples,
-                         tesseract::UNICHARSET* unicharset,
-                         FILE* file, tesseract::LIST* training_samples);
+                         tesseract::UNICHARSET *unicharset, FILE *file,
+                         tesseract::LIST *training_samples);
 
-void WriteTrainingSamples(
-    const tesseract::FEATURE_DEFS_STRUCT &FeatureDefs,
-    char *Directory,
-    tesseract::LIST CharList,
-    const char  *program_feature_type);
+void WriteTrainingSamples(const tesseract::FEATURE_DEFS_STRUCT &FeatureDefs, char *Directory,
+                          tesseract::LIST CharList, const char *program_feature_type);
 
 TESS_COMMON_TRAINING_API
-void FreeTrainingSamples(
-    tesseract::LIST        CharList);
+void FreeTrainingSamples(tesseract::LIST CharList);
 
 TESS_COMMON_TRAINING_API
-void FreeLabeledList(
-    LABELEDLIST LabeledList);
+void FreeLabeledList(LABELEDLIST LabeledList);
 
 TESS_COMMON_TRAINING_API
-void FreeLabeledClassList(
-    tesseract::LIST        ClassListList);
+void FreeLabeledClassList(tesseract::LIST ClassListList);
 
 TESS_COMMON_TRAINING_API
-tesseract::CLUSTERER *SetUpForClustering(
-    const tesseract::FEATURE_DEFS_STRUCT &FeatureDefs,
-    LABELEDLIST CharSample,
-    const char  *program_feature_type);
+tesseract::CLUSTERER *SetUpForClustering(const tesseract::FEATURE_DEFS_STRUCT &FeatureDefs,
+                                         LABELEDLIST CharSample, const char *program_feature_type);
 
 TESS_COMMON_TRAINING_API
-tesseract::LIST RemoveInsignificantProtos(
-    tesseract::LIST        ProtoList,
-    bool        KeepSigProtos,
-    bool        KeepInsigProtos,
-    int         N);
+tesseract::LIST RemoveInsignificantProtos(tesseract::LIST ProtoList, bool KeepSigProtos,
+                                          bool KeepInsigProtos, int N);
 
 TESS_COMMON_TRAINING_API
-void CleanUpUnusedData(
-    tesseract::LIST        ProtoList);
+void CleanUpUnusedData(tesseract::LIST ProtoList);
 
 TESS_COMMON_TRAINING_API
-void MergeInsignificantProtos(
-    tesseract::LIST        ProtoList,
-    const char  *label,
-    tesseract::CLUSTERER   *Clusterer,
-    tesseract::CLUSTERCONFIG *Config);
+void MergeInsignificantProtos(tesseract::LIST ProtoList, const char *label,
+                              tesseract::CLUSTERER *Clusterer, tesseract::CLUSTERCONFIG *Config);
 
 TESS_COMMON_TRAINING_API
-MERGE_CLASS FindClass(
-    tesseract::LIST        List,
-    const char        *Label);
+MERGE_CLASS FindClass(tesseract::LIST List, const std::string &Label);
 
 TESS_COMMON_TRAINING_API
-MERGE_CLASS NewLabeledClass(
-    const char        *Label);
+tesseract::CLASS_STRUCT *SetUpForFloat2Int(const tesseract::UNICHARSET &unicharset,
+                                           tesseract::LIST LabeledClassList);
+
+void Normalize(float *Values);
 
 TESS_COMMON_TRAINING_API
-tesseract::CLASS_STRUCT* SetUpForFloat2Int(const tesseract::UNICHARSET& unicharset,
-                                tesseract::LIST LabeledClassList);
-
-void Normalize(
-    float       *Values);
+void FreeNormProtoList(tesseract::LIST CharList);
 
 TESS_COMMON_TRAINING_API
-void FreeNormProtoList(
-    tesseract::LIST        CharList);
+void AddToNormProtosList(tesseract::LIST *NormProtoList, tesseract::LIST ProtoList, const std::string &CharName);
 
 TESS_COMMON_TRAINING_API
-void AddToNormProtosList(
-    tesseract::LIST*       NormProtoList,
-    tesseract::LIST        ProtoList,
-    char        *CharName);
-
-TESS_COMMON_TRAINING_API
-int NumberOfProtos(
-    tesseract::LIST        ProtoList,
-    bool        CountSigProtos,
-    bool        CountInsigProtos);
-
+int NumberOfProtos(tesseract::LIST ProtoList, bool CountSigProtos, bool CountInsigProtos);
 
 void allocNormProtos();
 
-#endif  // def DISABLED_LEGACY_ENGINE
+} // namespace tesseract
 
-#endif  // TESSERACT_TRAINING_COMMONTRAINING_H_
+#endif // def DISABLED_LEGACY_ENGINE
+
+#endif // TESSERACT_TRAINING_COMMONTRAINING_H_

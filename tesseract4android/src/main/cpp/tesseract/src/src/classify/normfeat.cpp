@@ -2,7 +2,6 @@
  ** Filename:    normfeat.c
  ** Purpose:     Definition of char normalization features.
  ** Author:      Dan Johnson
- ** History:     12/14/90, DSJ, Created.
  **
  ** (c) Copyright Hewlett-Packard Company, 1988.
  ** Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,8 +17,8 @@
 
 #include "normfeat.h"
 
-#include "intfx.h"
 #include "featdefs.h"
+#include "intfx.h"
 #include "mfoutline.h"
 
 namespace tesseract {
@@ -54,20 +53,18 @@ float ActualOutlineLength(FEATURE Feature) {
  *     the x center of the grapheme's bounding box.
  *     - English: [0.011, 0.31]
  */
-FEATURE_SET ExtractCharNormFeatures(const INT_FX_RESULT_STRUCT& fx_info) {
-  FEATURE_SET feature_set = NewFeatureSet(1);
-  FEATURE feature = NewFeature(&CharNormDesc);
+FEATURE_SET ExtractCharNormFeatures(const INT_FX_RESULT_STRUCT &fx_info) {
+  auto feature_set = new FEATURE_SET_STRUCT(1);
+  auto feature = new FEATURE_STRUCT(&CharNormDesc);
 
-  feature->Params[CharNormY] =
-      MF_SCALE_FACTOR * (fx_info.Ymean - kBlnBaselineOffset);
-  feature->Params[CharNormLength] =
-      MF_SCALE_FACTOR * fx_info.Length / LENGTH_COMPRESSION;
+  feature->Params[CharNormY] = MF_SCALE_FACTOR * (fx_info.Ymean - kBlnBaselineOffset);
+  feature->Params[CharNormLength] = MF_SCALE_FACTOR * fx_info.Length / LENGTH_COMPRESSION;
   feature->Params[CharNormRx] = MF_SCALE_FACTOR * fx_info.Rx;
   feature->Params[CharNormRy] = MF_SCALE_FACTOR * fx_info.Ry;
 
   AddFeature(feature_set, feature);
 
   return feature_set;
-}                                /* ExtractCharNormFeatures */
+} /* ExtractCharNormFeatures */
 
 } // namespace tesseract

@@ -9,11 +9,16 @@ ACLOCAL_AMFLAGS = -I m4
 
 CLEANFILES =
 
+DEFAULT_INCLUDES =
+
 SUBDIRS = . tessdata
 
 EXTRA_DIST = README.md LICENSE
 EXTRA_DIST += aclocal.m4 config configure.ac autogen.sh
-EXTRA_DIST += tesseract.pc.in java doc
+EXTRA_DIST += tesseract.pc.in doc
+if !GRAPHICS_DISABLED
+EXTRA_DIST += java
+endif
 EXTRA_DIST += CMakeLists.txt tesseract.pc.cmake cmake VERSION
 
 DIST_SUBDIRS = $(SUBDIRS)
@@ -30,11 +35,13 @@ dist-hook:
 	rm -f `find $(distdir) -name '*~'`
 	rm -rf $(distdir)/doc/html/* $(distdir)/doc/*.log
 
+if !GRAPHICS_DISABLED
 ScrollView.jar:
 	@cd "$(top_builddir)/java" && $(MAKE) $@
 
 install-jars:
 	@cd "$(top_builddir)/java" && $(MAKE) $@
+endif
 
 doc:
 	-srcdir="$(top_srcdir)" builddir="$(top_builddir)" \
@@ -62,7 +69,6 @@ pkginclude_HEADERS += include/tesseract/pageiterator.h
 pkginclude_HEADERS += include/tesseract/publictypes.h
 pkginclude_HEADERS += include/tesseract/renderer.h
 pkginclude_HEADERS += include/tesseract/resultiterator.h
-pkginclude_HEADERS += include/tesseract/thresholder.h
 pkginclude_HEADERS += include/tesseract/unichar.h
 
 # Rules for all subdirectories.
@@ -192,6 +198,7 @@ noinst_HEADERS += src/ccmain/paramsd.h
 noinst_HEADERS += src/ccmain/pgedit.h
 noinst_HEADERS += src/ccmain/tesseractclass.h
 noinst_HEADERS += src/ccmain/tessvars.h
+noinst_HEADERS += src/ccmain/thresholder.h
 noinst_HEADERS += src/ccmain/werdit.h
 if !DISABLED_LEGACY_ENGINE
 noinst_HEADERS += src/ccmain/docqual.h
@@ -210,8 +217,10 @@ libtesseract_la_SOURCES += src/ccmain/pageiterator.cpp
 libtesseract_la_SOURCES += src/ccmain/pagesegmain.cpp
 libtesseract_la_SOURCES += src/ccmain/pagewalk.cpp
 libtesseract_la_SOURCES += src/ccmain/paragraphs.cpp
+if !GRAPHICS_DISABLED
 libtesseract_la_SOURCES += src/ccmain/paramsd.cpp
 libtesseract_la_SOURCES += src/ccmain/pgedit.cpp
+endif
 libtesseract_la_SOURCES += src/ccmain/reject.cpp
 libtesseract_la_SOURCES += src/ccmain/resultiterator.cpp
 libtesseract_la_SOURCES += src/ccmain/tessedit.cpp
@@ -247,6 +256,7 @@ noinst_HEADERS += src/ccstruct/crakedge.h
 noinst_HEADERS += src/ccstruct/debugpixa.h
 noinst_HEADERS += src/ccstruct/detlinefit.h
 noinst_HEADERS += src/ccstruct/dppoint.h
+noinst_HEADERS += src/ccstruct/image.h
 noinst_HEADERS += src/ccstruct/imagedata.h
 noinst_HEADERS += src/ccstruct/linlsq.h
 noinst_HEADERS += src/ccstruct/matrix.h
@@ -271,6 +281,7 @@ noinst_HEADERS += src/ccstruct/seam.h
 noinst_HEADERS += src/ccstruct/split.h
 noinst_HEADERS += src/ccstruct/statistc.h
 noinst_HEADERS += src/ccstruct/stepblob.h
+noinst_HEADERS += src/ccstruct/tabletransfer.h
 noinst_HEADERS += src/ccstruct/werd.h
 if !DISABLED_LEGACY_ENGINE
 noinst_HEADERS += src/ccstruct/fontinfo.h
@@ -287,6 +298,7 @@ libtesseract_la_SOURCES += src/ccstruct/ccstruct.cpp
 libtesseract_la_SOURCES += src/ccstruct/coutln.cpp
 libtesseract_la_SOURCES += src/ccstruct/detlinefit.cpp
 libtesseract_la_SOURCES += src/ccstruct/dppoint.cpp
+libtesseract_la_SOURCES += src/ccstruct/image.cpp
 libtesseract_la_SOURCES += src/ccstruct/imagedata.cpp
 libtesseract_la_SOURCES += src/ccstruct/linlsq.cpp
 libtesseract_la_SOURCES += src/ccstruct/matrix.cpp
@@ -325,7 +337,6 @@ if !NO_TESSDATA_PREFIX
 libtesseract_ccutil_la_CPPFLAGS += -DTESSDATA_PREFIX=@datadir@
 endif
 
-noinst_HEADERS += src/ccutil/bits16.h
 noinst_HEADERS += src/ccutil/ccutil.h
 noinst_HEADERS += src/ccutil/clst.h
 noinst_HEADERS += src/ccutil/elst2.h
@@ -344,7 +355,6 @@ noinst_HEADERS += src/ccutil/qrsequence.h
 noinst_HEADERS += src/ccutil/sorthelper.h
 noinst_HEADERS += src/ccutil/scanutils.h
 noinst_HEADERS += src/ccutil/serialis.h
-noinst_HEADERS += src/ccutil/strngs.h
 noinst_HEADERS += src/ccutil/tessdatamanager.h
 noinst_HEADERS += src/ccutil/tprintf.h
 noinst_HEADERS += src/ccutil/unicharcompress.h
@@ -367,7 +377,6 @@ libtesseract_ccutil_la_SOURCES += src/ccutil/elst.cpp
 libtesseract_ccutil_la_SOURCES += src/ccutil/errcode.cpp
 libtesseract_ccutil_la_SOURCES += src/ccutil/mainblk.cpp
 libtesseract_ccutil_la_SOURCES += src/ccutil/serialis.cpp
-libtesseract_ccutil_la_SOURCES += src/ccutil/strngs.cpp
 libtesseract_ccutil_la_SOURCES += src/ccutil/scanutils.cpp
 libtesseract_ccutil_la_SOURCES += src/ccutil/tessdatamanager.cpp
 libtesseract_ccutil_la_SOURCES += src/ccutil/tprintf.cpp
@@ -388,7 +397,6 @@ endif
 noinst_HEADERS += src/classify/classify.h
 if !DISABLED_LEGACY_ENGINE
 noinst_HEADERS += src/classify/adaptive.h
-noinst_HEADERS += src/classify/blobclass.h
 noinst_HEADERS += src/classify/cluster.h
 noinst_HEADERS += src/classify/clusttool.h
 noinst_HEADERS += src/classify/featdefs.h
@@ -432,7 +440,6 @@ libtesseract_la_SOURCES += src/classify/intmatcher.cpp
 libtesseract_la_SOURCES += src/classify/intproto.cpp
 libtesseract_la_SOURCES += src/classify/kdtree.cpp
 libtesseract_la_SOURCES += src/classify/mf.cpp
-libtesseract_la_SOURCES += src/classify/mfdefs.cpp
 libtesseract_la_SOURCES += src/classify/mfoutline.cpp
 libtesseract_la_SOURCES += src/classify/mfx.cpp
 libtesseract_la_SOURCES += src/classify/normfeat.cpp
@@ -648,6 +655,7 @@ endif
 
 # Rules for src/viewer.
 
+if !GRAPHICS_DISABLED
 noinst_HEADERS += src/viewer/scrollview.h
 noinst_HEADERS += src/viewer/svmnode.h
 noinst_HEADERS += src/viewer/svutil.h
@@ -655,6 +663,7 @@ noinst_HEADERS += src/viewer/svutil.h
 libtesseract_la_SOURCES += src/viewer/scrollview.cpp
 libtesseract_la_SOURCES += src/viewer/svmnode.cpp
 libtesseract_la_SOURCES += src/viewer/svutil.cpp
+endif
 
 # TODO: Add rule to generate svpaint from svpaint.cpp.
 
@@ -670,7 +679,6 @@ noinst_HEADERS += src/wordrec/language_model.h
 noinst_HEADERS += src/wordrec/lm_consistency.h
 noinst_HEADERS += src/wordrec/lm_pain_points.h
 noinst_HEADERS += src/wordrec/lm_state.h
-noinst_HEADERS += src/wordrec/measure.h
 noinst_HEADERS += src/wordrec/outlines.h
 noinst_HEADERS += src/wordrec/params_model.h
 noinst_HEADERS += src/wordrec/plotedges.h
@@ -693,7 +701,9 @@ libtesseract_la_SOURCES += src/wordrec/lm_state.cpp
 libtesseract_la_SOURCES += src/wordrec/outlines.cpp
 libtesseract_la_SOURCES += src/wordrec/params_model.cpp
 libtesseract_la_SOURCES += src/wordrec/pieces.cpp
+if !GRAPHICS_DISABLED
 libtesseract_la_SOURCES += src/wordrec/plotedges.cpp
+endif
 libtesseract_la_SOURCES += src/wordrec/render.cpp
 libtesseract_la_SOURCES += src/wordrec/segsearch.cpp
 libtesseract_la_SOURCES += src/wordrec/wordclass.cpp
@@ -784,10 +794,6 @@ training_CPPFLAGS += -I$(top_srcdir)/src/cutil
 training_CPPFLAGS += $(ICU_UC_CFLAGS) $(ICU_I18N_CFLAGS)
 training_CPPFLAGS += $(pango_CFLAGS)
 training_CPPFLAGS += $(cairo_CFLAGS)
-
-bin_SCRIPTS = src/training/language-specific.sh src/training/tesstrain.sh
-scripts_DATA = src/training/tesstrain_utils.sh
-scriptsdir = $(bindir)
 
 if DISABLED_LEGACY_ENGINE
 training_CPPFLAGS += -DDISABLED_LEGACY_ENGINE
@@ -1008,7 +1014,27 @@ fuzzer-api: unittest/fuzzers/fuzzer-api.cpp
           $(libcurl_LIBS) \
           -o $@
 
-CLEANFILES += fuzzer-api
+fuzzer-api-512x256: libtesseract.la
+fuzzer-api-512x256: unittest/fuzzers/fuzzer-api.cpp
+	$(CXX) $(CXXFLAGS) -g $(LIB_FUZZING_ENGINE) \
+          -DTESSERACT_FUZZER_WIDTH=512 \
+          -DTESSERACT_FUZZER_HEIGHT=256 \
+          -I $(top_srcdir)/include \
+          -I $(builddir)/include \
+          -I $(top_srcdir)/src/ccmain \
+          -I $(top_srcdir)/src/ccstruct \
+          -I $(top_srcdir)/src/ccutil \
+          $(LEPTONICA_CFLAGS) \
+          $(OPENMP_CXXFLAGS) \
+          $< \
+          $(builddir)/.libs/libtesseract.a \
+          $(LEPTONICA_LIBS) \
+          $(TENSORFLOW_LIBS) \
+          $(libarchive_LIBS) \
+          $(libcurl_LIBS) \
+          -o $@
+
+CLEANFILES += fuzzer-api fuzzer-api-512x256
 
 if ASCIIDOC
 
@@ -1120,6 +1146,7 @@ unittest_CPPFLAGS += -I$(top_srcdir)/src/wordrec
 unittest_CPPFLAGS += -I$(top_srcdir)/abseil
 if TENSORFLOW
 unittest_CPPFLAGS += -DINCLUDE_TENSORFLOW
+unittest_CPPFLAGS += -I$(top_srcdir)/unittest
 unittest_CPPFLAGS += -I/usr/include/tensorflow
 endif # TENSORFLOW
 

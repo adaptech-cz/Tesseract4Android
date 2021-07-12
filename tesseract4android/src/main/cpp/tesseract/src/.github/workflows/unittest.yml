@@ -1,11 +1,11 @@
 name: unittest
-# autotools build on ubuntu and macOS homebrew.
-# unittests with address sanitizers.
+# autotools build on ubuntu. unittests with address sanitizers. with openmp.
 # [  FAILED  ] LSTMTrainerTest.DeterminismTest - clang version 9.0.0-2~ubuntu18.04.2
+# ubuntu-20.04-gcc-unittest - CI runs out of diskspace.
 on:
   #push:
   schedule:
-    - cron: 0 19 * * *
+    - cron: 0 0 * * *
 
 jobs:
   sanitizers:
@@ -15,12 +15,8 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - { name: macos-10.15-clang-unittest, os: macos-10.15, cxx: clang++ }
-          - { name: ubuntu-18.04-clang-8-unittest, os: ubuntu-18.04, cxx: clang++-8 }
           - { name: ubuntu-18.04-gcc-unittest, os: ubuntu-18.04, cxx: g++ }
-          - { name: ubuntu-20.04-clang-10-unittest, os: ubuntu-20.04, cxx: clang++-10 }
-          - { name: ubuntu-20.04-gcc-unittest, os: ubuntu-20.04, cxx: g++ }
-
+          - { name: ubuntu-20.04-clang-unittest, os: ubuntu-20.04, cxx: clang++ }
     steps:
     - uses: actions/checkout@v2
       with:
@@ -28,16 +24,8 @@ jobs:
 
     - name: Install dependencies (Linux)
       run: |
-           sudo apt-get install autoconf-archive libleptonica-dev libpango1.0-dev -y
+           sudo apt-get install autoconf libleptonica-dev libpango1.0-dev -y
            sudo apt-get install cabextract -y
-      if: runner.os == 'Linux'
-
-    - name: Install dependencies (MacOS Homebrew)
-      run: |
-           brew install automake autoconf-archive libarchive
-           brew install leptonica cairo pango
-           brew install cabextract abseil
-      if: runner.os == 'macOS'
 
     - name: Setup
       run: |
@@ -46,32 +34,22 @@ jobs:
 
     - name: Configure (Linux)
       run: |
-           ./configure '--disable-shared' \
-                'CXX=${{ matrix.config.cxx }}' \
-                'CXXFLAGS=-g -O2 -fsanitize=address,undefined'
-      if: runner.os == 'Linux'
-
-    - name: Configure (MacOS Homebrew)
-      run: |
-           ./configure '--disable-shared' '--with-pic' \
-                'CXX=${{ matrix.config.cxx }}' \
-                'CXXFLAGS=-g -O2 -fsanitize=address,undefined' \
-                "PKG_CONFIG_PATH=$(brew --prefix)/opt/icu4c/lib/pkgconfig:$(brew --prefix)/opt/libarchive/lib/pkgconfig:$(brew --prefix)/opt/libffi/lib/pkgconfig"
-      if: runner.os == 'macOS'
+           ./configure '--disable-shared' 'CXX=${{ matrix.config.cxx }}' \
+               'CXXFLAGS=-g -O2 -fsanitize=address,undefined'
 
     - name: Make and Install Tesseract
       run: |
-           make -j 8
+           ${{ matrix.config.cxx }} --version
+           make
            sudo make install
 
     - name: Make and Install Training Tools
       run: |
-           make training -j 8
+           make training
            sudo make training-install
 
-    - name: Display Version
+    - name: Display Tesseract and Training Tools Version
       run: |
-           ${{ matrix.config.cxx }} --version
            tesseract -v
            lstmtraining -v
            text2image -v
@@ -90,9 +68,9 @@ jobs:
 
     - name: Make and run Unit Tests
       run: |
-           make check -j 4
+           make check
 
-    - name: Display Unit Tests Report
+    - name: Display Unit Tests Report and Compiler Version
       run: |
            cat test-suite.log
            ${{ matrix.config.cxx }} --version
