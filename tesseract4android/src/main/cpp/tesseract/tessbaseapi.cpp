@@ -207,7 +207,7 @@ jboolean Java_com_googlecode_tesseract_android_TessBaseAPI_nativeInitParams(JNIE
   const char *c_dir = env->GetStringUTFChars(dir, NULL);
   const char *c_lang = env->GetStringUTFChars(lang, NULL);
 
-  GenericVector<STRING> vars_vec, vars_values;
+  std::vector<std::string> vars_vec, vars_values;
 
   jsize size = env->GetArrayLength(vars);
 
@@ -218,8 +218,8 @@ jboolean Java_com_googlecode_tesseract_android_TessBaseAPI_nativeInitParams(JNIE
     const char *c_var = env->GetStringUTFChars(var, NULL);
     const char *c_value = env->GetStringUTFChars(value, NULL);
 
-    vars_vec.push_back(STRING(c_var));
-    vars_values.push_back(STRING(c_value));
+    vars_vec.push_back(std::string(c_var));
+    vars_values.push_back(std::string(c_value));
 
     env->ReleaseStringUTFChars(var, c_var);
     env->ReleaseStringUTFChars(value, c_value);
@@ -412,7 +412,7 @@ jstring Java_com_googlecode_tesseract_android_TessBaseAPI_nativeGetVariable(JNIE
 
   const char *c_var = env->GetStringUTFChars(var, NULL);
 
-  STRING value;
+  std::string value;
   if (nat->api.GetVariableAsString(c_var, &value)) {
     result = env->NewStringUTF(value.c_str());
   }
