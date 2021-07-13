@@ -15,7 +15,7 @@ task androidJavadocs(type: Javadoc) {
 	source = android.sourceSets.main.java.srcDirs
 	classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
 	android.libraryVariants.all { variant ->
-		if (variant.name == 'release') {
+		if (variant.name.endsWith('Release')) {
 			owner.classpath += variant.javaCompileProvider.get().classpath
 		}
 	}
@@ -37,26 +37,28 @@ task androidSourcesJar(type: Jar) {
 afterEvaluate {
 	publishing {
 		publications {
-			// Creates a Maven publication called "release".
-			release(MavenPublication) {
-				// Applies the component for the release build variant.
-				from components.release
+			android.libraryVariants.all { variant ->
+				// Only consider release build variants.
+				if (variant.buildType.name != "release") {
+					return
+				}
 
-				// Adds javadocs and sources as separate jars.
-				artifact androidJavadocsJar
-				artifact androidSourcesJar
+				"${variant.flavorName}"(MavenPublication) {
+					// Applies the component for the build variant.
+					from components.findByName(variant.name)
 
-				// You can customize attributes of the publication here or in module's build.gradle file.
-				groupId 'cz.adaptech.android'
-				artifactId 'tesseract4android'
-				version = android.defaultConfig.versionName
+					// Adds javadocs and sources as separate jars.
+					artifact androidJavadocsJar
+					artifact androidSourcesJar
 
-				pom.withXml {
-					final root = asNode()
-					// Attribute "scm" (and probably also "name") is required in order to be valid pom for publishing on JCenter.
-					// Bintray works without them. Maven Central requires in addition few more attributes.
-					root.appendNode('name', 'tesseract4android')
-					root.appendNode('scm').appendNode('url', 'https://github.com/adaptech-cz/Tesseract4Android')
+					groupId 'cz.adaptech.android'
+					version android.defaultConfig.versionName
+					artifactId 'tesseract4android'
+
+					// Append flavor name to the version (unless it's "standard" flavor)
+					if (variant.flavorName != "standard") {
+						version = "${version}-${variant.flavorName}"
+					}
 				}
 			}
 		}

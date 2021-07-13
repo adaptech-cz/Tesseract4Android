@@ -2,8 +2,7 @@ apply plugin: 'com.android.library'
 
 android {
 	compileSdkVersion 28
-	// TODO: We can set specific NDK version we want to use, see https://developer.android.com/studio/projects/install-ndk#specific-version
-	// ndkVersion "major.minor.build"
+	ndkVersion "22.1.7171670"
 	defaultConfig {
 		minSdkVersion 16
 		targetSdkVersion 28
@@ -15,11 +14,6 @@ android {
 				// Specifies which native libraries or executables to build and package.
 				// TODO: Include eyes-two in some build flavor of the library?
 				//targets "jpeg", "png", "leptonica", "tesseract"
-
-				// We can compile with OpenMP to use parallel processing in Tesseract,
-				// but it actually results in worse processing time and cpu usage.
-				//cppFlags "-fopenmp"
-				//cFlags "-fopenmp"
 			}
 		}
 		ndk {
@@ -32,6 +26,26 @@ android {
 		release {
 			minifyEnabled false
 			proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+		}
+	}
+	flavorDimensions "parallelization"
+	productFlavors {
+		standard {
+		}
+		openmp {
+			// Since NDK r21 is OpenMP compiled as a shared library, but due to bug it is never
+			// included in resulting APK/AAR. It will be fixed probably in NDK r23, but until then
+			// we need to use r20 which compiles OpenMP as a static library.
+			// TODO: Remove this when https://issuetracker.google.com/issues/152897016 is fixed.
+			ndkVersion "20.1.5948944"
+
+			versionNameSuffix "-openmp"
+			externalNativeBuild {
+				cmake {
+					cFlags "-fopenmp"
+					cppFlags "-fopenmp"
+				}
+			}
 		}
 	}
 	compileOptions {
