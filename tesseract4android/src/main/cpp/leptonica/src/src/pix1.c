@@ -62,7 +62,6 @@
  *          PIX          *pixCopy()
  *          l_int32       pixResizeImageData()
  *          l_int32       pixCopyColormap()
- *          l_int32       pixSizesEqual()
  *          l_int32       pixTransferAllData()
  *          l_int32       pixSwapAndDestroy()
  *
@@ -99,6 +98,8 @@
  *          l_int32       pixSetText()
  *          l_int32       pixAddText()
  *          l_int32       pixCopyText()
+ *          l_uint8      *pixGetTextCompNew()
+ *          l_int32      *pixSetTextCompNew()
  *          PIXCMAP      *pixGetColormap()
  *          l_int32       pixSetColormap()
  *          l_int32       pixDestroyColormap()
@@ -109,6 +110,10 @@
  *
  *    Pix line ptrs
  *          void        **pixGetLinePtrs()
+ *
+ *    Pix size comparisons
+ *          l_int32       pixSizesEqual()
+ *          l_int32       pixMaxAspectRatio()
  *
  *    Pix debug
  *          l_int32       pixPrintStreamInfo()
@@ -297,7 +302,7 @@ setPixMemoryManager(alloc_fn   allocator,
 
 
 /*--------------------------------------------------------------------*
- *                              Pix Creation                          *
+ *                             Pix Creation                           *
  *--------------------------------------------------------------------*/
 /*!
  * \brief   pixCreate()
@@ -331,8 +336,10 @@ PIX  *pixd;
  *
  * <pre>
  * Notes:
- *      (1) Must set pad bits to avoid reading uninitialized data, because
- *          some optimized routines (e.g., pixConnComp()) read from pad bits.
+ *      (1) Pad bits are set to avoid reading uninitialized data, because
+ *          some optimized routines read from pad bits.
+ *      (2) Initializing memory is very fast, so this optimization is
+ *          not used in the library.
  * </pre>
  */
 PIX *
@@ -400,6 +407,10 @@ PIX  *pixd;
  *      (1) Makes a Pix of the same size as the input Pix, with
  *          the data array allocated but not initialized to 0.
  *      (2) Copies the other fields, including colormap if it exists.
+ *      (3) Pad bits are set to avoid reading uninitialized data, because
+ *          some optimized routines read from pad bits.
+ *      (4) Initializing memory is very fast, so this optimization is
+ *          not used in the library.
  * </pre>
  */
 PIX *
@@ -421,6 +432,7 @@ PIX     *pixd;
     pixCopyColormap(pixd, pixs);
     pixCopyText(pixd, pixs);
     pixCopyInputFormat(pixd, pixs);
+    pixSetPadBits(pixd, 0);
     return pixd;
 }
 
@@ -834,33 +846,6 @@ PIXCMAP        *cmapd;
 
 
 /*!
- * \brief   pixSizesEqual()
- *
- * \param[in]    pix1, pix2
- * \return  1 if the two pix have same {h, w, d}; 0 otherwise.
- */
-l_int32
-pixSizesEqual(const PIX  *pix1,
-              const PIX  *pix2)
-{
-    PROCNAME("pixSizesEqual");
-
-    if (!pix1 || !pix2)
-        return ERROR_INT("pix1 and pix2 not both defined", procName, 0);
-
-    if (pix1 == pix2)
-        return 1;
-
-    if ((pixGetWidth(pix1) != pixGetWidth(pix2)) ||
-        (pixGetHeight(pix1) != pixGetHeight(pix2)) ||
-        (pixGetDepth(pix1) != pixGetDepth(pix2)))
-        return 0;
-    else
-        return 1;
-}
-
-
-/*!
  * \brief   pixTransferAllData()
  *
  * \param[in]      pixd        must be different from pixs
@@ -1027,7 +1012,7 @@ pixSwapAndDestroy(PIX  **ppixd,
 
 
 /*--------------------------------------------------------------------*
- *                                Accessors                           *
+ *                              Pix Accessors                         *
  *--------------------------------------------------------------------*/
 l_int32
 pixGetWidth(const PIX  *pix)
@@ -1611,6 +1596,71 @@ pixCopyText(PIX        *pixd,
 }
 
 
+/*!
+ * \brief   pixGetTextCompNew()
+ *
+ * \param[in]   pix
+ * \param[out]  psize    this number of bytes of returned binary data
+ * \return  ptr to binary data derived from the text string in the pix,
+ *          after decoding and uncompressing
+ *
+ * <pre>
+ * Notes:
+ *      (1) The ascii string in the text field of the input pix was
+ *          previously stored there using pixSetTextCompNew().
+ *      (2) This retrieves the string and performs ascii85 decoding
+ *          followed by decompression on it.  The returned binary data
+ *          is owned by the caller and must be freed.
+ * </pre>
+ */
+l_uint8 *
+pixGetTextCompNew(PIX     *pix,
+                  size_t  *psize)
+{
+char  *str;
+
+    PROCNAME("pixGetTextCompNew");
+
+    if (!pix)
+        return (l_uint8 *)ERROR_PTR("pix not defined", procName, NULL);
+    str = pixGetText(pix);
+    return decodeAscii85WithComp(str, strlen(str), psize);
+}
+
+
+/*!
+ * \brief   pixSetTextCompNew()
+ *
+ * \param[in]   pix
+ * \param[in]   data    binary data
+ * \param[in]   size    number of bytes of binary data
+ * \return  0 if OK, 1 on error
+ *
+ * <pre>
+ * Notes:
+ *      (1) This receives binary data and performs compression and ascii85
+ *          encoding on it.  The ascii result is stored in the input pix,
+ *          replacing any string that may be there.
+ *      (2) The input %data can be reconstructed using pixGetTextCompNew().
+ * </pre>
+ */
+l_ok
+pixSetTextCompNew(PIX            *pix,
+                  const l_uint8  *data,
+                  size_t          size)
+{
+size_t  encodesize;  /* ignored */
+
+    PROCNAME("pixSetTextCompNew");
+
+    if (!pix)
+        return ERROR_INT("pix not defined", procName, 1);
+
+    stringReplace(&pix->text, encodeAscii85WithComp(data, size, &encodesize));
+    return 0;
+}
+
+
 PIXCMAP *
 pixGetColormap(PIX  *pix)
 {
@@ -1919,6 +1969,67 @@ void     **lines;
         lines[i] = (void *)(data + i * wpl);
 
     return lines;
+}
+
+
+/*--------------------------------------------------------------------*
+ *                         Pix Size Comparisons                       *
+ *--------------------------------------------------------------------*/
+/*!
+ * \brief   pixSizesEqual()
+ *
+ * \param[in]    pix1, pix2
+ * \return  1 if the two pix have same {h, w, d}; 0 otherwise.
+ */
+l_int32
+pixSizesEqual(const PIX  *pix1,
+              const PIX  *pix2)
+{
+    PROCNAME("pixSizesEqual");
+
+    if (!pix1 || !pix2)
+        return ERROR_INT("pix1 and pix2 not both defined", procName, 0);
+
+    if (pix1 == pix2)
+        return 1;
+
+    if ((pixGetWidth(pix1) != pixGetWidth(pix2)) ||
+        (pixGetHeight(pix1) != pixGetHeight(pix2)) ||
+        (pixGetDepth(pix1) != pixGetDepth(pix2)))
+        return 0;
+    else
+        return 1;
+}
+
+
+/*!
+ * \brief   pixMaxAspectRatio()
+ *
+ * \param[in]    pixs      32 bpp rgb
+ * \param[out]   pratio    max aspect ratio, >= 1.0; -1.0 on error
+ * \return  0 if OK, 1 on error
+ */
+l_ok
+pixMaxAspectRatio(PIX        *pixs,
+                  l_float32  *pratio)
+{
+l_int32  w, h;
+
+    PROCNAME("pixMaxAspectRatio");
+
+    if (!pratio)
+        return ERROR_INT("&ratio not defined", procName, 1);
+    *pratio = -1.0;
+    if (!pixs)
+        return ERROR_INT("pixs not defined", procName, 1);
+    pixGetDimensions(pixs, &w, &h, NULL);
+    if (w == 0 || h == 0) {
+        L_ERROR("invalid size: w = %d, h = %d\n", procName, w, h);
+        return 1;
+    }
+
+    *pratio = L_MAX((l_float32)h / (l_float32)w, (l_float32)w / (l_float32)h);
+    return 0;
 }
 
 

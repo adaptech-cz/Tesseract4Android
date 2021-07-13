@@ -86,9 +86,9 @@
  *
  *      Adaptive contrast normalization
  *          PIX             *pixContrastNorm()          8 bpp
- *          l_int32          pixMinMaxTiles()
- *          l_int32          pixSetLowContrast()
- *          PIX             *pixLinearTRCTiled()
+ *          static l_int32   pixMinMaxTiles()
+ *          static l_int32   pixSetLowContrast()
+ *          static PIX      *pixLinearTRCTiled()
  *          static l_int32  *iaaGetLinearTRC()
  *
  *  Background normalization is done by generating a reduced map (or set
@@ -153,6 +153,12 @@ static const l_int32  DefaultBgVal = 200;       /*!< default bg value      */
 static const l_int32  DefaultXSmoothSize = 2;  /*!< default x smooth size */
 static const l_int32  DefaultYSmoothSize = 1;  /*!< default y smooth size */
 
+static l_int32 pixMinMaxTiles(PIX *pixs, l_int32 sx, l_int32 sy,
+                              l_int32 mindiff, l_int32 smoothx, l_int32 smoothy,
+                              PIX **ppixmin, PIX **ppixmax);
+static l_int32 pixSetLowContrast(PIX *pixs1, PIX *pixs2, l_int32 mindiff);
+static PIX *pixLinearTRCTiled(PIX *pixd, PIX *pixs, l_int32 sx, l_int32 sy,
+                              PIX *pixmin, PIX *pixmax);
 static l_int32 *iaaGetLinearTRC(l_int32 **iaa, l_int32 diff);
 
 #ifndef  NO_CONSOLE_IO
@@ -182,6 +188,8 @@ static l_int32 *iaaGetLinearTRC(l_int32 **iaa, l_int32 diff);
  *                          for light text)
  *          blackval   70  (a bit more than 60)
  *          whiteval  190  (a bit less than 200)
+ *    (3) Note: the whiteval must not exceed 200, which is the value
+ *        that the background is set to in pixBackgroundNormSimple().
  * </pre>
  */
 PIX *
@@ -202,6 +210,11 @@ PIX     *pixd;
     d = pixGetDepth(pixs);
     if (d != 8 && d != 32)
         return (PIX *)ERROR_PTR("depth not 8 or 32", procName, NULL);
+    if (whiteval > 200) {
+        L_WARNING("white value %d must not exceed 200; reset to 190",
+                  procName, whiteval);
+        whiteval = 190;
+    }
 
     pixd = pixBackgroundNormSimple(pixs, pixim, pixg);
     if (!pixd)
@@ -261,12 +274,12 @@ pixBackgroundNormSimple(PIX  *pixs,
  * Notes:
  *    (1) This is a top-level interface for normalizing the image intensity
  *        by mapping the image so that the background is near the input
- *        value 'bgval'.
+ *        value %bgval.
  *    (2) The input image is either grayscale or rgb.
  *    (3) For each component in the input image, the background value
  *        in each tile is estimated using the values in the tile that
  *        are not part of the foreground, where the foreground is
- *        determined by the input 'thresh' argument.
+ *        determined by %thresh.
  *    (4) An optional binary mask can be specified, with the foreground
  *        pixels typically over image regions.  The resulting background
  *        map values will be determined by surrounding pixels that are
@@ -280,25 +293,29 @@ pixBackgroundNormSimple(PIX  *pixs,
  *        grayscale version can be used elsewhere.  If the input is RGB
  *        and this is not supplied, it is made internally using only
  *        the green component, and destroyed after use.
- *    (6) The dimensions of the pixel tile (sx, sy) give the amount by
+ *    (6) The dimensions of the pixel tile (%sx, %sy) give the amount by
  *        by which the map is reduced in size from the input image.
- *    (7) The threshold is used to binarize the input image, in order to
+ *    (7) The input image is binarized using %thresh, in order to
  *        locate the foreground components.  If this is set too low,
  *        some actual foreground may be used to determine the maps;
  *        if set too high, there may not be enough background
- *        to determine the map values accurately.  Typically, it's
+ *        to determine the map values accurately.  Typically, it is
  *        better to err by setting the threshold too high.
- *    (8) A 'mincount' threshold is a minimum count of pixels in a
+ *    (8) A %mincount threshold is a minimum count of pixels in a
  *        tile for which a background reading is made, in order for that
  *        pixel in the map to be valid.  This number should perhaps be
  *        at least 1/3 the size of the tile.
- *    (9) A 'bgval' target background value for the normalized image.  This
+ *    (9) A %bgval target background value for the normalized image.  This
  *        should be at least 128.  If set too close to 255, some
- *        clipping will occur in the result.
- *    (10) Two factors, 'smoothx' and 'smoothy', are input for smoothing
- *        the map.  Each low-pass filter kernel dimension is
- *        is 2 * (smoothing factor) + 1, so a
- *        value of 0 means no smoothing. A value of 1 or 2 is recommended.
+ *        clipping will occur in the result.  It is recommended to use
+ *        %bgval = 200.
+ *    (10) Two factors, %smoothx and %smoothy, are input for smoothing
+ *         the map.  Each low-pass filter kernel dimension is
+ *         is 2 * (smoothing factor) + 1, so a
+ *         value of 0 means no smoothing. A value of 1 or 2 is recommended.
+ *    (11) See pixCleanBackgroundToWhite().  The recommended value for %bgval
+ *         is 200.  As done there, pixBackgroundNorm() is typically followed
+ *         by pixGammaTRC(), where the maxval must not not exceed %bgval.
  * </pre>
  */
 PIX *
@@ -2088,8 +2105,7 @@ PIX       *pixd;
          * 4x faster when using the LUT.  C'est la vie.  */
     lut = NULL;
     if (w * h > 100000) {  /* more pixels than 2^16 */
-        if ((lut = (l_uint8 *)LEPT_CALLOC(0x10000, sizeof(l_uint8))) == NULL)
-            return (PIX *)ERROR_PTR("lut not made", procName, NULL);
+        lut = (l_uint8 *)LEPT_CALLOC(0x10000, sizeof(l_uint8));
         for (i = 0; i < 256; i++) {
             for (j = 0; j < 256; j++) {
                 fval = (l_float32)(i * target) / (j + 0.5);
@@ -2098,7 +2114,7 @@ PIX       *pixd;
         }
     }
 
-    if ((pixd = pixCreateNoInit(w, h, 8)) == NULL) {
+    if ((pixd = pixCreate(w, h, 8)) == NULL) {
         LEPT_FREE(lut);
         return (PIX *)ERROR_PTR("pixd not made", procName, NULL);
     }
@@ -2646,7 +2662,7 @@ PIX  *pixmin, *pixmax;
  *      (2) See pixContrastNorm() for usage.
  * </pre>
  */
-l_ok
+static l_ok
 pixMinMaxTiles(PIX     *pixs,
                l_int32  sx,
                l_int32  sy,
@@ -2737,7 +2753,7 @@ PIX     *pixmin1, *pixmax1, *pixmin2, *pixmax2;
  *          caller should check return value.
  * </pre>
  */
-l_ok
+static l_ok
 pixSetLowContrast(PIX     *pixs1,
                   PIX     *pixs2,
                   l_int32  mindiff)
@@ -2820,7 +2836,7 @@ l_uint32  *data1, *data2, *line1, *line2;
  *          and stored for reuse in an integer array within the ptr array iaa[].
  * </pre>
  */
-PIX *
+static PIX *
 pixLinearTRCTiled(PIX       *pixd,
                   PIX       *pixs,
                   l_int32    sx,
@@ -2847,8 +2863,7 @@ l_uint32  *data, *datamin, *datamax, *line, *tline, *linemin, *linemax;
     if (sx < 5 || sy < 5)
         return (PIX *)ERROR_PTR("sx and/or sy less than 5", procName, pixd);
 
-    if ((iaa = (l_int32 **)LEPT_CALLOC(256, sizeof(l_int32 *))) == NULL)
-        return (PIX *)ERROR_PTR("iaa not made", procName, NULL);
+    iaa = (l_int32 **)LEPT_CALLOC(256, sizeof(l_int32 *));
     if ((pixd = pixCopy(pixd, pixs)) == NULL) {
         LEPT_FREE(iaa);
         return (PIX *)ERROR_PTR("pixd not made", procName, NULL);
@@ -2923,8 +2938,7 @@ l_float32  factor;
     if (iaa[diff] != NULL)  /* already have it */
        return iaa[diff];
 
-    if ((ia = (l_int32 *)LEPT_CALLOC(256, sizeof(l_int32))) == NULL)
-        return (l_int32 *)ERROR_PTR("ia not made", procName, NULL);
+    ia = (l_int32 *)LEPT_CALLOC(256, sizeof(l_int32));
     iaa[diff] = ia;
     if (diff == 0) {  /* shouldn't happen */
         for (i = 0; i < 256; i++)

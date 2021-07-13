@@ -13,23 +13,27 @@ LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 
     PIX *pix1, *pix2, *pix3, *pix4, *pix5, *pix6;
     NUMA *na1, *na2, *na3, *na4, *na5, *na6;
+    NUMAA *naa1;
 
     pix1 = pixConvertTo8(pixs, FALSE);
     box = boxCreate(120, 30, 200, 200);
-    pixGetGrayHistogramInRect(pix1, box, 1);
+    na1 = pixGetGrayHistogramInRect(pix1, box, 1);
+    numaDestroy(&na1);
     boxDestroy(&box);
     pixDestroy(&pix1);
 
-    pixGetGrayHistogramTiled(pixs, 1, 1, 1);
+    naa1 = pixGetGrayHistogramTiled(pixs, 1, 1, 1);
+    numaaDestroy(&naa1);
 
     pix1 = pixConvertTo8(pixs, FALSE);
-    pixGetCmapHistogramMasked(pix1, NULL, 1, 1, 1);
+    na1 = pixGetCmapHistogramMasked(pix1, NULL, 1, 1, 1);
+    numaDestroy(&na1);
     pixDestroy(&pix1);
 
     pix1 = pixConvertTo8(pixs, FALSE);
     box = boxCreate(120, 30, 200, 200);
-    numa1 = pixGetCmapHistogramInRect(pix2, box, 1);
-    numaDestroy(&numa1);
+    na1 = pixGetCmapHistogramInRect(pix1, box, 1);
+    numaDestroy(&na1);
     boxDestroy(&box);
     pixDestroy(&pix1);
 
@@ -100,6 +104,6 @@ LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
     pixSplitDistributionFgBg(pix1, 1.5, 1, &thresh, &fgval, &bgval, &pix2);
     pixDestroy(&pix1);
     pixDestroy(&pix2);
-
+    pixDestroy(&pixs);
     return 0;
 }

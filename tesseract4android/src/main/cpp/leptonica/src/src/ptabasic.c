@@ -352,12 +352,14 @@ l_int32  n;
         return ERROR_INT("pta not defined", procName, 1);
 
     n = pta->n;
-    if (n >= pta->nalloc)
-        ptaExtendArrays(pta);
+    if (n >= pta->nalloc) {
+        if (ptaExtendArrays(pta))
+            return ERROR_INT("extension failed", procName, 1);
+    }
+
     pta->x[n] = x;
     pta->y[n] = y;
     pta->n++;
-
     return 0;
 }
 
@@ -370,7 +372,8 @@ l_int32  n;
  *
  * <pre>
  * Notes:
- *      (1) The max number of points is 100M.
+ *      (1) Doubles the size of the array.
+ *      (2) The max number of points is 100M.
  * </pre>
  */
 static l_int32
@@ -382,13 +385,16 @@ size_t  oldsize, newsize;
 
     if (!pta)
         return ERROR_INT("pta not defined", procName, 1);
-    if (pta->nalloc > MaxArraySize)  /* belt & suspenders */
-        return ERROR_INT("pta has too many ptrs", procName, 1);
-    oldsize = pta->nalloc * sizeof(l_float32);
-    newsize = 2 * oldsize;
-    if (newsize > 4 * MaxArraySize)  /* array of 100M floats */
-        return ERROR_INT("newsize > 400 MB; too large", procName, 1);
-
+    if (pta->nalloc > MaxArraySize)
+        return ERROR_INT("pta at maximum size; can't extend", procName, 1);
+    oldsize = 4 * pta->nalloc;
+    if (pta->nalloc > MaxArraySize / 2) {
+        newsize = 4 * MaxArraySize;
+        pta->nalloc = MaxArraySize;
+    } else {
+        newsize = 2 * oldsize;
+        pta->nalloc *= 2;
+    }
     if ((pta->x = (l_float32 *)reallocNew((void **)&pta->x,
                                           oldsize, newsize)) == NULL)
         return ERROR_INT("new x array not returned", procName, 1);
@@ -396,7 +402,6 @@ size_t  oldsize, newsize;
                                           oldsize, newsize)) == NULL)
         return ERROR_INT("new y array not returned", procName, 1);
 
-    pta->nalloc *= 2;
     return 0;
 }
 
@@ -425,11 +430,15 @@ l_int32  i, n;
     if (!pta)
         return ERROR_INT("pta not defined", procName, 1);
     n = ptaGetCount(pta);
-    if (index < 0 || index > n)
-        return ERROR_INT("index not in {0...n}", procName, 1);
+    if (index < 0 || index > n) {
+        L_ERROR("index %d not in [0,...,%d]\n", procName, index, n);
+        return 1;
+    }
 
-    if (n > pta->nalloc)
-        ptaExtendArrays(pta);
+    if (n > pta->nalloc) {
+        if (ptaExtendArrays(pta))
+            return ERROR_INT("extension failed", procName, 1);
+    }
     pta->n++;
     for (i = n; i > index; i--) {
         pta->x[i] = pta->x[i - 1];
@@ -466,8 +475,10 @@ l_int32  i, n;
     if (!pta)
         return ERROR_INT("pta not defined", procName, 1);
     n = ptaGetCount(pta);
-    if (index < 0 || index >= n)
-        return ERROR_INT("index not in {0...n - 1}", procName, 1);
+    if (index < 0 || index >= n) {
+        L_ERROR("index %d not in [0,...,%d]\n", procName, index, n - 1);
+        return 1;
+    }
 
         /* Remove the point */
     for (i = index + 1; i < n; i++) {
@@ -931,6 +942,9 @@ FILE    *fp;
     if ((fp = open_memstream((char **)pdata, psize)) == NULL)
         return ERROR_INT("stream not opened", procName, 1);
     ret = ptaWriteStream(fp, pta, type);
+    fputc('\0', fp);
+    fclose(fp);
+    *psize = *psize - 1;
 #else
     L_INFO("work-around: writing to a temp file\n", procName);
   #ifdef _WIN32
@@ -943,8 +957,8 @@ FILE    *fp;
     ret = ptaWriteStream(fp, pta, type);
     rewind(fp);
     *pdata = l_binaryReadStream(fp, psize);
-#endif  /* HAVE_FMEMOPEN */
     fclose(fp);
+#endif  /* HAVE_FMEMOPEN */
     return ret;
 }
 
@@ -1048,11 +1062,16 @@ PTA     *ptac;
     }
 
     n = ptaaGetCount(ptaa);
-    if (n >= ptaa->nalloc)
-        ptaaExtendArray(ptaa);
+    if (n >= ptaa->nalloc) {
+        if (ptaaExtendArray(ptaa)) {
+            if (copyflag != L_INSERT)
+                ptaDestroy(&ptac);
+            return ERROR_INT("extension failed", procName, 1);
+        }
+    }
+
     ptaa->pta[n] = ptac;
     ptaa->n++;
-
     return 0;
 }
 
@@ -1576,6 +1595,9 @@ FILE    *fp;
     if ((fp = open_memstream((char **)pdata, psize)) == NULL)
         return ERROR_INT("stream not opened", procName, 1);
     ret = ptaaWriteStream(fp, ptaa, type);
+    fputc('\0', fp);
+    fclose(fp);
+    *psize = *psize - 1;
 #else
     L_INFO("work-around: writing to a temp file\n", procName);
   #ifdef _WIN32
@@ -1588,7 +1610,7 @@ FILE    *fp;
     ret = ptaaWriteStream(fp, ptaa, type);
     rewind(fp);
     *pdata = l_binaryReadStream(fp, psize);
-#endif  /* HAVE_FMEMOPEN */
     fclose(fp);
+#endif  /* HAVE_FMEMOPEN */
     return ret;
 }

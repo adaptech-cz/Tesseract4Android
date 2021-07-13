@@ -529,11 +529,16 @@ PIX     *pixc;
         return ERROR_INT("pixc not made", procName, 1);
 
     n = pixaGetCount(pixa);
-    if (n >= pixa->nalloc)
-        pixaExtendArray(pixa);
+    if (n >= pixa->nalloc) {
+        if (pixaExtendArray(pixa)) {
+            if (copyflag != L_INSERT)
+                pixDestroy(&pixc);
+            return ERROR_INT("extension failed", procName, 1);
+        }
+    }
+
     pixa->pix[n] = pixc;
     pixa->n++;
-
     return 0;
 }
 
@@ -1139,9 +1144,11 @@ PIX     *pix;
  * <pre>
  * Notes:
  *      (1) To clear all the text fields, use %sa == NULL and %text == NULL.
- *      (2) To set all the text fields to the same value %text, use %sa = NULL.
- *      (3) If %sa is defined, we ignore %text and use it; %sa must have
- *          the same count as %pixa.
+ *      (2) Otherwise, this replaces all text fields with a copy of a string,
+ *          either the same string or a string from %sa.
+ *      (3) To set all the text fields to the same value %text, use %sa = NULL.
+ *      (4) If %sa is defined, ignore %text and use the strings in %sa.
+ *          %sa must have the same count as %pixa.
  * </pre>
  */
 l_ok
@@ -1372,14 +1379,18 @@ l_int32  i, n;
     if (!pixa)
         return ERROR_INT("pixa not defined", procName, 1);
     n = pixaGetCount(pixa);
-    if (index < 0 || index > n)
-        return ERROR_INT("index not in {0...n}", procName, 1);
+    if (index < 0 || index > n) {
+        L_ERROR("index %d not in [0,...,%d]\n", procName, index, n);
+        return 1;
+    }
     if (!pixs)
         return ERROR_INT("pixs not defined", procName, 1);
 
     if (n >= pixa->nalloc) {  /* extend both ptr arrays */
-        pixaExtendArray(pixa);
-        boxaExtendArray(pixa->boxa);
+        if (pixaExtendArray(pixa))
+            return ERROR_INT("extension failed", procName, 1);
+        if (boxaExtendArray(pixa->boxa))
+            return ERROR_INT("extension failed", procName, 1);
     }
     pixa->n++;
     for (i = n; i > index; i--)
@@ -1389,7 +1400,6 @@ l_int32  i, n;
         /* Optionally, insert the box */
     if (box)
         boxaInsertBox(pixa->boxa, index, box);
-
     return 0;
 }
 
@@ -1422,8 +1432,10 @@ PIX    **array;
     if (!pixa)
         return ERROR_INT("pixa not defined", procName, 1);
     n = pixaGetCount(pixa);
-    if (index < 0 || index >= n)
-        return ERROR_INT("index not in {0...n - 1}", procName, 1);
+    if (index < 0 || index >= n) {
+        L_ERROR("index %d not in [0,...,%d]\n", procName, index, n - 1);
+        return 1;
+    }
 
         /* Remove the pix */
     array = pixa->pix;
@@ -1478,8 +1490,10 @@ PIX    **array;
     if (!pixa)
         return ERROR_INT("pixa not defined", procName, 1);
     n = pixaGetCount(pixa);
-    if (index < 0 || index >= n)
-        return ERROR_INT("index not in {0...n - 1}", procName, 1);
+    if (index < 0 || index >= n) {
+        L_ERROR("index %d not in [0,...,%d]\n", procName, index, n - 1);
+        return 1;
+    }
 
         /* Remove the pix */
     array = pixa->pix;
@@ -2006,11 +2020,15 @@ PIXA    *pixac;
     }
 
     n = pixaaGetCount(paa, NULL);
-    if (n >= paa->nalloc)
-        pixaaExtendArray(paa);
+    if (n >= paa->nalloc) {
+        if (pixaaExtendArray(paa)) {
+            if (copyflag != L_INSERT)
+                pixaDestroy(&pixac);
+            return ERROR_INT("extension failed", procName, 1);
+        }
+    }
     paa->pixa[n] = pixac;
     paa->n++;
-
     return 0;
 }
 
@@ -2866,6 +2884,9 @@ FILE    *fp;
     if ((fp = open_memstream((char **)pdata, psize)) == NULL)
         return ERROR_INT("stream not opened", procName, 1);
     ret = pixaWriteStream(fp, pixa);
+    fputc('\0', fp);
+    fclose(fp);
+    *psize = *psize - 1;
 #else
     L_INFO("work-around: writing to a temp file\n", procName);
   #ifdef _WIN32
@@ -2878,8 +2899,8 @@ FILE    *fp;
     ret = pixaWriteStream(fp, pixa);
     rewind(fp);
     *pdata = l_binaryReadStream(fp, psize);
-#endif  /* HAVE_FMEMOPEN */
     fclose(fp);
+#endif  /* HAVE_FMEMOPEN */
     return ret;
 }
 
@@ -3248,6 +3269,9 @@ FILE    *fp;
     if ((fp = open_memstream((char **)pdata, psize)) == NULL)
         return ERROR_INT("stream not opened", procName, 1);
     ret = pixaaWriteStream(fp, paa);
+    fputc('\0', fp);
+    fclose(fp);
+    *psize = *psize - 1;
 #else
     L_INFO("work-around: writing to a temp file\n", procName);
   #ifdef _WIN32
@@ -3260,8 +3284,8 @@ FILE    *fp;
     ret = pixaaWriteStream(fp, paa);
     rewind(fp);
     *pdata = l_binaryReadStream(fp, psize);
-#endif  /* HAVE_FMEMOPEN */
     fclose(fp);
+#endif  /* HAVE_FMEMOPEN */
     return ret;
 }
 

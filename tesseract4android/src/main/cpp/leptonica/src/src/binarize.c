@@ -52,6 +52,12 @@
  *          static PIX   *pixSauvolaGetThreshold()
  *          static PIX   *pixApplyLocalThreshold();
  *
+ *      Sauvola binarization on contrast normalization
+ *          PIX          *pixSauvolaOnContrastNorm()  8 bpp
+ *
+ *      Contrast normalization followed by bg normalization and thresholding
+ *          PIX          *pixThreshOnDoubleNorm()
+ *
  *      Global thresholding using connected components
  *          PIX          *pixThresholdByConnComp()
  *
@@ -459,14 +465,14 @@ PIX      *pixn, *pixm, *pixd, *pix1, *pix2, *pix3, *pix4;
  * <pre>
  * Notes:
  *      (1) The window width and height are 2 * %whsize + 1.  The minimum
- *          value for %whsize is 2; typically it is >= 7..
+ *          value for %whsize is 2; typically it is >= 7.
  *      (2) For nx == ny == 1, this defaults to pixSauvolaBinarize().
  *      (3) Why a tiled version?
- *          (a) Because the mean value accumulator is a uint32, overflow
- *              can occur for an image with more than 16M pixels.
- *          (b) The mean value accumulator array for 16M pixels is 64 MB.
- *              The mean square accumulator array for 16M pixels is 128 MB.
- *              Using tiles reduces the size of these arrays.
+ *          (a) A uint32 is used for the mean value accumulator, so
+ *              overflow can occur for an image with more than 16M pixels.
+ *          (b) A dpix is used to accumulate mean square values, and it
+ *              can only accommodate images with less than 2^28 pixels.
+ *              Using tiles reduces the size of all the arrays.
  *          (c) Each tile can be processed independently, in parallel,
  *              on a multicore processor.
  *      (4) The Sauvola threshold is determined from the formula:
@@ -529,11 +535,11 @@ PIXTILING  *pt;
 
         /* We can use pixtiling for painting both outputs, if requested */
     if (ppixth) {
-        pixth = pixCreateNoInit(w, h, 8);
+        pixth = pixCreate(w, h, 8);
         *ppixth = pixth;
     }
     if (ppixd) {
-        pixd = pixCreateNoInit(w, h, 1);
+        pixd = pixCreate(w, h, 1);
         *ppixd = pixd;
     }
     pt = pixTilingCreate(pixs, nx, ny, 0, 0, whsize + 1, whsize + 1);
@@ -830,6 +836,118 @@ PIX       *pixd;
         }
     }
 
+    return pixd;
+}
+
+
+/*----------------------------------------------------------------------*
+ *      Contrast normalization followed by Sauvola binarization         *
+ *----------------------------------------------------------------------*/
+/*!
+ * \brief   pixSauvolaOnContrastNorm()
+ *
+ * \param[in]    pixs          8 or 32 bpp
+ * \param[in]    mindiff       minimum diff to accept as valid in contrast
+ *                             normalization.  Use ~130 for noisy images.
+ * \param[out]   ppixn         [optional] intermediate output from contrast
+ *                             normalization
+ * \param[out]   ppixth        [optional] threshold array for binarization
+ * \return  pixd    1 bpp thresholded image, or NULL on error
+ *
+ * <pre>
+ * Notes:
+ *      (1) This composite operation is good for adaptively removing
+ *          dark background.
+ * </pre>
+ */
+PIX  *
+pixSauvolaOnContrastNorm(PIX     *pixs,
+                         l_int32  mindiff,
+                         PIX    **ppixn,
+                         PIX    **ppixth)
+{
+l_int32  w, h, d, nx, ny;
+PIX     *pixg, *pix1, *pixd;
+
+    PROCNAME("pixSauvolaOnContrastNorm");
+
+    if (ppixn) *ppixn = NULL;
+    if (ppixth) *ppixth = NULL;
+    if (!pixs || (d = pixGetDepth(pixs)) < 8)
+        return (PIX *)ERROR_PTR("pixs undefined or d < 8 bpp", procName, NULL);
+    if (d == 32)
+        pixg = pixConvertRGBToGray(pixs, 0.3, 0.4, 0.3);
+    else
+        pixg = pixConvertTo8(pixs, 0);
+
+    pix1 = pixContrastNorm(NULL, pixg, 50, 50, mindiff, 2, 2);
+
+        /* Use tiles of size approximately 250 x 250 */
+    pixGetDimensions(pix1, &w, &h, NULL);
+    nx = L_MAX(1, (w + 125) / 250);
+    ny = L_MAX(1, (h + 125) / 250);
+    pixSauvolaBinarizeTiled(pix1, 25, 0.40, nx, ny, ppixth, &pixd);
+    pixDestroy(&pixg);
+    if (ppixn)
+        *ppixn = pix1;
+    else
+        pixDestroy(&pix1);
+    return pixd;
+}
+
+
+/*----------------------------------------------------------------------*
+ *      Contrast normalization followed by background normalization     *
+ *                            and thresholding                          *
+ *----------------------------------------------------------------------*/
+/*!
+ * \brief   pixTheshOnDoubleNorm()
+ *
+ * \param[in]    pixs          8 or 32 bpp
+ * \param[in]    mindiff       minimum diff to accept as valid in contrast
+ *                             normalization.  Use ~130 for noisy images.
+ * \return  pixd    1 bpp thresholded image, or NULL on error
+ *
+ * <pre>
+ * Notes:
+ *      (1) This composite operation is good for adaptively removing
+ *          dark background.
+ *      (2) The threshold for the binarization uses an estimate based
+ *          on Otsu adaptive thresholding.
+ * </pre>
+ */
+PIX  *
+pixThreshOnDoubleNorm(PIX     *pixs,
+                      l_int32  mindiff)
+{
+l_int32    d, ival;
+l_uint32   val;
+PIX       *pixg, *pix1, *pixd;
+
+    PROCNAME("pixThreshOnDoubleNorm");
+
+    if (!pixs || (d = pixGetDepth(pixs)) < 8)
+        return (PIX *)ERROR_PTR("pixs undefined or d < 8 bpp", procName, NULL);
+    if (d == 32)
+        pixg = pixConvertRGBToGray(pixs, 0.3, 0.4, 0.3);
+    else
+        pixg = pixConvertTo8(pixs, 0);
+
+        /* Use the entire image for the estimate; pix1 is 1x1 */
+    pixOtsuAdaptiveThreshold(pixg, 5000, 5000, 0, 0, 0.1, &pix1, NULL);
+    pixGetPixel(pix1, 0, 0, &val);
+    ival = (l_int32)val;
+    ival = L_MIN(ival, 110);
+    pixDestroy(&pix1);
+
+        /* Double normalization */
+    pixContrastNorm(pixg, pixg, 50, 50, mindiff, 2, 2);
+    pix1 = pixBackgroundNormSimple(pixg, NULL, NULL);
+    pixDestroy(&pixg);
+
+/*    lept_stderr("ival = %d\n", ival); */
+    pixd = pixThresholdToBinary(pix1, ival);
+    pixDestroy(&pix1);
     return pixd;
 }
 

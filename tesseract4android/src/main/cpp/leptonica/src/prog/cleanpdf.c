@@ -53,9 +53,8 @@
  *       600  (binarize at twice the resolution of the gray or color input,
  *             by doing an interpolated 2x expansion on the grayscale
  *             image, followed by thresholding to 1 bpp)
- *    That number will also be used as the resolution of the output pdf.
  *    At 300 ppi, an 8.5 x 11 page would have 2550 x 3300 pixels.
- *    You can also input 0 for the default resolution of 300 ppi.
+ *    You can also input 0 for the default output resolution of 300 ppi.
  *
  *    The pdf output is written to %outfile.  It is advisable (but not
  *    required) to have a '.pdf' extension.
@@ -68,16 +67,18 @@
  *
  *    Whenever possible, the images will be deskewed.
  *
- *    The file-handling functions in leptonica do not support filenames
- *    that have spaces.  To use cleanpdf in linux with such filenames,
- *    substitute an ascii character for the spaces; e.g., '^'.
- *       char *newstr = stringReplaceEachSubstr(str, " ", "^", NULL);
- *    Then run cleanpdf on the file(s).  Note that you can have an
- *    output filename with spaces by using single quotes; e.g.,
- *       cleanpdf dir thresh res 'filename with spaces'
+ *    Notes on using filenames with internal spaces.
+ *    * The file-handling functions in leptonica do not support filenames
+ *      that have spaces.  To use cleanpdf in linux with such input
+ *      filenames, substitute an ascii character for the spaces; e.g., '^'.
+ *         char *newstr = stringReplaceEachSubstr(str, " ", "^", NULL);
+ *      Then run cleanpdf on the file(s).
+ *    * To get an output filename with spaces, use single quotes; e.g.,
+ *         cleanpdf dir thresh res 'filename with spaces'
  *
- *    N.B.  This requires pdfimages.  For non-unix systems, this requires
- *    installation of the cygwin Poppler package:
+ *    N.B.  This requires the Poppler package of pdf utilities, such as
+ *          pdfimages and pdftoppm.  For non-unix systems, this requires
+ *          installation of the cygwin Poppler package:
  *       https://cygwin.com/cgi-bin2/package-cat.cgi?file=x86/poppler/
  *              poppler-0.26.5-1
  */
@@ -94,16 +95,22 @@
 # endif  /* _MSC_VER || __MINGW32__ */
 #endif  /* _WIN32 */
 
+    /* Set to 1 to use pdftoppm; 0 for pdfimages */
+#define   USE_PDFTOPPM     1
+
 #include "string.h"
 #include <sys/stat.h>
 #include <sys/types.h>
 #include "allheaders.h"
 
+    /* Special version */
+PIX *pixConvertTo8Special(PIX *pix);
+
 l_int32 main(int    argc,
              char **argv)
 {
 char         buf[256];
-char        *basedir, *fname, *tail, *basename, *imagedir, *outfile;
+char        *basedir, *fname, *tail, *basename, *imagedir, *outfile, *firstpath;
 l_int32      thresh, res, rotation, i, n, ret;
 PIX         *pixs, *pix1, *pix2, *pix3, *pix4, *pix5;
 SARRAY      *sa;
@@ -138,11 +145,25 @@ static char  mainName[] = "cleanpdf";
         /* Get the names of the pdf files */
     if ((sa = getSortedPathnamesInDirectory(basedir, "pdf", 0, 0)) == NULL)
         return ERROR_INT("files not found", mainName, 1);
-    sarrayWriteStream(stderr, sa);
+    sarrayWriteStderr(sa);
     n = sarrayGetCount(sa);
 #endif
 
-        /* Rasterize: pdfimages -f fname root */
+        /* Rasterize: use either
+         *     pdftoppm -r 300 fname outroot  (-r 300 renders output at 300 ppi)
+         * or
+         *     pdfimages -j fname outroot   (-j outputs jpeg if input is dct)
+         * Use of pdftoppm:
+         *    This works on all pdf pages, both wrapped images and pages that
+         *    were made orthographically.  The default output resolution for
+         *    pdftoppm is 150 ppi, but we use 300 ppi.  This makes large
+         *    uncompressed files (e.g., a standard size RGB page image at 300
+         *    ppi is 25 MB), but it is very fast.  This is now preferred over
+         *    using pdfimages.
+         * Use of pdfimages:
+         *    This only works when all pages are pdf wrappers around images.
+         *    In some cases, it scrambles the order of the output pages
+         *    and inserts extra images. */
     imagedir = stringJoin(basedir, "/image");
 #if 1
 #ifndef _WIN32
@@ -154,12 +175,17 @@ static char  mainName[] = "cleanpdf";
         fname = sarrayGetString(sa, i, L_NOCOPY);
         splitPathAtDirectory(fname, NULL, &tail);
         splitPathAtExtension(tail, &basename, NULL);
+  #if USE_PDFTOPPM
+        snprintf(buf, sizeof(buf), "pdftoppm -r 300 %s %s/%s",
+                 fname, imagedir, basename);
+  #else
         snprintf(buf, sizeof(buf), "pdfimages -j %s %s/%s",
                  fname, imagedir, basename);
+  #endif  /* USE_PDFTOPPM */
         lept_free(tail);
         lept_free(basename);
-        fprintf(stderr, "%s\n", buf);
-        ret = system(buf);   /* pdfimages -j */
+        lept_stderr("%s\n", buf);
+        ret = system(buf);   /* pdfimages or pdftoppm */
     }
     sarrayDestroy(&sa);
 #endif
@@ -167,12 +193,13 @@ static char  mainName[] = "cleanpdf";
 #if 1
         /* Clean, deskew and compress */
     sa = getSortedPathnamesInDirectory(imagedir, NULL, 0, 0);
-    sarrayWriteStream(stderr, sa);
+    sarrayWriteStderr(sa);
     n = sarrayGetCount(sa);
+    firstpath = NULL;
     for (i = 0; i < n; i++) {
         fname = sarrayGetString(sa, i, L_NOCOPY);
         pixs = pixRead(fname);
-        pix1 = pixConvertTo8(pixs, FALSE);
+        pix1 = pixConvertTo8Special(pixs);
         if (rotation > 0)
             pix2 = pixRotateOrth(pix1, rotation);
         else
@@ -187,8 +214,10 @@ static char  mainName[] = "cleanpdf";
         splitPathAtDirectory(fname, NULL, &tail);
         splitPathAtExtension(tail, &basename, NULL);
         snprintf(buf, sizeof(buf), "%s/%s.tif", imagedir, basename);
-        fprintf(stderr, "%s\n", buf);
+        lept_stderr("%s\n", buf);
         pixWrite(buf, pix5, IFF_TIFF_G4);
+        if (i == 0)  /* save full path to first image */
+            firstpath = stringNew(buf);
         pixDestroy(&pixs);
         pixDestroy(&pix1);
         pixDestroy(&pix2);
@@ -202,12 +231,48 @@ static char  mainName[] = "cleanpdf";
 #endif
 
 #if 1
-        /* Generate the pdf */
-    fprintf(stderr, "Write output to %s\n", outfile);
-    convertFilesToPdf(imagedir, "tif", res, 1.0, L_G4_ENCODE, 0, NULL, outfile);
+        /* Generate the pdf.  Compute the actual input resolution from
+         * the pixel dimensions of the first image.  This will cause each
+         * page to be printed to cover an 8.5 x 11 inch sheet of paper.
+         * We use flate encoding to avoid photometric reversal which
+         * happens when encoded with G4 tiff.  */
+    lept_stderr("Write output to %s\n", outfile);
+    pix1 = pixRead(firstpath);
+    pixInferResolution(pix1, 11.0, &res);
+    pixDestroy(&pix1);
+    lept_free(firstpath);
+    convertFilesToPdf(imagedir, "tif", res, 1.0, L_G4_ENCODE,
+                      0, NULL, outfile);
 #endif
 
     return 0;
 }
 
 
+    /* A special version of pixConvertTo8() that returns an image without
+     * a colormap and uses pixConvertRGBToGrayMinMax() to strongly
+     * render color into black. */
+PIX *
+pixConvertTo8Special(PIX  *pixs)
+{
+    l_int32 d = pixGetDepth(pixs);
+    if (d == 1) {
+        return pixConvert1To8(NULL, pixs, 255, 0);
+    } else if (d == 2) {
+        return pixConvert2To8(pixs, 0, 85, 170, 255, FALSE);
+    } else if (d == 4) {
+        return pixConvert4To8(pixs, FALSE);
+    } else if (d == 8) {
+        if (pixGetColormap(pixs) != NULL)
+            return pixRemoveColormap(pixs, REMOVE_CMAP_TO_GRAYSCALE);
+        else
+            return pixCopy(NULL, pixs);
+    } else if (d == 16) {
+        return pixConvert16To8(pixs, L_MS_BYTE);
+    } else if (d == 32) {
+        return pixConvertRGBToGrayMinMax(pixs, L_CHOOSE_MIN);
+    }
+
+    L_ERROR("Invalid depth d = %d\n", "pixConvertSpecialTo8", d);
+    return NULL;
+}

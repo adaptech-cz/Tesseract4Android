@@ -29,6 +29,9 @@
  *        l_uint8        *decodeAscii85()
  *        static l_int32  convertChunkToAscii85()
  *
+ *        char           *encodeAscii85WithComp()
+ *        l_uint8        *decodeAscii85WithComp()
+ *
  *    String reformatting for base 64 encoded data
  *        char           *reformatPacked64()
  *
@@ -55,6 +58,7 @@
 #endif  /* HAVE_CONFIG_H */
 
 #include <ctype.h>
+#include <string.h>
 #include "allheaders.h"
 
     /* Base64 encoding table in string representation */
@@ -343,10 +347,10 @@ encodeAscii85(const l_uint8  *inarray,
               size_t          insize,
               size_t         *poutsize)
 {
-    char    *chara;
-    char     outbuf[8];
-    l_int32  maxsize, i, index, linecount, nbout, eof;
-    size_t   outindex;
+char    *chara;
+char     outbuf[8];
+l_int32  maxsize, i, index, linecount, nbout, eof;
+size_t   outindex;
 
     PROCNAME("encodeAscii85");
 
@@ -430,7 +434,7 @@ l_int32   eof, index, nread, nbout, i;
     inword = 0;
     for (i = 0; i < nread; i++) {
         inbyte = inarray[index + i];
-        inword += inbyte << (8 * (3 - i));
+        inword += (l_uint32)inbyte << (8 * (3 - i));
     }
 
 #if 0
@@ -560,6 +564,87 @@ l_uint32    oword;
     *poutsize = ocount;
 
     return outa;
+}
+
+
+/*!
+ * \brief   encodeAscii85WithComp)
+ *
+ * \param[in]    indata     input binary data
+ * \param[in]    insize     number of bytes in input data
+ * \param[out]   poutsize   number of bytes in output string
+ * \return  outstr with 64 characters + \n in each line
+ *
+ * <pre>
+ * Notes:
+ *      (1) Compress the input data; then encode ascii85.  For ascii
+ *          input, a first compression step will significantly reduce
+ *          the final encoded output size.
+ * </pre>
+ */
+char *
+encodeAscii85WithComp(const l_uint8  *indata,
+                      size_t          insize,
+                      size_t         *poutsize)
+{
+char     *outstr;
+size_t    size1;
+l_uint8  *data1;
+
+    PROCNAME("encodeAscii85WithComp");
+
+    if (!poutsize)
+        return (char *)ERROR_PTR("&outsize not defined", procName, NULL);
+    *poutsize = 0;
+    if (!indata)
+        return (char *)ERROR_PTR("indata not defined", procName, NULL);
+
+    if ((data1 = zlibCompress(indata, insize, &size1)) == NULL)
+        return (char *)ERROR_PTR("data1 not made", procName, NULL);
+    outstr = encodeAscii85(data1, size1, poutsize);
+    LEPT_FREE(data1);
+    return outstr;
+}
+
+
+/*!
+ * \brief   decodeAscii85WithComp()
+ *
+ * \param[in]    instr       ascii85 input data string
+ * \param[in]    insize      number of bytes in input data
+ * \param[out]   poutsize    number of bytes in output binary data
+ * \return  outdata   binary data before compression and ascii85 encoding
+ *
+ * <pre>
+ * Notes:
+ *      (1) We assume the input data has been zlib compressed and then
+ *          properly encoded, so we reverse the procedure.  This is the
+ *          inverse of encodeAscii85WithComp().
+ *      (2) Set %insize == 0 to use strlen(%instr).
+ * </pre>
+ */
+l_uint8 *
+decodeAscii85WithComp(const char  *instr,
+                      size_t       insize,
+                      size_t      *poutsize)
+{
+size_t    size1;
+l_uint8  *data1, *outdata;
+
+    PROCNAME("decodeAscii85WithComp");
+
+    if (!poutsize)
+        return (l_uint8 *)ERROR_PTR("&outsize not defined", procName, NULL);
+    *poutsize = 0;
+    if (!instr)
+        return (l_uint8 *)ERROR_PTR("instr not defined", procName, NULL);
+
+    if (insize == 0) insize = strlen(instr);
+    if ((data1 = decodeAscii85(instr, insize, &size1)) == NULL)
+        return (l_uint8 *)ERROR_PTR("data1 not made", procName, NULL);
+    outdata = zlibUncompress(data1, size1, poutsize);
+    LEPT_FREE(data1);
+    return outdata;
 }
 
 

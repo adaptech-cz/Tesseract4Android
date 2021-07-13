@@ -83,6 +83,9 @@
  *           l_int32    fileConcatenate()
  *           l_int32    fileAppendString()
  *
+ *       File split operations
+ *           l_int32    fileSplitLinesUniform()
+ *
  *       Multi-platform functions for opening file streams
  *           FILE      *fopenReadStream()
  *           FILE      *fopenWriteStream()
@@ -1686,12 +1689,30 @@ l_uint8  *datad;
 }
 
 
+/*!
+ * \brief   l_binaryCompare()
+ *
+ * \param[in]    data1
+ * \param[in]    size1   of data1
+ * \param[in]    data2
+ * \param[in]    size2   of data1
+ * \param[out]   psame  (1 if the same, 0 if different)
+ * \return  0 if OK, 1 on error
+ *
+ * <pre>
+ * Notes:
+ *      (1) This can also be used to compare C strings str1 and str2.
+ *          If the string lengths are not known, use strlen():
+ *            l_binaryCompare((l_uint8 *)str1, strlen(str1),
+                              (l_uint8 *)str2, strlen(str2));
+ * </pre>
+ */
 l_ok
 l_binaryCompare(const l_uint8  *data1,
                 size_t          size1,
                 const l_uint8  *data2,
                 size_t          size2,
-                l_int32  *psame)
+                l_int32        *psame)
 {
 l_int32  i;
 
@@ -1710,6 +1731,7 @@ l_int32  i;
     *psame = TRUE;
     return 0;
 }
+
 
 /*--------------------------------------------------------------------*
  *                         File copy operations                       *
@@ -1796,6 +1818,95 @@ FILE  *fp;
         return ERROR_INT("stream not opened", procName, 1);
     fprintf(fp, "%s", str);
     fclose(fp);
+    return 0;
+}
+
+
+/*--------------------------------------------------------------------*
+ *                         File split operations                      *
+ *--------------------------------------------------------------------*/
+/*!
+ * \brief   fileSplitLinesUniform()
+ *
+ * \param[in]    filename      input file
+ * \param[in]    n             number of output files (>= 1)
+ * \param[in]    save_empty    1 to save empty lines; 0 to remove them
+ * \param[in]    rootpath      root pathname of output files
+ * \param[in]    ext           output extension, including the '.'; can be NULL
+ * \return  0 if OK, 1 on error
+ *
+ * <pre>
+ * Notes:
+ *      (1) This splits an input text file into %n files with roughly
+ *          equal numbers of text lines in each file.
+ *      (2) if %save_empty == 1, empty lines are included, and concatention
+ *          of the text in the split files will be identical to the original.
+ *      (3) The output filenames are in the form:
+ *               <rootpath>_N.<ext>, N = 1, ... n
+ *      (4) This handles the temp directory pathname conversion on windows:
+ *              /tmp  ==>  [Windows Temp directory]
+ *      (5) Files can also be sharded into sets of lines by the program 'split':
+ *              split -n l/<n> <filename>
+ *          Using 'split', the resulting files have approximately equal
+ *          numbers of bytes, rather than equal numbers of lines.
+ * </pre>
+ */
+l_ok
+fileSplitLinesUniform(const char  *filename,
+                      l_int32      n,
+                      l_int32      save_empty,
+                      const char  *rootpath,
+                      const char  *ext)
+{
+l_int32   i, totlines, nlines, index;
+size_t    nbytes;
+l_uint8  *data;
+char     *str;
+char      outname[512];
+NUMA     *na;
+SARRAY   *sa;
+
+    PROCNAME("fileSplitLinesUniform");
+
+    if (!filename)
+        return ERROR_INT("filename not defined", procName, 1);
+    if (!rootpath)
+        return ERROR_INT("rootpath not defined", procName, 1);
+    if (n <= 0)
+        return ERROR_INT("n must be > 0", procName, 1);
+    if (save_empty != 0 && save_empty != 1)
+        return ERROR_INT("save_empty not 0 or 1", procName, 1);
+
+        /* Make sarray of lines; the newlines are stripped off */
+    if ((data = l_binaryRead(filename, &nbytes)) == NULL)
+        return ERROR_INT("data not read", procName, 1);
+    sa = sarrayCreateLinesFromString((const char *)data, save_empty);
+    LEPT_FREE(data);
+    if (!sa)
+        return ERROR_INT("sa not made", procName, 1);
+    totlines = sarrayGetCount(sa);
+    if (n > totlines) {
+        sarrayDestroy(&sa);
+        L_ERROR("num files = %d > num lines = %d\n", procName, n, totlines);
+        return 1;
+    }
+
+        /* Write n sets of lines to n files, adding the newlines back */
+    na = numaGetUniformBinSizes(totlines, n);
+    index = 0;
+    for (i = 0; i < n; i++) {
+        if (ext == NULL)
+            snprintf(outname, sizeof(outname), "%s_%d", rootpath, i);
+        else
+            snprintf(outname, sizeof(outname), "%s_%d%s", rootpath, i, ext);
+        numaGetIValue(na, i, &nlines);
+        str = sarrayToStringRange(sa, index, nlines, 1);  /* add newlines */
+        l_binaryWrite(outname, "w", str, strlen(str));
+        LEPT_FREE(str);
+        index += nlines;
+    }
+    numaDestroy(&na);
+    sarrayDestroy(&sa);
     return 0;
 }
 
@@ -2655,7 +2766,7 @@ l_int32  ret;
 
 #if defined(__APPLE__)  /* iOS 11 does not support system() */
 
-  #if TARGET_OS_OSX /* Mac OS X */
+  #if (defined(TARGET_OS_OSX) && TARGET_OS_OSX == 1)  /* Mac OS X */
     ret = system(cmd);
   #elif TARGET_OS_IPHONE || defined(OS_IOS)  /* iOS */
     L_ERROR("iOS 11 does not support system()\n", procName);
@@ -2987,6 +3098,10 @@ size_t  len1, len2, len3, len4;
  *            * UNIX_PATH_SEPCHAR:  '\\' ==> '/'
  *            * WIN_PATH_SEPCHAR:   '/' ==> '\\'
  *      (3) Virtually all path operations in leptonica use unix separators.
+ *      (4) The backslash is a valid character in unix pathnames and should
+ *          not be converted.  Each backslash needs to be escaped with a
+ *          preceding backslash for the shell, but the actual filename
+ *          does not include these escape characters.
  * </pre>
  */
 l_ok
@@ -3004,10 +3119,12 @@ size_t   len;
 
     len = strlen(path);
     if (type == UNIX_PATH_SEPCHAR) {
+#ifdef _WIN32  /* only convert on windows */
         for (i = 0; i < len; i++) {
             if (path[i] == '\\')
                 path[i] = '/';
         }
+#endif  /* _WIN32 */
     } else {  /* WIN_PATH_SEPCHAR */
         for (i = 0; i < len; i++) {
             if (path[i] == '/')

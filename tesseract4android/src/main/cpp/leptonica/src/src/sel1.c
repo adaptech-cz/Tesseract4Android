@@ -153,6 +153,10 @@ static const l_int32 InitialPtrArraySize = 50;      /*!< n'importe quoi */
     /* Bounds on kernel size */
 static const l_uint32  MaxKernelSize = 10000;
 
+    /* Bounds on pix template size */
+static const l_uint32  MaxPixTemplateSize = 100;
+static const l_uint32  MaxPixTemplateHits = 1000;
+
     /* Static functions */
 static l_int32 selaExtendArray(SELA *sela);
 static SEL *selCreateFromSArray(SARRAY *sa, l_int32 first, l_int32 last);
@@ -257,10 +261,7 @@ SELA  *sela;
     sela = (SELA *)LEPT_CALLOC(1, sizeof(SELA));
     sela->nalloc = n;
     sela->n = 0;
-    if ((sela->sel = (SEL **)LEPT_CALLOC(n, sizeof(SEL *))) == NULL) {
-        LEPT_FREE(sela);
-        return (SELA *)ERROR_PTR("sel ptrs not made", procName, NULL);
-    }
+    sela->sel = (SEL **)LEPT_CALLOC(n, sizeof(SEL *));
     return sela;
 }
 
@@ -314,8 +315,7 @@ SEL  *sel;
 
     PROCNAME("selCreate");
 
-    if ((sel = (SEL *)LEPT_CALLOC(1, sizeof(SEL))) == NULL)
-        return (SEL *)ERROR_PTR("sel not made", procName, NULL);
+    sel = (SEL *)LEPT_CALLOC(1, sizeof(SEL));
     if (name)
         sel->name = stringNew(name);
     sel->sy = height;
@@ -378,8 +378,7 @@ SEL     *csel;
     if (!sel)
         return (SEL *)ERROR_PTR("sel not defined", procName, NULL);
 
-    if ((csel = (SEL *)LEPT_CALLOC(1, sizeof(SEL))) == NULL)
-        return (SEL *)ERROR_PTR("csel not made", procName, NULL);
+    csel = (SEL *)LEPT_CALLOC(1, sizeof(SEL));
     selGetParameters(sel, &sy, &sx, &cy, &cx);
     csel->sy = sy;
     csel->sx = sx;
@@ -518,7 +517,7 @@ l_int32 **
 create2dIntArray(l_int32  sy,
                  l_int32  sx)
 {
-l_int32    i, j, success;
+l_int32    i;
 l_int32  **array;
 
     PROCNAME("create2dIntArray");
@@ -528,24 +527,11 @@ l_int32  **array;
     if (sy <= 0 || sy > MaxKernelSize)
         return (l_int32 **)ERROR_PTR("sy out of bounds", procName, NULL);
 
-    if ((array = (l_int32 **)LEPT_CALLOC(sy, sizeof(l_int32 *))) == NULL)
-        return (l_int32 **)ERROR_PTR("ptr array not made", procName, NULL);
-    success = TRUE;
-    for (i = 0; i < sy; i++) {
-        if ((array[i] = (l_int32 *)LEPT_CALLOC(sx, sizeof(l_int32))) == NULL) {
-            success = FALSE;
-            break;
-        }
-    }
-    if (success) return array;
-
-        /* Cleanup after error */
-    for (j = 0; j < i; j++)
-        LEPT_FREE(array[j]);
-    LEPT_FREE(array);
-    return (l_int32 **)ERROR_PTR("array not made", procName, NULL);
+    array = (l_int32 **)LEPT_CALLOC(sy, sizeof(l_int32 *));
+    for (i = 0; i < sy; i++)
+        array[i] = (l_int32 *)LEPT_CALLOC(sx, sizeof(l_int32));
+    return array;
 }
-
 
 
 /*------------------------------------------------------------------------*
@@ -599,11 +585,16 @@ SEL     *csel;
         csel->name = stringNew(selname);
 
     n = selaGetCount(sela);
-    if (n >= sela->nalloc)
-        selaExtendArray(sela);
+    if (n >= sela->nalloc) {
+        if (selaExtendArray(sela)) {
+            if (copyflag != L_INSERT)
+                selDestroy(&csel);
+            return ERROR_INT("extension failed", procName, 1);
+        }
+    }
+
     sela->sel[n] = csel;
     sela->n++;
-
     return 0;
 }
 
@@ -2009,6 +2000,8 @@ SEL     *sel;
  * <pre>
  * Notes:
  *      (1) The origin must be positive.
+ *      (2) The pix must not exceed MaxPixTemplateSize in either dimension.
+ *          and the total number of hits must not exceed MaxPixTemplateHits.
  * </pre>
  */
 SEL *
@@ -2018,7 +2011,7 @@ selCreateFromPix(PIX         *pix,
                  const char  *name)
 {
 SEL      *sel;
-l_int32   i, j, w, h, d;
+l_int32   i, j, w, h, d, nhits;
 l_uint32  val;
 
     PROCNAME("selCreateFromPix");
@@ -2030,6 +2023,15 @@ l_uint32  val;
     pixGetDimensions(pix, &w, &h, &d);
     if (d != 1)
         return (SEL *)ERROR_PTR("pix not 1 bpp", procName, NULL);
+    if (w > MaxPixTemplateSize || h > MaxPixTemplateSize) {
+        L_ERROR("pix template too large (w = %d, h = %d)\n", procName, w, h);
+        return NULL;
+    }
+    pixCountPixels(pix, &nhits, NULL);
+    if (nhits > MaxPixTemplateHits) {
+        L_ERROR("too many hits (%d) in pix template\n", procName, nhits);
+        return NULL;
+    }
 
     sel = selCreate(h, w, name);
     selSetOrigin(sel, cy, cx);

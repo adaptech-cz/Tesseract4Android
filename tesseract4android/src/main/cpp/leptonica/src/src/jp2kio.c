@@ -246,6 +246,7 @@ pixReadStreamJp2k(FILE     *fp,
 const char        *opjVersion;
 l_int32            i, j, index, bx, by, bw, bh, val, rval, gval, bval, aval;
 l_int32            w, h, wpl, bps, spp, xres, yres, reduce, prec, colorspace;
+l_int32            codec;  /* L_J2K_CODEC or L_JP2_CODEC */
 l_uint32           pixel;
 l_uint32          *data, *line;
 opj_dparameters_t  parameters;   /* decompression parameters */
@@ -270,13 +271,17 @@ PIX               *pix = NULL;
          return NULL;
      }
 
-        /* Get the resolution and the bits/sample */
+        /* Get the resolution, bits/sample and codec type */
     rewind(fp);
     fgetJp2kResolution(fp, &xres, &yres);
-    freadHeaderJp2k(fp, NULL, NULL, &bps, NULL);
+    freadHeaderJp2k(fp, NULL, NULL, &bps, NULL, &codec);
     rewind(fp);
+    if (codec != L_J2K_CODEC && codec != L_JP2_CODEC) {
+        L_ERROR("valid codec not identified\n", procName);
+        return NULL;
+    }
 
-    if (bps > 8) {
+    if (bps != 8) {
         L_ERROR("found %d bps; can only handle 8 bps\n", procName, bps);
         return NULL;
     }
@@ -297,7 +302,11 @@ PIX               *pix = NULL;
     parameters.cp_reduce = reduce;
 
         /* Get a decoder handle */
-    if ((l_codec = opj_create_decompress(OPJ_CODEC_JP2)) == NULL) {
+    if (codec == L_JP2_CODEC)
+        l_codec = opj_create_decompress(OPJ_CODEC_JP2);
+    else if (codec == L_J2K_CODEC)
+        l_codec = opj_create_decompress(OPJ_CODEC_J2K);
+    if (!l_codec) {
         L_ERROR("failed to make the codec\n", procName);
         return NULL;
     }
@@ -464,8 +473,9 @@ PIX               *pix = NULL;
  *          reduction factors of 1, 2, 4, 8 and 16 are encoded, and retrieval
  *          is done at the level requested when reading.  For default,
  *          use either 5 or 0.
- *      (3) The %hint parameter is not yet in use.
- *      (4) For now, we only support 1 "layer" for quality.
+ *      (3) By default, we use the JP2 codec.
+ *      (4) The %hint parameter is not yet in use.
+ *      (5) For now, we only support 1 "layer" for quality.
  * </pre>
  */
 l_ok
@@ -488,7 +498,8 @@ FILE  *fp;
     if ((fp = fopenWriteStream(filename, "wb+")) == NULL)
         return ERROR_INT("stream not opened", procName, 1);
 
-    if (pixWriteStreamJp2k(fp, pix, quality, nlevels, hint, debug)) {
+    if (pixWriteStreamJp2k(fp, pix, quality, nlevels, L_JP2_CODEC,
+                           hint, debug)) {
         fclose(fp);
         return ERROR_INT("pix not written to stream", procName, 1);
     }
@@ -505,14 +516,13 @@ FILE  *fp;
  * \param[in]    pix        any depth, cmap is OK
  * \param[in]    quality    SNR > 0; 0 for default (34); 100 for lossless
  * \param[in]    nlevels    <= 10
+ * \param[in]    codec      L_JP2_CODEC or L_J2K_CODEC
  * \param[in]    hint       a bitwise OR of L_JP2K_* values; 0 for default
  * \param[in]    debug      output callback messages, etc
  * \return  0 if OK, 1 on error
  * <pre>
  * Notes:
  *      (1) See pixWriteJp2k() for usage.
- *      (2) For an encoder with more encoding options, see, e.g.,
- *    https://github.com/OpenJPEG/openjpeg/blob/master/tests/test_tile_encoder.c
  * </pre>
  */
 l_ok
@@ -520,6 +530,7 @@ pixWriteStreamJp2k(FILE    *fp,
                    PIX     *pix,
                    l_int32  quality,
                    l_int32  nlevels,
+                   l_int32  codec,
                    l_int32  hint,
                    l_int32  debug)
 {
@@ -554,6 +565,8 @@ opj_image_t       *image = NULL;
         L_WARNING("nlevels = %d > 10; setting to 10\n", procName, nlevels);
         nlevels = 10;
     }
+    if (codec != L_JP2_CODEC && codec != L_J2K_CODEC)
+        return ERROR_INT("valid codec not identified\n", procName, 1);
 
     opjVersion = opj_version();
     if (opjVersion[0] != '2') {
@@ -611,7 +624,11 @@ opj_image_t       *image = NULL;
     }
 
         /* Get the encoder handle */
-    if ((l_codec = opj_create_compress(OPJ_CODEC_JP2)) == NULL) {
+    if (codec == L_JP2_CODEC)
+        l_codec = opj_create_compress(OPJ_CODEC_JP2);
+    else  /* codec == L_J2K_CODEC */
+        l_codec = opj_create_compress(OPJ_CODEC_J2K);
+    if (!l_codec) {
         opj_image_destroy(image);
         LEPT_FREE(parameters.cp_comment);
         return ERROR_INT("failed to get the encoder handle\n", procName, 1);
@@ -631,6 +648,8 @@ opj_image_t       *image = NULL;
         LEPT_FREE(parameters.cp_comment);
         return ERROR_INT("failed to set up the encoder\n", procName, 1);
     }
+
+        /* Set the resolution (TBD) */
 
         /* Open a compression stream for writing.  In 2.0 we could use this:
          *     opj_stream_create_default_file_stream(fp, 0)
@@ -850,7 +869,11 @@ FILE    *fp;
 #if HAVE_FMEMOPEN
     if ((fp = open_memstream((char **)pdata, psize)) == NULL)
         return ERROR_INT("stream not opened", procName, 1);
-    ret = pixWriteStreamJp2k(fp, pix, quality, nlevels, hint, debug);
+    ret = pixWriteStreamJp2k(fp, pix, quality, nlevels, L_JP2_CODEC,
+                             hint, debug);
+    fputc('\0', fp);
+    fclose(fp);
+    *psize = *psize - 1;
 #else
     L_INFO("work-around: writing to a temp file\n", procName);
   #ifdef _WIN32
@@ -860,11 +883,12 @@ FILE    *fp;
     if ((fp = tmpfile()) == NULL)
         return ERROR_INT("tmpfile stream not opened", procName, 1);
   #endif  /* _WIN32 */
-    ret = pixWriteStreamJp2k(fp, pix, quality, nlevels, hint, debug);
+    ret = pixWriteStreamJp2k(fp, pix, quality, nlevels, L_JP2_CODEC,
+                             hint, debug);
     rewind(fp);
     *pdata = l_binaryReadStream(fp, psize);
-#endif  /* HAVE_FMEMOPEN */
     fclose(fp);
+#endif  /* HAVE_FMEMOPEN */
     return ret;
 }
 

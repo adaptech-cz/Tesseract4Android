@@ -31,6 +31,8 @@
  *      * search/replace for strings and arrays
  *      * sarray generation and flattening
  *      * sarray serialization
+ *      * file splitting
+ *      * sarray splitting
  */
 
 #ifdef HAVE_CONFIG_H
@@ -47,12 +49,13 @@ char  substr2[4] = "00";
 int main(int    argc,
          char **argv)
 {
-l_int32       loc, count;
+l_int32       i, loc, count;
 size_t        size1, size2;
 char         *str0, *str1, *str2, *str3, *str4, *str5, *str6;
+char          fname[128];
 l_uint8      *data1, *data2;
 L_DNA        *da;
-SARRAY       *sa1, *sa2, *sa3;
+SARRAY       *sa1, *sa2, *sa3, *sa4, *sa5;
 L_REGPARAMS  *rp;
 
     if (regTestSetup(argc, argv, &rp))
@@ -175,10 +178,52 @@ L_REGPARAMS  *rp;
                      strlen(str2), "/tmp/lept/string/junk3.txt");
     str3 = (char *)l_binaryRead("/tmp/lept/string/junk3.txt", &size2);
     regTestCompareStrings(rp, (l_uint8 *)str1, size1, (l_uint8 *)str3, size2);
+                                                                /* 22 */
     lept_free(str1);
     lept_free(str2);
     lept_free(str3);
 
+        /* File splitting by lines */
+    str1 = (char *)l_binaryRead("kernel_reg.c", &size1);
+    fileSplitLinesUniform("kernel_reg.c", 3, 1, "/tmp/lept/string/split",
+                          ".txt");
+    str2 = NULL;
+    for (i = 0; i < 3; i++) {  /* put the pieces back together */
+        snprintf(fname, sizeof(fname), "/tmp/lept/string/split_%d.txt", i);
+        str3 = (char *)l_binaryRead(fname, &size2);
+        stringJoinIP(&str2, str3);
+        lept_free(str3);
+    }
+    regTestCompareStrings(rp, (l_uint8 *)str1, size1,
+                          (l_uint8 *)str2, strlen(str2));  /* 23 */
+    lept_free(str1);
+    lept_free(str2);
+
+        /* Sarray splitting by lines */
+    str1 = (char *)l_binaryRead("kernel_reg.c", &size1);
+    sa1 = sarrayCreateLinesFromString(str1, 0);
+    sa2 = sarrayConcatUniformly(sa1, 6, 0);  /* into 6 strings */
+    sa3 = sarrayCreate(0);
+    for (i = 0; i < 6; i++) {
+        str2 = sarrayGetString(sa2, i, L_NOCOPY);
+        sa4 = sarrayCreateLinesFromString(str2, 0);
+        sarrayJoin(sa3, sa4);
+        sarrayDestroy(&sa4);
+    }
+    sa5 = sarrayConcatUniformly(sa3, 6, 0);  /* same as sa2 ? */
+    sarrayWriteMem((l_uint8 **)&str3, &size1, sa2);
+    sarrayWriteMem((l_uint8 **)&str4, &size2, sa5);
+    regTestWriteDataAndCheck(rp, str3, size1, ".sa");  /* 24 */
+    regTestWriteDataAndCheck(rp, str4, size2, ".sa");  /* 25 */
+    regTestCompareFiles(rp, 24, 25);  /* 26 */
+    sarrayDestroy(&sa1);
+    sarrayDestroy(&sa2);
+    sarrayDestroy(&sa3);
+    sarrayDestroy(&sa4);
+    sarrayDestroy(&sa5);
+    lept_free(str1);
+    lept_free(str3);
+    lept_free(str4);
+
     return regTestCleanup(rp);
 }
-

@@ -61,6 +61,7 @@ static const char *tests[] = {
                               "binarize_reg",
                               "binmorph1_reg",
                               "binmorph3_reg",
+                              "binmorph6_reg",
                               "blackwhite_reg",
                               "blend1_reg",
                               "blend2_reg",
@@ -99,6 +100,7 @@ static const char *tests[] = {
                               "dna_reg",
                               "dwamorph1_reg",
                               "edge_reg",
+                              "encoding_reg",
                               "enhance_reg",
                               "equal_reg",
                               "expand_reg",
@@ -108,6 +110,7 @@ static const char *tests[] = {
                          /*   "files_reg",  */
                               "findcorners_reg",
                               "findpattern_reg",
+                              "flipdetect_reg",
                               "fpix1_reg",
                               "fpix2_reg",
                               "genfonts_reg",

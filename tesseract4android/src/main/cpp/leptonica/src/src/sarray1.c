@@ -55,6 +55,9 @@
  *          char      *sarrayToString()
  *          char      *sarrayToStringRange()
  *
+ *      Concatenate strings uniformly within the sarray
+ *          SARRAY    *sarrayConcatUniformly()
+ *
  *      Join 2 sarrays
  *          l_int32    sarrayJoin()
  *          l_int32    sarrayAppendRange()
@@ -70,7 +73,7 @@
  *
  *      Filter sarray
  *          SARRAY    *sarraySelectBySubstring()
- *          SARRAY    *sarraySelectByRange()
+ *          SARRAY    *sarraySelectRange()
  *          l_int32    sarrayParseRange()
  *
  *      Serialize for I/O
@@ -79,6 +82,7 @@
  *          SARRAY    *sarrayReadMem()
  *          l_int32    sarrayWrite()
  *          l_int32    sarrayWriteStream()
+ *          l_int32    sarrayWriteStderr()
  *          l_int32    sarrayWriteMem()
  *          l_int32    sarrayAppend()
  *
@@ -146,7 +150,7 @@
 #endif  /* ! _WIN32 */
 #include "allheaders.h"
 
-static const l_uint32  MaxPtrArraySize = 25000000;  /* 25 million */
+static const l_uint32  MaxPtrArraySize = 50000000;    /* 50 million */
 static const l_int32   InitialPtrArraySize = 50;      /*!< n'importe quoi */
 
     /* Static functions */
@@ -460,8 +464,10 @@ l_int32  n;
         return ERROR_INT("invalid copyflag", procName, 1);
 
     n = sarrayGetCount(sa);
-    if (n >= sa->nalloc)
-        sarrayExtendArray(sa);
+    if (n >= sa->nalloc) {
+        if (sarrayExtendArray(sa))
+            return ERROR_INT("extension failed", procName, 1);
+    }
 
     if (copyflag == L_COPY)
         sa->array[n] = stringNew(string);
@@ -481,7 +487,7 @@ l_int32  n;
  * <pre>
  * Notes:
  *      (1) Doubles the size of the string ptr array.
- *      (2) The max number of strings is 25M.
+ *      (2) The max number of strings is 50M.
  * </pre>
  */
 static l_int32
@@ -493,18 +499,20 @@ size_t  oldsize, newsize;
 
     if (!sa)
         return ERROR_INT("sa not defined", procName, 1);
-    if (sa->nalloc > MaxPtrArraySize)  /* belt & suspenders */
-        return ERROR_INT("sa has too many ptrs", procName, 1);
+    if (sa->nalloc >= MaxPtrArraySize)
+        return ERROR_INT("sa at maximum ptr size; can't extend", procName, 1);
     oldsize = sa->nalloc * sizeof(char *);
-    newsize = 2 * oldsize;
-    if (newsize > 8 * MaxPtrArraySize)  /* ptrs for 25 million strings */
-        return ERROR_INT("newsize > 200 MB; too large", procName, 1);
-
+    if (sa->nalloc > MaxPtrArraySize / 2) {
+        newsize = MaxPtrArraySize * sizeof(char *);
+        sa->nalloc = MaxPtrArraySize;
+    } else {
+        newsize = 2 * oldsize;
+        sa->nalloc *= 2;
+    }
     if ((sa->array = (char **)reallocNew((void **)&sa->array,
                                          oldsize, newsize)) == NULL)
         return ERROR_INT("new ptr array not returned", procName, 1);
 
-    sa->nalloc *= 2;
     return 0;
 }
 
@@ -759,17 +767,17 @@ sarrayChangeRefcount(SARRAY  *sa,
  * \param[in]    addnlflag   flag: 0 adds nothing to each substring
  *                                 1 adds '\n' to each substring
  *                                 2 adds ' ' to each substring
+ *                                 3 adds ',' to each substring
  * \return  dest string, or NULL on error
  *
  * <pre>
  * Notes:
  *      (1) Concatenates all the strings in the sarray, preserving
  *          all white space.
- *      (2) If addnlflag != 0, adds either a '\n' or a ' ' after
- *          each substring.
+ *      (2) If addnlflag != 0, adds '\n', ' ' or ',' after each substring.
  *      (3) This function was NOT implemented as:
  *            for (i = 0; i < n; i++)
- *                     strcat(dest, sarrayGetString(sa, i, L_NOCOPY));
+ *                strcat(dest, sarrayGetString(sa, i, L_NOCOPY));
  *          Do you see why?
  * </pre>
  */
@@ -796,14 +804,14 @@ sarrayToString(SARRAY  *sa,
  * \param[in]   addnlflag   flag: 0 adds nothing to each substring
  *                                1 adds '\n' to each substring
  *                                2 adds ' ' to each substring
+ *                                3 adds ',' to each substring
  * \return  dest string, or NULL on error
  *
  * <pre>
  * Notes:
- *      (1) Concatenates the specified strings inthe sarray, preserving
+ *      (1) Concatenates the specified strings in the sarray, preserving
  *          all white space.
- *      (2) If addnlflag != 0, adds either a '\n' or a ' ' after
- *          each substring.
+ *      (2) If addnlflag != 0, adds '\n', ' ' or ',' after each substring.
  *      (3) If the sarray is empty, this returns a string with just
  *          the character corresponding to %addnlflag.
  * </pre>
@@ -821,7 +829,7 @@ l_int32  n, i, last, size, index, len;
 
     if (!sa)
         return (char *)ERROR_PTR("sa not defined", procName, NULL);
-    if (addnlflag != 0 && addnlflag != 1 && addnlflag != 2)
+    if (addnlflag != 0 && addnlflag != 1 && addnlflag != 2 && addnlflag != 3)
         return (char *)ERROR_PTR("invalid addnlflag", procName, NULL);
 
     n = sarrayGetCount(sa);
@@ -833,29 +841,33 @@ l_int32  n, i, last, size, index, len;
                 return stringNew("");
             if (addnlflag == 1)
                 return stringNew("\n");
-            else  /* addnlflag == 2) */
+            if (addnlflag == 2)
                 return stringNew(" ");
+            else  /* addnlflag == 3) */
+                return stringNew(",");
         } else {
             return (char *)ERROR_PTR("first not valid", procName, NULL);
         }
     }
 
+        /* Determine the range of string indices to be used */
     if (first < 0 || first >= n)
         return (char *)ERROR_PTR("first not valid", procName, NULL);
     if (nstrings == 0 || (nstrings > n - first))
         nstrings = n - first;  /* no overflow */
     last = first + nstrings - 1;
 
+        /* Determine the size of the output string */
     size = 0;
     for (i = first; i <= last; i++) {
         if ((str = sarrayGetString(sa, i, L_NOCOPY)) == NULL)
             return (char *)ERROR_PTR("str not found", procName, NULL);
         size += strlen(str) + 2;
     }
-
     if ((dest = (char *)LEPT_CALLOC(size + 1, sizeof(char))) == NULL)
         return (char *)ERROR_PTR("dest not made", procName, NULL);
 
+        /* Construct the output */
     index = 0;
     for (i = first; i <= last; i++) {
         src = sarrayGetString(sa, i, L_NOCOPY);
@@ -868,10 +880,73 @@ l_int32  n, i, last, size, index, len;
         } else if (addnlflag == 2) {
             dest[index] = ' ';
             index++;
+        } else if (addnlflag == 3) {
+            dest[index] = ',';
+            index++;
         }
     }
 
     return dest;
+}
+
+
+/*----------------------------------------------------------------------*
+ *           Concatenate strings uniformly within the sarray            *
+ *----------------------------------------------------------------------*/
+/*!
+ * \brief   sarrayConcatUniformly()
+ *
+ * \param[in]    sa          string array
+ * \param[in]    n           number of strings in output sarray
+ * \param[in]    addnlflag   flag: 0 adds nothing to each substring
+ *                                 1 adds '\n' to each substring
+ *                                 2 adds ' ' to each substring
+ *                                 3 adds ',' to each substring
+ * \return  dest sarray, or NULL on error
+ *
+ * <pre>
+ * Notes:
+ *      (1) Divides %sa into %n essentially equal sets of strings,
+ *          concatenates each set individually, and makes an output
+ *          sarray with the %n concatenations.  %n must not exceed the
+ *          number of strings in %sa.
+ *      (2) If addnlflag != 0, adds '\n', ' ' or ',' after each substring.
+ * </pre>
+ */
+SARRAY *
+sarrayConcatUniformly(SARRAY  *sa,
+                      l_int32  n,
+                      l_int32  addnlflag)
+{
+l_int32  i, first, ntot, nstr;
+char    *str;
+NUMA    *na;
+SARRAY  *saout;
+
+    PROCNAME("sarrayConcatUniformly");
+
+    if (!sa)
+        return (SARRAY *)ERROR_PTR("sa not defined", procName, NULL);
+    ntot = sarrayGetCount(sa);
+    if (n < 1)
+        return (SARRAY *)ERROR_PTR("n must be >= 1", procName, NULL);
+    if (n > ntot) {
+        L_ERROR("n = %d > ntot = %d\n", procName, n, ntot);
+        return NULL;
+    }
+    if (addnlflag != 0 && addnlflag != 1 && addnlflag != 2 && addnlflag != 3)
+        return (SARRAY *)ERROR_PTR("invalid addnlflag", procName, NULL);
+
+    saout = sarrayCreate(0);
+    na = numaGetUniformBinSizes(ntot, n);
+    for (i = 0, first = 0; i < n; i++) {
+        numaGetIValue(na, i, &nstr);
+        str = sarrayToStringRange(sa, first, nstr, addnlflag);
+        sarrayAddString(saout, str, L_INSERT);
+        first += nstr;
+    }
+    numaDestroy(&na);
+    return saout;
 }
 
 
@@ -907,9 +982,11 @@ l_int32  n, i;
     n = sarrayGetCount(sa2);
     for (i = 0; i < n; i++) {
         str = sarrayGetString(sa2, i, L_NOCOPY);
-        sarrayAddString(sa1, str, L_COPY);
+        if (sarrayAddString(sa1, str, L_COPY) == 1) {
+            L_ERROR("failed to add string at i = %d\n", procName, i);
+            return 1;
+        }
     }
-
     return 0;
 }
 
@@ -1191,7 +1268,7 @@ SARRAY  *saout;
 
 
 /*!
- * \brief   sarraySelectByRange()
+ * \brief   sarraySelectRange()
  *
  * \param[in]    sain    input sarray
  * \param[in]    first   index of first string to be selected
@@ -1207,15 +1284,15 @@ SARRAY  *saout;
  * </pre>
  */
 SARRAY *
-sarraySelectByRange(SARRAY  *sain,
-                    l_int32  first,
-                    l_int32  last)
+sarraySelectRange(SARRAY  *sain,
+                  l_int32  first,
+                  l_int32  last)
 {
 char    *str;
 l_int32  n, i;
 SARRAY  *saout;
 
-    PROCNAME("sarraySelectByRange");
+    PROCNAME("sarraySelectRange");
 
     if (!sain)
         return (SARRAY *)ERROR_PTR("sain not defined", procName, NULL);
@@ -1390,7 +1467,7 @@ SARRAY  *sa;
  * <pre>
  * Notes:
  *      (1) We store the size of each string along with the string.
- *          The limit on the number of strings is 25M.
+ *          The limit on the number of strings is 50M.
  *          The limit on the size of any string is 2^30 bytes.
  *      (2) This allows a string to have embedded newlines.  By reading
  *          the entire string, as determined by its size, we are
@@ -1523,7 +1600,7 @@ FILE    *fp;
 /*!
  * \brief   sarrayWriteStream()
  *
- * \param[in]    fp    file stream
+ * \param[in]    fp    file stream; use NULL to write to stderr
  * \param[in]    sa    string array
  * \return  0 if OK; 1 on error
  *
@@ -1544,7 +1621,7 @@ l_int32  i, n, len;
     if (!fp)
         return ERROR_INT("stream not defined", procName, 1);
     if (!sa)
-        return ERROR_INT("sa not defined", procName, 1);
+        return sarrayWriteStderr(sa);
 
     n = sarrayGetCount(sa);
     fprintf(fp, "\nSarray Version %d\n", SARRAY_VERSION_NUMBER);
@@ -1555,6 +1632,34 @@ l_int32  i, n, len;
     }
     fprintf(fp, "\n");
 
+    return 0;
+}
+
+
+/*!
+ * \brief   sarrayWriteStderr()
+ *
+ * \param[in]    sa    string array
+ * \return  0 if OK; 1 on error
+ */
+l_ok
+sarrayWriteStderr(SARRAY  *sa)
+{
+l_int32  i, n, len;
+
+    PROCNAME("sarrayWriteStderr");
+
+    if (!sa)
+        return ERROR_INT("sa not defined", procName, 1);
+
+    n = sarrayGetCount(sa);
+    lept_stderr("\nSarray Version %d\n", SARRAY_VERSION_NUMBER);
+    lept_stderr("Number of strings = %d\n", n);
+    for (i = 0; i < n; i++) {
+        len = strlen(sa->array[i]);
+        lept_stderr("  %d[%d]:  %s\n", i, len, sa->array[i]);
+    }
+    lept_stderr("\n");
     return 0;
 }
 
@@ -1595,6 +1700,9 @@ FILE    *fp;
     if ((fp = open_memstream((char **)pdata, psize)) == NULL)
         return ERROR_INT("stream not opened", procName, 1);
     ret = sarrayWriteStream(fp, sa);
+    fputc('\0', fp);
+    fclose(fp);
+    *psize = *psize - 1;
 #else
     L_INFO("work-around: writing to a temp file\n", procName);
   #ifdef _WIN32
@@ -1607,8 +1715,8 @@ FILE    *fp;
     ret = sarrayWriteStream(fp, sa);
     rewind(fp);
     *pdata = l_binaryReadStream(fp, psize);
-#endif  /* HAVE_FMEMOPEN */
     fclose(fp);
+#endif  /* HAVE_FMEMOPEN */
     return ret;
 }
 
@@ -1894,12 +2002,26 @@ struct stat     st;
 
     if (!dirname)
         return (SARRAY *)ERROR_PTR("dirname not defined", procName, NULL);
+    if (dirname[0] == '\0')
+        return (SARRAY *)ERROR_PTR("dirname is empty", procName, NULL);
 
-        /* It's nice to ignore directories.  fstatat() works with relative
-           directory paths, but stat() requires using the absolute path.
-           Also, do not pass NULL as the second parameter to realpath();
-           use a buffer of sufficient size. */
-    ignore = realpath(dirname, dir);  /* see note above */
+        /* Who would have thought it was this fiddly to open a directory
+           and get the files inside?  fstatat() works with relative
+           directory paths, and stat() requires using the absolute path.
+           realpath works as follows for files and directories:
+            * If the file or directory exists, realpath returns its path;
+              else it returns NULL.
+            * If the second arg to realpath is passed in, the canonical path
+              is returned there.  Use a buffer of sufficient size.  If the
+              second arg is NULL, the path is malloc'd and returned if the
+              file or directory exists.
+           We pass in a buffer for the second arg, and check that the canonical
+           directory path was made.  The existence of the directory is checked
+           later, after its actual path is returned by genPathname().  */
+    dir[0] = '\0';  /* init empty in case realpath() fails to write it */
+    ignore = realpath(dirname, dir);
+    if (dir[0] == '\0')
+        return (SARRAY *)ERROR_PTR("dir not made", procName, NULL);
     realdir = genPathname(dir, NULL);
     if ((pdir = opendir(realdir)) == NULL) {
         LEPT_FREE(realdir);

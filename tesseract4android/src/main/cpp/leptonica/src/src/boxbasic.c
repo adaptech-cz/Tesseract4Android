@@ -643,11 +643,15 @@ BOX     *boxc;
         return ERROR_INT("boxc not made", procName, 1);
 
     n = boxaGetCount(boxa);
-    if (n >= boxa->nalloc)
-        boxaExtendArray(boxa);
+    if (n >= boxa->nalloc) {
+        if (boxaExtendArray(boxa)) {
+            if (copyflag != L_INSERT)
+                boxDestroy(&boxc);
+            return ERROR_INT("extension failed", procName, 1);
+        }
+    }
     boxa->box[n] = boxc;
     boxa->n++;
-
     return 0;
 }
 
@@ -1005,19 +1009,22 @@ BOX    **array;
     if (!boxa)
         return ERROR_INT("boxa not defined", procName, 1);
     n = boxaGetCount(boxa);
-    if (index < 0 || index > n)
-        return ERROR_INT("index not in {0...n}", procName, 1);
+    if (index < 0 || index > n) {
+        L_ERROR("index %d not in [0,...,%d]\n", procName, index, n);
+        return 1;
+    }
     if (!box)
         return ERROR_INT("box not defined", procName, 1);
 
-    if (n >= boxa->nalloc)
-        boxaExtendArray(boxa);
+    if (n >= boxa->nalloc) {
+        if (boxaExtendArray(boxa))
+            return ERROR_INT("extension failed", procName, 1);
+    }
     array = boxa->box;
     boxa->n++;
     for (i = n; i > index; i--)
         array[i] = array[i - 1];
     array[index] = box;
-
     return 0;
 }
 
@@ -1075,8 +1082,10 @@ BOX    **array;
     if (!boxa)
         return ERROR_INT("boxa not defined", procName, 1);
     n = boxaGetCount(boxa);
-    if (index < 0 || index >= n)
-        return ERROR_INT("index not in {0...n - 1}", procName, 1);
+    if (index < 0 || index >= n) {
+        L_ERROR("index %d not in [0,...,%d]\n", procName, index, n - 1);
+        return 1;
+    }
 
     if (pbox)
         *pbox = boxaGetBox(boxa, index, L_CLONE);
@@ -1356,8 +1365,10 @@ BOXA    *bac;
         bac = boxaCopy(ba, copyflag);
 
     n = boxaaGetCount(baa);
-    if (n >= baa->nalloc)
-        boxaaExtendArray(baa);
+    if (n >= baa->nalloc) {
+        if (boxaaExtendArray(baa))
+            return ERROR_INT("extension failed", procName, 1);
+    }
     baa->boxa[n] = bac;
     baa->n++;
     return 0;
@@ -1552,16 +1563,16 @@ BOXA  *boxa;
  *          with copies of %boxa.  Any existing boxa are destroyed.
  *          After this operation, the number of boxa is equal to
  *          the number of allocated ptrs.
- *      (2) Note that we use boxaaReplaceBox() instead of boxaInsertBox().
- *          They both have the same effect when inserting into a NULL ptr
- *          in the boxa ptr array
+ *      (2) Note that we use boxaaReplaceBoxa() which replaces a boxa,
+ *          instead of boxaaInsertBoxa(), which is O(n) and shifts all
+ *          the boxa pointers from the insertion point to the end.
  *      (3) Example usage.  This function is useful to prepare for a
  *          random insertion (or replacement) of boxa into a boxaa.
  *          To randomly insert boxa into a boxaa, up to some index "max":
  *             Boxaa *baa = boxaaCreate(max);
  *               // initialize the boxa
  *             Boxa *boxa = boxaCreate(...);
- *             ...  [optionally fix with boxes]
+ *             ...  [optionally fill with boxes]
  *             boxaaInitFull(baa, boxa);
  *          A typical use is to initialize the array with empty boxa,
  *          and to replace only a subset that must be aligned with
@@ -1625,7 +1636,8 @@ l_int32  i, n;
         /* Extend the ptr array if necessary */
     n = boxaaGetCount(baa);
     if (maxindex < n) return 0;
-    boxaaExtendArrayToSize(baa, maxindex + 1);
+    if (boxaaExtendArrayToSize(baa, maxindex + 1))
+        return ERROR_INT("extension failed", procName, 1);
 
         /* Fill the new entries with copies of boxa */
     for (i = n; i <= maxindex; i++)
@@ -1683,9 +1695,10 @@ l_int32  n;
  * <pre>
  * Notes:
  *      (1) This shifts boxa[i] --> boxa[i + 1] for all i >= index,
- *          and then inserts boxa as boxa[index].
- *      (2) To insert at the beginning of the array, set index = 0.
- *      (3) To append to the array, it's easier to use boxaaAddBoxa().
+ *          and then inserts boxa as boxa[index].  It is typically used
+ *          when %baa is full of boxa.
+ *      (2) To insert at the beginning of the array, set %index = 0.
+ *      (3) To append to the array, it is equivalent to boxaaAddBoxa().
  *      (4) This should not be used repeatedly to insert into large arrays,
  *          because the function is O(n).
  * </pre>
@@ -1703,19 +1716,22 @@ BOXA   **array;
     if (!baa)
         return ERROR_INT("baa not defined", procName, 1);
     n = boxaaGetCount(baa);
-    if (index < 0 || index > n)
-        return ERROR_INT("index not in {0...n}", procName, 1);
+    if (index < 0 || index > n) {
+        L_ERROR("index %d not in [0,...,%d]\n", procName, index, n);
+        return 1;
+    }
     if (!boxa)
         return ERROR_INT("boxa not defined", procName, 1);
 
-    if (n >= baa->nalloc)
-        boxaaExtendArray(baa);
+    if (n >= baa->nalloc) {
+        if (boxaaExtendArray(baa))
+            return ERROR_INT("extension failed", procName, 1);
+    }
     array = baa->boxa;
     baa->n++;
     for (i = n; i > index; i--)
         array[i] = array[i - 1];
     array[index] = boxa;
-
     return 0;
 }
 
@@ -2079,6 +2095,9 @@ FILE    *fp;
     if ((fp = open_memstream((char **)pdata, psize)) == NULL)
         return ERROR_INT("stream not opened", procName, 1);
     ret = boxaaWriteStream(fp, baa);
+    fputc('\0', fp);
+    fclose(fp);
+    *psize = *psize - 1;
 #else
     L_INFO("work-around: writing to a temp file\n", procName);
   #ifdef _WIN32
@@ -2091,8 +2110,8 @@ FILE    *fp;
     ret = boxaaWriteStream(fp, baa);
     rewind(fp);
     *pdata = l_binaryReadStream(fp, psize);
-#endif  /* HAVE_FMEMOPEN */
     fclose(fp);
+#endif  /* HAVE_FMEMOPEN */
     return ret;
 }
 
@@ -2371,6 +2390,9 @@ FILE    *fp;
     if ((fp = open_memstream((char **)pdata, psize)) == NULL)
         return ERROR_INT("stream not opened", procName, 1);
     ret = boxaWriteStream(fp, boxa);
+    fputc('\0', fp);
+    fclose(fp);
+    *psize = *psize - 1;
 #else
     L_INFO("work-around: writing to a temp file\n", procName);
   #ifdef _WIN32
@@ -2383,8 +2405,8 @@ FILE    *fp;
     ret = boxaWriteStream(fp, boxa);
     rewind(fp);
     *pdata = l_binaryReadStream(fp, psize);
-#endif  /* HAVE_FMEMOPEN */
     fclose(fp);
+#endif  /* HAVE_FMEMOPEN */
     return ret;
 }
 

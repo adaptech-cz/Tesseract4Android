@@ -304,7 +304,7 @@ PIXCMAP  *cmap;
  *
  * <pre>
  * Notes:
- *      (1) If %pix is input, this will veify that pixel values cannot
+ *      (1) If %pix is input, this will verify that pixel values cannot
  *          overflow the colormap.  This is a relatively expensive operation
  *          that may need to check all the pixel values.
  *      (2) If %pix is input, there must be at least one color in the
@@ -317,7 +317,7 @@ pixcmapIsValid(const PIXCMAP  *cmap,
                PIX            *pix,
                l_int32        *pvalid)
 {
-l_int32  d, nalloc, maxindex;
+l_int32  d, depth, nalloc, maxindex, maxcolors;
 
     PROCNAME("pixcmapIsValid");
 
@@ -343,16 +343,37 @@ l_int32  d, nalloc, maxindex;
         return 1;
     }
 
+        /* If a pix is given, it must have a depth no larger than 8 */
+    if (pix) {
+        depth = pixGetDepth(pix);
+        if (depth > 8) {
+            L_ERROR("pix depth %d > 8\n", procName, depth);
+            return 1;
+        }
+        maxcolors = 1 << depth;
+    }
+
         /* To prevent indexing overflow into the cmap, the pix depth
          * must not exceed the cmap depth.  Do not require depth equality,
-         * because some functions such as median cut quantizers do not. */
-    if (pix && (pixGetDepth(pix) > d)) {
-        L_ERROR("(pix depth = %d) > (cmap depth = %d)\n", procName,
-                pixGetDepth(pix), d);
+         * because some functions such as median cut quantizers allow
+         * the cmap depth to be bigger than the pix depth. */
+    if (pix && (depth > d)) {
+        L_ERROR("(pix depth = %d) > (cmap depth = %d)\n", procName, depth, d);
         return 1;
     }
     if (pix && cmap->n < 1) {
         L_ERROR("cmap array is empty; invalid with any pix\n", procName);
+        return 1;
+    }
+
+        /* Do not let the colormap have more colors than the pixels
+         * can address.  The png encoder considers this to be an
+         * "invalid palette length".  For example, for 1 bpp, the
+         * colormap may have a depth > 1, but it must not have more
+         * than 2 colors. */
+    if (pix && (cmap->n > maxcolors)) {
+        L_ERROR("cmap entries = %d > max colors for pix = %d\n", procName,
+                cmap->n, maxcolors);
         return 1;
     }
 
@@ -1937,6 +1958,9 @@ FILE    *fp;
     if ((fp = open_memstream((char **)pdata, psize)) == NULL)
         return ERROR_INT("stream not opened", procName, 1);
     ret = pixcmapWriteStream(fp, cmap);
+    fputc('\0', fp);
+    fclose(fp);
+    *psize = *psize - 1;
 #else
     L_INFO("work-around: writing to a temp file\n", procName);
   #ifdef _WIN32
@@ -1949,8 +1973,8 @@ FILE    *fp;
     ret = pixcmapWriteStream(fp, cmap);
     rewind(fp);
     *pdata = l_binaryReadStream(fp, psize);
-#endif  /* HAVE_FMEMOPEN */
     fclose(fp);
+#endif  /* HAVE_FMEMOPEN */
     return ret;
 }
 

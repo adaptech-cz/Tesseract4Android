@@ -44,8 +44,8 @@
  *           NUMA    *numaEqualizeTRC()
  *
  *      Generic TRC mapper
- *           PIX     *pixTRCMap()
- *           PIX     *pixTRCMapGeneral()
+ *           l_int32  pixTRCMap()
+ *           l_int32  pixTRCMapGeneral()
  *
  *      Unsharp-masking
  *           PIX     *pixUnsharpMasking()
@@ -765,7 +765,7 @@ NUMA      *nah, *nasum, *nad;
  * \param[in]    pixs    8 grayscale or 32 bpp rgb; not colormapped
  * \param[in]    pixm    [optional] 1 bpp mask
  * \param[in]    na      mapping array
- * \return  pixd, or NULL on error
+ * \return  0 if OK, 1 on error
  *
  * <pre>
  * Notes:
@@ -886,7 +886,7 @@ l_uint32  *data, *datam, *line, *linem, *tab;
  * \param[in]    pixs             32 bpp rgb; not colormapped
  * \param[in]    pixm             [optional] 1 bpp mask
  * \param[in]    nar, nag, nab    mapping arrays
- * \return  pixd, or NULL on error
+ * \return  0 if OK, 1 on error
  *
  * <pre>
  * Notes:
@@ -1825,7 +1825,9 @@ l_uint32  *data, *line;
  *          and the deviations from this are shown separately for deltas
  *          in r, g and b.  For each component, we show 2 * %nincr + 1
  *          images.
- *      (3) Usage: color prints differ from the original due to three factors:
+ *      (3) The pix must have minimum dimensions of 100 and an aspect
+ *          ratio not exceeding 5.0.
+ *      (4) Usage: color prints differ from the original due to three factors:
  *          illumination, calibration of the camera in acquisition,
  *          and calibration of the printer.  This function can be used
  *          to iteratively match a color print to the original.  On each
@@ -1842,8 +1844,8 @@ pixMosaicColorShiftRGB(PIX       *pixs,
                        l_int32    nincr)
 {
 char       buf[64];
-l_int32    i;
-l_float32  del;
+l_int32    i, w, h;
+l_float32  del, ratio;
 L_BMF     *bmf;
 PIX       *pix1, *pix2, *pix3;
 PIXA      *pixa;
@@ -1864,6 +1866,16 @@ PIXA      *pixa;
     if (nincr < 0 || nincr > 6)
         return (PIX *)ERROR_PTR("nincr not in [0, 6]", procName, NULL);
     if (nincr == 0) nincr = 2;
+
+        /* Require width and height to be >= 100, and the aspect ratio <= 5.0 */
+    pixGetDimensions(pixs, &w, &h, NULL);
+    if (w < 100 || h < 100)
+        return (PIX *)ERROR_PTR("w and h not both >= 100", procName, NULL);
+    pixMaxAspectRatio(pixs, &ratio);
+    if (ratio < 1.0 || ratio > 5.0) {
+        L_ERROR("invalid aspect ratio %5.1f\n", procName, ratio);
+        return NULL;
+    }
 
     pixa = pixaCreate(3 * (2 * nincr + 1));
     bmf = bmfCreate(NULL, 8);
@@ -2143,7 +2155,7 @@ PIXCMAP   *cmap;
         return pixd;
     }
 
-    if ((pixd = pixCreateTemplateNoInit(pixs)) == NULL)
+    if ((pixd = pixCreateTemplate(pixs)) == NULL)
         return (PIX *)ERROR_PTR("pixd not made", procName, NULL);
     datas = pixGetData(pixs);
     datad = pixGetData(pixd);
@@ -2250,7 +2262,7 @@ PIXCMAP   *cmap;
         return pixd;
     }
 
-    if ((pixd = pixCreateTemplateNoInit(pixs)) == NULL)
+    if ((pixd = pixCreateTemplate(pixs)) == NULL)
         return (PIX *)ERROR_PTR("pixd not made", procName, NULL);
     datas = pixGetData(pixs);
     datad = pixGetData(pixd);

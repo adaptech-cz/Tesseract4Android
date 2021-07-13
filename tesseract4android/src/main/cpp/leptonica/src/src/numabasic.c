@@ -486,8 +486,10 @@ l_int32  n;
         return ERROR_INT("na not defined", procName, 1);
 
     n = numaGetCount(na);
-    if (n >= na->nalloc)
-        numaExtendArray(na);
+    if (n >= na->nalloc) {
+        if (numaExtendArray(na))
+            return ERROR_INT("extension failed", procName, 1);
+    }
     na->array[n] = val;
     na->n++;
     return 0;
@@ -559,11 +561,15 @@ l_int32  i, n;
     if (!na)
         return ERROR_INT("na not defined", procName, 1);
     n = numaGetCount(na);
-    if (index < 0 || index > n)
-        return ERROR_INT("index not in {0...n}", procName, 1);
+    if (index < 0 || index > n) {
+        L_ERROR("index %d not in [0,...,%d]\n", procName, index, n);
+        return 1;
+    }
 
-    if (n >= na->nalloc)
-        numaExtendArray(na);
+    if (n >= na->nalloc) {
+        if (numaExtendArray(na))
+            return ERROR_INT("extension failed", procName, 1);
+    }
     for (i = n; i > index; i--)
         na->array[i] = na->array[i - 1];
     na->array[index] = val;
@@ -597,8 +603,10 @@ l_int32  i, n;
     if (!na)
         return ERROR_INT("na not defined", procName, 1);
     n = numaGetCount(na);
-    if (index < 0 || index >= n)
-        return ERROR_INT("index not in {0...n - 1}", procName, 1);
+    if (index < 0 || index >= n) {
+        L_ERROR("index %d not in [0,...,%d]\n", procName, index, n - 1);
+        return 1;
+    }
 
     for (i = index + 1; i < n; i++)
         na->array[i - 1] = na->array[i];
@@ -627,8 +635,10 @@ l_int32  n;
     if (!na)
         return ERROR_INT("na not defined", procName, 1);
     n = numaGetCount(na);
-    if (index < 0 || index >= n)
-        return ERROR_INT("index not in {0...n - 1}", procName, 1);
+    if (index < 0 || index >= n) {
+        L_ERROR("index %d not in [0,...,%d]\n", procName, index, n - 1);
+        return 1;
+    }
 
     na->array[index] = val;
     return 0;
@@ -975,7 +985,7 @@ numaGetParameters(NUMA       *na,
  * \param[in]    na
  * \param[in]    startx  x value corresponding to na[0]
  * \param[in]    delx    difference in x values for the situation where the
- *                       elements of na correspond to the evaulation of a
+ *                       elements of na correspond to the evaluation of a
  *                       function at equal intervals of size %delx
  * \return  0 if OK, 1 on error
  */
@@ -1362,6 +1372,9 @@ FILE    *fp;
     if ((fp = open_memstream((char **)pdata, psize)) == NULL)
         return ERROR_INT("stream not opened", procName, 1);
     ret = numaWriteStream(fp, na);
+    fputc('\0', fp);
+    fclose(fp);
+    *psize = *psize - 1;
 #else
     L_INFO("work-around: writing to a temp file\n", procName);
   #ifdef _WIN32
@@ -1374,8 +1387,8 @@ FILE    *fp;
     ret = numaWriteStream(fp, na);
     rewind(fp);
     *pdata = l_binaryReadStream(fp, psize);
-#endif  /* HAVE_FMEMOPEN */
     fclose(fp);
+#endif  /* HAVE_FMEMOPEN */
     return ret;
 }
 
@@ -1556,8 +1569,13 @@ NUMA    *nac;
     }
 
     n = numaaGetCount(naa);
-    if (n >= naa->nalloc)
-        numaaExtendArray(naa);
+    if (n >= naa->nalloc) {
+        if (numaaExtendArray(naa)) {
+            if (copyflag != L_INSERT)
+                numaDestroy(&nac);
+            return ERROR_INT("extension failed", procName, 1);
+        }
+    }
     naa->numa[n] = nac;
     naa->n++;
     return 0;
@@ -2063,6 +2081,9 @@ FILE    *fp;
     if ((fp = open_memstream((char **)pdata, psize)) == NULL)
         return ERROR_INT("stream not opened", procName, 1);
     ret = numaaWriteStream(fp, naa);
+    fputc('\0', fp);
+    fclose(fp);
+    *psize = *psize - 1;
 #else
     L_INFO("work-around: writing to a temp file\n", procName);
   #ifdef _WIN32
@@ -2075,8 +2096,8 @@ FILE    *fp;
     ret = numaaWriteStream(fp, naa);
     rewind(fp);
     *pdata = l_binaryReadStream(fp, psize);
-#endif  /* HAVE_FMEMOPEN */
     fclose(fp);
+#endif  /* HAVE_FMEMOPEN */
     return ret;
 }
 

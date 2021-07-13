@@ -19,7 +19,7 @@ void build(Solution &s)
         t += "org.sw.demo.webmproject.webp"_dep;
     };
 
-    auto &leptonica = s.addTarget<LibraryTarget>("danbloomberg.leptonica", "1.80.0");
+    auto &leptonica = s.addTarget<LibraryTarget>("danbloomberg.leptonica", "1.81.1");
     leptonica += Git("https://github.com/DanBloomberg/leptonica");
 
     {
@@ -84,6 +84,7 @@ void build(Solution &s)
             {"binmorph3_reg", {"binmorph3_reg.c"}},
             {"binmorph4_reg", {"binmorph4_reg.c"}},
             {"binmorph5_reg", {"binmorph5_reg.c"}},
+            {"binmorph6_reg", {"binmorph6_reg.c"}},
             {"blackwhite_reg", {"blackwhite_reg.c"}},
             {"blend1_reg", {"blend1_reg.c"}},
             {"blend2_reg", {"blend2_reg.c"}},
@@ -123,6 +124,7 @@ void build(Solution &s)
             {"dwamorph1_reg", {"dwamorph1_reg.c", "dwalinear.3.c", "dwalinearlow.3.c"}},
             {"dwamorph2_reg", {"dwamorph2_reg.c", "dwalinear.3.c", "dwalinearlow.3.c"}},
             {"edge_reg", {"edge_reg.c"}},
+            {"encoding_reg", {"encoding_reg.c"}},
             {"enhance_reg", {"enhance_reg.c"}},
             {"equal_reg", {"equal_reg.c"}},
             {"expand_reg", {"expand_reg.c"}},
@@ -273,14 +275,14 @@ void build(Solution &s)
             {"findpattern1", {"findpattern1.c"}},
             {"findpattern2", {"findpattern2.c"}},
             {"findpattern3", {"findpattern3.c"}},
-            {"flipselgen", {"flipselgen.c"}},
             {"fmorphautogen", {"fmorphautogen.c"}},
             {"fpixcontours", {"fpixcontours.c"}},
             {"gammatest", {"gammatest.c"}},
             {"graphicstest", {"graphicstest.c"}},
             {"graymorphtest", {"graymorphtest.c"}},
-            {"histotest", {"histotest.c"}},
+            {"hashtest", {"hashtest.c"}},
             {"histoduptest", {"histoduptest.c"}},
+            {"histotest", {"histotest.c"}},
             {"htmlviewer", {"htmlviewer.c"}},
             {"imagetops", {"imagetops.c"}},
             {"jbcorrelation", {"jbcorrelation.c"}},
@@ -354,6 +356,7 @@ void build(Solution &s)
             {"splitimage2pdf", {"splitimage2pdf.c"}},
             {"sudokutest", {"sudokutest.c"}},
             {"textorient", {"textorient.c"}},
+            {"tiffpdftest", {"tiffpdftest.c"}},
             {"trctest", {"trctest.c"}},
             {"underlinetest", {"underlinetest.c"}},
             {"warpertest", {"warpertest.c"}},

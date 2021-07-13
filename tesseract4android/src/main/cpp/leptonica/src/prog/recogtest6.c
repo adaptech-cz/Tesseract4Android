@@ -91,8 +91,8 @@ L_RECOG  *recog;
             rchaExtract(recog->rcha, NULL, &nascore, NULL, NULL,
                         NULL, NULL, NULL);
             pixDisplay(pixdb, 300, 500);
-            boxaWriteStream(stderr, boxa);
-            numaWriteStream(stderr, nascore);
+            boxaWriteStderr(boxa);
+            numaWriteStderr(nascore);
             numaDestroy(&nascore);
             pixDestroy(&pixdb);
         } else {  /* just get the timing */
