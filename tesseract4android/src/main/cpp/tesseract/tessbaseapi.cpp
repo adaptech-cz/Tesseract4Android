@@ -401,6 +401,27 @@ jintArray Java_com_googlecode_tesseract_android_TessBaseAPI_nativeWordConfidence
   return ret;
 }
 
+jstring Java_com_googlecode_tesseract_android_TessBaseAPI_nativeGetVariable(JNIEnv *env,
+                                                                             jobject thiz,
+                                                                             jlong mNativeData,
+                                                                             jstring var) {
+
+  native_data_t *nat = (native_data_t *) mNativeData;
+
+  jstring result = NULL;
+
+  const char *c_var = env->GetStringUTFChars(var, NULL);
+
+  STRING value;
+  if (nat->api.GetVariableAsString(c_var, &value)) {
+    result = env->NewStringUTF(value.c_str());
+  }
+
+  env->ReleaseStringUTFChars(var, c_var);
+
+  return result;
+}
+
 jboolean Java_com_googlecode_tesseract_android_TessBaseAPI_nativeSetVariable(JNIEnv *env,
                                                                              jobject thiz,
                                                                              jlong mNativeData,

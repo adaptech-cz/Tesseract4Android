@@ -493,6 +493,21 @@ public class TessBaseAPI {
 	}
 
 	/**
+	 * Get the value of an internal "parameter" as a string, if it exists.
+	 * <p>
+	 * Boolean variables are returned as "0" (false) or "1" (true).
+	 *
+	 * @param var name of the variable
+	 * @return the value or {@code null} if the name lookup failed
+	 */
+	public String getVariable(String var) {
+		if (mRecycled)
+			throw new IllegalStateException();
+
+		return nativeGetVariable(mNativeData, var);
+	}
+
+	/**
 	 * Set the value of an internal "parameter."
 	 * <p>
 	 * Supply the name of the parameter and the value as a string, just as
@@ -1071,6 +1086,8 @@ public class TessBaseAPI {
 	private native int nativeMeanConfidence(long mNativeData);
 
 	private native int[] nativeWordConfidences(long mNativeData);
+
+	private native String nativeGetVariable(long mNativeData, String var);
 
 	private native boolean nativeSetVariable(long mNativeData, String var, String value);
 

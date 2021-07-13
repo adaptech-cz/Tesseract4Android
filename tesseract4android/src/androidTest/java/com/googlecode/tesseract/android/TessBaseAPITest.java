@@ -712,6 +712,25 @@ public class TessBaseAPITest {
 	}
 
 	@Test
+	public void testGetVariable() {
+		// Attempt to initialize the API.
+		final TessBaseAPI baseApi = new TessBaseAPI();
+		boolean success = baseApi.init(TESSBASE_PATH, DEFAULT_LANGUAGE);
+		assertTrue(success);
+
+		// Non existing variable should return null
+		String nonExistingVariable = baseApi.getVariable("__non_existing_variable__");
+		assertNull(nonExistingVariable);
+
+		// Existing value should return real value
+		String existingVariable = baseApi.getVariable("tessedit_do_invert");
+		assertTrue("0".equals(existingVariable) || "1".equals(existingVariable));
+
+		// Attempt to shut down the API.
+		baseApi.recycle();
+	}
+
+	@Test
 	public void testSetVariable() {
 		final String inputText = "hello";
 		final Bitmap bmp = getTextImage(inputText, 640, 480);
