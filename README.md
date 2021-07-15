@@ -50,7 +50,8 @@ You can get compiled version of Tesseract4Android from JitPack.io.
            implementation 'com.github.adaptech-cz:tesseract4android:3.0.0'
            
            // To use OpenMP variant:
-           implementation 'com.github.adaptech-cz:tesseract4android:3.0.0-openmp'
+           // NOTE: This variant is currently unavailable due to issues with JitPack. You must compile it yourself.
+           //implementation 'com.github.adaptech-cz:tesseract4android-openmp:3.0.0'
        }
 
 ## Building
