@@ -57,7 +57,7 @@ afterEvaluate {
 
 					// Append flavor name to the version (unless it's "standard" flavor)
 					if (variant.flavorName != "standard") {
-						version = "${version}-${variant.flavorName}"
+						artifactId = "${artifactId}-${variant.flavorName}"
 					}
 				}
 			}
