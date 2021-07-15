@@ -2,7 +2,9 @@ apply plugin: 'com.android.library'
 
 android {
 	compileSdkVersion 28
-	ndkVersion "22.1.7171670"
+	// TODO: This is commented due to bug on JitPack.
+	//  Uncomment this when you want to build this library locally with OpenMP support
+	//ndkVersion "22.1.7171670"
 	defaultConfig {
 		minSdkVersion 16
 		targetSdkVersion 28
@@ -32,7 +34,9 @@ android {
 	productFlavors {
 		standard {
 		}
-		openmp {
+		// TODO: This is commented due to bug on JitPack.
+		//  Uncomment this when you want to build this library locally with OpenMP support
+		/*openmp {
 			// Since NDK r21 is OpenMP compiled as a shared library, but due to bug it is never
 			// included in resulting APK/AAR. It will be fixed probably in NDK r23, but until then
 			// we need to use r20 which compiles OpenMP as a static library.
@@ -46,7 +50,7 @@ android {
 					cppFlags "-fopenmp"
 				}
 			}
-		}
+		}*/
 	}
 	compileOptions {
 		sourceCompatibility JavaVersion.VERSION_1_8
