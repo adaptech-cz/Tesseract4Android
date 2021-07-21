@@ -51,7 +51,7 @@ afterEvaluate {
 					artifact androidJavadocsJar
 					artifact androidSourcesJar
 
-					groupId 'cz.adaptech.android'
+					groupId 'cz.adaptech'
 					version android.defaultConfig.versionName
 					artifactId 'tesseract4android'
 
