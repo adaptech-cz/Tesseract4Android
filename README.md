@@ -1,4 +1,4 @@
-[![](https://jitpack.io/v/adaptech-cz/tesseract4android.svg)](https://jitpack.io/#adaptech-cz/tesseract4android)
+[![](https://jitpack.io/v/cz.adaptech/tesseract4android.svg)](https://jitpack.io/#cz.adaptech/tesseract4android)
 
 # Tesseract4Android
 
@@ -47,11 +47,11 @@ You can get compiled version of Tesseract4Android from JitPack.io.
 
        dependencies {
            // To use Standard variant:
-           implementation 'com.github.adaptech-cz:tesseract4android:3.0.0'
+           implementation 'cz.adaptech:tesseract4android:3.0.0'
            
            // To use OpenMP variant:
            // NOTE: This variant is currently unavailable due to issues with JitPack. You must compile it yourself.
-           //implementation 'com.github.adaptech-cz:tesseract4android-openmp:3.0.0'
+           //implementation 'cz.adaptech:tesseract4android-openmp:3.0.0'
        }
 
 ## Building
