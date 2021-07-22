@@ -31,6 +31,10 @@ import android.os.Environment;
 import android.text.Html;
 import android.util.Pair;
 
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.SmallTest;
+import androidx.test.rule.GrantPermissionRule;
+
 import com.googlecode.leptonica.android.Pix;
 import com.googlecode.leptonica.android.Pixa;
 import com.googlecode.tesseract.android.TessBaseAPI.PageIteratorLevel;
@@ -38,7 +42,9 @@ import com.googlecode.tesseract.android.TessBaseAPI.ProgressNotifier;
 import com.googlecode.tesseract.android.TessBaseAPI.ProgressValues;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -55,6 +61,8 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+@SmallTest
+@RunWith(AndroidJUnit4.class)
 public class TessBaseAPITest {
 	static final String TESSBASE_PATH = Environment.getExternalStorageDirectory().toString();
 	static final String DEFAULT_LANGUAGE = "eng";
@@ -62,14 +70,13 @@ public class TessBaseAPITest {
 
 	private static final int DEFAULT_PAGE_SEG_MODE = TessBaseAPI.PageSegMode.PSM_SINGLE_BLOCK;
 
+	@Rule
+	public GrantPermissionRule permissionsStorage = GrantPermissionRule.grant(
+			Manifest.permission.READ_EXTERNAL_STORAGE,
+			Manifest.permission.WRITE_EXTERNAL_STORAGE);
+
 	@Before
 	public void setup() {
-		// Grant permission to use external storage
-		TestUtils.grantPermissions(new String[]{
-				Manifest.permission.READ_EXTERNAL_STORAGE,
-				Manifest.permission.WRITE_EXTERNAL_STORAGE,
-		});
-
 		// Check that the data file(s) exist.
 		for (String languageCode : DEFAULT_LANGUAGE.split("\\+")) {
 			if (!languageCode.startsWith("~")) {

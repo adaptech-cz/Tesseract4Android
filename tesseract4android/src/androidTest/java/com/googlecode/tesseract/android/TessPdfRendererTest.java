@@ -26,30 +26,33 @@ import android.graphics.Paint.Align;
 import android.graphics.Paint.Style;
 import android.os.Environment;
 
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.SmallTest;
+import androidx.test.rule.GrantPermissionRule;
+
 import com.googlecode.leptonica.android.Pix;
 import com.googlecode.leptonica.android.ReadFile;
 import com.googlecode.leptonica.android.WriteFile;
 
-import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.File;
 import java.io.IOException;
 
 import static org.junit.Assert.assertTrue;
 
+@SmallTest
+@RunWith(AndroidJUnit4.class)
 public class TessPdfRendererTest {
 
 	private final static String OUTPUT_PATH = Environment.getExternalStorageDirectory().toString() + "/";
 
-	@Before
-	public void setup() {
-		// Grant permission to use external storage
-		TestUtils.grantPermissions(new String[]{
-				Manifest.permission.READ_EXTERNAL_STORAGE,
-				Manifest.permission.WRITE_EXTERNAL_STORAGE,
-		});
-	}
+	@Rule
+	public GrantPermissionRule permissionsStorage = GrantPermissionRule.grant(
+			Manifest.permission.READ_EXTERNAL_STORAGE,
+			Manifest.permission.WRITE_EXTERNAL_STORAGE);
 
 	@Test
 	public void testCreate() {
