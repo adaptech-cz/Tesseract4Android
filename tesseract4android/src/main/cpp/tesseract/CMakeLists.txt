@@ -71,8 +71,9 @@ list(APPEND arch_files
         ${TESS_PATH}arch/dotproduct.cpp
         ${TESS_PATH}arch/simddetect.cpp
         ${TESS_PATH}arch/intsimdmatrix.cpp
-        # NEON support (we can include this file on any architecture without explicit checks)
+        # NEON support (we can include these files on any architecture without explicit checks)
         ${TESS_PATH}arch/intsimdmatrixneon.cpp
+        ${TESS_PATH}arch/dotproductneon.cpp
         )
 
 # Enable use of NEON on armeabi-v7a
@@ -80,6 +81,8 @@ if (${ANDROID_ABI} STREQUAL "armeabi-v7a")
     add_definitions("-DHAVE_NEON")
 
     set_source_files_properties(${TESS_PATH}arch/intsimdmatrixneon.cpp
+        PROPERTIES COMPILE_FLAGS -mfpu=neon)
+    set_source_files_properties(${TESS_PATH}arch/dotproductneon.cpp
         PROPERTIES COMPILE_FLAGS -mfpu=neon)
 
     # Include cpu-features for runtime detection of NEON support
