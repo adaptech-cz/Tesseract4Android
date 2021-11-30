@@ -85,10 +85,13 @@ option(OPENMP_BUILD "Build with openmp support" OFF)  # see issue #1662
 option(GRAPHICS_DISABLED "Disable disable graphics (ScrollView)" OFF)
 option(DISABLED_LEGACY_ENGINE "Disable the legacy OCR engine" OFF)
 option(ENABLE_LTO "Enable link-time optimization" OFF)
-option(FAST_FLOAT "Enable float for LSTM" OFF)
+option(FAST_FLOAT "Enable float for LSTM" ON)
 option(BUILD_TRAINING_TOOLS "Build training tools" ON)
 option(BUILD_TESTS "Build tests" OFF)
 option(USE_SYSTEM_ICU "Use system ICU" OFF)
+option(DISABLE_ARCHIVE "Disable build with libarchive (if available)" OFF)
+option(DISABLE_CURL "Disable build with libcurl (if available)" OFF)
+
 if(NOT ${CMAKE_VERSION} VERSION_LESS "3.15.0")
     if(WIN32 AND MSVC)
         option(WIN32_MT_BUILD "Build with MT flag for MSVC" OFF)
@@ -102,7 +105,7 @@ endif()
 ###############################################################################
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  set(CLANG 1)
+    set(CLANG 1)
 endif()
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -115,7 +118,10 @@ include(CheckCXXCompilerFlag)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
+if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    # cygwin gnu c++ needs to use -std=gnu++17 instead of -std=c++17
+    set(CMAKE_CXX_EXTENSIONS OFF)
+endif ()
 
 if (BUILD_SHARED_LIBS)
     set(CMAKE_CXX_VISIBILITY_PRESET hidden)
@@ -252,7 +258,13 @@ elseif(MSVC)
     if (NOT CLANG)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
     endif()
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /wd4244 /wd4305 /wd4267")
+    # Hide some warnings for release target
+    # wd4244 'argument': conversion from 'uint64_t' to 'unsigned int', possible loss of data
+    # wd4251 needs to have dll-interface
+    # wd4267 return': conversion from 'size_t' to 'int', possible loss of data
+    # wd4275 non dll-interface class
+    # wd4305 ...truncation from 'double' to 'float'
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /wd4244 /wd4305 /wd4267 /wd4251 /wd4275")
     # Don't use /Wall because it generates too many warnings.
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /W0 /bigobj")
     # MT flag
@@ -337,25 +349,54 @@ if (SW_BUILD)
     sw_execute()
 else()
     find_package(PkgConfig)
-    if(PKG_CONFIG_EXECUTABLE AND NOT Leptonica_DIR)
-        pkg_check_modules(Leptonica REQUIRED lept>=${MINIMUM_LEPTONICA_VERSION})
+    # Check for required library.
+    # option -DLeptonica_DIR=path => cmake hint where to find leptonica
+    find_package(Leptonica ${MINIMUM_LEPTONICA_VERSION} CONFIG)
+    if (NOT Leptonica_FOUND AND PKG_CONFIG_EXECUTABLE)
+        pkg_check_modules(Leptonica lept>=${MINIMUM_LEPTONICA_VERSION})
         link_directories(${Leptonica_LIBRARY_DIRS})
-    else()
-        find_package(Leptonica ${MINIMUM_LEPTONICA_VERSION} REQUIRED CONFIG)
     endif()
     if (NOT Leptonica_FOUND)
         message(FATAL_ERROR "Cannot find required library Leptonica. Quitting!")
     endif(NOT Leptonica_FOUND)
+    include_directories(${Leptonica_INCLUDE_DIRS})
 
-    # Check for optional libarchive.
-    if(PKG_CONFIG_EXECUTABLE)
-        pkg_check_modules(LibArchive libarchive)
-    else()
+    # Check for optional libraries.
+    find_package(TIFF)  # for tesseract
+    if(NOT TIFF_FOUND AND PKG_CONFIG_EXECUTABLE)
+            # try PKG_CONFIG to find libtiff if cmake failed
+            pkg_check_modules(TIFF libtiff-4)
+    endif()
+    if(TIFF_FOUND)
+        set(HAVE_TIFFIO_H ON)
+        include_directories(${TIFF_INCLUDE_DIRS})
+    endif(TIFF_FOUND)
+    if(DISABLE_ARCHIVE)
+        set(HAVE_LIBARCHIVE OFF)
+    else(DISABLE_ARCHIVE)
         find_package(LibArchive)
-    endif()
-    if(LibArchive_FOUND)
-        set(HAVE_LIBARCHIVE ON)
-    endif()
+        if(NOT LibArchive_FOUND AND PKG_CONFIG_EXECUTABLE)
+            # try PKG_CONFIG to find libarchive if cmake failed
+            pkg_check_modules(LibArchive libarchive)
+        endif()
+        if(LibArchive_FOUND)
+            set(HAVE_LIBARCHIVE ON)
+            include_directories(${LibArchive_INCLUDE_DIRS})
+        endif(LibArchive_FOUND)
+    endif(DISABLE_ARCHIVE)
+    if (DISABLE_CURL)
+        set(HAVE_LIBCURL OFF)
+    else(DISABLE_CURL)
+        find_package(CURL)
+        if(NOT CURL_FOUND AND PKG_CONFIG_EXECUTABLE)
+            # try PKG_CONFIG to find libcurl if cmake failed
+            pkg_check_modules(CURL libcurl)
+        endif()
+        if(CURL_FOUND)
+            set(HAVE_LIBCURL ON)
+            include_directories(${CURL_INCLUDE_DIRS})
+        endif(CURL_FOUND)
+    endif(DISABLE_CURL)
 endif()
 
 find_package(OpenCL QUIET)
@@ -368,8 +409,12 @@ find_package(OpenCL QUIET)
 ###############################################################################
 
 if (NOT MSVC)
-   set(MARCH_NATIVE_FLAGS "${MARCH_NATIVE_FLAGS} -O3 -ffast-math")
+    set(MARCH_NATIVE_FLAGS "${MARCH_NATIVE_FLAGS} -O3 -ffast-math")
 endif()
+
+if(NOT DEFINED CMAKE_INSTALL_LIBDIR)
+    set(CMAKE_INSTALL_LIBDIR lib)
+endif(NOT DEFINED CMAKE_INSTALL_LIBDIR)
 
 set(AUTOCONFIG_SRC ${CMAKE_CURRENT_BINARY_DIR}/config_auto.h.in)
 set(AUTOCONFIG ${CMAKE_CURRENT_BINARY_DIR}/config_auto.h)
@@ -384,6 +429,7 @@ include(Configure)
 configure_file(${AUTOCONFIG_SRC} ${AUTOCONFIG} @ONLY)
 
 set(INCLUDE_DIR "${CMAKE_INSTALL_PREFIX}/include")
+set(LIBRARY_DIRS "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
 
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/include/tesseract/version.h.in
@@ -391,15 +437,6 @@ configure_file(
 
 include(CMakePackageConfigHelpers)
 include(GenerateExportHeader)
-configure_package_config_file(
-    cmake/templates/TesseractConfig.cmake.in
-    ${CMAKE_CURRENT_BINARY_DIR}/cmake/tesseract/TesseractConfig.cmake
-    INSTALL_DESTINATION lib/cmake/tesseract
-    PATH_VARS INCLUDE_DIR)
-write_basic_package_version_file(
-    ${CMAKE_CURRENT_BINARY_DIR}/cmake/tesseract/TesseractConfigVersion.cmake
-    VERSION ${PACKAGE_VERSION}
-    COMPATIBILITY SameMajorVersion)
 
 # show summary of configuration
 if(${CMAKE_BUILD_TYPE} MATCHES Debug)
@@ -435,6 +472,8 @@ message( STATUS "Link-time optimization: ${CMAKE_INTERPROCEDURAL_OPTIMIZATION}")
 message( STATUS "--------------------------------------------------------")
 message( STATUS "Build with sw [SW_BUILD]: ${SW_BUILD}")
 message( STATUS "Build with openmp support [OPENMP_BUILD]: ${OPENMP_BUILD}")
+message( STATUS "Build with libarchive support [HAVE_LIBARCHIVE]: ${HAVE_LIBARCHIVE}")
+message( STATUS "Build with libcurl support [HAVE_LIBCURL]: ${HAVE_LIBCURL}")
 message( STATUS "Enable float for LSTM [FAST_FLOAT]: ${FAST_FLOAT}")
 message( STATUS "Disable disable graphics (ScrollView) [GRAPHICS_DISABLED]: ${GRAPHICS_DISABLED}")
 message( STATUS "Disable the legacy OCR engine [DISABLED_LEGACY_ENGINE]: ${DISABLED_LEGACY_ENGINE}")
@@ -455,14 +494,11 @@ include(SourceGroups)
 
 add_definitions(-D_SILENCE_STDEXT_HASH_DEPRECATION_WARNINGS=1)
 
-include_directories(${Leptonica_INCLUDE_DIRS})
-include_directories(${LibArchive_INCLUDE_DIRS})
-
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
 if(ANDROID_TOOLCHAIN)
-  include_directories(${ANDROID_TOOLCHAIN}/sysroot/usr/include)
-  add_compile_definitions(__ANDROID_API_FUTURE__)
+    include_directories(${ANDROID_TOOLCHAIN}/sysroot/usr/include)
+    add_compile_definitions(__ANDROID_API_FUTURE__)
 endif()
 
 ########################################
@@ -509,7 +545,6 @@ if (DISABLED_LEGACY_ENGINE)
         src/ccutil/ambigs.cpp
         src/ccutil/bitvector.cpp
         src/ccutil/indexmapbidi.cpp
-        src/ccutil/universalambigs.cpp
         src/classify/adaptive.cpp
         src/classify/adaptmatch.cpp
         src/classify/blobclass.cpp
@@ -592,11 +627,11 @@ if(HAVE_SSE4_1)
                                 PROPERTIES COMPILE_FLAGS ${SSE4_1_COMPILE_FLAGS})
 endif(HAVE_SSE4_1)
 if(HAVE_NEON)
-   list(APPEND arch_files_opt src/arch/dotproductneon.cpp src/arch/intsimdmatrixneon.cpp)
-   if(NEON_COMPILE_FLAGS)
+    list(APPEND arch_files_opt src/arch/dotproductneon.cpp src/arch/intsimdmatrixneon.cpp)
+    if(NEON_COMPILE_FLAGS)
        set_source_files_properties(src/arch/dotproductneon.cpp src/arch/intsimdmatrixneon.cpp
                                    PROPERTIES COMPILE_FLAGS ${NEON_COMPILE_FLAGS})
-   endif()
+    endif()
 endif(HAVE_NEON)
 
 file(GLOB_RECURSE tesseract_hdr
@@ -660,13 +695,23 @@ target_link_libraries           (libtesseract PRIVATE ${LIB_Ws2_32} ${LIB_pthrea
 if(OpenMP_CXX_FOUND)
     target_link_libraries(libtesseract PUBLIC OpenMP::OpenMP_CXX)
 endif()
+if(LibArchive_FOUND)
+    target_link_libraries(libtesseract PUBLIC ${LibArchive_LIBRARIES})
+endif(LibArchive_FOUND)
+if(CURL_FOUND)
+    if(NOT "${CURL_LIBRARIES}")
+        target_link_libraries(libtesseract PUBLIC CURL::libcurl)
+    else()
+        target_link_libraries(libtesseract PUBLIC ${CURL_LIBRARIES})
+    endif()
+endif(CURL_FOUND)
 set_target_properties           (libtesseract PROPERTIES VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
 set_target_properties           (libtesseract PROPERTIES SOVERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
 if (WIN32)
-set_target_properties           (libtesseract PROPERTIES OUTPUT_NAME tesseract${VERSION_MAJOR}${VERSION_MINOR})
-set_target_properties           (libtesseract PROPERTIES DEBUG_OUTPUT_NAME tesseract${VERSION_MAJOR}${VERSION_MINOR}d)
+    set_target_properties       (libtesseract PROPERTIES OUTPUT_NAME tesseract${VERSION_MAJOR}${VERSION_MINOR})
+    set_target_properties       (libtesseract PROPERTIES DEBUG_OUTPUT_NAME tesseract${VERSION_MAJOR}${VERSION_MINOR}d)
 else()
-set_target_properties           (libtesseract PROPERTIES OUTPUT_NAME tesseract)
+    set_target_properties       (libtesseract PROPERTIES OUTPUT_NAME tesseract)
 endif()
 
 if (SW_BUILD)
@@ -677,10 +722,7 @@ if (SW_BUILD)
     file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/TesseractTargets.cmake "include(${CMAKE_CURRENT_BINARY_DIR}/cppan.cmake)\n")
     export(TARGETS libtesseract APPEND FILE ${CMAKE_CURRENT_BINARY_DIR}/TesseractTargets.cmake NAMESPACE Tesseract::)
 else()
-    target_link_libraries       (libtesseract PUBLIC
-        ${Leptonica_LIBRARIES}
-        ${LibArchive_LIBRARIES}
-    )
+    target_link_libraries       (libtesseract PUBLIC ${Leptonica_LIBRARIES})
     export(TARGETS libtesseract FILE ${CMAKE_CURRENT_BINARY_DIR}/TesseractTargets.cmake NAMESPACE Tesseract::)
 endif()
 
@@ -691,38 +733,52 @@ if (WIN32 AND CLANG AND OPENMP_BUILD)
 endif()
 
 ########################################
-# EXECUTABLE tesseractmain
+# EXECUTABLE tesseract
 ########################################
 
-add_executable                  (tesseract src/api/tesseractmain.cpp)
+add_executable                  (tesseract src/tesseract.cpp)
 target_link_libraries           (tesseract libtesseract)
-if (WIN32 AND HAVE_TIFFIO_H)
-    target_link_libraries(tesseract tiff)
+if (HAVE_TIFFIO_H AND WIN32)
+    target_link_libraries       (tesseract ${TIFF_LIBRARIES})
 endif()
 
 if (OPENMP_BUILD AND UNIX)
-target_link_libraries           (tesseract pthread)
+    target_link_libraries       (tesseract pthread)
 endif()
 
 ########################################
 
-if (BUILD_TESTS AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/googletest/CMakeLists.txt)
-    add_subdirectory(googletest)
+if (BUILD_TESTS AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/unittest/third_party/googletest/CMakeLists.txt)
+    add_subdirectory(unittest/third_party/googletest)
 endif()
 
 if (BUILD_TRAINING_TOOLS)
-add_subdirectory(src/training)
+    add_subdirectory(src/training)
 endif()
 
 get_target_property(tesseract_NAME libtesseract NAME)
 get_target_property(tesseract_VERSION libtesseract VERSION)
 get_target_property(tesseract_OUTPUT_NAME libtesseract OUTPUT_NAME)
+
 configure_file(tesseract.pc.cmake ${CMAKE_CURRENT_BINARY_DIR}/tesseract.pc @ONLY)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/tesseract.pc DESTINATION lib/pkgconfig)
+
+configure_package_config_file(
+    cmake/templates/TesseractConfig.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/cmake/tesseract/TesseractConfig.cmake
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/tesseract
+    PATH_VARS INCLUDE_DIR LIBRARY_DIRS)
+write_basic_package_version_file(
+    ${CMAKE_CURRENT_BINARY_DIR}/cmake/tesseract/TesseractConfigVersion.cmake
+    VERSION ${PACKAGE_VERSION}
+    COMPATIBILITY SameMajorVersion)
+
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/tesseract.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 install(TARGETS tesseract DESTINATION bin)
-install(TARGETS libtesseract EXPORT TesseractTargets RUNTIME DESTINATION bin LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
-install(EXPORT TesseractTargets NAMESPACE Tesseract:: DESTINATION lib/cmake/tesseract)
-install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/cmake DESTINATION lib)
+install(TARGETS libtesseract EXPORT TesseractTargets RUNTIME DESTINATION bin LIBRARY
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(EXPORT TesseractTargets NAMESPACE Tesseract:: DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/tesseract)
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/cmake DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 install(FILES
     include/tesseract/baseapi.h
