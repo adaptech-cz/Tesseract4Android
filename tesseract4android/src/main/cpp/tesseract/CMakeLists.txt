@@ -107,9 +107,6 @@ file(GLOB tesseract_hdr
         ${TESS_PATH}wordrec/*.h
         )
 
-# Explicitly remove some unwanted files
-list(REMOVE_ITEM tesseract_src "${CMAKE_CURRENT_SOURCE_DIR}/${TESS_PATH}api/tesseractmain.cpp")
-
 add_library( # Sets the name of the library.
         tesseract
 
