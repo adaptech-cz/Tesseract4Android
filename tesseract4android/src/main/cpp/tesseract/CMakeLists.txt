@@ -144,6 +144,7 @@ include_directories(${TESS_PATH}wordrec)
 # Define preprocessor constants
 add_definitions(-DHAVE_CONFIG_H)
 add_definitions(-DGRAPHICS_DISABLED)
+add_definitions(-DFAST_FLOAT)
 
 # Ignore some warnings during build
 target_compile_options(tesseract PRIVATE "-Wno-null-dereference")
