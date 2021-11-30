@@ -1,4 +1,34 @@
-2019-12-27 - V4.1.1
+2021-11-22 - V5.0.0
+  * Faster training and recognition by default (float instead of
+    double calculations)
+  * More options for binarization
+  * Improved support for ARM NEON
+  * Modernized code
+  * Removed proprietary data types like GenericVector and STRING
+    from public API
+  * pdf.ttf no longer needed, now integrated into the code
+  * Faster flat build with automake
+  * New options for combine_tessdata to show details of traineddata files
+  * Improved training messages
+  * Improved unit tests and fuzzing tests
+  * Lots of bug fixes
+
+2021-11-15 - V4.1.3
+  * Fix build regression for autoconf build
+
+2021-11-14 - V4.1.2
+  * Add RowAttributes getter to PageIterator
+  * Allow line images with larger width for training
+  * Fix memory leaks
+  * Improve build process
+  * Don't output empty ALTO sourceImageInformation (issue #2700)
+  * Extend URI support for Tesseract with libcurl
+  * Abort LSTM training with integer model (fixes issue #1573)
+  * Update documentation
+  * Make automake builds less noisy by default
+  * Don't use -march=native in automake builds
+
+2019-12-26 - V4.1.1
   * Implemented sw build (cppan is depreciated)
   * Improved cmake build
   * Code cleanup and optimization
@@ -36,7 +66,7 @@
   * Enabled OpenMP support.
   * Parameter unlv_tilde_crunching change to false.
   * Miscellaneous Fixes.
-  * Detailed Changelog can be found at https://github.com/tesseract-ocr/tesseract/wiki/4.0x-Changelog and https://github.com/tesseract-ocr/tesseract/wiki/ReleaseNotes#tesseract-release-notes-oct-29-2018---v400
+  * Detailed Changelog can be found at https://tesseract-ocr.github.io/tessdoc/4.0x-Changelog.html and https://tesseract-ocr.github.io/tessdoc/ReleaseNotes.html#tesseract-release-notes-oct-29-2018---v400
 
 2017-02-16 - V3.05.00
   * Made some fine tuning to the hOCR output.
@@ -156,7 +186,7 @@
   * `OcrEngineMode` in `Init` replaces `AccuracyVSpeed` to control cube.
   * Greatly improved segmentation search with consequent accuracy and speed improvements, especially for Chinese.
   * Added `PageIterator` and `ResultIterator` as cleaner ways to get the full results out of Tesseract, that are not currently provided by any of the `TessBaseAPI::Get*` methods. All other methods, such as the `ETEXT_STRUCT` in particular are deprecated and will be deleted in the future.
-  * ApplyBoxes totally rewritten to make training easier. It can now cope with touching/overlapping training characters, and a new boxfile format allows word boxes instead of character boxes, BUT to use that you have to have already boostrapped the language with character boxes. "Cyclic dependency" on traineddata.
+  * ApplyBoxes totally rewritten to make training easier. It can now cope with touching/overlapping training characters, and a new boxfile format allows word boxes instead of character boxes, BUT to use that you have to have already bootstrapped the language with character boxes. "Cyclic dependency" on traineddata.
   * Auto orientation and script detection added to page layout analysis.
   * Deleted *lots* of dead code.
   * Fixxht module replaced with scalable data-driven module.

@@ -40,8 +40,7 @@
 if [ "$1" = "clean" ]; then
     echo "Cleaning..."
     rm configure aclocal.m4
-    rm m4/*
-    rmdir m4
+    rm m4/l*
     rm config/*
     rmdir config
     find . -iname "Makefile.in" -type f -exec rm '{}' +
@@ -58,11 +57,6 @@ elif command -v glibtoolize >/dev/null 2>&1; then
 else
   echo "Unable to find a valid copy of libtoolize or glibtoolize in your PATH!"
   bail_out
-fi
-
-# create m4 directory if it does not exist
-if [ ! -d m4 ];  then
-    mkdir m4
 fi
 
 bail_out()
@@ -87,6 +81,10 @@ aclocal -I config || bail_out
 echo "Running $LIBTOOLIZE"
 $LIBTOOLIZE -f -c || bail_out
 $LIBTOOLIZE --automake || bail_out
+
+# Run aclocal a 2nd time because glibtoolize created additional m4 files.
+echo "Running aclocal"
+aclocal -I config || bail_out
 
 # --- Step 3: Generate configure and include/miaconfig.h from:
 #             . configure.ac

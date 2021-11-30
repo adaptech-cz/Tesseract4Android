@@ -27,6 +27,7 @@ cmake_minimum_required(VERSION 3.4.1)
 # Gradle automatically packages shared libraries with your APK.
 
 set(TESS_PATH "src/src/")
+set(TESS_INCLUDE_PATH "src/include/")
 set(LEPT_PATH "../leptonica/src/src/")
 
 # Get version with components from VERSION file.
@@ -44,8 +45,8 @@ set(GENERIC_MINOR_VERSION ${VERSION_MINOR})
 set(GENERIC_MICRO_VERSION ${VERSION_PATCH})
 
 configure_file(
-        ${TESS_PATH}api/tess_version.h.in
-        ${CMAKE_CURRENT_SOURCE_DIR}/${TESS_PATH}api/tess_version.h @ONLY)
+        ${TESS_INCLUDE_PATH}tesseract/version.h.in
+        ${CMAKE_CURRENT_SOURCE_DIR}/${TESS_INCLUDE_PATH}tesseract/version.h @ONLY)
 
 configure_file(
         config_auto.h.in
@@ -53,9 +54,6 @@ configure_file(
 
 file(GLOB tesseract_src
         ${TESS_PATH}api/*.cpp
-        ${TESS_PATH}arch/simddetect.cpp
-        ${TESS_PATH}arch/intsimdmatrix.cpp
-        ${TESS_PATH}arch/dotproduct.cpp
         ${TESS_PATH}ccmain/*.cpp
         ${TESS_PATH}ccstruct/*.cpp
         ${TESS_PATH}ccutil/*.cpp
@@ -68,6 +66,30 @@ file(GLOB tesseract_src
         ${TESS_PATH}viewer/*.cpp
         ${TESS_PATH}wordrec/*.cpp
         )
+
+list(APPEND arch_files
+        ${TESS_PATH}arch/dotproduct.cpp
+        ${TESS_PATH}arch/simddetect.cpp
+        ${TESS_PATH}arch/intsimdmatrix.cpp
+        # NEON support (we can include these files on any architecture without explicit checks)
+        ${TESS_PATH}arch/intsimdmatrixneon.cpp
+        ${TESS_PATH}arch/dotproductneon.cpp
+        )
+
+# Enable use of NEON on armeabi-v7a
+if (${ANDROID_ABI} STREQUAL "armeabi-v7a")
+    add_definitions("-DHAVE_NEON")
+
+    set_source_files_properties(${TESS_PATH}arch/intsimdmatrixneon.cpp
+        PROPERTIES COMPILE_FLAGS -mfpu=neon)
+    set_source_files_properties(${TESS_PATH}arch/dotproductneon.cpp
+        PROPERTIES COMPILE_FLAGS -mfpu=neon)
+
+    # Include cpu-features for runtime detection of NEON support
+    include(AndroidNdkModules)
+    android_ndk_import_module_cpufeatures()
+    set(LIBRARY_CPU_FEATURES cpufeatures)
+endif()
 
 file(GLOB tesseract_hdr
         ${TESS_PATH}api/*.h
@@ -85,9 +107,6 @@ file(GLOB tesseract_hdr
         ${TESS_PATH}wordrec/*.h
         )
 
-# Explicitly remove some unwanted files
-list(REMOVE_ITEM tesseract_src "${CMAKE_CURRENT_SOURCE_DIR}/${TESS_PATH}api/tesseractmain.cpp")
-
 add_library( # Sets the name of the library.
         tesseract
 
@@ -96,6 +115,7 @@ add_library( # Sets the name of the library.
 
         # Provides a relative path to your source file(s).
         ${tesseract_src}
+        ${arch_files}
         ${tesseract_hdr}
         pageiterator.cpp
         resultiterator.cpp
@@ -106,6 +126,7 @@ add_library( # Sets the name of the library.
 # Specifies a path to native header files.
 include_directories(${LEPT_PATH})
 
+include_directories(${TESS_INCLUDE_PATH})
 include_directories(${TESS_PATH}api)
 include_directories(${TESS_PATH}arch)
 include_directories(${TESS_PATH}ccmain)
@@ -122,8 +143,6 @@ include_directories(${TESS_PATH}wordrec)
 
 # Define preprocessor constants
 add_definitions(-DHAVE_CONFIG_H)
-# NOTE: We can't use ANDROID_BUILD, because otherwise it disables LSTM and during that breaks whole build
-#add_definitions(-DANDROID_BUILD)
 add_definitions(-DGRAPHICS_DISABLED)
 
 # Ignore some warnings during build
@@ -140,6 +159,7 @@ target_link_libraries( # Specifies the target library.
         atomic
         dl
         log
+        ${LIBRARY_CPU_FEATURES}
         jnigraphics
         leptonica
         )

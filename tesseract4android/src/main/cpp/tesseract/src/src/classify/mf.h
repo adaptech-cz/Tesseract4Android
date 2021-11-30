@@ -18,22 +18,13 @@
 #ifndef MF_H
 #define MF_H
 
-/**----------------------------------------------------------------------------
-          Include Files and Type Defines
-----------------------------------------------------------------------------**/
-#include "ocrfeatures.h"
 #include "blobs.h"
+#include "ocrfeatures.h"
 
-typedef enum {
-  MFXPosition, MFYPosition,
-  MFLength, MFDirection, MFBulge1, MFBulge2,
-  MFCount  // For array sizes.
-} MF_PARAM_NAME;
+namespace tesseract {
 
-typedef float MicroFeature[MFCount];
-/*----------------------------------------------------------------------------
-          Private Function Prototypes
------------------------------------------------------------------------------*/
-FEATURE_SET ExtractMicros(TBLOB* Blob, const DENORM& cn_denorm);
+FEATURE_SET ExtractMicros(TBLOB *Blob, const DENORM &cn_denorm);
+
+} // namespace tesseract
 
 #endif

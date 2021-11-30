@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////
 // File:        unicity_table.h
 // Description: a class to uniquify objects, manipulating them using integers
-// ids.
+//              ids.
 // Author:      Samuel Charron
 //
 // (C) Copyright 2006, Google Inc.
@@ -20,9 +20,13 @@
 #ifndef TESSERACT_CCUTIL_UNICITY_TABLE_H_
 #define TESSERACT_CCUTIL_UNICITY_TABLE_H_
 
-#include "tesscallback.h"
 #include "errcode.h"
+
 #include "genericvector.h"
+
+#include <functional> // for std::function
+
+namespace tesseract {
 
 // A class to uniquify objects, manipulating them using integers ids.
 // T requirements:
@@ -31,178 +35,85 @@
 //     constructor.
 template <typename T>
 class UnicityTable {
- public:
-  UnicityTable();
+public:
   /// Clear the structures and deallocate internal structures.
-  ~UnicityTable();
+  ~UnicityTable() {
+    clear();
+  }
 
   /// Reserve some memory. If there is size or more elements, the table will
   /// then allocate size * 2 elements.
-  void reserve(int size);
+  void reserve(int size) {
+    table_.reserve(size);
+  }
 
   /// Return the size used.
-  int size() const;
+  int size() const  {
+    return table_.size();
+  }
 
   /// Return the object from an id.
-  const T &get(int id) const;
+  const T &at(int id) const {
+    return table_.at(id);
+  }
 
   // Return the pointer to an object with the given id.
-  T *get_mutable(int id);
+  T &at(int id) {
+    return table_.at(id);
+  }
 
   /// Return the id of the T object.
   /// This method NEEDS a compare_callback to be passed to
   /// set_compare_callback.
-  int get_id(T object) const;
-
-  /// Return true if T is in the table
-  bool contains(T object) const;
-
-  /// Return true if the id is valid
-  T contains_id(int id) const;
+  int get_index(T object) const {
+    return table_.get_index(object);
+  }
 
   /// Add an element in the table
-  int push_back(T object);
+  int push_back(T object)  {
+    auto idx = get_index(object);
+    if (idx == -1) {
+      table_.push_back(object);
+      idx = size();
+    }
+    return idx;
+  }
 
   /// Add a callback to be called to delete the elements when the table took
   /// their ownership.
-  void set_clear_callback(TessCallback1<T>* cb);
-
-  /// Add a callback to be called to compare the elements when needed (contains,
-  /// get_id, ...)
-  void set_compare_callback(TessResultCallback2<bool, T const &, T const &>* cb);
+  void set_clear_callback(std::function<void(T)> cb) {
+    table_.set_clear_callback(cb);
+  }
 
   /// Clear the table, calling the callback function if any.
   /// All the owned Callbacks are also deleted.
   /// If you don't want the Callbacks to be deleted, before calling clear, set
   /// the callback to nullptr.
-  void clear();
+  void clear()  {
+    table_.clear();
+  }
 
   /// This method clear the current object, then, does a shallow copy of
   /// its argument, and finally invalidate its argument.
-  void move(UnicityTable<T>* from);
+  void move(UnicityTable<T> *from) {
+    table_.move(&from->table_);
+  }
 
   /// Read/Write the table to a file. This does _NOT_ read/write the callbacks.
   /// The Callback given must be permanent since they will be called more than
   /// once. The given callback will be deleted at the end.
   /// Returns false on read/write error.
-  bool write(FILE* f, TessResultCallback2<bool, FILE*, T const &>* cb) const;
-  bool read(tesseract::TFile* f,
-            TessResultCallback2<bool, tesseract::TFile*, T*>* cb);
+  bool write(FILE *f, std::function<bool(FILE *, const T &)> cb) const {
+    return table_.write(f, cb);
+  }
+  bool read(tesseract::TFile *f, std::function<bool(tesseract::TFile *, T *)> cb) {
+    return table_.read(f, cb);
+  }
 
- private:
+private:
   GenericVector<T> table_;
-  // Mutable because Run method is not const
-  mutable TessResultCallback2<bool, T const &, T const &>* compare_cb_;
 };
 
-template <typename T>
-class UnicityTableEqEq : public UnicityTable<T> {
- public:
-  UnicityTableEqEq() {
-    UnicityTable<T>::set_compare_callback(
-        NewPermanentTessCallback(tesseract::cmp_eq<T>));
-  }
-};
+} // namespace tesseract
 
-template <typename T>
-UnicityTable<T>::UnicityTable() :
-  compare_cb_(nullptr) {
-}
-
-
-template <typename T>
-UnicityTable<T>::~UnicityTable() {
-  clear();
-}
-
-template <typename T>
-int UnicityTable<T>::size() const{
-  return table_.size();
-}
-
-// Reserve some memory. If there is size or more elements, the table will
-// then allocate size * 2 elements.
-template <typename T>
-void UnicityTable<T>::reserve(int size) {
-  table_.reserve(size);
-}
-
-// Return the object from an id.
-template <typename T>
-const T &UnicityTable<T>::get(int id) const {
-  return table_.get(id);
-}
-// Returns the pointer to the object with the given id.
-template <typename T>
-T *UnicityTable<T>::get_mutable(int id) {
-  return &(table_.get(id));
-}
-// Return true if the id is valid
-template <typename T>
-T UnicityTable<T>::contains_id(int id) const {
-  return table_.contains_index(id);
-}
-
-// Return the id of the T object.
-template <typename T>
-int UnicityTable<T>::get_id(T object) const {
-  return table_.get_index(object);
-}
-
-// Return true if T is in the table
-template <typename T>
-bool UnicityTable<T>::contains(T object) const {
-  return get_id(object) != -1;
-}
-
-// Add an element in the table
-template <typename T>
-int UnicityTable<T>::push_back(T object) {
-  int idx = get_id(object);
-  if (idx == -1) {
-    idx = table_.push_back(object);
-  }
-  return idx;
-}
-
-// Add a callback to be called to delete the elements when the table took
-// their ownership.
-template <typename T>
-void UnicityTable<T>::set_clear_callback(TessCallback1<T>* cb) {
-  table_.set_clear_callback(cb);
-}
-
-// Add a callback to be called to delete the elements when the table took
-// their ownership.
-template <typename T>
-void UnicityTable<T>::set_compare_callback(TessResultCallback2<bool, T const &, T const &>* cb) {
-  table_.set_compare_callback(cb);
-  compare_cb_ = cb;
-}
-
-// Clear the table, calling the callback function if any.
-template <typename T>
-void UnicityTable<T>::clear() {
-  table_.clear();
-}
-
-template <typename T>
-bool UnicityTable<T>::write(
-    FILE* f, TessResultCallback2<bool, FILE*, T const &>* cb) const {
-  return table_.write(f, cb);
-}
-
-template <typename T>
-bool UnicityTable<T>::read(
-    tesseract::TFile* f, TessResultCallback2<bool, tesseract::TFile*, T*>* cb) {
-  return table_.read(f, cb);
-}
-
-// This method clear the current object, then, does a shallow copy of
-// its argument, and finally invalidate its argument.
-template <typename T>
-void UnicityTable<T>::move(UnicityTable<T>* from) {
-  table_.move(&from->table_);
-}
-
-#endif  // TESSERACT_CCUTIL_UNICITY_TABLE_H_
+#endif // TESSERACT_CCUTIL_UNICITY_TABLE_H_

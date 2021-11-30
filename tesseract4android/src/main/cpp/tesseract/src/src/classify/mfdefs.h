@@ -2,7 +2,6 @@
  ** Filename:    mfdefs.h
  ** Purpose:     Definition of micro-features
  ** Author:      Dan Johnson
- ** History:     Mon Jan 22 08:42:13 1990, DSJ, Created.
  **
  ** (c) Copyright Hewlett-Packard Company, 1988.
  ** Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,39 +17,25 @@
 #ifndef MFDEFS_H
 #define MFDEFS_H
 
-/**----------------------------------------------------------------------------
-          Include Files and Type Defines
-----------------------------------------------------------------------------**/
-#include "matchdefs.h"
-#include "oldlist.h"
+#include <array>
+#include <forward_list>
 
-/* definition of a list of micro-features */
-using MICROFEATURES = LIST;
+namespace tesseract {
 
-/* definition of structure of micro-features */
-#define MFSIZE 6
-typedef float MFBLOCK[MFSIZE];
-using MICROFEATURE = float*;
+enum class MicroFeatureParameter {
+  MFXPosition,
+  MFYPosition,
+  MFLength,
+  MFDirection,
+  MFBulge1,
+  MFBulge2,
 
-/* definitions of individual micro-feature parameters */
-#define XPOSITION 0
-#define YPOSITION 1
-#define MFLENGTH 2
-#define ORIENTATION 3
-#define FIRSTBULGE 4
-#define SECONDBULGE 5
+  MFCount // For array sizes.
+};
 
-/**----------------------------------------------------------------------------
-            Macros
-----------------------------------------------------------------------------**/
+using MicroFeature = std::array<float, (int)MicroFeatureParameter::MFCount>;
+using MICROFEATURES = std::forward_list<MicroFeature>;
 
-/* macros for accessing micro-feature lists */
-#define NextFeatureOf(L) ((MICROFEATURE)first_node(L))
+} // namespace tesseract
 
-/**----------------------------------------------------------------------------
-          Public Function Prototypes
-----------------------------------------------------------------------------**/
-MICROFEATURE NewMicroFeature();
-
-void FreeMicroFeatures(MICROFEATURES MicroFeatures);
 #endif

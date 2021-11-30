@@ -17,7 +17,7 @@
 
 #include <stdio.h>
 #include "common.h"
-#include "resultiterator.h"
+#include <tesseract/resultiterator.h>
 #include "allheaders.h"
 #include "pageres.h"
 #include "tesseractclass.h"

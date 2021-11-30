@@ -18,24 +18,29 @@
 
 // Include automatically generated configuration file if running autoconf.
 #ifdef HAVE_CONFIG_H
-#include "config_auto.h"
+#  include "config_auto.h"
 #endif
 
-#include <cstdio>
-#include <cstdarg>
-#include "params.h"
-#include "strngs.h"
 #include "tprintf.h"
 
+#include "params.h"
+
+#include <climits> // for INT_MAX
+#include <cstdarg>
+#include <cstdio>
+
+namespace tesseract {
+
 #define MAX_MSG_LEN 2048
+
+INT_VAR(log_level, INT_MAX, "Logging level");
 
 static STRING_VAR(debug_file, "", "File to send tprintf output to");
 
 // Trace printf
-DLLSYM void tprintf(const char *format, ...)
-{
-  const char* debug_file_name = debug_file.string();
-  static FILE *debugfp = nullptr;   // debug file
+void tprintf(const char *format, ...) {
+  const char *debug_file_name = debug_file.c_str();
+  static FILE *debugfp = nullptr; // debug file
 
   if (debug_file_name == nullptr) {
     // This should not happen.
@@ -57,8 +62,8 @@ DLLSYM void tprintf(const char *format, ...)
     debugfp = nullptr;
   }
 
-  va_list args;            // variable args
-  va_start(args, format);  // variable list
+  va_list args;           // variable args
+  va_start(args, format); // variable list
   if (debugfp != nullptr) {
     vfprintf(debugfp, format, args);
   } else {
@@ -66,3 +71,5 @@ DLLSYM void tprintf(const char *format, ...)
   }
   va_end(args);
 }
+
+} // namespace tesseract

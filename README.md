@@ -20,7 +20,6 @@ This project uses additional libraries (with their own specific licenses):
  - Android 4.1 (API 16) or higher
  - A v4.0.0 [trained data file(s)][tessdata] for language(s) you want to use. Data files must be
 copied to the Android device to a directory named `tessdata`.
- - If you want to use PdfRenderer, copy also [pdf.ttf][pdffile] file to the `tessdata` directory.
  - Application must hold permission `READ_EXTERNAL_STORAGE` to access `tessdata` directory.
 
 ## Variants
@@ -100,4 +99,3 @@ To build the release version of the library, use task `tesseract4android:assembl
 [jpeg]: http://libjpeg.sourceforge.net/
 [png]: http://www.libpng.org/pub/png/libpng.html
 [tessdata]: https://github.com/tesseract-ocr/tessdata/tree/4.0.0
-[pdffile]: https://github.com/tesseract-ocr/tesseract/blob/master/tessdata/pdf.ttf

@@ -15,19 +15,20 @@
 ///////////////////////////////////////////////////////////////////////
 
 #include "intsimdmatrix.h"
+#include <gtest/gtest.h>
+#include <gtest/internal/gtest-port.h>
 #include <memory>
-#include "genericvector.h"
+#include <vector>
 #include "include_gunit.h"
 #include "matrix.h"
 #include "simddetect.h"
 #include "tprintf.h"
 
 namespace tesseract {
-namespace {
 
 class IntSimdMatrixTest : public ::testing::Test {
- protected:
-  void SetUp() {
+protected:
+  void SetUp() override {
     std::locale::global(std::locale(""));
   }
 
@@ -42,7 +43,7 @@ class IntSimdMatrixTest : public ::testing::Test {
     return a;
   }
   // Makes a random input vector of the given size, with rounding up.
-  std::vector<int8_t> RandomVector(int size, const IntSimdMatrix& matrix) {
+  std::vector<int8_t> RandomVector(int size, const IntSimdMatrix &matrix) {
     int rounded_size = matrix.RoundInputs(size);
     std::vector<int8_t> v(rounded_size, 0);
     for (int i = 0; i < size; ++i) {
@@ -51,29 +52,35 @@ class IntSimdMatrixTest : public ::testing::Test {
     return v;
   }
   // Makes a random scales vector of the given size.
-  GenericVector<double> RandomScales(int size) {
-    GenericVector<double> v(size, 0.0);
+  std::vector<TFloat> RandomScales(int size) {
+    std::vector<TFloat> v(size);
     for (int i = 0; i < size; ++i) {
-      v[i] = 1.0 + random_.SignedRand(1.0);
+      v[i] = (1.0 + random_.SignedRand(1.0)) / INT8_MAX;
     }
     return v;
   }
   // Tests a range of sizes and compares the results against the generic version.
-  void ExpectEqualResults(const IntSimdMatrix& matrix) {
-    double total = 0.0;
+  void ExpectEqualResults(const IntSimdMatrix &matrix) {
+    TFloat total = 0.0;
     for (int num_out = 1; num_out < 130; ++num_out) {
       for (int num_in = 1; num_in < 130; ++num_in) {
         GENERIC_2D_ARRAY<int8_t> w = InitRandom(num_out, num_in + 1);
         std::vector<int8_t> u = RandomVector(num_in, matrix);
-        GenericVector<double> scales = RandomScales(num_out);
-        std::vector<double> base_result(num_out);
+        std::vector<TFloat> scales = RandomScales(num_out);
+        int ro = num_out;
+        if (IntSimdMatrix::intSimdMatrix) {
+          ro = IntSimdMatrix::intSimdMatrix->RoundOutputs(ro);
+        }
+        std::vector<TFloat> base_result(num_out);
         IntSimdMatrix::MatrixDotVector(w, scales, u.data(), base_result.data());
-        std::vector<double> test_result(num_out);
+        std::vector<TFloat> test_result(ro);
         std::vector<int8_t> shaped_wi;
-        matrix.Init(w, shaped_wi);
+        int32_t rounded_num_out;
+        matrix.Init(w, shaped_wi, rounded_num_out);
+        scales.resize(rounded_num_out);
         if (matrix.matrixDotVectorFunction) {
-          matrix.matrixDotVectorFunction(w.dim1(), w.dim2(), &shaped_wi[0],
-                                         &scales[0], &u[0], &test_result[0]);
+          matrix.matrixDotVectorFunction(w.dim1(), w.dim2(), &shaped_wi[0], &scales[0], &u[0],
+                                         &test_result[0]);
         } else {
           IntSimdMatrix::MatrixDotVector(w, scales, u.data(), test_result.data());
         }
@@ -84,7 +91,11 @@ class IntSimdMatrixTest : public ::testing::Test {
       }
     }
     // Compare sum of all results with expected value.
-    EXPECT_FLOAT_EQ(total, -423243.392011);
+#ifdef FAST_FLOAT
+    EXPECT_FLOAT_EQ(total, 337852.16f);
+#else
+    EXPECT_FLOAT_EQ(total, 337849.39354684710);
+#endif
   }
 
   TRand random_;
@@ -98,33 +109,30 @@ TEST_F(IntSimdMatrixTest, C) {
 
 // Tests that the SSE implementation gets the same result as the vanilla.
 TEST_F(IntSimdMatrixTest, SSE) {
-#if defined(SSE4_1)
-  if (SIMDDetect::IsSSEAvailable()) {
-    tprintf("SSE found! Continuing...");
-  } else {
-    tprintf("No SSE found! Not tested!");
-    return;
+#if defined(HAVE_SSE4_1)
+  if (!SIMDDetect::IsSSEAvailable()) {
+    GTEST_LOG_(INFO) << "No SSE found! Not tested!";
+    GTEST_SKIP();
   }
   ExpectEqualResults(IntSimdMatrix::intSimdMatrixSSE);
 #else
-  tprintf("SSE unsupported! Not tested!");
+  GTEST_LOG_(INFO) << "SSE unsupported! Not tested!";
+  GTEST_SKIP();
 #endif
 }
 
 // Tests that the AVX2 implementation gets the same result as the vanilla.
 TEST_F(IntSimdMatrixTest, AVX2) {
-#if defined(AVX2)
-  if (SIMDDetect::IsAVX2Available()) {
-    tprintf("AVX2 found! Continuing...");
-  } else {
-    tprintf("No AVX2 found! Not tested!");
-    return;
+#if defined(HAVE_AVX2)
+  if (!SIMDDetect::IsAVX2Available()) {
+    GTEST_LOG_(INFO) << "No AVX2 found! Not tested!";
+    GTEST_SKIP();
   }
   ExpectEqualResults(IntSimdMatrix::intSimdMatrixAVX2);
 #else
-  tprintf("AVX2 unsupported! Not tested!");
+  GTEST_LOG_(INFO) << "AVX2 unsupported! Not tested!";
+  GTEST_SKIP();
 #endif
 }
 
-}  // namespace
-}  // namespace tesseract
+} // namespace tesseract

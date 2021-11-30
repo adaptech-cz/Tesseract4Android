@@ -1,5 +1,4 @@
-/* -*-C-*-
-###############################################################################
+/******************************************************************************
 #
 # File:         oldlist.cpp
 # Description:  List processing procedures.
@@ -56,22 +55,13 @@
 
 ******************************************************************************/
 #include "oldlist.h"
+
+#include "errcode.h" // for ASSERT_HOST
+
 #include <cstdio>
-#include <cstring>      // for strcmp
-#include "errcode.h"    // for ASSERT_HOST
+#include <cstring> // for strcmp
 
-/**********************************************************************
- *  c o p y   f i r s t
- *
- *  Do the appropriate kind a push operation to copy the first node from
- *  one list to another.
- *
- **********************************************************************/
-
-#define copy_first(l1,l2)  \
-(l2=push(l2, first_node(l1)))
-
-
+namespace tesseract {
 
 /*----------------------------------------------------------------------
               F u n c t i o n s
@@ -88,18 +78,6 @@ static int is_same(void *item1, void *item2) {
 }
 
 /**********************************************************************
- *  c o u n t
- *
- *  Recursively count the elements in  a list.  Return the count.
- **********************************************************************/
-int count(LIST var_list) {
-  int temp = 0;
-
-  iterate(var_list) temp += 1;
-  return (temp);
-}
-
-/**********************************************************************
  *  d e l e t e    d
  *
  *  Delete all the elements out of the current list that match the key.
@@ -111,19 +89,21 @@ LIST delete_d(LIST list, void *key, int_compare is_equal) {
   LIST result = NIL_LIST;
   LIST last_one = NIL_LIST;
 
-  if (is_equal == nullptr) is_equal = is_same;
+  if (is_equal == nullptr) {
+    is_equal = is_same;
+  }
 
   while (list != NIL_LIST) {
-    if (!(*is_equal)(first_node(list), key)) {
+    if (!(*is_equal)(list->first_node(), key)) {
       if (last_one == NIL_LIST) {
         last_one = list;
-        list = list_rest(list);
+        list = list->list_rest();
         result = last_one;
         set_rest(last_one, NIL_LIST);
       } else {
         set_rest(last_one, list);
         last_one = list;
-        list = list_rest(list);
+        list = list->list_rest();
         set_rest(last_one, NIL_LIST);
       }
     } else {
@@ -142,7 +122,7 @@ LIST destroy(LIST list) {
   LIST next;
 
   while (list != NIL_LIST) {
-    next = list_rest(list);
+    next = list->list_rest();
     delete list;
     list = next;
   }
@@ -158,27 +138,10 @@ void destroy_nodes(LIST list, void_dest destructor) {
   ASSERT_HOST(destructor != nullptr);
 
   while (list != NIL_LIST) {
-    if (first_node(list) != nullptr) (*destructor)(first_node(list));
+    if (list->first_node() != nullptr) {
+      (*destructor)(list->first_node());
+    }
     list = pop(list);
-  }
-}
-
-/**********************************************************************
- *  i n s e r t
- *
- *  Create a list element and rearrange the pointers so that the first
- *  element in the list is the second argument.
- **********************************************************************/
-void insert(LIST list, void *node) {
-  LIST element;
-
-  if (list != NIL_LIST) {
-    element = push(NIL_LIST, node);
-    set_rest(element, list_rest(list));
-    set_rest(list, element);
-    node = first_node(list);
-    list->node = first_node(list_rest(list));
-    list->next->node = (LIST)node;
   }
 }
 
@@ -188,8 +151,10 @@ void insert(LIST list, void *node) {
  *  Return the last list item (this is list type).
  **********************************************************************/
 LIST last(LIST var_list) {
-  while (list_rest(var_list) != NIL_LIST) var_list = list_rest(var_list);
-  return (var_list);
+  while (var_list->list_rest() != NIL_LIST) {
+    var_list = var_list->list_rest();
+  }
+  return var_list;
 }
 
 /**********************************************************************
@@ -199,9 +164,9 @@ LIST last(LIST var_list) {
  *  that it occupied in the list.
  **********************************************************************/
 LIST pop(LIST list) {
-  LIST temp = list_rest(list);
+  LIST temp = list->list_rest();
   delete list;
-  return (temp);
+  return temp;
 }
 
 /**********************************************************************
@@ -231,21 +196,9 @@ LIST push_last(LIST list, void *item) {
     t = last(list);
     t->next = push(NIL_LIST, item);
     return (list);
-  } else
+  } else {
     return (push(NIL_LIST, item));
-}
-
-/**********************************************************************
- *  r e v e r s e
- *
- *  Create a new list with the elements reversed. The old list is not
- *  destroyed.
- **********************************************************************/
-LIST reverse(LIST list) {
-  LIST newlist = NIL_LIST;
-
-  iterate(list) copy_first(list, newlist);
-  return (newlist);
+  }
 }
 
 /**********************************************************************
@@ -256,8 +209,12 @@ LIST reverse(LIST list) {
  *  the third parameter to this routine.
  **********************************************************************/
 LIST search(LIST list, void *key, int_compare is_equal) {
-  if (is_equal == nullptr) is_equal = is_same;
+  if (is_equal == nullptr) {
+    is_equal = is_same;
+  }
 
-  iterate(list) if ((*is_equal)(first_node(list), key)) return (list);
+  iterate(list) if ((*is_equal)(list->first_node(), key)) return list;
   return (NIL_LIST);
 }
+
+} // namespace tesseract

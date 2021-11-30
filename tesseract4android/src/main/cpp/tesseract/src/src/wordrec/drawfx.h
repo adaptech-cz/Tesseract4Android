@@ -1,5 +1,5 @@
 /**********************************************************************
- * File:        drawfx.h  (Formerly drawfx.h)
+ * File:        drawfx.h
  * Description: Draw things to do with feature extraction.
  * Author:      Ray Smith
  *
@@ -22,10 +22,15 @@
 #include "params.h"
 #include "scrollview.h"
 
-extern STRING_VAR_H (fx_debugfile, DEBUG_WIN_NAME, "Name of debugfile");
-extern ScrollView* fx_win;
-extern FILE *fx_debug;
-void create_fx_win();  //make features win
-void clear_fx_win();  //make features win
-void create_fxdebug_win();  //make gradients win
+namespace tesseract {
+
+#ifndef GRAPHICS_DISABLED
+extern ScrollView *fx_win;
+#endif // !GRAPHICS_DISABLED
+void create_fx_win();      // make features win
+void clear_fx_win();       // make features win
+void create_fxdebug_win(); // make gradients win
+
+} // namespace tesseract
+
 #endif

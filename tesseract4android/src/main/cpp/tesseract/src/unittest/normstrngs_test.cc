@@ -9,22 +9,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "absl/strings/str_format.h"    // for absl::StrFormat
-#include "include_gunit.h"
 #include "normstrngs.h"
+#include <tesseract/unichar.h>
+#include "include_gunit.h"
 #include "normstrngs_test.h"
-#include "strngs.h"
-#include "unichar.h"
-#if defined(HAS_UNILIB_H)
-#include "unilib.h"
+#ifdef INCLUDE_TENSORFLOW
+#  include "util/utf8/unilib.h" // for UniLib
 #endif
 
 #include "include_gunit.h"
 
 namespace tesseract {
-namespace {
 
-#if defined(HAS_UNILIB_H)
+#if defined(MISSING_CODE)
 static std::string EncodeAsUTF8(const char32 ch32) {
   UNICHAR uni_ch(ch32);
   return std::string(uni_ch.utf8(), uni_ch.utf8_len());
@@ -32,58 +29,51 @@ static std::string EncodeAsUTF8(const char32 ch32) {
 #endif
 
 TEST(NormstrngsTest, BasicText) {
-  const char* kBasicText = "AbCd Ef";
+  const char *kBasicText = "AbCd Ef";
   std::string result;
   EXPECT_TRUE(NormalizeUTF8String(UnicodeNormMode::kNFKC, OCRNorm::kNormalize,
-                                  GraphemeNorm::kNormalize, kBasicText,
-                                  &result));
+                                  GraphemeNorm::kNormalize, kBasicText, &result));
   EXPECT_STREQ(kBasicText, result.c_str());
 }
 
 TEST(NormstrngsTest, LigatureText) {
-  const char* kTwoByteLigText = "ĳ";  // U+0133 (ĳ) -> ij
+  const char *kTwoByteLigText = "ĳ"; // U+0133 (ĳ) -> ij
   std::string result;
   EXPECT_TRUE(NormalizeUTF8String(UnicodeNormMode::kNFKC, OCRNorm::kNormalize,
-                                  GraphemeNorm::kNormalize, kTwoByteLigText,
-                                  &result));
+                                  GraphemeNorm::kNormalize, kTwoByteLigText, &result));
   EXPECT_STREQ("ij", result.c_str());
 
-  const char* kThreeByteLigText = "ﬁnds";  // U+FB01 (ﬁ) -> fi
+  const char *kThreeByteLigText = "ﬁnds"; // U+FB01 (ﬁ) -> fi
   EXPECT_TRUE(NormalizeUTF8String(UnicodeNormMode::kNFKC, OCRNorm::kNormalize,
-                                  GraphemeNorm::kNormalize, kThreeByteLigText,
-                                  &result));
+                                  GraphemeNorm::kNormalize, kThreeByteLigText, &result));
   EXPECT_STREQ("finds", result.c_str());
 }
 
 TEST(NormstrngsTest, OcrSpecificNormalization) {
-  const char* kSingleQuoteText = "‘Hi";  // U+2018 (‘) -> U+027 (')
+  const char *kSingleQuoteText = "‘Hi"; // U+2018 (‘) -> U+027 (')
   std::string result;
   EXPECT_TRUE(NormalizeUTF8String(UnicodeNormMode::kNFKC, OCRNorm::kNormalize,
-                                  GraphemeNorm::kNormalize, kSingleQuoteText,
-                                  &result));
+                                  GraphemeNorm::kNormalize, kSingleQuoteText, &result));
   EXPECT_STREQ("'Hi", result.c_str());
 
-  const char* kDoubleQuoteText = "“Hi";  // U+201C (“) -> U+022 (")
+  const char *kDoubleQuoteText = "“Hi"; // U+201C (“) -> U+022 (")
   EXPECT_TRUE(NormalizeUTF8String(UnicodeNormMode::kNFKC, OCRNorm::kNormalize,
-                                  GraphemeNorm::kNormalize, kDoubleQuoteText,
-                                  &result));
+                                  GraphemeNorm::kNormalize, kDoubleQuoteText, &result));
   EXPECT_STREQ("\"Hi", result.c_str());
 
-  const char* kEmDash = "Hi—";  // U+2014 (—) -> U+02D (-)
+  const char *kEmDash = "Hi—"; // U+2014 (—) -> U+02D (-)
   EXPECT_TRUE(NormalizeUTF8String(UnicodeNormMode::kNFKC, OCRNorm::kNormalize,
                                   GraphemeNorm::kNormalize, kEmDash, &result));
   EXPECT_STREQ("Hi-", result.c_str());
   // Without the ocr normalization, these changes are not made.
-  EXPECT_TRUE(NormalizeUTF8String(UnicodeNormMode::kNFKC, OCRNorm::kNone,
-                                  GraphemeNorm::kNormalize, kSingleQuoteText,
-                                  &result));
+  EXPECT_TRUE(NormalizeUTF8String(UnicodeNormMode::kNFKC, OCRNorm::kNone, GraphemeNorm::kNormalize,
+                                  kSingleQuoteText, &result));
   EXPECT_STREQ(kSingleQuoteText, result.c_str());
-  EXPECT_TRUE(NormalizeUTF8String(UnicodeNormMode::kNFKC, OCRNorm::kNone,
-                                  GraphemeNorm::kNormalize, kDoubleQuoteText,
-                                  &result));
+  EXPECT_TRUE(NormalizeUTF8String(UnicodeNormMode::kNFKC, OCRNorm::kNone, GraphemeNorm::kNormalize,
+                                  kDoubleQuoteText, &result));
   EXPECT_STREQ(kDoubleQuoteText, result.c_str());
-  EXPECT_TRUE(NormalizeUTF8String(UnicodeNormMode::kNFKC, OCRNorm::kNone,
-                                  GraphemeNorm::kNormalize, kEmDash, &result));
+  EXPECT_TRUE(NormalizeUTF8String(UnicodeNormMode::kNFKC, OCRNorm::kNone, GraphemeNorm::kNormalize,
+                                  kEmDash, &result));
   EXPECT_STREQ(kEmDash, result.c_str());
 }
 
@@ -92,48 +82,44 @@ const char kEngText[] = "the quick brown fox jumps over the lazy dog";
 const char kHinText[] = "पिताने विवाह की | हो गई उद्विग्न वह सोचा";
 const char kKorText[] = "이는 것으로";
 // Hindi words containing illegal vowel sequences.
-const char* kBadlyFormedHinWords[] = {"उपयोक्ताो", "नहीें",     "प्रंात",
-                                      "कहीअे",     "पत्रिाका", "छह्णाीस"};
+const char *kBadlyFormedHinWords[] = {"उपयोक्ताो", "नहीें", "प्रंात", "कहीअे", "पत्रिाका", "छह्णाीस"};
 // Thai illegal sequences.
-const char* kBadlyFormedThaiWords[] = {"ฤิ", "กา้ํ", "กิำ", "นำ้", "เเก"};
+const char *kBadlyFormedThaiWords[] = {"ฤิ", "กา้ํ", "กิำ", "นำ้", "เเก"};
 
 TEST(NormstrngsTest, DetectsCorrectText) {
   std::string chars;
-  EXPECT_TRUE(NormalizeUTF8String(UnicodeNormMode::kNFKC, OCRNorm::kNone,
-                                  GraphemeNorm::kNormalize, kEngText, &chars));
+  EXPECT_TRUE(NormalizeUTF8String(UnicodeNormMode::kNFKC, OCRNorm::kNone, GraphemeNorm::kNormalize,
+                                  kEngText, &chars));
   EXPECT_STREQ(kEngText, chars.c_str());
 
-  EXPECT_TRUE(NormalizeUTF8String(UnicodeNormMode::kNFKC, OCRNorm::kNone,
-                                  GraphemeNorm::kNormalize, kHinText, &chars))
+  EXPECT_TRUE(NormalizeUTF8String(UnicodeNormMode::kNFKC, OCRNorm::kNone, GraphemeNorm::kNormalize,
+                                  kHinText, &chars))
       << "Incorrect text: '" << kHinText << "'";
   EXPECT_STREQ(kHinText, chars.c_str());
 
-  EXPECT_TRUE(NormalizeUTF8String(UnicodeNormMode::kNFKC, OCRNorm::kNone,
-                                  GraphemeNorm::kNormalize, kKorText, &chars));
+  EXPECT_TRUE(NormalizeUTF8String(UnicodeNormMode::kNFKC, OCRNorm::kNone, GraphemeNorm::kNormalize,
+                                  kKorText, &chars));
   EXPECT_STREQ(kKorText, chars.c_str());
 }
 
 TEST(NormstrngsTest, DetectsIncorrectText) {
-  for (size_t i = 0; i < ARRAYSIZE(kBadlyFormedHinWords); ++i) {
+  for (auto &kBadlyFormedHinWord : kBadlyFormedHinWords) {
     EXPECT_FALSE(NormalizeUTF8String(UnicodeNormMode::kNFKC, OCRNorm::kNone,
-                                     GraphemeNorm::kNormalize,
-                                     kBadlyFormedHinWords[i], nullptr))
-        << kBadlyFormedHinWords[i];
+                                     GraphemeNorm::kNormalize, kBadlyFormedHinWord, nullptr))
+        << kBadlyFormedHinWord;
   }
-  for (size_t i = 0; i < ARRAYSIZE(kBadlyFormedThaiWords); ++i) {
+  for (auto &kBadlyFormedThaiWord : kBadlyFormedThaiWords) {
     EXPECT_FALSE(NormalizeUTF8String(UnicodeNormMode::kNFKC, OCRNorm::kNone,
-                                     GraphemeNorm::kNormalize,
-                                     kBadlyFormedThaiWords[i], nullptr))
-        << kBadlyFormedThaiWords[i];
+                                     GraphemeNorm::kNormalize, kBadlyFormedThaiWord, nullptr))
+        << kBadlyFormedThaiWord;
   }
 }
 
 TEST(NormstrngsTest, NonIndicTextDoesntBreakIndicRules) {
   std::string nonindic = "Here's some latin text.";
   std::string dest;
-  EXPECT_TRUE(NormalizeUTF8String(UnicodeNormMode::kNFC, OCRNorm::kNone,
-                                  GraphemeNorm::kNormalize, nonindic.c_str(),
-                                  &dest))
+  EXPECT_TRUE(NormalizeUTF8String(UnicodeNormMode::kNFC, OCRNorm::kNone, GraphemeNorm::kNormalize,
+                                  nonindic.c_str(), &dest))
       << PrintString32WithUnicodes(nonindic);
   EXPECT_EQ(dest, nonindic);
 }
@@ -142,9 +128,8 @@ TEST(NormstrngsTest, NoLonelyJoiners) {
   std::string str = "x\u200d\u0d06\u0d34\u0d02";
   std::vector<std::string> glyphs;
   // Returns true, but the joiner is gone.
-  EXPECT_TRUE(NormalizeCleanAndSegmentUTF8(
-      UnicodeNormMode::kNFC, OCRNorm::kNone, GraphemeNormMode::kCombined, true,
-      str.c_str(), &glyphs))
+  EXPECT_TRUE(NormalizeCleanAndSegmentUTF8(UnicodeNormMode::kNFC, OCRNorm::kNone,
+                                           GraphemeNormMode::kCombined, true, str.c_str(), &glyphs))
       << PrintString32WithUnicodes(str);
   EXPECT_EQ(glyphs.size(), 3);
   EXPECT_EQ(glyphs[0], std::string("x"));
@@ -156,9 +141,8 @@ TEST(NormstrngsTest, NoLonelyJoinersPlus) {
   std::string str = "\u0d2a\u200d+\u0d2a\u0d4b";
   std::vector<std::string> glyphs;
   // Returns true, but the joiner is gone.
-  EXPECT_TRUE(NormalizeCleanAndSegmentUTF8(
-      UnicodeNormMode::kNFC, OCRNorm::kNone, GraphemeNormMode::kCombined, true,
-      str.c_str(), &glyphs))
+  EXPECT_TRUE(NormalizeCleanAndSegmentUTF8(UnicodeNormMode::kNFC, OCRNorm::kNone,
+                                           GraphemeNormMode::kCombined, true, str.c_str(), &glyphs))
       << PrintString32WithUnicodes(str);
   EXPECT_EQ(glyphs.size(), 3);
   EXPECT_EQ(glyphs[0], std::string("\u0d2a"));
@@ -173,9 +157,8 @@ TEST(NormstrngsTest, NoLonelyJoinersNonAlpha) {
   str = "\u200d\u200c\u200d";
   // Without the plus, the string is invalid.
   std::string result;
-  EXPECT_FALSE(NormalizeUTF8String(UnicodeNormMode::kNFC, OCRNorm::kNone,
-                                   GraphemeNorm::kNormalize, str.c_str(),
-                                   &result))
+  EXPECT_FALSE(NormalizeUTF8String(UnicodeNormMode::kNFC, OCRNorm::kNone, GraphemeNorm::kNormalize,
+                                   str.c_str(), &result))
       << PrintString32WithUnicodes(result);
 }
 
@@ -186,14 +169,14 @@ TEST(NormstrngsTest, JoinersStayInArabic) {
 }
 
 TEST(NormstrngsTest, DigitOK) {
-  std::string str = "\u0cea";  // Digit 4.
+  std::string str = "\u0cea"; // Digit 4.
   ExpectGraphemeModeResults(str, UnicodeNormMode::kNFC, 1, 1, 1, str);
 }
 
 TEST(NormstrngsTest, DandaOK) {
-  std::string str = "\u0964";  // Single danda.
+  std::string str = "\u0964"; // Single danda.
   ExpectGraphemeModeResults(str, UnicodeNormMode::kNFC, 1, 1, 1, str);
-  str = "\u0965";  // Double danda.
+  str = "\u0965"; // Double danda.
   ExpectGraphemeModeResults(str, UnicodeNormMode::kNFC, 1, 1, 1, str);
 }
 
@@ -314,7 +297,7 @@ TEST(NormstrngsTest, AllScriptsRegtest) {
         "hòa hoãn với người Pháp để cho họ được dựng một ngôi nhà thờ nhỏ bằng "
         "Cặp câu đói súc tích mà sâu sắc, là lời chúc lời"}});
 
-  for (const auto& p : kScriptText) {
+  for (const auto &p : kScriptText) {
     std::string normalized;
     EXPECT_TRUE(tesseract::NormalizeUTF8String(
         tesseract::UnicodeNormMode::kNFKC, tesseract::OCRNorm::kNormalize,
@@ -331,7 +314,9 @@ TEST(NormstrngsTest, IsWhitespace) {
   EXPECT_TRUE(IsWhitespace('\n'));
   // U+2000 through U+200A
   for (char32 ch = 0x2000; ch <= 0x200A; ++ch) {
-    SCOPED_TRACE(absl::StrFormat("Failed at U+%x", ch));
+    char text[80];
+    snprintf(text, sizeof(text), "Failed at U+%x", ch);
+    SCOPED_TRACE(text);
     EXPECT_TRUE(IsWhitespace(ch));
   }
   // U+3000 is whitespace
@@ -363,35 +348,43 @@ TEST(NormstrngsTest, SpanUTF8NotWhitespace) {
   EXPECT_EQ(12, SpanUTF8NotWhitespace(kMixedText));
 }
 
-#if defined(HAS_UNILIB_H)
-// Test that the method clones the util/utf8/public/unilib definition of
+// Test that the method clones the util/utf8/unilib definition of
 // interchange validity.
 TEST(NormstrngsTest, IsInterchangeValid) {
+#ifdef INCLUDE_TENSORFLOW
   const int32_t kMinUnicodeValue = 33;
   const int32_t kMaxUnicodeValue = 0x10FFFF;
   for (int32_t ch = kMinUnicodeValue; ch <= kMaxUnicodeValue; ++ch) {
-    SCOPED_TRACE(absl::StrFormat("Failed at U+%x", ch));
+    char text[80];
+    snprintf(text, sizeof(text), "Failed at U+%x", ch);
+    SCOPED_TRACE(text);
     EXPECT_EQ(UniLib::IsInterchangeValid(ch), IsInterchangeValid(ch));
   }
-}
+#else
+  GTEST_SKIP();
 #endif
+}
 
-#if defined(HAS_UNILIB_H)
-// Test that the method clones the util/utf8/public/unilib definition of
+// Test that the method clones the util/utf8/unilib definition of
 // 7-bit ASCII interchange validity.
 TEST(NormstrngsTest, IsInterchangeValid7BitAscii) {
+#if defined(MISSING_CODE) && defined(INCLUDE_TENSORFLOW)
   const int32_t kMinUnicodeValue = 33;
   const int32_t kMaxUnicodeValue = 0x10FFFF;
   for (int32_t ch = kMinUnicodeValue; ch <= kMaxUnicodeValue; ++ch) {
-    SCOPED_TRACE(absl::StrFormat("Failed at U+%x", ch));
+    char text[80];
+    snprintf(text, sizeof(text), "Failed at U+%x", ch);
+    SCOPED_TRACE(text);
     std::string str = EncodeAsUTF8(ch);
-    EXPECT_EQ(UniLib::IsInterchangeValid7BitAscii(str),
-              IsInterchangeValid7BitAscii(ch));
+    EXPECT_EQ(UniLib::IsInterchangeValid7BitAscii(str), IsInterchangeValid7BitAscii(ch));
   }
-}
+#else
+  // Skipped because of missing UniLib::IsInterchangeValid7BitAscii.
+  GTEST_SKIP();
 #endif
+}
 
-// Test that the method clones the util/utf8/public/unilib definition of
+// Test that the method clones the util/utf8/unilib definition of
 // fullwidth-halfwidth .
 TEST(NormstrngsTest, FullwidthToHalfwidth) {
   // U+FF21 -> U+0041 (Latin capital letter A)
@@ -401,12 +394,16 @@ TEST(NormstrngsTest, FullwidthToHalfwidth) {
   // U+FFE6 -> U+20A9 (won sign)
   EXPECT_EQ(0x20A9, FullwidthToHalfwidth(0xFFE6));
 
-#if defined(HAS_UNILIB_H)
+#if defined(MISSING_CODE) && defined(INCLUDE_TENSORFLOW)
+  // Skipped because of missing UniLib::FullwidthToHalfwidth.
   const int32_t kMinUnicodeValue = 33;
   const int32_t kMaxUnicodeValue = 0x10FFFF;
   for (int32_t ch = kMinUnicodeValue; ch <= kMaxUnicodeValue; ++ch) {
-    if (!IsValidCodepoint(ch)) continue;
-    SCOPED_TRACE(absl::StrFormat("Failed at U+%x", ch));
+    if (!IsValidCodepoint(ch))
+      continue;
+    char text[80];
+    snprintf(text, sizeof(text), "Failed at U+%x", ch);
+    SCOPED_TRACE(text);
     std::string str = EncodeAsUTF8(ch);
     const std::string expected_half_str =
         UniLib::FullwidthToHalfwidth(str.c_str(), str.length(), true);
@@ -415,5 +412,4 @@ TEST(NormstrngsTest, FullwidthToHalfwidth) {
 #endif
 }
 
-}  // namespace
-}  // namespace tesseract
+} // namespace tesseract

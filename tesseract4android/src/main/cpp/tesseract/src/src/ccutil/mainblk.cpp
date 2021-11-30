@@ -17,48 +17,42 @@
  **********************************************************************/
 
 #include <cstdlib>
-#include <cstring>      // for std::strrchr
+#include <cstring> // for std::strrchr
 #if defined(_WIN32)
-#include <io.h>         // for _access
+#  include <io.h> // for _access
 #endif
 
-#include "fileerr.h"
 #include "ccutil.h"
+#include "fileerr.h"
 
 namespace tesseract {
-/**********************************************************************
- * main_setup
- *
- * Main for mithras demo program. Read the arguments and set up globals.
- **********************************************************************/
-
 /**
  * @brief CCUtil::main_setup - set location of tessdata and name of image
  *
  * @param argv0 - paths to the directory with language files and config files.
  * An actual value of argv0 is used if not nullptr, otherwise TESSDATA_PREFIX is
- * used if not nullptr, next try to use compiled in -DTESSDATA_PREFIX. If previous
- * is not successful - use current directory.
+ * used if not nullptr, next try to use compiled in -DTESSDATA_PREFIX. If
+ * previous is not successful - use current directory.
  * @param basename - name of image
  */
-void CCUtil::main_setup(const char *argv0, const char *basename) {
-  imagebasename = basename;      /**< name of image */
+void CCUtil::main_setup(const std::string &argv0, const std::string &basename) {
+  imagebasename = basename; /**< name of image */
 
   char *tessdata_prefix = getenv("TESSDATA_PREFIX");
 
-  if (argv0 != nullptr && *argv0 != '\0') {
+  if (!argv0.empty()) {
     /* Use tessdata prefix from the command line. */
     datadir = argv0;
   } else if (tessdata_prefix) {
     /* Use tessdata prefix from the environment. */
     datadir = tessdata_prefix;
 #if defined(_WIN32)
-  } else if (datadir == nullptr || _access(datadir.string(), 0) != 0) {
+  } else if (datadir.empty() || _access(datadir.c_str(), 0) != 0) {
     /* Look for tessdata in directory of executable. */
     char path[_MAX_PATH];
     DWORD length = GetModuleFileName(nullptr, path, sizeof(path));
     if (length > 0 && length < sizeof(path)) {
-      char* separator = std::strrchr(path, '\\');
+      char *separator = std::strrchr(path, '\\');
       if (separator != nullptr) {
         *separator = '\0';
         datadir = path;
@@ -68,24 +62,21 @@ void CCUtil::main_setup(const char *argv0, const char *basename) {
 #endif /* _WIN32 */
 #if defined(TESSDATA_PREFIX)
   } else {
-/* Use tessdata prefix which was compiled in. */
-#define _STR(a) #a
-#define _XSTR(a) _STR(a)
-    datadir = _XSTR(TESSDATA_PREFIX) "/tessdata";
-#undef _XSTR
-#undef _STR
+    // Use tessdata prefix which was compiled in.
+    datadir = TESSDATA_PREFIX "/tessdata";
 #endif
   }
 
   // datadir may still be empty:
-  if (datadir.length() == 0) {
+  if (datadir.empty()) {
     datadir = "./";
   }
 
   // check for missing directory separator
-  const char *lastchar = datadir.string();
+  const char *lastchar = datadir.c_str();
   lastchar += datadir.length() - 1;
-  if ((strcmp(lastchar, "/") != 0) && (strcmp(lastchar, "\\") != 0))
+  if ((strcmp(lastchar, "/") != 0) && (strcmp(lastchar, "\\") != 0)) {
     datadir += "/";
+  }
 }
-}  // namespace tesseract
+} // namespace tesseract

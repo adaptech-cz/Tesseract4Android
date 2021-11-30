@@ -2,7 +2,6 @@
  ** Filename:   MergeNF.c
  ** Purpose:    Program for merging similar nano-feature protos
  ** Author:     Dan Johnson
- ** History:    Wed Nov 21 09:55:23 1990, DSJ, Created.
  **
  ** (c) Copyright Hewlett-Packard Company, 1988.
  ** Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +21,6 @@
 /**----------------------------------------------------------------------------
      Include Files and Type Defines
 ----------------------------------------------------------------------------**/
-#include "callcpp.h"
 #include "cluster.h"
 #include "ocrfeatures.h"
 #include "picofeat.h"
@@ -40,9 +38,9 @@
 #define MFLENGTH 2
 #define ORIENTATION 3
 
-typedef struct {
+struct FRECT {
   float MinX, MaxX, MinY, MaxY;
-} FRECT;
+};
 
 /**----------------------------------------------------------------------------
       Public Macros
@@ -55,25 +53,25 @@ typedef struct {
 /**----------------------------------------------------------------------------
      Public Function Prototypes
 ----------------------------------------------------------------------------**/
-float CompareProtos(PROTO p1, PROTO p2);
+float CompareProtos(tesseract::PROTO_STRUCT *p1, tesseract::PROTO_STRUCT *p2);
 
-void ComputeMergedProto(PROTO p1, PROTO p2, float w1, float w2,
-                        PROTO MergedProto);
+void ComputeMergedProto(tesseract::PROTO_STRUCT *p1, tesseract::PROTO_STRUCT *p2, float w1, float w2,
+                        tesseract::PROTO_STRUCT *MergedProto);
 
-int FindClosestExistingProto(CLASS_TYPE Class, int NumMerged[],
-                             PROTOTYPE* Prototype);
+int FindClosestExistingProto(tesseract::CLASS_TYPE Class, int NumMerged[],
+                             tesseract::PROTOTYPE *Prototype);
 
-void MakeNewFromOld(PROTO New, PROTOTYPE* Old);
+void MakeNewFromOld(tesseract::PROTO_STRUCT *New, tesseract::PROTOTYPE *Old);
 
-float SubfeatureEvidence(FEATURE Feature, PROTO Proto);
+float SubfeatureEvidence(tesseract::FEATURE Feature, tesseract::PROTO_STRUCT *Proto);
 
 double EvidenceOf(double Similarity);
 
-bool DummyFastMatch(FEATURE Feature, PROTO Proto);
+bool DummyFastMatch(tesseract::FEATURE Feature, tesseract::PROTO_STRUCT *Proto);
 
-void ComputePaddedBoundingBox(PROTO Proto, float TangentPad,
-                              float OrthogonalPad, FRECT* BoundingBox);
+void ComputePaddedBoundingBox(tesseract::PROTO_STRUCT *Proto, float TangentPad, float OrthogonalPad,
+                              FRECT *BoundingBox);
 
-bool PointInside(FRECT* Rectangle, float X, float Y);
+bool PointInside(FRECT *Rectangle, float X, float Y);
 
-#endif  // TESSERACT_TRAINING_MERGENF_H_
+#endif // TESSERACT_TRAINING_MERGENF_H_

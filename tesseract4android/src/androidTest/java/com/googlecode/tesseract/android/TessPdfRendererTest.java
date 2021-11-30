@@ -72,10 +72,6 @@ public class TessPdfRendererTest {
 		baseApi.recycle();
 	}
 
-	/**
-	 * NOTE: This test requires pdf.ttf file to be in tessdata folder.
-	 * File could be downloaded from: https://github.com/tesseract-ocr/tesseract/blob/master/tessdata/pdf.ttf
-	 */
 	@Test
 	public void testAddPageToDocument() throws IOException {
 		// Attempt to initialize the API.

@@ -1,5 +1,4 @@
-/* -*-C-*-
- ******************************************************************************
+/******************************************************************************
  *
  * File:         protos.h
  * Author:       Mark Seaman, SW Productivity
@@ -20,20 +19,15 @@
 #ifndef PROTOS_H
 #define PROTOS_H
 
-/*----------------------------------------------------------------------
-              I n c l u d e s
-----------------------------------------------------------------------*/
 #include "bitvec.h"
 #include "params.h"
-#include "unichar.h"
 #include "unicity_table.h"
 
-/*----------------------------------------------------------------------
-              T y p e s
-----------------------------------------------------------------------*/
-using CONFIGS = BIT_VECTOR*;
+#include <tesseract/unichar.h>
 
-typedef struct {
+namespace tesseract {
+
+struct PROTO_STRUCT {
   float A;
   float B;
   float C;
@@ -41,27 +35,19 @@ typedef struct {
   float Y;
   float Angle;
   float Length;
-} PROTO_STRUCT;
-using PROTO = PROTO_STRUCT*;
+};
 
 struct CLASS_STRUCT {
-  CLASS_STRUCT()
-      : NumProtos(0),
-        MaxNumProtos(0),
-        Prototypes(nullptr),
-        NumConfigs(0),
-        MaxNumConfigs(0),
-        Configurations(nullptr) {}
-  int16_t NumProtos;
-  int16_t MaxNumProtos;
-  PROTO Prototypes;
-  int16_t NumConfigs;
-  int16_t MaxNumConfigs;
-  CONFIGS Configurations;
-  UnicityTableEqEq<int> font_set;
+  int16_t NumProtos = 0;
+  int16_t MaxNumProtos = 0;
+  int16_t NumConfigs = 0;
+  int16_t MaxNumConfigs = 0;
+  std::vector<PROTO_STRUCT> Prototypes;
+  std::vector<BIT_VECTOR> Configurations;
+  UnicityTable<int> font_set;
 };
-using CLASS_TYPE = CLASS_STRUCT*;
-using CLASSES = CLASS_STRUCT*;
+using CLASS_TYPE = CLASS_STRUCT *;
+using CLASSES = CLASS_STRUCT *;
 
 /*----------------------------------------------------------------------
               M a c r o s
@@ -78,7 +64,7 @@ using CLASSES = CLASS_STRUCT*;
  * ProtoIn
  *
  * Choose the selected prototype in this class record.  Return the
- * pointer to it (type PROTO).
+ * pointer to it (PROTO_STRUCT *).
  */
 
 #define ProtoIn(Class, Pid) (&(Class)->Prototypes[Pid])
@@ -86,18 +72,26 @@ using CLASSES = CLASS_STRUCT*;
 /*----------------------------------------------------------------------
               F u n c t i o n s
 ----------------------------------------------------------------------*/
+TESS_API
 int AddConfigToClass(CLASS_TYPE Class);
 
+TESS_API
 int AddProtoToClass(CLASS_TYPE Class);
 
-void FillABC(PROTO Proto);
+TESS_API
+void FillABC(PROTO_STRUCT *Proto);
 
+TESS_API
 void FreeClass(CLASS_TYPE Class);
 
+TESS_API
 void FreeClassFields(CLASS_TYPE Class);
 
 void InitPrototypes();
 
+TESS_API
 CLASS_TYPE NewClass(int NumProtos, int NumConfigs);
+
+} // namespace tesseract
 
 #endif

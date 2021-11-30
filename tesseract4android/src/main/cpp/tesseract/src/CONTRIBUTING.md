@@ -6,11 +6,11 @@
 
 If you think you found a bug in Tesseract, please create an issue.
 
-Use the [users mailing-list](https://groups.google.com/d/forum/tesseract-ocr) instead of creating an Issue if ...
+Use the [user forum](https://groups.google.com/g/tesseract-ocr) instead of creating an issue if ...
 * You have problems using Tesseract and need some help.
 * You have problems installing the software.
-* You are not satisfied with the accuracy of the OCR, and want to ask how you can improve it. Note: You should first read the [ImproveQuality](https://github.com/tesseract-ocr/tesseract/wiki/ImproveQuality) wiki page.
-* You are trying to train Tesseract and you have a problem and/or want to ask a question about the training process. Note: You should first read the **official** guides [[1]](https://github.com/tesseract-ocr/tesseract/wiki) or [[2]](https://github.com/tesseract-ocr/tesseract/wiki/TrainingTesseract) found in the project wiki.
+* You are not satisfied with the accuracy of the OCR, and want to ask how you can improve it. Note: You should first read the [ImproveQuality](https://tesseract-ocr.github.io/tessdoc/ImproveQuality.html) documentation.
+* You are trying to train Tesseract and you have a problem and/or want to ask a question about the training process. Note: You should first read the **official** guides [[1]](https://tesseract-ocr.github.io/tessdoc/) or [[2]](https://tesseract-ocr.github.io/tessdoc/Training-Tesseract.html) found in the project documentation.
 * You have a general question.
 
 An issue should only be reported if the platform you are using is one of these:
@@ -26,7 +26,7 @@ Search through open and closed issues to see if similar issue has been reported 
 
 Similarly, before you post your question in the forum, search through past threads to see if similar question has been asked already.
 
-Read the [wiki](https://github.com/tesseract-ocr/tesseract/wiki) before you report your issue or ask a question in the forum.
+Read the [documentation](https://tesseract-ocr.github.io/tessdoc/) before you report your issue or ask a question in the forum.
 
 Only report an issue in the latest official release. Optionally, try to check if the issue is not already solved in the latest snapshot in the git repository.
 
@@ -60,7 +60,7 @@ Use `Preview` before you send your issue. Read it again before sending.
 
 Note that most of the people that respond to issues and answer questions are either other 'regular' users or **volunteers** developers. Please be nice to them :-)
 
-The [tesseract developers](http://groups.google.com/group/tesseract-dev/) forum should be used to discuss Tesseract development: bug fixes, enhancements, add-ons for Tesseract.
+The [tesseract developers](https://groups.google.com/g/tesseract-dev) forum should be used to discuss Tesseract development: bug fixes, enhancements, add-ons for Tesseract.
 
 Sometimes you will not get a respond to your issue or question. We apologize in advance! Please don't take it personally. There can be many reasons for this, including: time limits, no one knows the answer (at least not the ones that are available at that time) or just that
 your question has been asked (and has been answered) many times before...
@@ -69,9 +69,9 @@ your question has been asked (and has been answered) many times before...
 
 You should always make sure your changes build and run successfully.
 
-For that, your clone needs to have all submodules (`abseil`, `googletest`, `test`) included. To do so, either specify `--recurse-submodules` during the initial clone, or run `git submodule update --init --recursive NAME` for each `NAME` later. If `configure` already created those directories (blocking the clone), remove them first (or `make distclean`), then clone and reconfigure.
+For that, your clone needs to have all submodules (`googletest`, `test`) included. To do so, either specify `--recurse-submodules` during the initial clone, or run `git submodule update --init --recursive NAME` for each `NAME` later. If `configure` already created those directories (blocking the clone), remove them first (or `make distclean`), then clone and reconfigure.
 
-Have a look at [the README](./README.md) and [testing README](./test/testing/README.md) and the [wiki page](https://github.com/tesseract-ocr/tesseract/wiki/Compiling-%E2%80%93-GitInstallation#unit-test-builds) on installation.
+Have a look at [the README](./README.md) and [testing README](./test/testing/README.md) and the [documentation](https://tesseract-ocr.github.io/tessdoc/Compiling-%E2%80%93-GitInstallation.html#unit-test-builds) on installation.
 
 In short, after running `configure` from the build directory of your choice, to build the library and CLI, run `make`. To test it, run `make check`. To build the training tools, run `make training`.
 

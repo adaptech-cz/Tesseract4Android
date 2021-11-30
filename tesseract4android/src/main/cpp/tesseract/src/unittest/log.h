@@ -18,33 +18,41 @@
 #ifndef TESSERACT_UNITTEST_LOG_H_
 #define TESSERACT_UNITTEST_LOG_H_
 
+// This is a minimal implementation of the TensorFlow logging API
+// which is sufficient for the Tesseract unit tests.
+
+// See tensorflow/core/platform/default/logging.h for the original code.
+
 #include <iostream>
 
-enum LogLevel {
-  INFO, ERROR
-};
+enum LogLevel { INFO, WARNING, ERROR, FATAL };
 
-static inline std::ostream& LOG(enum LogLevel level)
-{
+// Avoid conflict with logging.h from TensorFlow.
+#undef LOG
+
+static inline std::ostream &LOG(enum LogLevel level) {
   switch (level) {
-#if 0
-    case DEBUG:
-      std::cout << "[DEBUG] ";
-      break;
-#endif
     case INFO:
       std::cout << "[INFO]  ";
       break;
+    case WARNING:
+      std::cout << "[WARN]  ";
+      break;
     case ERROR:
       std::cout << "[ERROR] ";
+      break;
+    case FATAL:
+      std::cout << "[FATAL] ";
       break;
   }
   return std::cout;
 }
 
+// Avoid conflict with logging.h from TensorFlow.
+#undef QCHECK
+
 // https://github.com/google/ion/blob/master/ion/base/logging.h
-static inline std::ostream& QCHECK(bool condition)
-{
+static inline std::ostream &QCHECK(bool condition) {
   if (condition) {
     static std::ostream null_stream(nullptr);
     return null_stream;
@@ -52,4 +60,4 @@ static inline std::ostream& QCHECK(bool condition)
   return std::cout;
 }
 
-#endif  // TESSERACT_UNITTEST_LOG_H_
+#endif // TESSERACT_UNITTEST_LOG_H_

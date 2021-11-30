@@ -1,5 +1,4 @@
-/* -*-C-*-
- ********************************************************************************
+/******************************************************************************
  *
  * File:         gradechop.cpp  (Formerly gradechop.c)
  * Description:
@@ -16,15 +15,15 @@
  ** See the License for the specific language governing permissions and
  ** limitations under the License.
  *
- *********************************************************************************/
+ *****************************************************************************/
 /*----------------------------------------------------------------------
               I n c l u d e s
 ----------------------------------------------------------------------*/
 
-#include "wordrec.h"
-#include "chop.h"
 #include <algorithm>
 #include <cmath>
+#include "chop.h"
+#include "wordrec.h"
 
 /*----------------------------------------------------------------------
               M a c r o s
@@ -47,17 +46,16 @@ PRIORITY Wordrec::grade_split_length(SPLIT *split) {
   PRIORITY grade;
   float split_length;
 
-  split_length =
-      split->point1->WeightedDistance(*split->point2, chop_x_y_weight);
+  split_length = split->point1->WeightedDistance(*split->point2, chop_x_y_weight);
 
-  if (split_length <= 0)
+  if (split_length <= 0) {
     grade = 0;
-  else
-    grade = sqrt (split_length) * chop_split_dist_knob;
+  } else {
+    grade = std::sqrt(split_length) * chop_split_dist_knob;
+  }
 
   return (std::max(0.0f, grade));
 }
-
 
 /**********************************************************************
  * grade_sharpness
@@ -69,17 +67,17 @@ PRIORITY Wordrec::grade_split_length(SPLIT *split) {
 PRIORITY Wordrec::grade_sharpness(SPLIT *split) {
   PRIORITY grade;
 
-  grade = point_priority (split->point1) + point_priority (split->point2);
+  grade = point_priority(split->point1) + point_priority(split->point2);
 
-  if (grade < -360.0)
+  if (grade < -360.0) {
     grade = 0;
-  else
+  } else {
     grade += 360.0;
+  }
 
-  grade *= chop_sharpness_knob;       /* Values 0 to -360 */
+  grade *= chop_sharpness_knob; /* Values 0 to -360 */
 
   return (grade);
 }
 
-
-}  // namespace tesseract
+} // namespace tesseract

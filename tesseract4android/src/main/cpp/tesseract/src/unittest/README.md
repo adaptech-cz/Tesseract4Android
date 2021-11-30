@@ -60,16 +60,16 @@
 │   └── script
 │       └── Latin.traineddata
 └── tesseract
-    ├── abseil
     ...
     ├── test
     ├── unittest
+    │   └── third_party/googletest
     └── VERSION
 ```
 
 ### Fonts
 
-* Microsoft fonts: arialbi.ttf, times.ttf, verdana.ttf - [instalation guide](https://www.makeuseof.com/tag/how-to-install-microsoft-core-fonts-in-ubuntu-linux/)
+* Microsoft fonts: arialbi.ttf, times.ttf, verdana.ttf - [installation guide](https://www.makeuseof.com/tag/how-to-install-microsoft-core-fonts-in-ubuntu-linux/)
 * [ae_Arab.ttf](https://www.wfonts.com/download/data/2014/12/03/ae-arab/ae-arab.zip)
 * dejavu-fonts: [DejaVuSans-ExtraLight.ttf](https://dejavu-fonts.github.io/Download.html)
 * [Lohit-Hindi.ttf](https://raw.githubusercontent.com/pratul/packageofpractices/master/assets/fonts/Lohit-Hindi.ttf)
