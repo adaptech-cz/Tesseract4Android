@@ -489,7 +489,7 @@ l_uint8   *linebuf, *data, *rowptr;
 l_uint16   spp, bps, photometry, tiffcomp, orientation, sample_fmt;
 l_uint16  *redmap, *greenmap, *bluemap;
 l_int32    d, wpl, bpl, comptype, i, j, k, ncolors, rval, gval, bval, aval;
-l_int32    xres, yres, tiffbpl, packedbpl, halfsize;
+l_int32    xres, yres, tiffbpl, packedbpl, half_size, twothirds_size;
 l_uint32   w, h, tiffword, read_oriented;
 l_uint32  *line, *ppixel, *tiffdata, *pixdata;
 PIX       *pix, *pix1;
@@ -555,14 +555,16 @@ PIXCMAP   *cmap;
         L_WARNING("for 2 spp, only handle 8 bps\n", procName);
         return NULL;
     }
-    if (spp == 1)
+    if (spp == 1) {
         d = bps;
-    else if (spp == 2)  /* gray plus alpha */
+    } else if (spp == 2) {  /* gray plus alpha */
         d = 32;  /* will convert to RGBA */
-    else if (spp == 3 || spp == 4)
+    } else if (spp == 3 || spp == 4) {
         d = 32;
-    else
-        return (PIX *)ERROR_PTR("spp not in set {1,2,3,4}", procName, NULL);
+    } else {
+        L_ERROR("spp = %d; not in {1,2,3,4}\n", procName, spp);
+        return NULL;
+    }
 
     TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &w);
     TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &h);
@@ -577,18 +579,25 @@ PIXCMAP   *cmap;
 
         /* The relation between the size of a byte buffer required to hold
            a raster of image pixels (packedbpl) and the size of the tiff
-           buffer (tiffbuf) is either 1:1 or approximately 2:1, depending
-           on how the data is stored and subsampled.  Test this relation
-           between tiffbuf and the image parameters w, spp and bps. */
+           buffer (tiffbuf) is either 1:1 or approximately 1.5:1 or 2:1,
+           depending on how the data is stored and subsampled.  For security,
+           we test this relation between tiffbuf and the image parameters
+           w, spp and bps. */
     tiffbpl = TIFFScanlineSize(tif);
     packedbpl = (bps * spp * w + 7) / 8;
-    halfsize = (L_ABS(2 * tiffbpl - packedbpl) <= 8);
+    half_size = (L_ABS(2 * tiffbpl - packedbpl) <= 8);
+    twothirds_size = (L_ABS(3 * tiffbpl - 2 * packedbpl) <= 8);
 #if 0
-    if (halfsize)
-        L_INFO("packedbpl = %d is approx. twice tiffbpl = %d\n", procName,
-               packedbpl, tiffbpl);
+    if (half_size)
+        L_INFO("half_size: packedbpl = %d is approx. twice tiffbpl = %d\n",
+               procName, packedbpl, tiffbpl);
+    if (twothirds_size)
+        L_INFO("twothirds_size: packedbpl = %d is approx. 1.5 tiffbpl = %d\n",
+               procName, packedbpl, tiffbpl);
+    lept_stderr("tiffbpl = %d, packedbpl = %d, bps = %d, spp = %d, w = %d\n",
+                tiffbpl, packedbpl, bps, spp, w);
 #endif
-    if (tiffbpl != packedbpl && !halfsize) {
+    if (tiffbpl != packedbpl && !half_size && !twothirds_size) {
         L_ERROR("invalid tiffbpl: tiffbpl = %d, packedbpl = %d, "
                 "bps = %d, spp = %d, w = %d\n",
                 procName, tiffbpl, packedbpl, bps, spp, w);
@@ -609,7 +618,8 @@ PIXCMAP   *cmap;
             if (TIFFReadScanline(tif, linebuf, i, 0) < 0) {
                 LEPT_FREE(linebuf);
                 pixDestroy(&pix);
-                return (PIX *)ERROR_PTR("line read fail", procName, NULL);
+                L_ERROR("spp = 1, read fail at line %d\n", procName, i);
+                return NULL;
             }
             memcpy(data, linebuf, tiffbpl);
             data += bpl;
@@ -628,7 +638,8 @@ PIXCMAP   *cmap;
             if (TIFFReadScanline(tif, linebuf, i, 0) < 0) {
                 LEPT_FREE(linebuf);
                 pixDestroy(&pix);
-                return (PIX *)ERROR_PTR("line read fail", procName, NULL);
+                L_ERROR("spp = 2, read fail at line %d\n", procName, i);
+                return NULL;
             }
             rowptr = linebuf;
             ppixel = pixdata + i * wpl;
@@ -935,13 +946,16 @@ TIFF  *tif;
         return ERROR_INT("stream not defined", procName, 1 );
     if (!pix)
         return ERROR_INT("pix not defined", procName, 1 );
-    if (strcmp(modestr, "w") && strcmp(modestr, "a"))
-        return ERROR_INT("modestr not 'w' or 'a'", procName, 1 );
+    if (strcmp(modestr, "w") && strcmp(modestr, "a")) {
+        L_ERROR("modestr = %s; not 'w' or 'a'\n", procName, modestr);
+        return 1;
+    }
 
     if (pixGetDepth(pix) != 1 && comptype != IFF_TIFF &&
         comptype != IFF_TIFF_LZW && comptype != IFF_TIFF_ZIP &&
         comptype != IFF_TIFF_JPEG) {
-        L_WARNING("invalid compression type for bpp > 1\n", procName);
+        L_WARNING("invalid compression type %d for bpp > 1; using TIFF_ZIP\n",
+                  procName, comptype);
         comptype = IFF_TIFF_ZIP;
     }
 

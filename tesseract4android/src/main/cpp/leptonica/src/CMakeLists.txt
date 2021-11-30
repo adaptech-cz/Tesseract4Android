@@ -42,8 +42,8 @@ set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "CMake Targets")
 project(leptonica C CXX)
 
 set(VERSION_MAJOR 1)
-set(VERSION_MINOR 81)
-set(VERSION_PATCH 1)
+set(VERSION_MINOR 82)
+set(VERSION_PATCH 0)
 set(VERSION_PLAIN ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
 set(MINIMUM_WEBPMUX_VERSION 0.5.0)
 
@@ -56,6 +56,9 @@ endif()
 if(UNIX)
     option(SYM_LINK "Create symlink leptonica -> lept on UNIX" OFF)
 endif()
+
+set(leptonica_INSTALL_CMAKE_DIR "lib/cmake/leptonica"
+    CACHE STRING "Install destination for CMake package files")
 
 if(NOT SW_BUILD)
     find_package(GIF)
@@ -276,7 +279,7 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/lept.pc DESTINATION lib/pkgconfig)
 install(FILES
     ${CMAKE_CURRENT_BINARY_DIR}/LeptonicaConfig.cmake
     ${CMAKE_CURRENT_BINARY_DIR}/LeptonicaConfig-version.cmake
-    DESTINATION lib/cmake)
+    DESTINATION ${leptonica_INSTALL_CMAKE_DIR})
 
 ########################################
 # uninstall target
