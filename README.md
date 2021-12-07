@@ -35,23 +35,47 @@ You can get compiled version of Tesseract4Android from JitPack.io.
 
 1. Add the JitPack repository to your project root `build.gradle` file at the end of repositories:
 
-       allprojects {
-           repositories {
-               ...
-               maven { url 'https://jitpack.io' }
-           }
-       }
+```gradle
+allprojects {
+    repositories {
+        ...
+        maven { url 'https://jitpack.io' }
+    }
+}
+```
 
 2. Add the dependency to your app module `build.gradle` file:
 
-       dependencies {
-           // To use Standard variant:
-           implementation 'cz.adaptech:tesseract4android:4.0.0'
-           
-           // To use OpenMP variant:
-           // NOTE: This variant is currently unavailable due to issues with JitPack. You must compile it yourself.
-           //implementation 'cz.adaptech:tesseract4android-openmp:4.0.0'
-       }
+```gradle
+dependencies {
+    // To use Standard variant:
+    implementation 'cz.adaptech:tesseract4android:4.0.0'
+
+    // To use OpenMP variant:
+    // NOTE: This variant is currently unavailable due to issues with JitPack. You must compile it yourself.
+    //implementation 'cz.adaptech:tesseract4android-openmp:4.0.0'
+}
+```
+
+3. Use the `TessBaseAPI` class in your code:
+
+```java
+// Create Tesseract instance
+TessBaseAPI tess = new TessBaseAPI();
+
+// Given path must contain subdirectory `tessdata` where are `*.traineddata` language files
+String dataPath = new File(Environment.getExternalStorageDirectory(), "tesseract").getAbsolutePath();
+
+// Initialize API for specified language (can be called multiple times during Tesseract lifetime)
+tess.init(dataPath, "eng");
+
+// Specify image and then recognize it and get result (can be called multiple times during Tesseract lifetime)
+tess.setImage(image);
+String text = tess.getUTF8Text();
+
+// Release Tesseract when you don't want to use it anymore
+tess.recycle();
+```
 
 ## Building
 
@@ -68,8 +92,10 @@ To build the release version of the library, use task `tesseract4android:assembl
 
  - In project directory create `local.properties` file containing:
 
-       sdk.dir=c\:\\your\\path\\to\\android\\sdk
-       ndk.dir=c\:\\your\\path\\to\\android\\ndk
+```properties
+sdk.dir=c\:\\your\\path\\to\\android\\sdk
+ndk.dir=c\:\\your\\path\\to\\android\\ndk
+```
 
    Note for paths on Windows you must use `\` to escape some special characters, as in example above.
 
