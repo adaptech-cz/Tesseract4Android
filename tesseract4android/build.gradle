@@ -36,7 +36,7 @@ android {
 		}
 		// TODO: This is commented due to bug on JitPack.
 		//  Uncomment this when you want to build this library locally with OpenMP support
-		openmp {
+		/*openmp {
 			// Since NDK r21 is OpenMP compiled as a shared library, but due to bug it is never
 			// included in resulting APK/AAR. It will be fixed probably in NDK r23, but until then
 			// we need to use r20 which compiles OpenMP as a static library.
@@ -53,7 +53,7 @@ android {
 					cppFlags "-fopenmp"
 				}
 			}
-		}
+		}*/
 	}
 	compileOptions {
 		sourceCompatibility JavaVersion.VERSION_1_8
