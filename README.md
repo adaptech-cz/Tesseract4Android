@@ -49,11 +49,11 @@ allprojects {
 ```gradle
 dependencies {
     // To use Standard variant:
-    implementation 'cz.adaptech:tesseract4android:4.1.0'
+    implementation 'cz.adaptech:tesseract4android:4.1.1'
 
     // To use OpenMP variant:
     // NOTE: This variant is currently unavailable due to issues with JitPack. You must compile it yourself.
-    //implementation 'cz.adaptech:tesseract4android-openmp:4.1.0'
+    //implementation 'cz.adaptech:tesseract4android-openmp:4.1.1'
 }
 ```
 
