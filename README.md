@@ -67,7 +67,11 @@ TessBaseAPI tess = new TessBaseAPI();
 String dataPath = new File(Environment.getExternalStorageDirectory(), "tesseract").getAbsolutePath();
 
 // Initialize API for specified language (can be called multiple times during Tesseract lifetime)
-tess.init(dataPath, "eng");
+if (!tess.init(dataPath, "eng")) {
+    // Error initializing Tesseract (wrong data path or language) 
+    tess.recycle();
+    return;
+}
 
 // Specify image and then recognize it and get result (can be called multiple times during Tesseract lifetime)
 tess.setImage(image);
