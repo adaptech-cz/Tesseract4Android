@@ -52,7 +52,7 @@ afterEvaluate {
 					artifact androidSourcesJar
 
 					groupId 'cz.adaptech'
-					version android.defaultConfig.versionName
+					version '4.1.1'
 					artifactId 'tesseract4android'
 
 					// Append flavor name to the version (unless it's "standard" flavor)

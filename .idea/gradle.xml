@@ -14,7 +14,6 @@
             <option value="$PROJECT_DIR$/tesseract4android" />
           </set>
         </option>
-        <option name="resolveModulePerSourceSet" value="false" />
       </GradleProjectSettings>
     </option>
   </component>
