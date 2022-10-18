@@ -156,6 +156,8 @@ target_compile_options(tesseract PRIVATE "-Wno-null-dereference")
 target_link_libraries( # Specifies the target library.
         tesseract
 
+        -static-openmp -fopenmp
+
         # Links the target library to the z library included in the NDK.
         atomic
         dl

@@ -1,11 +1,16 @@
-apply plugin: 'com.android.library'
+plugins {
+	id 'com.android.library'
+	id 'maven-publish'
+}
+
+ext {
+	libraryVersion = '4.2.0-dev'
+}
 
 android {
 	namespace 'cz.adaptech.android.tesseract4android'
-	compileSdkVersion 28
-	// TODO: This is commented due to bug on JitPack.
-	//  Uncomment this when you want to build this library locally with OpenMP support
-	//ndkVersion "22.1.7171670"
+	compileSdkVersion 33
+	ndkVersion "25.1.8937393"
 	defaultConfig {
 		minSdkVersion 16
 		targetSdkVersion 28
@@ -15,6 +20,7 @@ android {
 				// Specifies which native libraries or executables to build and package.
 				// TODO: Include eyes-two in some build flavor of the library?
 				//targets "jpeg", "png", "leptonica", "tesseract"
+				version "3.22.1"
 			}
 		}
 		ndk {
@@ -33,26 +39,25 @@ android {
 	productFlavors {
 		standard {
 		}
-		// TODO: This is commented due to bug on JitPack.
-		//  Uncomment this when you want to build this library locally with OpenMP support
-		/*openmp {
-			// Since NDK r21 is OpenMP compiled as a shared library, but due to bug it is never
-			// included in resulting APK/AAR. It will be fixed probably in NDK r23, but until then
-			// we need to use r20 which compiles OpenMP as a static library.
-			// TODO: Remove this when https://issuetracker.google.com/issues/152897016 is fixed.
-			ndkVersion "20.1.5948944"
-
+		openmp {
 			versionNameSuffix "-openmp"
 			externalNativeBuild {
 				cmake {
-					// TODO: Remove this line when we use new NDK version that enables it by default
-					arguments "-DANDROID_ARM_NEON=ON"
-
 					cFlags "-fopenmp"
 					cppFlags "-fopenmp"
 				}
 			}
-		}*/
+		}
+	}
+	publishing {
+		singleVariant("standardRelease") {
+			withSourcesJar()
+			withJavadocJar()
+		}
+		singleVariant("openmpRelease") {
+			withSourcesJar()
+			withJavadocJar()
+		}
 	}
 	compileOptions {
 		sourceCompatibility JavaVersion.VERSION_11
@@ -75,4 +80,23 @@ dependencies {
 	androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
 }
 
-apply from: '../publish.gradle'
+afterEvaluate {
+	publishing {
+		publications {
+			standard(MavenPublication) {
+				from components.findByName('standardRelease')
+
+				groupId 'cz.adaptech'
+				artifactId 'tesseract4android'
+				version project.ext.libraryVersion
+			}
+			openmp(MavenPublication) {
+				from components.findByName('openmpRelease')
+
+				groupId 'cz.adaptech'
+				artifactId 'tesseract4android-openmp'
+				version project.ext.libraryVersion
+			}
+		}
+	}
+}
