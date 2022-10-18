@@ -81,6 +81,12 @@ String text = tess.getUTF8Text();
 tess.recycle();
 ```
 
+## Sample app
+
+There is example application in the [sample](/sample) directory. It shows basic usage of the TessBaseAPI inside ViewModel, showing progress indication, allowing stopping the processing and more.
+
+It uses sample image and english traineddata, which are extracted from the assets in the APK to app's private directory on device. This approach is used just to simplify code by avoiding storage permissions, downloading data from the internet, etc. It shouldn't be used this way in production code.
+
 ## Building
 
 You can use Android Studio to open the project and build the AAR. Or you can use `gradlew` from command line.
