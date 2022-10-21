@@ -93,10 +93,13 @@ You can use Android Studio to open the project and build the AAR. Or you can use
 
 To build the release version of the library, use task `tesseract4android:assembleRelease`. After successful build, you will have resulting `AAR` files in the `<project dir>/tesseract4Android/build/outputs/aar/` directory.
 
+Or you can publish the AAR directly to your local maven repository, by using task `tesseract4android:publishToMavenLocal`. After successful build, you can consume your library as any other maven dependency. Just make sure to add `mavenLocal()` repository in `repositories {}` block in your project's `build.gradle` file. 
+
 ### Android Studio
 
  - Open this project in Android Studio.
- - Open Gradle panel, expand `Tesseract4Android / :tesseract4Android / Tasks / other` and run `assembleRelease`.
+ - Open Gradle panel, expand `Tesseract4Android / :tesseract4Android / Tasks / other` and run `assembleRelease` (to get AAR).
+ - Or in the same panel expand `Tesseract4Android / :tesseract4Android / Tasks / publishing` and run `publishToMavenLocal` (to publish AAR).
 
 ### GradleW
 
@@ -109,7 +112,8 @@ ndk.dir=c\:\\your\\path\\to\\android\\ndk
 
    Note for paths on Windows you must use `\` to escape some special characters, as in example above.
 
- - Call `gradlew tesseract4android:assembleRelease` from command line.
+ - Call `gradlew tesseract4android:assembleRelease` from command line (to get AAR).
+ - Or call `gradlew tesseract4android:publishToMavenLocal` from command line (to publish AAR).
 
 ## License
 
