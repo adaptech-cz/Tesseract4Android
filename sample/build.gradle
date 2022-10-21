@@ -12,12 +12,9 @@ android {
         targetSdk 33
         versionCode 1
         versionName "1.0"
-        missingDimensionStrategy 'parallelization', 'standard'
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
-
-    flavorDimensions 'parallelization'
 
     buildTypes {
         release {
@@ -33,6 +30,18 @@ android {
         viewBinding true
     }
 }
+
+// In case you are using dependency on local library (the project(':tesseract4android') below),
+// uncomment this to specify which flavor you want to build.
+// Or you can specify *same* flavors also for the app - then they will be matched automatically.
+// See more: https://developer.android.com/studio/build/build-variants#variant_aware
+/*android {
+    defaultConfig {
+        // Choose 'standard' or 'openmp' flavor of the library
+        missingDimensionStrategy 'parallelization', 'openmp'
+    }
+    flavorDimensions 'parallelization'
+}*/
 
 dependencies {
     // Use library from JitPack for simplicity
