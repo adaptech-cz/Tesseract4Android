@@ -1,6 +1,7 @@
 package cz.adaptech.tesseract4android.sample.ui.main;
 
 import android.app.Application;
+import android.os.SystemClock;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -11,6 +12,7 @@ import androidx.lifecycle.MutableLiveData;
 import com.googlecode.tesseract.android.TessBaseAPI;
 
 import java.io.File;
+import java.util.Locale;
 
 public class MainViewModel extends AndroidViewModel {
 
@@ -75,6 +77,8 @@ public class MainViewModel extends AndroidViewModel {
             // Or set it as Bitmap, Pix,...
             // tessApi.setImage(imageBitmap);
 
+            long startTime = SystemClock.uptimeMillis();
+
             // Use getHOCRText(0) method to trigger recognition with progress notifications and
             // ability to cancel ongoing processing.
             tessApi.getHOCRText(0);
@@ -88,7 +92,9 @@ public class MainViewModel extends AndroidViewModel {
             if (stopped) {
                 progress.postValue("Stopped.");
             } else {
-                progress.postValue("Completed.");
+                long duration = SystemClock.uptimeMillis() - startTime;
+                progress.postValue(String.format(Locale.ENGLISH,
+                        "Completed in %.3fs.", (duration / 1000f)));
             }
         }).start();
     }
