@@ -20,13 +20,17 @@ android {
 				// Specifies which native libraries or executables to build and package.
 				// TODO: Include eyes-two in some build flavor of the library?
 				//targets "jpeg", "png", "leptonica", "tesseract"
-				version "3.22.1"
 			}
 		}
 		ndk {
 			// Specify the ABI configurations that Gradle should build and package.
 			// By default it compiles all available ABIs.
 			//abiFilters 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
+		}
+	}
+	externalNativeBuild {
+		cmake {
+			version '3.22.1'
 		}
 	}
 	buildTypes {
