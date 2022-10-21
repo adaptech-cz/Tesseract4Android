@@ -24,7 +24,7 @@ allprojects {
 }
 
 ext {
-    libraryVersion = '4.2.0-dev'
+    libraryVersion = '4.1.1a'
 }
 
 task clean(type: Delete) {
