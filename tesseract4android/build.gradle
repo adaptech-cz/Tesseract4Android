@@ -58,8 +58,14 @@ android {
 			versionNameSuffix "-openmp"
 			externalNativeBuild {
 				cmake {
-					cFlags "-fopenmp"
-					cppFlags "-fopenmp"
+					// NOTE: We must add -static-openmp argument to build it statically,
+					// because shared library is not being included in the resulting APK.
+					// See: https://github.com/android/ndk/issues/1028
+					// Use of that argument shows warnings during build:
+					// > C/C++: clang: warning: argument unused during compilation: '-static-openmp' [-Wunused-command-line-argument]
+					// But it has effect on the result.
+					cFlags "-fopenmp -static-openmp -Wno-unused-command-line-argument"
+					cppFlags "-fopenmp -static-openmp -Wno-unused-command-line-argument"
 				}
 			}
 		}
