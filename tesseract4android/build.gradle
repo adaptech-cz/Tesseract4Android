@@ -3,10 +3,6 @@ plugins {
 	id 'maven-publish'
 }
 
-ext {
-	libraryVersion = '4.2.0-dev'
-}
-
 android {
 	namespace 'cz.adaptech.android.tesseract4android'
 	compileSdkVersion 33
@@ -109,14 +105,14 @@ afterEvaluate {
 
 				groupId 'cz.adaptech'
 				artifactId 'tesseract4android'
-				version project.ext.libraryVersion
+				version rootProject.ext.libraryVersion
 			}
 			openmp(MavenPublication) {
 				from components.findByName('openmpRelease')
 
 				groupId 'cz.adaptech'
 				artifactId 'tesseract4android-openmp'
-				version project.ext.libraryVersion
+				version rootProject.ext.libraryVersion
 			}
 		}
 	}

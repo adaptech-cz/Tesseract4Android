@@ -16,10 +16,15 @@ buildscript {
 
 allprojects {
     repositories {
+        mavenLocal()
         google()
         mavenCentral()
         maven { url 'https://jitpack.io' }
     }
+}
+
+ext {
+    libraryVersion = '4.2.0-dev'
 }
 
 task clean(type: Delete) {
