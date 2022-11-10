@@ -105,14 +105,14 @@ afterEvaluate {
 
 				groupId 'cz.adaptech'
 				artifactId 'tesseract4android'
-				version rootProject.ext.libraryVersion
+				version rootProject.ext.tesseract4AndroidVersion
 			}
 			openmp(MavenPublication) {
 				from components.findByName('openmpRelease')
 
 				groupId 'cz.adaptech'
 				artifactId 'tesseract4android-openmp'
-				version rootProject.ext.libraryVersion
+				version rootProject.ext.tesseract4AndroidVersion
 			}
 		}
 	}
