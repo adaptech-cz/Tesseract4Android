@@ -18,6 +18,8 @@
 
 package com.googlecode.tesseract.android;
 
+import static java.lang.annotation.RetentionPolicy.SOURCE;
+
 import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.util.Log;
@@ -35,7 +37,7 @@ import java.lang.annotation.Retention;
 import java.util.Collections;
 import java.util.Map;
 
-import static java.lang.annotation.RetentionPolicy.SOURCE;
+import cz.adaptech.android.tesseract4android.BuildConfig;
 
 /**
  * Java interface for the Tesseract OCR engine. Does not implement all available
@@ -936,6 +938,15 @@ public class TessBaseAPI {
 			throw new IllegalStateException();
 
 		return nativeGetVersion(mNativeData);
+	}
+
+	/**
+	 * Returns flavor of the library.
+	 *
+	 * @return For example "standard" or "openmp".
+	 */
+	public String getLibraryFlavor() {
+		return BuildConfig.FLAVOR;
 	}
 
 	/**
