@@ -35,6 +35,10 @@ public class MainViewModel extends AndroidViewModel {
         tessApi = new TessBaseAPI(progressValues -> {
             progress.postValue("Progress: " + progressValues.getPercent() + " %");
         });
+
+        // Show Tesseract version and library flavor at startup
+        progress.setValue(String.format(Locale.ENGLISH, "Tesseract %s (%s)",
+                tessApi.getVersion(), tessApi.getLibraryFlavor()));
     }
 
     @Override
