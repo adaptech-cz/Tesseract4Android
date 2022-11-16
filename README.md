@@ -10,10 +10,10 @@ The Java/JNI wrapper files and tests for Leptonica / Tesseract are based on the 
 
 This project uses additional libraries (with their own specific licenses):
 
- - [Tesseract OCR][tesseract-ocr] 5.0.1
+ - [Tesseract OCR][tesseract-ocr] 5.2.0
  - [Leptonica][leptonica] 1.82.0
- - [libjpeg][jpeg] v9d
- - [libpng][png] 1.6.37
+ - [libjpeg][jpeg] v9e
+ - [libpng][png] 1.6.38
 
 ## Prerequisites
 
@@ -49,10 +49,10 @@ allprojects {
 ```gradle
 dependencies {
     // To use Standard variant:
-    implementation 'cz.adaptech.tesseract4android:tesseract4android:4.1.1a'
+    implementation 'cz.adaptech.tesseract4android:tesseract4android:4.2.0'
 
     // To use OpenMP variant:
-    implementation 'cz.adaptech.tesseract4android:tesseract4android-openmp:4.1.1a'
+    implementation 'cz.adaptech.tesseract4android:tesseract4android-openmp:4.2.0'
 }
 ```
 
