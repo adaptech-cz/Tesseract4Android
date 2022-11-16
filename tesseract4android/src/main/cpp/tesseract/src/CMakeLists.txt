@@ -8,7 +8,7 @@
 #
 # ##############################################################################
 
-cmake_minimum_required(VERSION 3.7 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
 
 # In-source builds are disabled.
 if("${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_BINARY_DIR}")
@@ -76,7 +76,7 @@ set(MINIMUM_LEPTONICA_VERSION 1.74)
 #
 # ##############################################################################
 
-message("Configuring tesseract version ${PACKAGE_VERSION}...")
+message(STATUS "Configuring tesseract version ${PACKAGE_VERSION}...")
 
 if(WIN32)
   option(SW_BUILD "Build with sw" ON)
@@ -88,6 +88,7 @@ option(GRAPHICS_DISABLED "Disable disable graphics (ScrollView)" OFF)
 option(DISABLED_LEGACY_ENGINE "Disable the legacy OCR engine" OFF)
 option(ENABLE_LTO "Enable link-time optimization" OFF)
 option(FAST_FLOAT "Enable float for LSTM" ON)
+option(ENABLE_OPENCL "Enable unsupported experimental OpenCL support" OFF)
 option(BUILD_TRAINING_TOOLS "Build training tools" ON)
 option(BUILD_TESTS "Build tests" OFF)
 option(USE_SYSTEM_ICU "Use system ICU" OFF)
@@ -152,57 +153,31 @@ if(COMPILER_SUPPORTS_MARCH_NATIVE)
   set(MARCH_NATIVE_OPT ON)
 endif()
 
-message("CMAKE_SYSTEM_PROCESSOR=<${CMAKE_SYSTEM_PROCESSOR}>")
+message(STATUS "CMAKE_SYSTEM_PROCESSOR=<${CMAKE_SYSTEM_PROCESSOR}>")
 
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86|x86_64|AMD64|amd64|i386|i686")
 
   set(HAVE_NEON FALSE)
-
-  check_cxx_compiler_flag("-mavx" HAVE_AVX)
-  if(HAVE_AVX)
-    set(AVX_COMPILE_FLAGS "-mavx")
-    add_definitions("-DHAVE_AVX")
-  endif(HAVE_AVX)
-
-  check_cxx_compiler_flag("-mavx2" HAVE_AVX2)
-  if(HAVE_AVX2)
-    set(AVX2_COMPILE_FLAGS "-mavx2")
-    add_definitions("-DHAVE_AVX2")
-  endif()
-
-  check_cxx_compiler_flag("-mfma" HAVE_FMA)
-  if(HAVE_FMA)
-    set(FMA_COMPILE_FLAGS "-mfma")
-    add_definitions("-DHAVE_FMA")
-  endif()
-
-  check_cxx_compiler_flag("-msse4.1" HAVE_SSE4_1)
-  if(HAVE_SSE4_1)
-    set(SSE4_1_COMPILE_FLAGS "-msse4.1")
-    add_definitions("-DHAVE_SSE4_1")
-  endif()
-
   if(MSVC)
-    if(NOT HAVE_AVX)
-      set(AVX_COMPILE_FLAGS "/arch:AVX")
-      set(HAVE_AVX ON)
-      add_definitions("-DHAVE_AVX")
-    endif()
+    set(HAVE_AVX ON)
+    set(AVX_COMPILE_FLAGS "/arch:AVX")
+    add_definitions("-DHAVE_AVX")
 
-    if(NOT HAVE_AVX2)
-      set(AVX2_COMPILE_FLAGS "/arch:AVX2")
-      set(HAVE_AVX2 ON)
-      add_definitions("-DHAVE_AVX2")
-      set(FMA_COMPILE_FLAGS "-D__FMA__")
-      set(HAVE_FMA ON)
-      add_definitions("-DHAVE_FMA")
-    endif()
+    set(HAVE_AVX2 ON)
+    set(AVX2_COMPILE_FLAGS "/arch:AVX2")
+    add_definitions("-DHAVE_AVX2")
 
-    if(NOT HAVE_SSE4_1)
-      set(SSE4_1_COMPILE_FLAGS "-D__SSE4_1__")
-      set(HAVE_SSE4_1 ON)
-      add_definitions("-DHAVE_SSE4_1")
-    endif()
+    set(HAVE_AVX512F ON)
+    set(AVX512F_COMPILE_FLAGS "/arch:AVX512")
+    add_definitions("-DHAVE_AVX512F")
+
+    set(HAVE_FMA ON)
+    set(FMA_COMPILE_FLAGS "-D__FMA__")
+    add_definitions("-DHAVE_FMA")
+
+    set(HAVE_SSE4_1 ON)
+    set(SSE4_1_COMPILE_FLAGS "-D__SSE4_1__")
+    add_definitions("-DHAVE_SSE4_1")
     # clang with MSVC compatibility
     if(CLANG)
       set(CMAKE_CXX_FLAGS
@@ -214,12 +189,43 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86|x86_64|AMD64|amd64|i386|i686")
         set(SSE4_1_COMPILE_FLAGS "-msse4.1 ${SSE4_1_COMPILE_FLAGS}")
       endif(HAVE_SSE4_1)
     endif(CLANG)
+  else()  # if not MSVC
+    check_cxx_compiler_flag("-mavx" HAVE_AVX)
+    if(HAVE_AVX)
+      set(AVX_COMPILE_FLAGS "-mavx")
+      add_definitions("-DHAVE_AVX")
+    endif(HAVE_AVX)
+
+    check_cxx_compiler_flag("-mavx2" HAVE_AVX2)
+    if(HAVE_AVX2)
+      set(AVX2_COMPILE_FLAGS "-mavx2")
+      add_definitions("-DHAVE_AVX2")
+    endif()
+
+    check_cxx_compiler_flag("-mavx512f" HAVE_AVX512F)
+    if(HAVE_AVX512F)
+      set(AVX512F_COMPILE_FLAGS "-mavx512f")
+      add_definitions("-DHAVE_AVX512F")
+    endif()
+
+    check_cxx_compiler_flag("-mfma" HAVE_FMA)
+    if(HAVE_FMA)
+      set(FMA_COMPILE_FLAGS "-mfma")
+      add_definitions("-DHAVE_FMA")
+    endif()
+
+    check_cxx_compiler_flag("-msse4.1" HAVE_SSE4_1)
+    if(HAVE_SSE4_1)
+      set(SSE4_1_COMPILE_FLAGS "-msse4.1")
+      add_definitions("-DHAVE_SSE4_1")
+    endif()
   endif(MSVC)
 
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64|aarch64.*|AARCH64.*")
 
   set(HAVE_AVX FALSE)
   set(HAVE_AVX2 FALSE)
+  set(HAVE_AVX512F FALSE)
   set(HAVE_FMA FALSE)
   set(HAVE_SSE4_1 FALSE)
 
@@ -230,6 +236,7 @@ elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm.*")
 
   set(HAVE_AVX FALSE)
   set(HAVE_AVX2 FALSE)
+  set(HAVE_AVX512F FALSE)
   set(HAVE_FMA FALSE)
   set(HAVE_SSE4_1 FALSE)
 
@@ -243,6 +250,7 @@ else()
 
   set(HAVE_AVX FALSE)
   set(HAVE_AVX2 FALSE)
+  set(HAVE_AVX512F FALSE)
   set(HAVE_FMA FALSE)
   set(HAVE_NEON FALSE)
   set(HAVE_SSE4_1 FALSE)
@@ -266,7 +274,7 @@ elseif(MSVC)
   # loss of data wd4275 non dll-interface class wd4305 ...truncation from
   # 'double' to 'float'
   set(CMAKE_CXX_FLAGS_RELEASE
-      "${CMAKE_CXX_FLAGS_RELEASE} /wd4244 /wd4305 /wd4267 /wd4251 /wd4275")
+      "${CMAKE_CXX_FLAGS_RELEASE} /wd4244 /wd4305 /wd4267 /wd4251 /wd4275 /wd4005")
   # Don't use /Wall because it generates too many warnings.
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /W0 /bigobj")
   # MT flag
@@ -292,7 +300,7 @@ if(OPENMP_BUILD)
   if(OpenMP_FOUND)
     message(">> OpenMP_FOUND ${OpenMP_FOUND} ${OpenMP_VERSION}")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-    if(${CMAKE_VERSION} VERSION_LESS "3.9.0")
+    if (NOT TARGET OpenMP::OpenMP_CXX)
       add_library(OpenMP::OpenMP_CXX IMPORTED INTERFACE)
     endif()
   endif()
@@ -411,7 +419,17 @@ else()
   endif(DISABLE_CURL)
 endif()
 
-find_package(OpenCL QUIET)
+IF(ENABLE_OPENCL)
+  find_package(OpenCL)
+  if (OpenCL_FOUND)
+    include_directories(${OpenCL_INCLUDE_DIRS})
+    message(STATUS "OpenCL_INCLUDE_DIRS: ${OpenCL_INCLUDE_DIRS}")
+    message(STATUS "OpenCL_LIBRARY: ${OpenCL_LIBRARY}")
+    set(USE_OPENCL ON)
+  else()
+    set(USE_OPENCL OFF)
+  endif(OpenCL_FOUND)
+endif(ENABLE_OPENCL)
 
 # ##############################################################################
 #
@@ -461,10 +479,17 @@ elseif(${CMAKE_BUILD_TYPE} MATCHES Release)
     set(CMAKE_INTERPROCEDURAL_OPTIMIZATION FALSE)
   endif() # LTO_SUPPORTED
 endif()
+
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+  set(BUILD_ARCH "64 bits")
+elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
+  set(BUILD_ARCH "32 bits")
+endif()
+
 message(STATUS)
 message(STATUS "General configuration for Tesseract ${PACKAGE_VERSION}")
 message(STATUS "--------------------------------------------------------")
-message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE} ${BUILD_ARCH}")
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID}")
 message(STATUS "Used standard: C++${CMAKE_CXX_STANDARD}")
 message(STATUS "CXX compiler options: ${COMPILER_FLAGS}")
@@ -475,6 +500,7 @@ message(STATUS "Linker options: ${CMAKE_EXE_LINKER_FLAGS} "
 message(STATUS "Install directory: ${CMAKE_INSTALL_PREFIX}")
 message(STATUS "HAVE_AVX: ${HAVE_AVX}")
 message(STATUS "HAVE_AVX2: ${HAVE_AVX2}")
+message(STATUS "HAVE_AVX512F: ${HAVE_AVX512F}")
 message(STATUS "HAVE_FMA: ${HAVE_FMA}")
 message(STATUS "HAVE_SSE4_1: ${HAVE_SSE4_1}")
 message(STATUS "MARCH_NATIVE_OPT: ${MARCH_NATIVE_OPT}")
@@ -494,6 +520,9 @@ message(STATUS "Disable the legacy OCR engine [DISABLED_LEGACY_ENGINE]: "
 message(STATUS "Build training tools [BUILD_TRAINING_TOOLS]: "
                "${BUILD_TRAINING_TOOLS}")
 message(STATUS "Build tests [BUILD_TESTS]: ${BUILD_TESTS}")
+if(ENABLE_OPENCL)
+  message(STATUS "Enable unsupported experimental OpenCL [ENABLE_OPENCL]: ${USE_OPENCL}")
+endif(ENABLE_OPENCL)
 message(STATUS "Use system ICU Library [USE_SYSTEM_ICU]: ${USE_SYSTEM_ICU}")
 message(STATUS "Install tesseract configs [INSTALL_CONFIGS]: ${INSTALL_CONFIGS}")
 message(STATUS "--------------------------------------------------------")
@@ -633,6 +662,11 @@ if(HAVE_AVX2)
   set_source_files_properties(src/arch/intsimdmatrixavx2.cpp
                               PROPERTIES COMPILE_FLAGS ${AVX2_COMPILE_FLAGS})
 endif(HAVE_AVX2)
+if(HAVE_AVX512F)
+  list(APPEND arch_files_opt src/arch/dotproductavx512.cpp)
+  set_source_files_properties(src/arch/dotproductavx512.cpp
+                              PROPERTIES COMPILE_FLAGS ${AVX512F_COMPILE_FLAGS})
+endif(HAVE_AVX512F)
 if(HAVE_FMA)
   list(APPEND arch_files_opt src/arch/dotproductfma.cpp)
   set_source_files_properties(src/arch/dotproductfma.cpp
@@ -754,6 +788,9 @@ target_link_libraries(libtesseract PRIVATE ${LIB_Ws2_32} ${LIB_pthread})
 if(OpenMP_CXX_FOUND)
   target_link_libraries(libtesseract PUBLIC OpenMP::OpenMP_CXX)
 endif()
+if(OpenCL_FOUND)
+  target_link_libraries(libtesseract PUBLIC OpenCL::OpenCL)
+endif()
 if(LibArchive_FOUND)
   target_link_libraries(libtesseract PUBLIC ${LibArchive_LIBRARIES})
 endif(LibArchive_FOUND)
@@ -803,6 +840,13 @@ if(WIN32
   # Workaround for "libomp.lib is not automatically added on Windows" see:
   # http://lists.llvm.org/pipermail/openmp-dev/2015-August/000857.html
   target_link_libraries(libtesseract PRIVATE ${OpenMP_LIBRARY})
+endif()
+
+if (ANDROID)
+    add_definitions(-DANDROID)
+    find_package(CpuFeaturesNdkCompat REQUIRED)
+    target_include_directories(libtesseract PRIVATE "${CpuFeaturesNdkCompat_DIR}/../../../include/ndk_compat")
+    target_link_libraries     (libtesseract PRIVATE CpuFeatures::ndk_compat)
 endif()
 
 # ##############################################################################

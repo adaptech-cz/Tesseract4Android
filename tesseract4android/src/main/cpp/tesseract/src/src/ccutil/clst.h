@@ -702,15 +702,12 @@ public:
   }
 };
 
-#define CLISTIZEH(CLASSNAME)                                          \
-  class CLASSNAME##_CLIST : public X_CLIST<CLASSNAME> {               \
-  public:                                                             \
-    using X_CLIST<CLASSNAME>::X_CLIST;                                \
-  };                                                                  \
-  class CLASSNAME##_C_IT : public X_ITER<CLIST_ITERATOR, CLASSNAME> { \
-  public:                                                             \
-    using X_ITER<CLIST_ITERATOR, CLASSNAME>::X_ITER;                  \
-    CLASSNAME##_C_IT(CLASSNAME##_CLIST *list) : X_ITER(list) {}       \
+#define CLISTIZEH(CLASSNAME)                                    \
+  class CLASSNAME##_CLIST : public X_CLIST<CLASSNAME> {         \
+    using X_CLIST<CLASSNAME>::X_CLIST;                          \
+  };                                                            \
+  struct CLASSNAME##_C_IT : X_ITER<CLIST_ITERATOR, CLASSNAME> { \
+    using X_ITER<CLIST_ITERATOR, CLASSNAME>::X_ITER;            \
   };
 
 } // namespace tesseract

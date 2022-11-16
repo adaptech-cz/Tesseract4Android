@@ -63,8 +63,14 @@ Tesseract::Tesseract()
                   "Break input into lines and remap boxes if present", this->params())
     , BOOL_MEMBER(tessedit_dump_pageseg_images, false,
                   "Dump intermediate images made during page segmentation", this->params())
-    , BOOL_MEMBER(tessedit_do_invert, true, "Try inverting the image in `LSTMRecognizeWord`",
+    // TODO: remove deprecated tessedit_do_invert in release 6.
+    , BOOL_MEMBER(tessedit_do_invert, true,
+                  "Try inverted line image if necessary (deprecated, will be "
+                  "removed in release 6, use the 'invert_threshold' parameter instead)",
                   this->params())
+    , double_MEMBER(invert_threshold, 0.7,
+                    "For lines with a mean confidence below this value, OCR is also tried with an inverted image",
+                    this->params())
     ,
     // The default for pageseg_mode is the old behaviour, so as not to
     // upset anything that relies on that.
@@ -86,27 +92,27 @@ Tesseract::Tesseract()
     , double_MEMBER(thresholding_window_size, 0.33,
                     "Window size for measuring local statistics (to be "
                     "multiplied by image DPI). "
-                    "This parameter is used by the Sauvola thresolding method",
+                    "This parameter is used by the Sauvola thresholding method",
                     this->params())
     , double_MEMBER(thresholding_kfactor, 0.34,
                     "Factor for reducing threshold due to variance. "
-                    "This parameter is used by the Sauvola thresolding method."
+                    "This parameter is used by the Sauvola thresholding method."
                     " Normal range: 0.2-0.5",
                     this->params())
     , double_MEMBER(thresholding_tile_size, 0.33,
                     "Desired tile size (to be multiplied by image DPI). "
-                    "This parameter is used by the LeptonicaOtsu thresolding "
+                    "This parameter is used by the LeptonicaOtsu thresholding "
                     "method",
                     this->params())
     , double_MEMBER(thresholding_smooth_kernel_size, 0.0,
                     "Size of convolution kernel applied to threshold array "
                     "(to be multiplied by image DPI). Use 0 for no smoothing. "
-                    "This parameter is used by the LeptonicaOtsu thresolding "
+                    "This parameter is used by the LeptonicaOtsu thresholding "
                     "method",
                     this->params())
     , double_MEMBER(thresholding_score_fraction, 0.1,
                     "Fraction of the max Otsu score. "
-                    "This parameter is used by the LeptonicaOtsu thresolding "
+                    "This parameter is used by the LeptonicaOtsu thresholding "
                     "method. "
                     "For standard Otsu use 0.0, otherwise 0.1 is recommended",
                     this->params())
