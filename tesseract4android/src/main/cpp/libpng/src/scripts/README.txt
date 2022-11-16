@@ -75,5 +75,5 @@ Other supporting scripts:
  macro.lst         =>  Used by autoconf tools
  prefix.dfn        =>  Used by autoconf tools
 
-
-Further information can be found in comments in the individual makefiles.
+Further information can be found in comments in the individual scripts and
+makefiles.
