@@ -730,8 +730,8 @@ public class TessBaseAPITest {
 		assertNull(nonExistingVariable);
 
 		// Existing value should return real value
-		String existingVariable = baseApi.getVariable("tessedit_do_invert");
-		assertTrue("0".equals(existingVariable) || "1".equals(existingVariable));
+		String existingVariable = baseApi.getVariable("invert_threshold");
+		assertNotNull(existingVariable);
 
 		// Attempt to shut down the API.
 		baseApi.recycle();
