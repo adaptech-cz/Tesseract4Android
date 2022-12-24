@@ -17,6 +17,8 @@ EXTRA_DIST += CMakeLists.txt tesseract.pc.cmake cmake VERSION
 
 DIST_SUBDIRS = $(SUBDIRS)
 
+EXTRA_PROGRAMS =
+
 uninstall-hook:
 	rm -rf $(DESTDIR)$(pkgincludedir)
 
@@ -673,9 +675,16 @@ noinst_HEADERS += src/viewer/svutil.h
 libtesseract_la_SOURCES += src/viewer/scrollview.cpp
 libtesseract_la_SOURCES += src/viewer/svmnode.cpp
 libtesseract_la_SOURCES += src/viewer/svutil.cpp
-endif
 
-# TODO: Add rule to generate svpaint from svpaint.cpp.
+EXTRA_PROGRAMS += svpaint
+svpaint_CPPFLAGS =
+svpaint_CPPFLAGS += -I$(top_builddir)/include
+svpaint_CPPFLAGS += -I$(top_srcdir)/include
+svpaint_CPPFLAGS += -I$(top_srcdir)/src/ccstruct
+svpaint_CPPFLAGS += -I$(top_srcdir)/src/viewer
+svpaint_SOURCES = src/svpaint.cpp
+svpaint_LDADD = libtesseract.la
+endif
 
 # Rules for src/wordrec.
 
@@ -758,12 +767,12 @@ endif
 
 if ENABLE_TRAINING
 
-training: $(EXTRA_PROGRAMS) | $(PROGRAMS)
+training: $(trainingtools) | $(PROGRAMS)
 
-training-install: $(EXTRA_PROGRAMS)
+training-install: $(trainingtools)
 	mkdir -p $(DESTDIR)$(bindir)
 	$(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install \
-	$(INSTALL) $(INSTALL_STRIP_FLAG) $(EXTRA_PROGRAMS) $(DESTDIR)$(bindir)
+	$(INSTALL) $(INSTALL_STRIP_FLAG) $(trainingtools) $(DESTDIR)$(bindir)
 
 training-uninstall:
 
@@ -773,14 +782,14 @@ check: libtesseract_training.la
 # dawg_test runs dawg2wordlist and wordlist2dawg.
 check: dawg2wordlist wordlist2dawg
 
-CLEANFILES += $(EXTRA_PROGRAMS)
-
 else
 
 training:
 	@echo "Need to reconfigure project, so there are no errors"
 
 endif
+
+CLEANFILES += $(EXTRA_PROGRAMS)
 
 training_CPPFLAGS := -DPANGO_ENABLE_ENGINE
 training_CPPFLAGS += -DTESS_COMMON_TRAINING_API=
@@ -888,27 +897,27 @@ libtesseract_training_la_SOURCES += src/training/common/sampleiterator.cpp
 libtesseract_training_la_SOURCES += src/training/common/trainingsampleset.cpp
 endif
 
-trainingtools = combine_lang_model
-trainingtools += combine_tessdata
-trainingtools += dawg2wordlist
-trainingtools += lstmeval
-trainingtools += lstmtraining
-trainingtools += merge_unicharsets
-trainingtools += set_unicharset_properties
-trainingtools += text2image
-trainingtools += unicharset_extractor
-trainingtools += wordlist2dawg
+trainingtools = combine_lang_model$(EXEEXT)
+trainingtools += combine_tessdata$(EXEEXT)
+trainingtools += dawg2wordlist$(EXEEXT)
+trainingtools += lstmeval$(EXEEXT)
+trainingtools += lstmtraining$(EXEEXT)
+trainingtools += merge_unicharsets$(EXEEXT)
+trainingtools += set_unicharset_properties$(EXEEXT)
+trainingtools += text2image$(EXEEXT)
+trainingtools += unicharset_extractor$(EXEEXT)
+trainingtools += wordlist2dawg$(EXEEXT)
 if !DISABLED_LEGACY_ENGINE
-trainingtools += ambiguous_words
-trainingtools += classifier_tester
-trainingtools += cntraining
-trainingtools += mftraining
-trainingtools += shapeclustering
+trainingtools += ambiguous_words$(EXEEXT)
+trainingtools += classifier_tester$(EXEEXT)
+trainingtools += cntraining$(EXEEXT)
+trainingtools += mftraining$(EXEEXT)
+trainingtools += shapeclustering$(EXEEXT)
 endif
 
 $(trainingtools): libtesseract.la
 
-EXTRA_PROGRAMS = $(trainingtools)
+EXTRA_PROGRAMS += $(trainingtools)
 
 extralib = libtesseract.la
 extralib += $(libarchive_LIBS)

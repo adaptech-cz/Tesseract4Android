@@ -74,7 +74,14 @@ if(NOT SW_BUILD)
   else()
     find_package(ICU 52.1 COMPONENTS uc i18n)
   endif()
+  if(ICU_FOUND)
+    message(">> ICU_FOUND ${ICU_FOUND} ${ICU_VERSION} ${ICU_LIBRARIES} ${ICU_INCLUDE_DIRS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ICU_CXX_FLAGS}")
+  else()
+    message(">> ICU not found!")
+  endif()
 endif()
+
 
 # ##############################################################################
 # LIBRARY common_training
@@ -112,6 +119,11 @@ add_library(common_training ${COMMON_TRAINING_SRC})
 target_include_directories(common_training PUBLIC common
                                                   ${CMAKE_CURRENT_BINARY_DIR})
 target_link_libraries(common_training PUBLIC libtesseract)
+install(
+  TARGETS common_training
+  RUNTIME DESTINATION bin
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 generate_export_header(common_training EXPORT_MACRO_NAME
                        TESS_COMMON_TRAINING_API)
 project_group(common_training "Training Tools")
@@ -252,11 +264,16 @@ if(ICU_FOUND)
                                                        PkgConfig::ICU)
     else()
       target_link_libraries(unicharset_training PUBLIC common_training
-                                                       ${ICU_LINK_LIBRARIES})
+                                                       ${ICU_LIBRARIES})
     endif()
   endif()
   target_include_directories(unicharset_training
                              PUBLIC unicharset ${CMAKE_CURRENT_BINARY_DIR})
+  install(
+    TARGETS unicharset_training
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
   generate_export_header(unicharset_training EXPORT_MACRO_NAME
                          TESS_UNICHARSET_TRAINING_API)
   project_group(unicharset_training "Training Tools")

@@ -546,7 +546,7 @@ void vigorous_noise_removal(TO_BLOCK *block) {
           }
         }
         // It might be noise so get rid of it.
-        delete blob->cblob();
+        delete blob->remove_cblob();
         delete b_it.extract();
       } else {
         prev = blob;
@@ -2000,6 +2000,9 @@ void Textord::make_spline_rows(TO_BLOCK *block, // block to do
                                bool testing_on) {
 #ifndef GRAPHICS_DISABLED
   ScrollView::Color colour; // of row
+  if (testing_on && to_win == nullptr) {
+    create_to_win(page_tr_);
+  }
 #endif
   TO_ROW_IT row_it = block->get_rows();
 
