@@ -37,7 +37,7 @@ import java.lang.annotation.Retention;
 import java.util.Collections;
 import java.util.Map;
 
-import cz.adaptech.android.tesseract4android.BuildConfig;
+import cz.adaptech.tesseract4android.BuildConfig;
 
 /**
  * Java interface for the Tesseract OCR engine. Does not implement all available

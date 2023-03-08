@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-	namespace 'cz.adaptech.android.tesseract4android'
+	namespace 'cz.adaptech.tesseract4android'
 	compileSdk 33
 	ndkVersion "25.1.8937393"
 
