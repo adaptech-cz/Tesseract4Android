@@ -17,55 +17,62 @@
 
 package com.googlecode.tesseract.android;
 
-import android.Manifest;
+import static org.junit.Assert.assertTrue;
+
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Paint.Align;
 import android.graphics.Paint.Style;
-import android.os.Environment;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
-import androidx.test.rule.GrantPermissionRule;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.googlecode.leptonica.android.Pix;
 import com.googlecode.leptonica.android.ReadFile;
 import com.googlecode.leptonica.android.WriteFile;
 
-import org.junit.Rule;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.File;
 import java.io.IOException;
 
-import static org.junit.Assert.assertTrue;
-
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class TessPdfRendererTest {
 
-	private final static String OUTPUT_PATH = Environment.getExternalStorageDirectory().toString() + "/";
+	private String tessDataPath;
+	private String language;
+	private String outputPath;
 
-	@Rule
-	public GrantPermissionRule permissionsStorage = GrantPermissionRule.grant(
-			Manifest.permission.READ_EXTERNAL_STORAGE,
-			Manifest.permission.WRITE_EXTERNAL_STORAGE);
+	@Before
+	public void setup() {
+		Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+
+		// Copy language data to storage
+		Assets.extractAssets(context);
+
+		tessDataPath = Assets.getTessDataPath(context);
+		language = Assets.getLanguage();
+		outputPath = Assets.getOutputPath(context);
+	}
 
 	@Test
 	public void testCreate() {
 		// Attempt to initialize the API.
 		final TessBaseAPI baseApi = new TessBaseAPI();
-		boolean success = baseApi.init(TessBaseAPITest.TESSBASE_PATH,
-				TessBaseAPITest.DEFAULT_LANGUAGE);
+		boolean success = baseApi.init(tessDataPath, language);
 		assertTrue(success);
 
 		String pdfBasename = "testCreate";
 
 		// Attempt to create a TessPdfRenderer instance.
-		TessPdfRenderer pdfRenderer = new TessPdfRenderer(baseApi, OUTPUT_PATH
+		TessPdfRenderer pdfRenderer = new TessPdfRenderer(baseApi, outputPath
 				+ pdfBasename);
 
 		pdfRenderer.recycle();
@@ -76,14 +83,13 @@ public class TessPdfRendererTest {
 	public void testAddPageToDocument() throws IOException {
 		// Attempt to initialize the API.
 		final TessBaseAPI baseApi = new TessBaseAPI();
-		boolean success = baseApi.init(TessBaseAPITest.TESSBASE_PATH,
-				TessBaseAPITest.DEFAULT_LANGUAGE);
+		boolean success = baseApi.init(tessDataPath, language);
 		assertTrue(success);
 
 		String pdfBasename = "testAddPageToDocument";
 
 		// Attempt to create a TessPdfRenderer instance.
-		TessPdfRenderer pdfRenderer = new TessPdfRenderer(baseApi, OUTPUT_PATH
+		TessPdfRenderer pdfRenderer = new TessPdfRenderer(baseApi, outputPath
 				+ pdfBasename);
 
 		// Start the PDF writing process.
@@ -111,7 +117,7 @@ public class TessPdfRendererTest {
 		assertTrue(endSuccess);
 
 		// Ensure that a PDF file was created.
-		File pdf = new File(OUTPUT_PATH + pdfBasename + ".pdf");
+		File pdf = new File(outputPath + pdfBasename + ".pdf");
 		assertTrue(pdf.isFile());
 		assertTrue(pdf.length() > 0);
 
