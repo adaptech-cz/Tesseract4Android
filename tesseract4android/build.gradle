@@ -17,7 +17,7 @@ android {
 			cmake {
 				// Specifies which native libraries or executables to build and package.
 				// TODO: Include eyes-two in some build flavor of the library?
-				//targets "jpeg", "png", "leptonica", "tesseract"
+				//targets "jpeg", "pngx", "leptonica", "tesseract"
 			}
 		}
 		ndk {

@@ -85,5 +85,5 @@ target_link_libraries( # Specifies the target library.
         jnigraphics
         z
         jpeg
-        png
+        pngx
         )

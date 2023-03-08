@@ -26,7 +26,7 @@ import androidx.annotation.IntRange;
 public class Rotate {
 	static {
 		System.loadLibrary("jpeg");
-		System.loadLibrary("png");
+		System.loadLibrary("pngx");
 		System.loadLibrary("leptonica");
 	}
 

@@ -36,7 +36,7 @@ import static java.lang.annotation.RetentionPolicy.SOURCE;
 public class Pix {
 	static {
 		System.loadLibrary("jpeg");
-		System.loadLibrary("png");
+		System.loadLibrary("pngx");
 		System.loadLibrary("leptonica");
 	}
 

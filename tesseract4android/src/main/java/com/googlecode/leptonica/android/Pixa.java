@@ -36,7 +36,7 @@ import androidx.annotation.Size;
 public class Pixa implements Iterable<Pix> {
 	static {
 		System.loadLibrary("jpeg");
-		System.loadLibrary("png");
+		System.loadLibrary("pngx");
 		System.loadLibrary("leptonica");
 	}
 

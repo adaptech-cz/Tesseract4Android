@@ -30,7 +30,7 @@ import static java.lang.annotation.RetentionPolicy.SOURCE;
 public class Edge {
 	static {
 		System.loadLibrary("jpeg");
-		System.loadLibrary("png");
+		System.loadLibrary("pngx");
 		System.loadLibrary("leptonica");
 	}
 

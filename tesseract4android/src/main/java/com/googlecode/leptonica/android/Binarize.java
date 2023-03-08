@@ -28,7 +28,7 @@ import androidx.annotation.FloatRange;
 public class Binarize {
 	static {
 		System.loadLibrary("jpeg");
-		System.loadLibrary("png");
+		System.loadLibrary("pngx");
 		System.loadLibrary("leptonica");
 	}
 
