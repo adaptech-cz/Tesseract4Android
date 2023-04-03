@@ -112,7 +112,7 @@ public:
   /// Magic number to determine endianness when reading the Dawg from file.
   static const int16_t kDawgMagicNumber = 42;
   /// A special unichar id that indicates that any appropriate pattern
-  /// (e.g.dicitonary word, 0-9 digit, etc) can be inserted instead
+  /// (e.g.dictionary word, 0-9 digit, etc) can be inserted instead
   /// Used for expressing patterns in punctuation and number Dawgs.
   static const UNICHAR_ID kPatternUnicharID = 0;
 
@@ -400,7 +400,7 @@ public:
 //
 /// Concrete class that can operate on a compacted (squished) Dawg (read,
 /// search and write to file). This class is read-only in the sense that
-/// new words can not be added to an instance of SquishedDawg.
+/// new words cannot be added to an instance of SquishedDawg.
 /// The underlying representation of the nodes and edges in SquishedDawg
 /// is stored as a contiguous EDGE_ARRAY (read from file or given as an
 /// argument to the constructor).

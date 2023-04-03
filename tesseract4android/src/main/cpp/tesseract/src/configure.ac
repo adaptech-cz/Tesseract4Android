@@ -28,8 +28,8 @@ AM_INIT_AUTOMAKE([foreign subdir-objects nostdinc])
 
 # Define date of package, etc. Could be useful in auto-generated
 # documentation.
-PACKAGE_YEAR=2022
-PACKAGE_DATE="12/22"
+PACKAGE_YEAR=2023
+PACKAGE_DATE="04/01"
 
 abs_top_srcdir=`AS_DIRNAME([$0])`
 
@@ -640,7 +640,7 @@ AM_COND_IF([ENABLE_TRAINING],
    echo "$ sudo make training-install"
    echo ""],
   [
-   echo "You can not build training tools because of missing dependency."
+   echo "You cannot build training tools because of missing dependency."
    echo "Check configure output for details."
    echo ""]
 )
