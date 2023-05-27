@@ -16,21 +16,26 @@ import java.io.OutputStream;
 
 public class Assets {
 
+    /**
+     * Returns locally accessible directory where our assets are extracted.
+     */
     @NonNull
-    public static String getTessDataPath(@NonNull Context context) {
-        // We need to return folder that contains the "tessdata" folder,
-        // which is in this sample directly the app's files dir
-        return context.getFilesDir().getAbsolutePath();
+    public static File getLocalDir(@NonNull Context context) {
+        return context.getFilesDir();
     }
 
+    /**
+     * Returns locally accessible directory path which contains the "tessdata" subdirectory
+     * with *.traineddata files.
+     */
     @NonNull
-    public static String getLanguage() {
-        return "eng";
+    public static String getTessDataPath(@NonNull Context context) {
+        return getLocalDir(context).getAbsolutePath();
     }
 
     @NonNull
     public static File getImageFile(@NonNull Context context) {
-        return new File(context.getFilesDir(), "sample.jpg");
+        return new File(getLocalDir(context), Config.IMAGE_NAME);
     }
 
     @Nullable
@@ -41,18 +46,32 @@ public class Assets {
     public static void extractAssets(@NonNull Context context) {
         AssetManager am = context.getAssets();
 
-        File imageFile = getImageFile(context);
-        if (!imageFile.exists()) {
-            copyFile(am, "sample.jpg", imageFile);
+        File localDir = getLocalDir(context);
+        if (!localDir.exists() && !localDir.mkdir()) {
+            throw new RuntimeException("Can't create directory " + localDir);
         }
 
         File tessDir = new File(getTessDataPath(context), "tessdata");
-        if (!tessDir.exists()) {
-            tessDir.mkdir();
+        if (!tessDir.exists() && !tessDir.mkdir()) {
+            throw new RuntimeException("Can't create directory " + tessDir);
         }
-        File engFile = new File(tessDir, "eng.traineddata");
-        if (!engFile.exists()) {
-            copyFile(am, "eng.traineddata", engFile);
+
+        // Extract all assets to our local directory.
+        // All *.traineddata into "tessdata" subdirectory, other files into root.
+        try {
+            for (String assetName : am.list("")) {
+                final File targetFile;
+                if (assetName.endsWith(".traineddata")) {
+                    targetFile = new File(tessDir, assetName);
+                } else {
+                    targetFile = new File(localDir, assetName);
+                }
+                if (!targetFile.exists()) {
+                    copyFile(am, assetName, targetFile);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 

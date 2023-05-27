@@ -11,11 +11,10 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.googlecode.tesseract.android.TessBaseAPI;
-
 import java.io.File;
 
 import cz.adaptech.tesseract4android.sample.Assets;
+import cz.adaptech.tesseract4android.sample.Config;
 import cz.adaptech.tesseract4android.sample.databinding.FragmentMainBinding;
 
 public class MainFragment extends Fragment {
@@ -38,8 +37,7 @@ public class MainFragment extends Fragment {
 
         if (!viewModel.isInitialized()) {
             String dataPath = Assets.getTessDataPath(requireContext());
-            String language = Assets.getLanguage();
-            viewModel.initTesseract(dataPath, language, TessBaseAPI.OEM_LSTM_ONLY);
+            viewModel.initTesseract(dataPath, Config.TESS_LANG, Config.TESS_ENGINE);
         }
     }
 
