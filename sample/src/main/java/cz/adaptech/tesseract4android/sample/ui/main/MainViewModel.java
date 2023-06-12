@@ -87,10 +87,19 @@ public class MainViewModel extends AndroidViewModel {
             // ability to cancel ongoing processing.
             tessApi.getHOCRText(0);
 
-            // Then get just normal UTF8 text as result. Using only this method would also trigger
-            // recognition, but would just block until it is completed.
+            // At this point the recognition has completed (or was interrupted by calling stop())
+            // and we can get the results we want. In this case just normal UTF8 text.
+            //
+            // Note that calling only this method (without the getHOCRText() above) would also
+            // trigger the recognition and return the same result, but we would received no progress
+            // notifications and we wouldn't be able to stop() the ongoing recognition.
             String text = tessApi.getUTF8Text();
 
+            // We can free up the recognition results and any stored image data in the tessApi
+            // if we don't need them anymore.
+            tessApi.clear();
+
+            // Publish the results
             result.postValue(text);
             processing.postValue(false);
             if (stopped) {
