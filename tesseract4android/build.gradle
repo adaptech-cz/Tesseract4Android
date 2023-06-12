@@ -61,7 +61,7 @@ android {
 					// See: https://github.com/android/ndk/issues/1028
 					// Use of that argument shows warnings during build:
 					// > C/C++: clang: warning: argument unused during compilation: '-static-openmp' [-Wunused-command-line-argument]
-					// But it has effect on the result.
+					// But it has no effect on the result.
 					cFlags "-fopenmp -static-openmp -Wno-unused-command-line-argument"
 					cppFlags "-fopenmp -static-openmp -Wno-unused-command-line-argument"
 				}
