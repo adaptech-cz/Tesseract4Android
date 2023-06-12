@@ -81,6 +81,11 @@ if (!tess.init(dataPath, "eng")) {
 tess.setImage(image);
 String text = tess.getUTF8Text();
 
+// See the sample project to see how to get progress notifications or how to stop the ongoing recognition. 
+
+// You can release the internal recognition results and image data when you don't need it anymore
+tess.clear();
+
 // Release Tesseract when you don't want to use it anymore
 tess.recycle();
 ```
@@ -94,7 +99,7 @@ It uses sample image and english traineddata, which are extracted from the asset
 to app's private directory on device. This is simple, but you are keeping 2 instances of the data
 file (first is kept in the APK file itself, second is kept on the storage) - wasting some space.
 If you plan to use multiple traineddata files, it would be better to download them directly from
-the internet rather than distributing them withing the APK.
+the internet rather than distributing them within the APK.
 
 ## Building
 
