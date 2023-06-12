@@ -27,7 +27,14 @@ public class MainViewModel extends AndroidViewModel {
     private final MutableLiveData<String> result = new MutableLiveData<>();
 
     private boolean tessInit;
-    private boolean stopped;
+
+    private volatile boolean stopped;
+
+    private volatile boolean tessProcessing;
+
+    private volatile boolean recycleAfterProcessing;
+
+    private final Object recycleLock = new Object();
 
     public MainViewModel(@NonNull Application application) {
         super(application);
@@ -43,11 +50,17 @@ public class MainViewModel extends AndroidViewModel {
 
     @Override
     protected void onCleared() {
-        if (isProcessing()) {
-            tessApi.stop();
+        synchronized (recycleLock) {
+            if (tessProcessing) {
+                // Processing is active, set flag to recycle tessApi after processing is completed
+                recycleAfterProcessing = true;
+                // Stop the processing as we don't care about the result anymore
+                tessApi.stop();
+            } else {
+                // No ongoing processing, we must recycle it here
+                tessApi.recycle();
+            }
         }
-        // Don't forget to release TessBaseAPI
-        tessApi.recycle();
     }
 
     public void initTesseract(@NonNull String dataPath, @NonNull String language, int engineMode) {
@@ -66,10 +79,12 @@ public class MainViewModel extends AndroidViewModel {
             Log.e(TAG, "recognizeImage: Tesseract is not initialized");
             return;
         }
-        if (isProcessing()) {
+        if (tessProcessing) {
             Log.e(TAG, "recognizeImage: Processing is in progress");
             return;
         }
+        tessProcessing = true;
+
         result.setValue("");
         processing.setValue(true);
         progress.setValue("Processing...");
@@ -109,20 +124,25 @@ public class MainViewModel extends AndroidViewModel {
                 progress.postValue(String.format(Locale.ENGLISH,
                         "Completed in %.3fs.", (duration / 1000f)));
             }
+
+            synchronized (recycleLock) {
+                tessProcessing = false;
+
+                // Recycle the instance here if the view model is already destroyed
+                if (recycleAfterProcessing) {
+                    tessApi.recycle();
+                }
+            }
         }).start();
     }
 
     public void stop() {
-        if (!isProcessing()) {
+        if (!tessProcessing) {
             return;
         }
-        tessApi.stop();
         progress.setValue("Stopping...");
         stopped = true;
-    }
-
-    public boolean isProcessing() {
-        return Boolean.TRUE.equals(processing.getValue());
+        tessApi.stop();
     }
 
     public boolean isInitialized() {
