@@ -62,31 +62,37 @@ dependencies {
 
 3. Use the `TessBaseAPI` class in your code:
 
+This is the simplest example you can have. In this case TessBaseAPI is always created, used to recognize the image and then destroyed.
+Better would be to create and initialize the instance only once and use it to recognize multiple images instead. Look at the [sample](/sample)
+project for such usage, additionally with progress notifications and a way to stop the ongoing processing.
+
 ```java
-// Create Tesseract instance
+// Create TessBaseAPI instance (this internally creates the native Tesseract instance)
 TessBaseAPI tess = new TessBaseAPI();
 
 // Given path must contain subdirectory `tessdata` where are `*.traineddata` language files
-// Additionally, the path must be directly readable by the app
+// The path must be directly readable by the app
 String dataPath = new File(context.getFilesDir(), "tesseract").getAbsolutePath();
 
-// Initialize API for specified language (can be called multiple times during Tesseract lifetime)
-if (!tess.init(dataPath, "eng")) {
-    // Error initializing Tesseract (wrong/inaccessible data path or not existing language file) 
+// Initialize API for specified language
+// (can be called multiple times during Tesseract lifetime)
+if (!tess.init(dataPath, "eng")) { // could be multiple languages, like "eng+deu+fra"
+    // Error initializing Tesseract (wrong/inaccessible data path or not existing language file(s))
+    // Release the native Tesseract instance
     tess.recycle();
     return;
 }
 
-// Specify image and then recognize it and get result (can be called multiple times during Tesseract lifetime)
+// Load the image (file path, Bitmap, Pix...)
+// (can be called multiple times during Tesseract lifetime)
 tess.setImage(image);
+
+// Start the recognition (if not done for this image yet) and retrieve the result
+// (can be called multiple times during Tesseract lifetime)
 String text = tess.getUTF8Text();
 
-// See the sample project to see how to get progress notifications or how to stop the ongoing recognition. 
-
-// You can release the internal recognition results and image data when you don't need it anymore
-tess.clear();
-
-// Release Tesseract when you don't want to use it anymore
+// Release the native Tesseract instance when you don't want to use it anymore
+// After this call, no method can be called on this TessBaseAPI instance
 tess.recycle();
 ```
 
