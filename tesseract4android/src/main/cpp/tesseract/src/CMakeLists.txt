@@ -96,6 +96,7 @@ option(ENABLE_NATIVE
 option(BUILD_TRAINING_TOOLS "Build training tools" ON)
 option(BUILD_TESTS "Build tests" OFF)
 option(USE_SYSTEM_ICU "Use system ICU" OFF)
+option(DISABLE_TIFF "Disable build with libtiff (if available)" OFF)
 option(DISABLE_ARCHIVE "Disable build with libarchive (if available)" OFF)
 option(DISABLE_CURL "Disable build with libcurl (if available)" OFF)
 option(INSTALL_CONFIGS "Install tesseract configs" ON)
@@ -323,7 +324,7 @@ if(OPENMP_BUILD)
   if(NOT OpenMP_FOUND
      AND CLANG
      AND WIN32)
-    # workaroung because find_package(OpenMP) does not work for clang-cl
+    # workaround because find_package(OpenMP) does not work for clang-cl
     # https://gitlab.kitware.com/cmake/cmake/issues/19404
     check_include_file_cxx(omp.h HAVE_OMP_H_INCLUDE)
     find_library(OpenMP_LIBRARY NAMES omp libomp.lib)
@@ -371,6 +372,7 @@ add_definitions("-DCMAKE_BUILD")
 # packages
 #
 # ##############################################################################
+include(CheckFunctions)
 
 if(SW_BUILD)
   find_package(SW REQUIRED)
@@ -397,21 +399,37 @@ else()
   endif()
   if(NOT Leptonica_FOUND)
     message(FATAL_ERROR "Cannot find required library Leptonica. Quitting!")
+  else()
+    message(STATUS "Found leptonica version: ${Leptonica_VERSION}")
   endif(NOT Leptonica_FOUND)
   include_directories(${Leptonica_INCLUDE_DIRS})
 
-  # Check for optional libraries.
-  find_package(TIFF) # for tesseract
-  if(NOT TIFF_FOUND AND PKG_CONFIG_EXECUTABLE)
-    # try PKG_CONFIG to find libtiff if cmake failed
-    pkg_check_modules(TIFF libtiff-4)
+  check_leptonica_tiff_support()
+  if (NOT LEPT_TIFF_RESULT EQUAL 0)
+    message(NOTICE "Leptonica was build without TIFF support! Disabling TIFF support...")
+    set(DISABLE_TIFF ON)
+  else()
+    message(STATUS "Leptonica was build with TIFF support.")
   endif()
-  if(TIFF_FOUND)
-    set(HAVE_TIFFIO_H ON)
-    include_directories(${TIFF_INCLUDE_DIRS})
-  endif(TIFF_FOUND)
+
+  # Check for optional libraries.
+  if(DISABLE_TIFF)
+    set(HAVE_TIFFIO_H OFF)
+    message(STATUS "TIFF support disabled.")
+  else(DISABLE_TIFF)
+    find_package(TIFF) # for tesseract
+    if(NOT TIFF_FOUND AND PKG_CONFIG_EXECUTABLE)
+      # try PKG_CONFIG to find libtiff if cmake failed
+      pkg_check_modules(TIFF libtiff-4)
+    endif()
+    if(TIFF_FOUND)
+      set(HAVE_TIFFIO_H ON)
+      include_directories(${TIFF_INCLUDE_DIRS})
+    endif(TIFF_FOUND)
+  endif(DISABLE_TIFF)
   if(DISABLE_ARCHIVE)
     set(HAVE_LIBARCHIVE OFF)
+    message(STATUS "LibArchive support disabled.")
   else(DISABLE_ARCHIVE)
     find_package(LibArchive)
     if(NOT LibArchive_FOUND AND PKG_CONFIG_EXECUTABLE)
@@ -425,6 +443,7 @@ else()
   endif(DISABLE_ARCHIVE)
   if(DISABLE_CURL)
     set(HAVE_LIBCURL OFF)
+    message(STATUS "CURL support disabled.")
   else(DISABLE_CURL)
     find_package(CURL)
     if(NOT CURL_FOUND AND PKG_CONFIG_EXECUTABLE)
