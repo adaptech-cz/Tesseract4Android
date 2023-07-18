@@ -164,6 +164,7 @@
 
 #include <string.h>
 #include "allheaders.h"
+#include "pix_internal.h"
 
     /* Static functions */
 static l_int32 recogTemplatesAreOK(L_RECOG *recog, l_int32 minsize,
@@ -222,19 +223,17 @@ recogTrainLabeled(L_RECOG  *recog,
 l_int32  ret;
 PIX     *pix;
 
-    PROCNAME("recogTrainLabeled");
-
     if (!recog)
-        return ERROR_INT("recog not defined", procName, 1);
+        return ERROR_INT("recog not defined", __func__, 1);
     if (!pixs)
-        return ERROR_INT("pixs not defined", procName, 1);
+        return ERROR_INT("pixs not defined", __func__, 1);
 
         /* Prepare the sample to be added. This step also acts
          * as a filter, and can invalidate pixs as a template. */
     ret = recogProcessLabeled(recog, pixs, box, text, &pix);
     if (ret) {
         pixDestroy(&pix);
-        L_WARNING("failure to get sample '%s' for training\n", procName,
+        L_WARNING("failure to get sample '%s' for training\n", __func__,
                   text);
         return 1;
     }
@@ -273,21 +272,19 @@ l_int32  textinpix, textin, nsets;
 NUMA    *na;
 PIX     *pix1, *pix2, *pix3, *pix4;
 
-    PROCNAME("recogProcessLabeled");
-
     if (!ppix)
-        return ERROR_INT("&pix not defined", procName, 1);
+        return ERROR_INT("&pix not defined", __func__, 1);
     *ppix = NULL;
     if (!recog)
-        return ERROR_INT("recog not defined", procName, 1);
+        return ERROR_INT("recog not defined", __func__, 1);
     if (!pixs)
-        return ERROR_INT("pixs not defined", procName, 1);
+        return ERROR_INT("pixs not defined", __func__, 1);
 
         /* Find the text; this will be stored with the output images */
     textin = text && (text[0] != '\0');
     textinpix = (pixs->text && (pixs->text[0] != '\0'));
     if (!textin && !textinpix) {
-        L_ERROR("no text: %d\n", procName, recog->num_samples);
+        L_ERROR("no text: %d\n", __func__, recog->num_samples);
         return 1;
     }
     textdata = (textin) ? text : pixs->text;  /* do not free */
@@ -313,7 +310,7 @@ PIX     *pix1, *pix2, *pix3, *pix4;
     pixClipToForeground(pix3, &pix4, NULL);
     pixDestroy(&pix3);
     if (!pix4)
-        return ERROR_INT("pix4 is empty", procName, 1);
+        return ERROR_INT("pix4 is empty", __func__, 1);
 
         /* Verify that if there is more than 1 c.c., they all have
          * horizontal overlap */
@@ -322,7 +319,7 @@ PIX     *pix1, *pix2, *pix3, *pix4;
     numaDestroy(&na);
     if (nsets > 1) {
         L_WARNING("found %d sets of horiz separated c.c.; skipping\n",
-                  procName, nsets);
+                  __func__, nsets);
         pixDestroy(&pix4);
         return 1;
     }
@@ -362,20 +359,18 @@ l_int32  npa, charint, index;
 PIXA    *pixa1;
 PIXAA   *paa;
 
-    PROCNAME("recogAddSample");
-
     if (!recog)
-        return ERROR_INT("recog not defined", procName, 1);
+        return ERROR_INT("recog not defined", __func__, 1);
     if (!pix || pixGetDepth(pix) != 1)
-        return ERROR_INT("pix not defined or not 1 bpp\n", procName, 1);
+        return ERROR_INT("pix not defined or not 1 bpp\n", __func__, 1);
     if (recog->train_done)
-        return ERROR_INT("not added: training has been completed", procName, 1);
+        return ERROR_INT("not added: training has been completed", __func__, 1);
     paa = recog->pixaa_u;
 
         /* Make sure the character is in the set */
     text = pixGetText(pix);
     if (l_convertCharstrToInt(text, &charint) == 1) {
-        L_ERROR("invalid text: %s\n", procName, text);
+        L_ERROR("invalid text: %s\n", __func__, text);
         return 1;
     }
 
@@ -385,20 +380,20 @@ PIXAA   *paa;
             /* New class must be added */
         npa = pixaaGetCount(paa, NULL);
         if (index > npa) {
-            L_ERROR("oops: bad index %d > npa %d!!\n", procName, index, npa);
+            L_ERROR("oops: bad index %d > npa %d!!\n", __func__, index, npa);
             return 1;
         }
         if (index == npa) {  /* paa needs to be extended */
             L_INFO("Adding new class and pixa: index = %d, text = %s\n",
-                   procName, index, text);
+                   __func__, index, text);
             pixa1 = pixaCreate(10);
             pixaaAddPixa(paa, pixa1, L_INSERT);
         }
     }
     if (debug) {
-        L_INFO("Identified text label: %s\n", procName, text);
+        L_INFO("Identified text label: %s\n", __func__, text);
         L_INFO("Identified: charint = %d, index = %d\n",
-               procName, charint, index);
+               __func__, charint, index);
     }
 
         /* Insert the unscaled character image into the right pixa.
@@ -424,12 +419,10 @@ recogModifyTemplate(L_RECOG  *recog,
 l_int32  w, h, empty;
 PIX     *pix1, *pix2;
 
-    PROCNAME("recogModifyTemplate");
-
     if (!recog)
-        return (PIX *)ERROR_PTR("recog not defined", procName, NULL);
+        return (PIX *)ERROR_PTR("recog not defined", __func__, NULL);
     if (!pixs)
-        return (PIX *)ERROR_PTR("pixs not defined", procName, NULL);
+        return (PIX *)ERROR_PTR("pixs not defined", __func__, NULL);
 
         /* Scale first */
     pixGetDimensions(pixs, &w, &h, NULL);
@@ -440,7 +433,7 @@ PIX     *pix1, *pix2;
         pix1 = pixScaleToSize(pixs, recog->scalew, recog->scaleh);
     }
     if (!pix1)
-        return (PIX *)ERROR_PTR("pix1 not made", procName, NULL);
+        return (PIX *)ERROR_PTR("pix1 not made", __func__, NULL);
 
         /* Then optionally convert to lines */
     if (recog->linew <= 0) {
@@ -450,14 +443,14 @@ PIX     *pix1, *pix2;
     }
     pixDestroy(&pix1);
     if (!pix2)
-        return (PIX *)ERROR_PTR("pix2 not made", procName, NULL);
+        return (PIX *)ERROR_PTR("pix2 not made", __func__, NULL);
 
         /* Make sure we still have some pixels */
     pixZero(pix2, &empty);
     if (empty) {
         pixDestroy(&pix2);
         return (PIX *)ERROR_PTR("modified template has no pixels",
-                                procName, NULL);
+                                __func__, NULL);
     }
     return pix2;
 }
@@ -466,7 +459,7 @@ PIX     *pix1, *pix2;
 /*!
  * \brief   recogAverageSamples()
  *
- * \param[in]   precog    addr of existing recog; may be destroyed
+ * \param[in]   recog    addr of existing recog
  * \param[in]   debug
  * \return  0 on success, 1 on failure
  *
@@ -481,14 +474,15 @@ PIX     *pix1, *pix2;
  *      (2) If the data in any class is nonexistent (no samples), or
  *          very bad (no fg pixels in the average), or if the ratio
  *          of max/min average unscaled class template heights is
- *          greater than max_ht_ratio, this destroys the recog.
- *          The caller must check the return value of the recog.
+ *          greater than max_ht_ratio, this function fails.  The caller
+ *          must check the return value of the recog, and destroy the
+ *          recog on failure.
  *      (3) Set debug = 1 to view the resulting templates and their centroids.
  * </pre>
  */
 l_int32
-recogAverageSamples(L_RECOG  **precog,
-                    l_int32    debug)
+recogAverageSamples(L_RECOG  *recog,
+                    l_int32   debug)
 {
 l_int32    i, nsamp, size, area, bx, by, badclass;
 l_float32  x, y, hratio;
@@ -496,14 +490,9 @@ BOX       *box;
 PIXA      *pixa1;
 PIX       *pix1, *pix2, *pix3;
 PTA       *pta1;
-L_RECOG   *recog;
 
-    PROCNAME("recogAverageSamples");
-
-    if (!precog)
-        return ERROR_INT("&recog not defined", procName, 1);
-    if ((recog = *precog) == NULL)
-        return ERROR_INT("recog not defined", procName, 1);
+    if (!recog)
+        return ERROR_INT("recog not defined", __func__, 1);
 
     if (recog->ave_done) {
         if (debug)  /* always do this if requested */
@@ -542,7 +531,7 @@ L_RECOG   *recog;
         nsamp = pixaGetCount(pixa1);
         nsamp = L_MIN(nsamp, 256);  /* we only use the first 256 */
         if (nsamp == 0) {  /* no information for this class */
-            L_ERROR("no samples in class %d\n", procName, i);
+            L_ERROR("no samples in class %d\n", __func__, i);
             badclass = TRUE;
             pixaDestroy(&pixa1);
             ptaDestroy(&pta1);
@@ -553,7 +542,7 @@ L_RECOG   *recog;
             pixInvert(pix2, pix2);
             pixClipToForeground(pix2, &pix3, &box);
             if (!box) {
-                L_ERROR("no fg pixels in average for uclass %d\n", procName, i);
+                L_ERROR("no fg pixels in average for uclass %d\n", __func__, i);
                 badclass = TRUE;
                 pixDestroy(&pix1);
                 pixDestroy(&pix2);
@@ -575,11 +564,9 @@ L_RECOG   *recog;
         ptaDestroy(&pta1);
     }
 
-        /* Are any classes bad?  If so, destroy the recog and return an error */
-    if (badclass) {
-        recogDestroy(precog);
-        return ERROR_INT("at least 1 bad class; destroying recog", procName, 1);
-    }
+        /* Are any classes bad?  */
+    if (badclass)
+        return ERROR_INT("at least 1 bad class", __func__, 1);
 
         /* Get the range of sizes of the unscaled average templates.
          * Reject if the height ratio is too large.  */
@@ -587,9 +574,8 @@ L_RECOG   *recog;
                   &recog->maxwidth_u, &recog->maxheight_u);
     hratio = (l_float32)recog->maxheight_u / (l_float32)recog->minheight_u;
     if (hratio > recog->max_ht_ratio) {
-        L_ERROR("ratio of max/min height of average templates = %4.1f;"
-                " destroying recog\n", procName, hratio);
-        recogDestroy(precog);
+        L_ERROR("ratio of max/min height of average templates = %4.1f\n",
+                __func__, hratio);
         return 1;
     }
 
@@ -604,7 +590,7 @@ L_RECOG   *recog;
         pixInvert(pix2, pix2);
         pixClipToForeground(pix2, &pix3, &box);
         if (!box) {
-            L_ERROR("no fg pixels in average for sclass %d\n", procName, i);
+            L_ERROR("no fg pixels in average for class %d\n", __func__, i);
             badclass = TRUE;
             pixDestroy(&pix1);
             pixDestroy(&pix2);
@@ -625,10 +611,8 @@ L_RECOG   *recog;
         ptaDestroy(&pta1);
     }
 
-    if (badclass) {
-        recogDestroy(precog);
-        return ERROR_INT("at least 1 bad class; destroying recog", procName, 1);
-    }
+    if (badclass)
+        return ERROR_INT("no fg pixels in at least 1 class", __func__, 1);
 
         /* Get the range of widths of the scaled average templates */
     pixaSizeRange(recog->pixa, &recog->minwidth, NULL, &recog->maxwidth, NULL);
@@ -677,22 +661,20 @@ l_float32  xc, yc, xave, yave;
 PIX       *pix1, *pix2, *pixsum;
 PTA       *ptac;
 
-    PROCNAME("pixaAccumulateSamples");
-
     if (px) *px = 0;
     if (py) *py = 0;
     if (!ppixd)
-        return ERROR_INT("&pixd not defined", procName, 1);
+        return ERROR_INT("&pixd not defined", __func__, 1);
     *ppixd = NULL;
     if (!pixa)
-        return ERROR_INT("pixa not defined", procName, 1);
+        return ERROR_INT("pixa not defined", __func__, 1);
 
     n = pixaGetCount(pixa);
     if (pta && ptaGetCount(pta) != n)
-        return ERROR_INT("pta count differs from pixa count", procName, 1);
+        return ERROR_INT("pta count differs from pixa count", __func__, 1);
     n = L_MIN(n, 256);  /* take the first 256 only */
     if (n == 0)
-        return ERROR_INT("pixa array empty", procName, 1);
+        return ERROR_INT("pixa array empty", __func__, 1);
 
         /* Find the centroids */
     if (pta) {
@@ -798,19 +780,17 @@ PTA       *pta;
 PTAA      *ptaa;
 L_RECOG   *recog;
 
-    PROCNAME("recogTrainingFinished");
-
     if (!precog)
-        return ERROR_INT("&recog not defined", procName, 1);
+        return ERROR_INT("&recog not defined", __func__, 1);
     if ((recog = *precog) == NULL)
-        return ERROR_INT("recog not defined", procName, 1);
+        return ERROR_INT("recog not defined", __func__, 1);
     if (recog->train_done) return 0;
 
         /* Test the input templates */
     recogTemplatesAreOK(recog, minsize, minfract, &ok);
     if (!ok) {
         recogDestroy(precog);
-        return ERROR_INT("bad templates", procName, 1);
+        return ERROR_INT("bad templates", __func__, 1);
     }
 
         /* Generate the storage for the possibly-scaled training bitmaps */
@@ -869,7 +849,7 @@ L_RECOG   *recog;
                 numaaAddNumber(recog->naasum, i, area);
             } else {
                 L_ERROR("failed: modified template for class %d, sample %d\n",
-                        procName, i, j);
+                        __func__, i, j);
             }
             pixDestroy(&pix);
         }
@@ -918,13 +898,11 @@ l_int32    i, n, validsets, nt;
 l_float32  ratio;
 NUMA      *na;
 
-    PROCNAME("recogTemplatesAreOK");
-
     if (!pok)
-        return ERROR_INT("&ok not defined", procName, 1);
+        return ERROR_INT("&ok not defined", __func__, 1);
     *pok = 0;
     if (!recog)
-        return ERROR_INT("recog not defined", procName, 1);
+        return ERROR_INT("recog not defined", __func__, 1);
 
     minsize = (minsize < 0) ? DefaultMinSetSize : minsize;
     minfract = (minfract < 0) ? DefaultMinSetFract : minfract;
@@ -983,14 +961,12 @@ NUMA      *na;
 PIXA      *pixa1, *pixa2, *pixa3, *pixa4, *pixa5;
 PIXAA     *paa;
 
-    PROCNAME("recogFilterPixaBySize");
-
     if (pna) *pna = NULL;
     if (!pixas)
-        return (PIXA *)ERROR_PTR("pixas not defined", procName, NULL);
+        return (PIXA *)ERROR_PTR("pixas not defined", __func__, NULL);
 
     if ((paa = recogSortPixaByClass(pixas, setsize)) == NULL)
-        return (PIXA *)ERROR_PTR("paa not made", procName, NULL);
+        return (PIXA *)ERROR_PTR("paa not made", __func__, NULL);
     nc = pixaaGetCount(paa, NULL);
     na = (pna) ? numaCreate(0) : NULL;
     if (pna) *pna = na;
@@ -1048,13 +1024,11 @@ recogSortPixaByClass(PIXA    *pixa,
 PIXAA    *paa;
 L_RECOG  *recog;
 
-    PROCNAME("recogSortPixaByClass");
-
     if (!pixa)
-        return (PIXAA *)ERROR_PTR("pixa not defined", procName, NULL);
+        return (PIXAA *)ERROR_PTR("pixa not defined", __func__, NULL);
 
     if ((recog = recogCreateFromPixaNoFinish(pixa, 0, 0, 0, 0, 0)) == NULL)
-        return (PIXAA *)ERROR_PTR("recog not made", procName, NULL);
+        return (PIXAA *)ERROR_PTR("recog not made", __func__, NULL);
     paa = recog->pixaa_u;   /* grab the paa of unscaled templates */
     recog->pixaa_u = NULL;
     recogDestroy(&recog);
@@ -1092,12 +1066,10 @@ recogRemoveOutliers1(L_RECOG  **precog,
 PIXA     *pixa1, *pixa2;
 L_RECOG  *recog;
 
-    PROCNAME("recogRemoveOutliers1");
-
     if (!precog)
-        return ERROR_INT("&recog not defined", procName, 1);
+        return ERROR_INT("&recog not defined", __func__, 1);
     if (*precog == NULL)
-        return ERROR_INT("recog not defined", procName, 1);
+        return ERROR_INT("recog not defined", __func__, 1);
 
         /* Extract the unscaled templates */
     pixa1 = recogExtractPixa(*precog);
@@ -1107,13 +1079,13 @@ L_RECOG  *recog;
                                 ppixsave, ppixrem);
     pixaDestroy(&pixa1);
     if (!pixa2)
-        return ERROR_INT("failure to remove outliers", procName, 1);
+        return ERROR_INT("failure to remove outliers", __func__, 1);
 
     recog = recogCreateFromPixa(pixa2, 0, 0, 0, 150, 1);
     pixaDestroy(&pixa2);
     if (!recog)
         return ERROR_INT("failure to make recog from pixa sans outliers",
-                          procName, 1);
+                          __func__, 1);
 
     *precog = recog;
     return 0;
@@ -1175,12 +1147,10 @@ PIXA      *pixa, *pixarem, *pixad;
 PTA       *pta;
 L_RECOG   *recog;
 
-    PROCNAME("pixaRemoveOutliers1");
-
     if (ppixsave) *ppixsave = NULL;
     if (ppixrem) *ppixrem = NULL;
     if (!pixas)
-        return (PIXA *)ERROR_PTR("pixas not defined", procName, NULL);
+        return (PIXA *)ERROR_PTR("pixas not defined", __func__, NULL);
     minscore = L_MIN(minscore, 1.0);
     if (minscore <= 0.0)
         minscore = DefaultMinScore;
@@ -1194,10 +1164,11 @@ L_RECOG   *recog;
     debug = (ppixsave || ppixrem) ? 1 : 0;
     recog = recogCreateFromPixa(pixas, 0, 40, 0, 128, 1);
     if (!recog)
-        return (PIXA *)ERROR_PTR("bad pixas; recog not made", procName, NULL);
-    recogAverageSamples(&recog, debug);
-    if (!recog)
-        return (PIXA *)ERROR_PTR("bad templates", procName, NULL);
+        return (PIXA *)ERROR_PTR("bad pixas; recog not made", __func__, NULL);
+    if (recogAverageSamples(recog, debug) != 0) {
+        recogDestroy(&recog);
+        return (PIXA *)ERROR_PTR("bad templates", __func__, NULL);
+    }
 
     nasave = (ppixsave) ? numaCreate(0) : NULL;
     pixarem = (ppixrem) ? pixaCreate(0) : NULL;
@@ -1242,7 +1213,7 @@ L_RECOG   *recog;
                             L_MIN(minscore, rankscore));
         if (debug) {
             L_INFO("minscore = %4.2f, rankscore = %4.2f, threshscore = %4.2f\n",
-                   procName, minscore, rankscore, threshscore);
+                   __func__, minscore, rankscore, threshscore);
         }
 
             /* Save templates that are at or above threshold.
@@ -1309,12 +1280,10 @@ recogRemoveOutliers2(L_RECOG  **precog,
 PIXA     *pixa1, *pixa2;
 L_RECOG  *recog;
 
-    PROCNAME("recogRemoveOutliers2");
-
     if (!precog)
-        return ERROR_INT("&recog not defined", procName, 1);
+        return ERROR_INT("&recog not defined", __func__, 1);
     if (*precog == NULL)
-        return ERROR_INT("recog not defined", procName, 1);
+        return ERROR_INT("recog not defined", __func__, 1);
 
         /* Extract the unscaled templates */
     pixa1 = recogExtractPixa(*precog);
@@ -1323,13 +1292,13 @@ L_RECOG  *recog;
     pixa2 = pixaRemoveOutliers2(pixa1, minscore, minsize, ppixsave, ppixrem);
     pixaDestroy(&pixa1);
     if (!pixa2)
-        return ERROR_INT("failure to remove outliers", procName, 1);
+        return ERROR_INT("failure to remove outliers", __func__, 1);
 
     recog = recogCreateFromPixa(pixa2, 0, 0, 0, 150, 1);
     pixaDestroy(&pixa2);
     if (!recog)
         return ERROR_INT("failure to make recog from pixa sans outliers",
-                          procName, 1);
+                          __func__, 1);
 
     *precog = recog;
     return 0;
@@ -1377,12 +1346,10 @@ PIX       *pix1, *pix2, *pix3;
 PIXA      *pixarem, *pixad;
 L_RECOG   *recog;
 
-    PROCNAME("pixaRemoveOutliers2");
-
     if (ppixsave) *ppixsave = NULL;
     if (ppixrem) *ppixrem = NULL;
     if (!pixas)
-        return (PIXA *)ERROR_PTR("pixas not defined", procName, NULL);
+        return (PIXA *)ERROR_PTR("pixas not defined", __func__, NULL);
     minscore = L_MIN(minscore, 1.0);
     if (minscore <= 0.0)
         minscore = DefaultMinScore;
@@ -1393,10 +1360,11 @@ L_RECOG   *recog;
     debug = (ppixsave || ppixrem) ? 1 : 0;
     recog = recogCreateFromPixa(pixas, 0, 40, 0, 128, 1);
     if (!recog)
-        return (PIXA *)ERROR_PTR("bad pixas; recog not made", procName, NULL);
-    recogAverageSamples(&recog, debug);
-    if (!recog)
-        return (PIXA *)ERROR_PTR("bad templates", procName, NULL);
+        return (PIXA *)ERROR_PTR("bad pixas; recog not made", __func__, NULL);
+    if (recogAverageSamples(recog, debug) != 0) {
+        recogDestroy(&recog);
+        return (PIXA *)ERROR_PTR("bad templates", __func__, NULL);
+    }
 
     nasave = (ppixsave) ? numaCreate(0) : NULL;
     pixarem = (ppixrem) ? pixaCreate(0) : NULL;
@@ -1501,16 +1469,14 @@ l_float32  score;
 PIX       *pix1, *pix2, *pixdb;
 PIXA      *pixa1, *pixa2, *pixa3, *pixad;
 
-    PROCNAME("recogTrainFromBoot");
-
     if (!recogboot)
-        return (PIXA *)ERROR_PTR("recogboot not defined", procName, NULL);
+        return (PIXA *)ERROR_PTR("recogboot not defined", __func__, NULL);
     if (!pixas)
-        return (PIXA *)ERROR_PTR("pixas not defined", procName, NULL);
+        return (PIXA *)ERROR_PTR("pixas not defined", __func__, NULL);
 
         /* Make sure all input pix are 1 bpp */
     if ((n = pixaGetCount(pixas)) == 0)
-        return (PIXA *)ERROR_PTR("no pix in pixa", procName, NULL);
+        return (PIXA *)ERROR_PTR("no pix in pixa", __func__, NULL);
     pixaVerifyDepth(pixas, &same, &maxd);
     if (maxd == 1) {
         pixa1 = pixaCopy(pixas, L_COPY);
@@ -1601,10 +1567,8 @@ PIXA     *pixa;
 L_RECOG  *recog1, *recog2;
 SARRAY   *sa;
 
-    PROCNAME("recogPadDigitTrainingSet");
-
     if (!precog)
-        return ERROR_INT("&recog not defined", procName, 1);
+        return ERROR_INT("&recog not defined", __func__, 1);
     recog1 = *precog;
 
     recogIsPaddingNeeded(recog1, &sa);
@@ -1614,12 +1578,12 @@ SARRAY   *sa;
     pixa = recogAddDigitPadTemplates(recog1, sa);
     sarrayDestroy(&sa);
     if (!pixa)
-        return ERROR_INT("pixa not made", procName, 1);
+        return ERROR_INT("pixa not made", __func__, 1);
 
         /* Need to use templates that are scaled to a fixed height. */
     if (scaleh <= 0) {
         L_WARNING("templates must be scaled to fixed height; using %d\n",
-                  procName, 40);
+                  __func__, 40);
         scaleh = 40;
     }
 
@@ -1660,13 +1624,11 @@ l_float32  minval;
 NUMA      *naclass;
 SARRAY    *sa;
 
-    PROCNAME("recogIsPaddingNeeded");
-
     if (!psa)
-        return ERROR_INT("&sa not defined", procName, 1);
+        return ERROR_INT("&sa not defined", __func__, 1);
     *psa = NULL;
     if (!recog)
-        return ERROR_INT("recog not defined", procName, 1);
+        return ERROR_INT("recog not defined", __func__, 1);
 
         /* Do we have samples from all classes? */
     nclass = pixaaGetCount(recog->pixaa_u, &naclass);  /* unscaled bitmaps */
@@ -1718,10 +1680,8 @@ l_int32  i, nclass, index, ival;
 NUMA    *na;
 SARRAY  *sa;
 
-    PROCNAME("recogAddMissingClassStrings");
-
     if (!recog)
-        return (SARRAY *)ERROR_PTR("recog not defined", procName, NULL);
+        return (SARRAY *)ERROR_PTR("recog not defined", __func__, NULL);
 
         /* Only handling digits */
     nclass = pixaaGetCount(recog->pixaa_u, NULL);  /* unscaled bitmaps */
@@ -1777,14 +1737,12 @@ l_int32  i, j, n, nt;
 PIX     *pix;
 PIXA    *pixa1, *pixa2;
 
-    PROCNAME("recogAddDigitPadTemplates");
-
     if (!recog)
-        return (PIXA *)ERROR_PTR("recog not defined", procName, NULL);
+        return (PIXA *)ERROR_PTR("recog not defined", __func__, NULL);
     if (!sa)
-        return (PIXA *)ERROR_PTR("sa not defined", procName, NULL);
+        return (PIXA *)ERROR_PTR("sa not defined", __func__, NULL);
     if (recogCharsetAvailable(recog->charset_type) == FALSE)
-        return (PIXA *)ERROR_PTR("boot charset not available", procName, NULL);
+        return (PIXA *)ERROR_PTR("boot charset not available", __func__, NULL);
 
         /* Make boot recog templates */
     pixa1 = recogMakeBootDigitTemplates(0, 0);
@@ -1824,8 +1782,6 @@ recogCharsetAvailable(l_int32  type)
 {
 l_int32  ret;
 
-    PROCNAME("recogCharsetAvailable");
-
     switch (type)
     {
     case L_ARABIC_NUMERALS:
@@ -1835,11 +1791,11 @@ l_int32  ret;
     case L_UC_ROMAN_NUMERALS:
     case L_LC_ALPHA:
     case L_UC_ALPHA:
-        L_INFO("charset type %d not available\n", procName, type);
+        L_INFO("charset type %d not available\n", __func__, type);
         ret = FALSE;
         break;
     default:
-        L_INFO("charset type %d is unknown\n", procName, type);
+        L_INFO("charset type %d is unknown\n", __func__, type);
         ret = FALSE;
         break;
     }
@@ -1992,12 +1948,10 @@ l_int32  i, val, count;
 PIX     *pix;
 NUMA    *na;
 
-    PROCNAME("recogShowContent");
-
     if (!fp)
-        return ERROR_INT("stream not defined", procName, 1);
+        return ERROR_INT("stream not defined", __func__, 1);
     if (!recog)
-        return ERROR_INT("recog not defined", procName, 1);
+        return ERROR_INT("recog not defined", __func__, 1);
 
     fprintf(fp, "Debug print of recog contents\n");
     fprintf(fp, "  Setsize: %d\n", recog->setsize);
@@ -2050,7 +2004,7 @@ NUMA    *na;
 /*!
  * \brief   recogDebugAverages()
  *
- * \param[in]    precog    addr of recog
+ * \param[in]    recog    addr of recog
  * \param[in]    debug     0 no output; 1 for images; 2 for text; 3 for both
  * \return  0 if OK, 1 on error
  *
@@ -2061,32 +2015,26 @@ NUMA    *na;
  *          correlated to.  This is written into the recog.
  *      (2) It also generates pixa_tr of all the input training images,
  *          which can be used, e.g., in recogShowMatchesInRange().
- *      (3) Destroys the recog if the averaging function finds any bad classes.
+ *      (3) Returns an error if the averaging function finds bad classes.
  * </pre>
  */
 l_ok
-recogDebugAverages(L_RECOG  **precog,
-                   l_int32    debug)
+recogDebugAverages(L_RECOG  *recog,
+                   l_int32   debug)
 {
 l_int32    i, j, n, np, index;
 l_float32  score;
 PIX       *pix1, *pix2, *pix3;
 PIXA      *pixa, *pixat;
 PIXAA     *paa1, *paa2;
-L_RECOG   *recog;
 
-    PROCNAME("recogDebugAverages");
-
-    if (!precog)
-        return ERROR_INT("&recog not defined", procName, 1);
-    if ((recog = *precog) == NULL)
-        return ERROR_INT("recog not defined", procName, 1);
+    if (!recog)
+        return ERROR_INT("recog not defined", __func__, 1);
 
         /* Mark the training as finished if necessary, and make sure
          * that the average templates have been built. */
-    recogAverageSamples(&recog, 0);
-    if (!recog)
-        return ERROR_INT("averaging failed; recog destroyed", procName, 1);
+    if (recogAverageSamples(recog, 0) != 0)
+        return ERROR_INT("averaging failed", __func__, 1);
 
         /* Save a pixa of all the training examples */
     paa1 = recog->pixaa;
@@ -2150,10 +2098,8 @@ l_float32  x, y;
 PIX       *pix1, *pix2, *pixr;
 PIXA      *pixat, *pixadb;
 
-    PROCNAME("recogShowAverageTemplates");
-
     if (!recog)
-        return ERROR_INT("recog not defined", procName, 1);
+        return ERROR_INT("recog not defined", __func__, 1);
 
     lept_stderr("min/max width_u = (%d,%d); min/max height_u = (%d,%d)\n",
                 recog->minwidth_u, recog->maxwidth_u,
@@ -2231,15 +2177,13 @@ l_float32  fval;
 PIX       *pix1, *pix2;
 PIXA      *pixa1;
 
-    PROCNAME("pixDisplayOutliers");
-
     if (!pixas)
-        return (PIX *)ERROR_PTR("pixas not defined", procName, NULL);
+        return (PIX *)ERROR_PTR("pixas not defined", __func__, NULL);
     if (!nas)
-        return (PIX *)ERROR_PTR("nas not defined", procName, NULL);
+        return (PIX *)ERROR_PTR("nas not defined", __func__, NULL);
     n = pixaGetCount(pixas);
     if (numaGetCount(nas) != n)
-        return (PIX *)ERROR_PTR("pixas and nas sizes differ", procName, NULL);
+        return (PIX *)ERROR_PTR("pixas and nas sizes differ", __func__, NULL);
 
     pixa1 = pixaCreate(n);
     for (i = 0; i < n; i++) {
@@ -2287,10 +2231,8 @@ char   buf[64];
 PIX   *pix1, *pix2, *pix3, *pix4, *pix5;
 PIXA  *pixa;
 
-    PROCNAME("recogDisplayOutlier");
-
     if (!recog)
-        return (PIX *)ERROR_PTR("recog not defined", procName, NULL);
+        return (PIX *)ERROR_PTR("recog not defined", __func__, NULL);
 
     pix1 = pixaaGetPix(recog->pixaa, iclass, jsamp, L_CLONE);
     pix2 = pixaGetPix(recog->pixa, iclass, L_CLONE);
@@ -2344,12 +2286,10 @@ NUMA      *nascore, *naindex;
 PIX       *pix1, *pix2;
 PIXA      *pixa1, *pixa2;
 
-    PROCNAME("recogShowMatchesInRange");
-
     if (!recog)
-        return ERROR_INT("recog not defined", procName, 1);
+        return ERROR_INT("recog not defined", __func__, 1);
     if (!pixa)
-        return ERROR_INT("pixa not defined", procName, 1);
+        return ERROR_INT("pixa not defined", __func__, 1);
 
         /* Run the recognizer on the set of images */
     n = pixaGetCount(pixa);
@@ -2388,7 +2328,7 @@ PIXA      *pixa1, *pixa2;
         if (display)
             pixDisplay(recog->pixdb_range, 300, 100);
     } else {
-        L_INFO("no character matches in the range of scores\n", procName);
+        L_INFO("no character matches in the range of scores\n", __func__);
     }
 
     pixaDestroy(&pixa1);
@@ -2439,12 +2379,10 @@ L_BMF  *bmf;
 PIX    *pix3, *pix4, *pix5, *pixd;
 PIXA   *pixa;
 
-    PROCNAME("recogShowMatch");
-
     if (!recog)
-        return (PIX *)ERROR_PTR("recog not defined", procName, NULL);
+        return (PIX *)ERROR_PTR("recog not defined", __func__, NULL);
     if (!pix1)
-        return (PIX *)ERROR_PTR("pix1 not defined", procName, NULL);
+        return (PIX *)ERROR_PTR("pix1 not defined", __func__, NULL);
 
     bmf = (recog->bmf && index >= 0) ? recog->bmf : NULL;
     if (!pix2 && !box && !bmf)  /* nothing to do */

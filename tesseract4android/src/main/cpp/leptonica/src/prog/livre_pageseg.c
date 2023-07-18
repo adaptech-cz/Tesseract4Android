@@ -57,18 +57,17 @@ l_int32 DoPageSegmentation(PIX *pixs, l_int32 which);
 int main(int    argc,
          char **argv)
 {
-char        *filein;
-l_int32      i;
-PIX         *pixs;   /* input image should be at least 300 ppi */
-static char  mainName[] = "livre_pageseg";
+char    *filein;
+l_int32  i;
+PIX     *pixs;   /* input image should be at least 300 ppi */
 
     if (argc != 2)
-        return ERROR_INT(" Syntax:  livre_pageseg filein", mainName, 1);
+        return ERROR_INT(" Syntax:  livre_pageseg filein", __func__, 1);
     filein = argv[1];
     setLeptDebugOK(1);
 
     if ((pixs = pixRead(filein)) == NULL)
-        return ERROR_INT("pix not made", mainName, 1);
+        return ERROR_INT("pix not made", __func__, 1);
 
     for (i = 1; i <= 4; i++)
         DoPageSegmentation(pixs, i);
@@ -108,8 +107,6 @@ l_int32   ws_flag = 0;
 l_int32   text_flag = 0;
 l_int32   block_flag = 0;
 
-    PROCNAME("DoPageSegmentation");
-
     if (which == 1)
         ht_flag = 1;
     else if (which == 2)
@@ -119,7 +116,7 @@ l_int32   block_flag = 0;
     else if (which == 4)
         block_flag = 1;
     else
-        return ERROR_INT("invalid parameter: not in [1...4]", procName, 1);
+        return ERROR_INT("invalid parameter: not in [1...4]", __func__, 1);
 
     pixa = pixaCreate(0);
     lept_mkdir("lept/livre");

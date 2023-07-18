@@ -101,10 +101,8 @@ l_uint8    *bufferin, *bufferout;
 L_BBUFFER  *bbin, *bbout;
 z_stream    z;
 
-    PROCNAME("zlibCompress");
-
     if (!datain)
-        return (l_uint8 *)ERROR_PTR("datain not defined", procName, NULL);
+        return (l_uint8 *)ERROR_PTR("datain not defined", __func__, NULL);
 
         /* Set up fixed size buffers used in z_stream */
     bufferin = (l_uint8 *)LEPT_CALLOC(L_BUF_SIZE, sizeof(l_uint8));
@@ -116,7 +114,7 @@ z_stream    z;
 
     success = TRUE;
     if (!bufferin || !bufferout || !bbin || !bbout) {
-        L_ERROR("calloc fail for buffer\n", procName);
+        L_ERROR("calloc fail for buffer\n", __func__);
         success = FALSE;
         goto cleanup_arrays;
     }
@@ -124,7 +122,6 @@ z_stream    z;
     z.zalloc = (alloc_func)0;
     z.zfree = (free_func)0;
     z.opaque = (voidpf)0;
-
     z.next_in = bufferin;
     z.avail_in = 0;
     z.next_out = bufferout;
@@ -132,7 +129,7 @@ z_stream    z;
 
     status = deflateInit(&z, ZLIB_COMPRESSION_LEVEL);
     if (status != Z_OK) {
-        L_ERROR("deflateInit failed\n", procName);
+        L_ERROR("deflateInit failed\n", __func__);
         success = FALSE;
         goto cleanup_arrays;
     }
@@ -204,10 +201,8 @@ size_t      nbytes;
 L_BBUFFER  *bbin, *bbout;
 z_stream    z;
 
-    PROCNAME("zlibUncompress");
-
     if (!datain)
-        return (l_uint8 *)ERROR_PTR("datain not defined", procName, NULL);
+        return (l_uint8 *)ERROR_PTR("datain not defined", __func__, NULL);
 
         /* Set up fixed size buffers used in z_stream */
     bufferin = (l_uint8 *)LEPT_CALLOC(L_BUF_SIZE, sizeof(l_uint8));
@@ -219,21 +214,24 @@ z_stream    z;
 
     success = TRUE;
     if (!bufferin || !bufferout || !bbin || !bbout) {
-        L_ERROR("calloc fail for buffer\n", procName);
+        L_ERROR("calloc fail for buffer\n", __func__);
         success = FALSE;
         goto cleanup_arrays;
     }
 
     z.zalloc = (alloc_func)0;
     z.zfree = (free_func)0;
-
     z.next_in = bufferin;
     z.avail_in = 0;
     z.next_out = bufferout;
     z.avail_out = L_BUF_SIZE;
 
-    inflateInit(&z);
-
+    status = inflateInit(&z);
+    if (status != Z_OK) {
+        L_ERROR("inflateInit fail for buffer\n", __func__);
+        success = FALSE;
+        goto cleanup_arrays;
+    }
 
     for ( ; ; ) {
         if (z.avail_in == 0) {

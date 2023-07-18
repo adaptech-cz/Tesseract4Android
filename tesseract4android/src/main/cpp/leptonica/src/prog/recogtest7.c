@@ -52,8 +52,6 @@ PIX      *pix1, *pix2, *pix3;
 PIXA     *pixa1, *pixa2, *pixa3;
 L_RECOG  *recog1, *recog2;
 
-    PROCNAME("recogtest7");
-
     if (argc != 1) {
         lept_stderr(" Syntax: recogtest7\n");
         return 1;
@@ -69,13 +67,13 @@ L_RECOG  *recog1, *recog2;
     pixa2 = pixaMakeFromTiledPixa(pixa1, 0, 0, 100);
     pixa3 = l_bootnum_gen4(100);
     pixaEqual(pixa2, pixa3, 0, NULL, &same);
-    if (!same) L_ERROR("Bad!  The pixa differ!\n", procName);
+    if (!same) L_ERROR("Bad!  The pixa differ!\n", __func__);
     pix1 = pixaDisplayTiledWithText(pixa1, 1400, 1.0, 10, 2, 6, 0xff000000);
     pixDisplay(pix1, 100, 100);
     pix2 = pixaDisplayTiledWithText(pixa2, 1400, 1.0, 10, 2, 6, 0xff000000);
     pix3 = pixaDisplayTiledWithText(pixa3, 1400, 1.0, 10, 2, 6, 0xff000000);
     pixEqual(pix2, pix3, &same);
-    if (!same) L_ERROR("Bad! The displayed pix differ!\n", procName);
+    if (!same) L_ERROR("Bad! The displayed pix differ!\n", __func__);
     pixWrite("/tmp/lept/digits/pix1.png", pix1, IFF_PNG);
     pixWrite("/tmp/lept/digits/bootnum4.png", pix1, IFF_PNG);
     pixaDestroy(&pixa1);
@@ -94,7 +92,7 @@ L_RECOG  *recog1, *recog2;
 
 #if 1
     lept_stderr("\nShow averaged samples\n");
-    recogAverageSamples(&recog1, 1);
+    recogAverageSamples(recog1, 1);
     recogShowAverageTemplates(recog1);
     pix1 = pixaGetPix(recog1->pixadb_ave, 0, L_CLONE);
     pixWrite("/tmp/lept/digits/unscaled_ave.png", pix1, IFF_PNG);
@@ -113,7 +111,7 @@ L_RECOG  *recog1, *recog2;
     pixDestroy(&pix1);
     recog1 = recogCreateFromPixa(pixa1, scaledw, scaledh, 0, 120, 1);
     lept_stderr("\nShow matches against all inputs for given range\n");
-    recogDebugAverages(&recog1, 0);
+    recogDebugAverages(recog1, 0);
     recogShowMatchesInRange(recog1, recog1->pixa_tr, 0.85, 1.00, 1);
     pixWrite("/tmp/lept/digits/match_input.png", recog1->pixdb_range, IFF_PNG);
     lept_stderr("\nShow best match against average template\n");

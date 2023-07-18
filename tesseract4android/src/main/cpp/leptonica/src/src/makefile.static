@@ -45,10 +45,12 @@
 #   Set flags in environ.h.  The default is to have libjpeg, libpng,
 #   libtiff and libz, but not libwebp, libopenjp or libgif.
 #
-#   Customization for non-POSIX-compliant GNU functions
-#   fmemopen() and open_memstream().
-#   The default is not to use, because they only work on linux.
-#   To use these, #define HAVE_FMEMOPEN to 1 in environ.h.
+#   The functions fmemopen() and open_memstream() conform to
+#   IEEE Std 1003.1-2008 ("POSIX.1").  In addition to Linux and BSD,
+#   they are supported on macOS (> 10.12), iOS (>= 11.0) and
+#   android (sdk >= 23).  However, they are not supported on Windows.
+#   The code for determining use of these functions on different platforms
+#   is made in environ.h.
 #
 #   Customization for POSIX-compliant function fstatat().
 #   The default is not to use, because some systems do not support it.
@@ -153,8 +155,8 @@ LIBRARIAN_SHARED =	gcc -shared
 #  Links are created among the files <libname>.X.Y,
 #  <libname>.X, and <libname>, where Y is the minor revision number.
 MAJOR_REV = 1
-MINOR_REV = 81
-PATCH_REV = 0
+MINOR_REV = 83
+PATCH_REV = 1
 
 #########################################################
 
@@ -229,12 +231,15 @@ LEPTLIB_C =	adaptmap.c affine.c \
 		zlibmem.c zlibmemstub.c
 
 LEPTLIB_H =	allheaders.h alltypes.h \
-		array.h arrayaccess.h bbuffer.h \
-		bmf.h bmfdata.h bmp.h ccbord.h \
+		array.h array_internal.h \
+		arrayaccess.h bbuffer.h \
+		bmf.h bmfdata.h bmp.h \
+		ccbord.h ccbord_internal.h \
 		colorfill.h dewarp.h environ.h gplot.h \
 		hashmap.h heap.h imageio.h \
 		jbclass.h list.h morph.h \
-		pix.h ptra.h queue.h rbtree.h \
+		pix.h pix_internal.h \
+		ptra.h queue.h rbtree.h \
 		readbarcode.h recog.h regutils.h \
 		stack.h stringcode.h sudoku.h watershed.h
 

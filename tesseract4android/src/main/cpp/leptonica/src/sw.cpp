@@ -19,7 +19,7 @@ void build(Solution &s)
         t += "org.sw.demo.webmproject.webp"_dep;
     };
 
-    auto &leptonica = s.addTarget<LibraryTarget>("danbloomberg.leptonica", "1.82.0");
+    auto &leptonica = s.addTarget<LibraryTarget>("danbloomberg.leptonica", "1.83.1");
     leptonica += Git("https://github.com/DanBloomberg/leptonica");
 
     {
@@ -377,6 +377,7 @@ void check(Checker &c)
     auto &s = c.addSet("leptonica");
     s.checkFunctionExists("fmemopen");
     s.checkFunctionExists("fstatat");
+    s.checkFunctionExists("dirfd");
     s.checkIncludeExists("dlfcn.h");
     s.checkIncludeExists("inttypes.h");
     s.checkIncludeExists("memory.h");

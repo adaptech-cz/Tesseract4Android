@@ -61,11 +61,10 @@ int main(int    argc,
 char      *filein, *fileout;
 l_float32  angle, deg2rad;
 PIX       *pixs, *pixd;
-static char  mainName[] = "rotatefastalt";
 
     if (argc != 4)
         return ERROR_INT("Syntax:  rotatefastalt filein angle fileout",
-                         mainName, 1);
+                         __func__, 1);
     filein = argv[1];
     angle = atof(argv[2]);
     fileout = argv[3];
@@ -73,7 +72,7 @@ static char  mainName[] = "rotatefastalt";
     setLeptDebugOK(1);
     deg2rad = 3.1415926535 / 180.;
     if ((pixs = pixRead(filein)) == NULL)
-        return ERROR_INT("pixs not read", mainName, 1);
+        return ERROR_INT("pixs not read", __func__, 1);
 
     startTimer();
     pixd = pixRotateAMColorFast2(pixs, deg2rad * angle, 255);
@@ -115,18 +114,16 @@ l_int32    w, h, wpls, wpld;
 l_uint32  *datas, *datad;
 PIX       *pixshft, *pixd;
 
-    PROCNAME("pixRotateAMColorFast2");
-
     if (!pixs)
-        return (PIX *)ERROR_PTR("pixs not defined", procName, NULL);
+        return (PIX *)ERROR_PTR("pixs not defined", __func__, NULL);
     if (pixGetDepth(pixs) != 32)
-        return (PIX *)ERROR_PTR("pixs must be 32 bpp", procName, NULL);
+        return (PIX *)ERROR_PTR("pixs must be 32 bpp", __func__, NULL);
 
     if (L_ABS(angle) < VERY_SMALL_ANGLE)
         return pixClone(pixs);
 
     if ((pixshft = pixShiftRGB258(pixs)) == NULL)
-        return (PIX *)ERROR_PTR("pixshft not defined", procName, NULL);
+        return (PIX *)ERROR_PTR("pixshft not defined", __func__, NULL);
 
     w = pixGetWidth(pixshft);
     h = pixGetHeight(pixshft);
@@ -156,19 +153,17 @@ l_uint32   word;
 l_uint32  *datas, *datad, *lines, *lined;
 PIX       *pixd;
 
-    PROCNAME("pixShift258");
-
     if (!pixs)
-        return (PIX *)ERROR_PTR("pixs not defined", procName, NULL);
+        return (PIX *)ERROR_PTR("pixs not defined", __func__, NULL);
     if (pixGetDepth(pixs) != 32)
-        return (PIX *)ERROR_PTR("depth not 32 bpp", procName, NULL);
+        return (PIX *)ERROR_PTR("depth not 32 bpp", __func__, NULL);
     w = pixGetWidth(pixs);
     h = pixGetHeight(pixs);
     wpls = pixGetWpl(pixs);
     datas = pixGetData(pixs);
 
     if ((pixd = pixCreate(w, h, 32)) == NULL)
-        return (PIX *)ERROR_PTR("pixd not made", procName, NULL);
+        return (PIX *)ERROR_PTR("pixd not made", __func__, NULL);
     wpld = pixGetWpl(pixd);
     datad = pixGetData(pixd);
 

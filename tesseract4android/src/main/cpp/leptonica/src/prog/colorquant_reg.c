@@ -36,7 +36,6 @@
 
 #include "allheaders.h"
 
-static const l_int32 SPACE = 30;
 static const l_int32 MAX_WIDTH = 350;
 static const char *image[4] = {"marge.jpg",
                                "test24.jpg",
@@ -76,11 +75,9 @@ l_float32  factor;
 PIX       *pix, *pixs, *pixc, *pix32, *pixt, *pixd;
 PIXA      *pixa;
 
-    PROCNAME("TestImage");
-
     if ((pix = pixRead(filename)) == NULL) {
         rp->success = FALSE;
-        return ERROR_INT("pix not made", procName, 1);
+        return ERROR_INT("pix not made", __func__, 1);
     }
     pixGetDimensions(pix, &w, &h, NULL);
     if (w > MAX_WIDTH) {

@@ -31,7 +31,7 @@
  * \file array.h
  *
  * <pre>
- *  Contains the following structs:
+ *  This file has typedefs for the following array structs:
  *      struct Numa          array of floats
  *      struct Numaa
  *      struct L_Dna         array of doubles
@@ -40,7 +40,7 @@
  *      struct Sarray        array of C-strings
  *      struct L_Bytea       array of bytes
  *
- *  Contains definitions for:
+ *  It contains definitions for:
  *      Numa interpolation flags
  *      Numa border flags
  *      Numa data type conversion to string
@@ -62,84 +62,25 @@
 /*------------------------------------------------------------------------*
  *                             Array Structs                              *
  *------------------------------------------------------------------------*/
-
-/*! Numa version for serialization */
-#define  NUMA_VERSION_NUMBER     1
-
     /*! Number array: an array of floats */
-struct Numa
-{
-    l_int32          nalloc;    /*!< size of allocated number array      */
-    l_int32          n;         /*!< number of numbers saved             */
-    l_int32          refcount;  /*!< reference count (1 if no clones)    */
-    l_float32        startx;    /*!< x value assigned to array[0]        */
-    l_float32        delx;      /*!< change in x value as i --> i + 1    */
-    l_float32       *array;     /*!< number array                        */
-};
 typedef struct Numa  NUMA;
 
     /*! Array of number arrays */
-struct Numaa
-{
-    l_int32          nalloc;    /*!< size of allocated ptr array          */
-    l_int32          n;         /*!< number of Numa saved                 */
-    struct Numa    **numa;      /*!< array of Numa                        */
-};
 typedef struct Numaa  NUMAA;
 
-/*! Dna version for serialization */
-#define  DNA_VERSION_NUMBER     1
-
     /*! Double number array: an array of doubles */
-struct L_Dna
-{
-    l_int32          nalloc;    /*!< size of allocated number array      */
-    l_int32          n;         /*!< number of numbers saved             */
-    l_int32          refcount;  /*!< reference count (1 if no clones)    */
-    l_float64        startx;    /*!< x value assigned to array[0]        */
-    l_float64        delx;      /*!< change in x value as i --> i + 1    */
-    l_float64       *array;     /*!< number array                        */
-};
 typedef struct L_Dna  L_DNA;
 
     /*! Array of double number arrays */
-struct L_Dnaa
-{
-    l_int32          nalloc;    /*!< size of allocated ptr array          */
-    l_int32          n;         /*!< number of L_Dna saved                */
-    struct L_Dna   **dna;       /*!< array of L_Dna                       */
-};
 typedef struct L_Dnaa  L_DNAA;
 
-struct L_DnaHash
-{
-    l_int32          nbuckets;
-    l_int32          initsize;   /*!< initial size of each dna that is made  */
-    struct L_Dna   **dna;        /*!< array of L_Dna                       */
-};
+    /*! Array of double number arrays, used as a simple hash */
 typedef struct L_DnaHash L_DNAHASH;
 
-/*! Sarray version for serialization */
-#define  SARRAY_VERSION_NUMBER     1
-
     /*! String array: an array of C strings */
-struct Sarray
-{
-    l_int32          nalloc;    /*!< size of allocated ptr array         */
-    l_int32          n;         /*!< number of strings allocated         */
-    l_int32          refcount;  /*!< reference count (1 if no clones)    */
-    char           **array;     /*!< string array                        */
-};
 typedef struct Sarray SARRAY;
 
     /*! Byte array (analogous to C++ "string") */
-struct L_Bytea
-{
-    size_t           nalloc;    /*!< number of bytes allocated in data array  */
-    size_t           size;      /*!< number of bytes presently used           */
-    l_int32          refcount;  /*!< reference count (1 if no clones)         */
-    l_uint8         *data;      /*!< data array                               */
-};
 typedef struct L_Bytea L_BYTEA;
 
 

@@ -179,7 +179,7 @@ static l_int32   var_WRITE_DATE_AND_VERSION = 1;
  *
  * <pre>
  * Notes:
- *      (1) If %res == 0 and the input resolution field is 0,
+ *      (1) If %res == 0 and the input resolution field from the pix is 0,
  *          this will use DefaultInputRes.
  *      (2) This only writes %data if it is the last image to be
  *          written on the page.
@@ -204,20 +204,21 @@ l_float32     xpt, ypt, wpt, hpt;
 L_COMP_DATA  *cid = NULL;
 L_PDF_DATA   *lpd = NULL;
 
-    PROCNAME("pixConvertToPdfData");
-
     if (!pdata)
-        return ERROR_INT("&data not defined", procName, 1);
+        return ERROR_INT("&data not defined", __func__, 1);
     *pdata = NULL;
     if (!pnbytes)
-        return ERROR_INT("&nbytes not defined", procName, 1);
+        return ERROR_INT("&nbytes not defined", __func__, 1);
     *pnbytes = 0;
     if (!pix)
-        return ERROR_INT("pix not defined", procName, 1);
+        return ERROR_INT("pix not defined", __func__, 1);
     if (type != L_JPEG_ENCODE && type != L_G4_ENCODE &&
         type != L_FLATE_ENCODE && type != L_JP2K_ENCODE) {
         selectDefaultPdfEncoding(pix, &type);
     }
+    if (quality < 0 || quality > 100)
+        return ERROR_INT("invalid quality", __func__, 1);
+
     if (plpd) {  /* part of multi-page invocation */
         if (position == L_FIRST_IMAGE)
             *plpd = NULL;
@@ -227,7 +228,7 @@ L_PDF_DATA   *lpd = NULL;
          * be ascii85 encoded. */
     pixGenerateCIData(pix, type, quality, 0, &cid);
     if (!cid)
-        return ERROR_INT("cid not made", procName, 1);
+        return ERROR_INT("cid not made", __func__, 1);
 
         /* Get media box in pts.  Guess the input image resolution
          * based on the input parameter %res, the resolution data in
@@ -235,12 +236,8 @@ L_PDF_DATA   *lpd = NULL;
     pixres = cid->res;
     w = cid->w;
     h = cid->h;
-    if (res <= 0.0) {
-        if (pixres > 0)
-            res = pixres;
-        else
-            res = DefaultInputRes;
-    }
+    if (res <= 0.0)
+        res = (pixres > 0) ? pixres : DefaultInputRes;
     xpt = x * 72. / res;
     ypt = y * 72. / res;
     wpt = w * 72. / res;
@@ -249,10 +246,10 @@ L_PDF_DATA   *lpd = NULL;
         /* Set up lpd */
     if (!plpd) {  /* single image */
         if ((lpd = pdfdataCreate(title)) == NULL)
-            return ERROR_INT("lpd not made", procName, 1);
+            return ERROR_INT("lpd not made", __func__, 1);
     } else if (position == L_FIRST_IMAGE) {  /* first of multiple images */
         if ((lpd = pdfdataCreate(title)) == NULL)
-            return ERROR_INT("lpd not made", procName, 1);
+            return ERROR_INT("lpd not made", __func__, 1);
         *plpd = lpd;
     } else {  /* not the first of multiple images */
         lpd = *plpd;
@@ -271,7 +268,7 @@ L_PDF_DATA   *lpd = NULL;
         pdfdataDestroy(&lpd);
         if (plpd) *plpd = NULL;
         if (ret)
-            return ERROR_INT("pdf output not made", procName, 1);
+            return ERROR_INT("pdf output not made", __func__, 1);
     }
 
     return 0;
@@ -334,16 +331,14 @@ L_DNAA   *daa_locs;  /* object locations on each page */
 NUMA     *na_objs, *napage;
 NUMAA    *naa_objs;  /* object mapping numbers to new values */
 
-    PROCNAME("ptraConcatenatePdfToData");
-
     if (!pdata)
-        return ERROR_INT("&data not defined", procName, 1);
+        return ERROR_INT("&data not defined", __func__, 1);
     *pdata = NULL;
     if (!pnbytes)
-        return ERROR_INT("&nbytes not defined", procName, 1);
+        return ERROR_INT("&nbytes not defined", __func__, 1);
     *pnbytes = 0;
     if (!pa_data)
-        return ERROR_INT("pa_data not defined", procName, 1);
+        return ERROR_INT("pa_data not defined", __func__, 1);
 
         /* Parse the files and find the object locations.
          * Remove file data that cannot be parsed. */
@@ -356,9 +351,9 @@ NUMAA    *naa_objs;  /* object mapping numbers to new values */
             l_byteaDestroy(&bas);
             if (sa) {
                 fname = sarrayGetString(sa, i, L_NOCOPY);
-                L_ERROR("can't parse file %s; skipping\n", procName, fname);
+                L_ERROR("can't parse file %s; skipping\n", __func__, fname);
             } else {
-                L_ERROR("can't parse file %d; skipping\n", procName, i);
+                L_ERROR("can't parse file %d; skipping\n", __func__, i);
             }
         } else {
             l_dnaaAddDna(daa_locs, da_locs, L_INSERT);
@@ -370,7 +365,7 @@ NUMAA    *naa_objs;  /* object mapping numbers to new values */
     ptraGetActualCount(pa_data, &npages);
     if (npages == 0) {
         l_dnaaDestroy(&daa_locs);
-        return ERROR_INT("no parsable pdf files found", procName, 1);
+        return ERROR_INT("no parsable pdf files found", __func__, 1);
     }
 
         /* Find the mapping from initial to final object numbers */
@@ -489,14 +484,12 @@ l_int32  istiff;
 PIXA    *pixa;
 FILE    *fp;
 
-    PROCNAME("convertTiffMultipageToPdf");
-
     if ((fp = fopenReadStream(filein)) == NULL)
-        return ERROR_INT("file not found", procName, 1);
+        return ERROR_INT("file not found", __func__, 1);
     istiff = fileFormatIsTiff(fp);
     fclose(fp);
     if (!istiff)
-        return ERROR_INT("file not tiff format", procName, 1);
+        return ERROR_INT("file not tiff format", __func__, 1);
 
     pixa = pixaReadMultipageTiff(filein);
     pixaConvertToPdf(pixa, 0, 1.0, 0, 0, "weasel2", fileout);
@@ -545,23 +538,21 @@ l_int32       format, type;
 L_COMP_DATA  *cid;
 PIX          *pixt;
 
-    PROCNAME("l_generateCIDataForPdf");
-
     if (!pcid)
-        return ERROR_INT("&cid not defined", procName, 1);
+        return ERROR_INT("&cid not defined", __func__, 1);
     *pcid = cid = NULL;
     if (!fname && !pix)
-        return ERROR_INT("neither fname nor pix are defined", procName, 1);
+        return ERROR_INT("neither fname nor pix are defined", __func__, 1);
 
         /* If a compressed file is given that is not 'stdin', see if we
          * can generate the pdf output without transcoding. */
     if (fname && strcmp(fname, "-") != 0 && strcmp(fname, "stdin") != 0) {
         findFileFormat(fname, &format);
         if (format == IFF_UNKNOWN)
-            L_WARNING("file %s format is unknown\n", procName, fname);
+            L_WARNING("file %s format is unknown\n", __func__, fname);
         if (format == IFF_PS || format == IFF_LPDF) {
             L_ERROR("file %s is unsupported format %d\n",
-                  procName, fname, format);
+                  __func__, fname, format);
             return 1;
         }
         if (format == IFF_JFIF_JPEG) {
@@ -571,7 +562,6 @@ PIX          *pixt;
         } else if (format == IFF_PNG) {
             cid = l_generateFlateDataPdf(fname, pix);
         }
-
     }
 
         /* Otherwise, use the pix to generate the pdf output */
@@ -581,17 +571,15 @@ PIX          *pixt;
         else
             pixt = pixClone(pix);
         if (!pixt)
-            return ERROR_INT("pixt not made", procName, 1);
+            return ERROR_INT("pixt not made", __func__, 1);
         if (selectDefaultPdfEncoding(pixt, &type)) {
             pixDestroy(&pixt);
             return 1;
         }
         pixGenerateCIData(pixt, type, quality, 0, &cid);
         pixDestroy(&pixt);
-    }
-    if (!cid) {
-        L_ERROR("totally kerflummoxed\n", procName);
-        return 1;
+        if (!cid)
+            return ERROR_INT("cid not made from pix", __func__, 1);
     }
     *pcid = cid;
     return 0;
@@ -633,34 +621,32 @@ l_int32       format, d, bps, spp, iscmap;
 L_COMP_DATA  *cid;
 PIX          *pix;
 
-    PROCNAME("l_generateCIData");
-
     if (!pcid)
-        return ERROR_INT("&cid not defined", procName, 1);
+        return ERROR_INT("&cid not defined", __func__, 1);
     *pcid = NULL;
     if (!fname)
-        return ERROR_INT("fname not defined", procName, 1);
+        return ERROR_INT("fname not defined", __func__, 1);
     if (type != L_G4_ENCODE && type != L_JPEG_ENCODE &&
         type != L_FLATE_ENCODE && type != L_JP2K_ENCODE)
-        return ERROR_INT("invalid conversion type", procName, 1);
+        return ERROR_INT("invalid conversion type", __func__, 1);
     if (ascii85 != 0 && ascii85 != 1)
-        return ERROR_INT("invalid ascii85", procName, 1);
+        return ERROR_INT("invalid ascii85", __func__, 1);
 
         /* Sanity check on requested encoding */
     pixReadHeader(fname, &format, NULL, NULL, &bps, &spp, &iscmap);
     d = bps * spp;
     if (d == 24) d = 32;
     if (iscmap && type != L_FLATE_ENCODE) {
-        L_WARNING("pixs has cmap; using flate encoding\n", procName);
+        L_WARNING("pixs has cmap; using flate encoding\n", __func__);
         type = L_FLATE_ENCODE;
     } else if (d < 8 && type == L_JPEG_ENCODE) {
-        L_WARNING("pixs has < 8 bpp; using flate encoding\n", procName);
+        L_WARNING("pixs has < 8 bpp; using flate encoding\n", __func__);
         type = L_FLATE_ENCODE;
     } else if (d < 8 && type == L_JP2K_ENCODE) {
-        L_WARNING("pixs has < 8 bpp; using flate encoding\n", procName);
+        L_WARNING("pixs has < 8 bpp; using flate encoding\n", __func__);
         type = L_FLATE_ENCODE;
     } else if (d > 1 && type == L_G4_ENCODE) {
-        L_WARNING("pixs has > 1 bpp; using flate encoding\n", procName);
+        L_WARNING("pixs has > 1 bpp; using flate encoding\n", __func__);
         type = L_FLATE_ENCODE;
     }
 
@@ -669,35 +655,35 @@ PIX          *pix;
             cid = l_generateJpegData(fname, ascii85);
         } else {
             if ((pix = pixRead(fname)) == NULL)
-                return ERROR_INT("pix not returned for JPEG", procName, 1);
+                return ERROR_INT("pix not returned for JPEG", __func__, 1);
             cid = pixGenerateJpegData(pix, ascii85, quality);
             pixDestroy(&pix);
         }
         if (!cid)
-            return ERROR_INT("jpeg data not made", procName, 1);
+            return ERROR_INT("jpeg data not made", __func__, 1);
     } else if (type == L_JP2K_ENCODE) {
         if (format == IFF_JP2) {  /* do not transcode */
             cid = l_generateJp2kData(fname);
         } else {
             if ((pix = pixRead(fname)) == NULL)
-                return ERROR_INT("pix not returned for JP2K", procName, 1);
+                return ERROR_INT("pix not returned for JP2K", __func__, 1);
             cid = pixGenerateJp2kData(pix, quality);
             pixDestroy(&pix);
         }
         if (!cid)
-            return ERROR_INT("jp2k data not made", procName, 1);
+            return ERROR_INT("jp2k data not made", __func__, 1);
     } else if (type == L_G4_ENCODE) {
         if ((pix = pixRead(fname)) == NULL)
-            return ERROR_INT("pix not returned for G4", procName, 1);
+            return ERROR_INT("pix not returned for G4", __func__, 1);
         cid = pixGenerateG4Data(pix, ascii85);
         pixDestroy(&pix);
         if (!cid)
-            return ERROR_INT("g4 data not made", procName, 1);
+            return ERROR_INT("g4 data not made", __func__, 1);
     } else if (type == L_FLATE_ENCODE) {
         if ((cid = l_generateFlateData(fname, ascii85)) == NULL)
-            return ERROR_INT("flate data not made", procName, 1);
+            return ERROR_INT("flate data not made", __func__, 1);
     } else {
-        return ERROR_INT("invalid conversion type", procName, 1);
+        return ERROR_INT("invalid conversion type", __func__, 1);
     }
     *pcid = cid;
 
@@ -747,10 +733,8 @@ L_COMP_DATA  *cid;
 PIX          *pix;
 PIXCMAP      *cmap = NULL;
 
-    PROCNAME("l_generateFlateDataPdf");
-
     if (!fname)
-        return (L_COMP_DATA *)ERROR_PTR("fname not defined", procName, NULL);
+        return (L_COMP_DATA *)ERROR_PTR("fname not defined", __func__, NULL);
 
     findFileFormat(fname, &format);
     spp = 0;  /* init to spp != 4 if not png */
@@ -759,7 +743,7 @@ PIXCMAP      *cmap = NULL;
     if (format == IFF_PNG) {
         isPngInterlaced(fname, &interlaced);
         if (readHeaderPng(fname, NULL, NULL, &bps, &spp, NULL))
-            return (L_COMP_DATA *)ERROR_PTR("bad png input", procName, NULL);
+            return (L_COMP_DATA *)ERROR_PTR("bad png input", __func__, NULL);
     }
 
         /* PDF is capable of inlining some types of PNG files, but not all
@@ -778,7 +762,7 @@ PIXCMAP      *cmap = NULL;
         else
             pix = pixClone(pixs);
         if (!pix)
-            return (L_COMP_DATA *)ERROR_PTR("pix not made", procName, NULL);
+            return (L_COMP_DATA *)ERROR_PTR("pix not made", __func__, NULL);
         cid = pixGenerateFlateData(pix, 0);
         pixDestroy(&pix);
         return cid;
@@ -788,7 +772,7 @@ PIXCMAP      *cmap = NULL;
          * Implementation by Jeff Breidenbach.
          * First, read the metadata */
     if ((fp = fopenReadStream(fname)) == NULL)
-        return (L_COMP_DATA *)ERROR_PTR("stream not opened", procName, NULL);
+        return (L_COMP_DATA *)ERROR_PTR("stream not opened", __func__, NULL);
     freadHeaderPng(fp, &w, &h, &bps, &spp, &cmapflag);
     fgetPngResolution(fp, &xres, &yres);
     fclose(fp);
@@ -800,7 +784,7 @@ PIXCMAP      *cmap = NULL;
         /* Read the entire png file */
     if ((pngcomp = l_binaryRead(fname, &nbytespng)) == NULL)
         return (L_COMP_DATA *)ERROR_PTR("unable to read file",
-                                        procName, NULL);
+                                        __func__, NULL);
 
         /* Extract flate data, copying portions of it to memory, including
          * the predictor information in a byte at the beginning of each
@@ -811,7 +795,7 @@ PIXCMAP      *cmap = NULL;
     if ((datacomp = (l_uint8 *)LEPT_CALLOC(1, nbytespng)) == NULL) {
         LEPT_FREE(pngcomp);
         return (L_COMP_DATA *)ERROR_PTR("unable to allocate memory",
-                                        procName, NULL);
+                                        __func__, NULL);
     }
 
         /* Parse the png file.  Each chunk consists of:
@@ -834,7 +818,7 @@ PIXCMAP      *cmap = NULL;
             LEPT_FREE(pngcomp);
             LEPT_FREE(datacomp);
             pixcmapDestroy(&cmap);
-            L_ERROR("invalid png: i = %d, n = %d, nbytes = %zu\n", procName,
+            L_ERROR("invalid png: i = %d, n = %d, nbytes = %zu\n", __func__,
                     i, n, nbytespng);
             return NULL;
         }
@@ -853,7 +837,7 @@ PIXCMAP      *cmap = NULL;
                 LEPT_FREE(datacomp);
                 pixcmapDestroy(&cmap);
                 L_ERROR("invalid png: i = %d, n = %d, cmapsize = %d\n",
-                        procName, i, n, (1 << bps));
+                        __func__, i, n, (1 << bps));
                 return NULL;
             }
             cmap = pixcmapCreate(bps);
@@ -869,7 +853,7 @@ PIXCMAP      *cmap = NULL;
     if (nbytescomp == 0) {
         LEPT_FREE(datacomp);
         pixcmapDestroy(&cmap);
-        return (L_COMP_DATA *)ERROR_PTR("invalid PNG file", procName, NULL);
+        return (L_COMP_DATA *)ERROR_PTR("invalid PNG file", __func__, NULL);
     }
 
         /* Extract and encode the colormap data as hexascii  */
@@ -880,7 +864,7 @@ PIXCMAP      *cmap = NULL;
         if (!cmapdata) {
             LEPT_FREE(datacomp);
             return (L_COMP_DATA *)ERROR_PTR("cmapdata not made",
-                                            procName, NULL);
+                                            __func__, NULL);
         }
         cmapdatahex = pixcmapConvertToHex(cmapdata, ncolors);
         LEPT_FREE(cmapdata);
@@ -936,31 +920,32 @@ size_t        nbytes, nbytes85;
 L_COMP_DATA  *cid;
 FILE         *fp;
 
-    PROCNAME("l_generateJpegData");
-
     if (!fname)
-        return (L_COMP_DATA *)ERROR_PTR("fname not defined", procName, NULL);
+        return (L_COMP_DATA *)ERROR_PTR("fname not defined", __func__, NULL);
+
+    if (ascii85flag != 0 && ascii85flag != 1)
+        return (L_COMP_DATA *)ERROR_PTR("wrong ascii85flags", __func__, NULL);
 
         /* Read the metadata */
     if (readHeaderJpeg(fname, &w, &h, &spp, NULL, NULL))
-        return (L_COMP_DATA *)ERROR_PTR("bad jpeg metadata", procName, NULL);
+        return (L_COMP_DATA *)ERROR_PTR("bad jpeg metadata", __func__, NULL);
     bps = 8;
     if ((fp = fopenReadStream(fname)) == NULL)
-        return (L_COMP_DATA *)ERROR_PTR("stream not opened", procName, NULL);
+        return (L_COMP_DATA *)ERROR_PTR("stream not opened", __func__, NULL);
     fgetJpegResolution(fp, &xres, &yres);
     fclose(fp);
 
         /* Read the entire jpeg file.  The returned jpeg data in memory
          * starts with ffd8 and ends with ffd9 */
     if ((data = l_binaryRead(fname, &nbytes)) == NULL)
-        return (L_COMP_DATA *)ERROR_PTR("data not extracted", procName, NULL);
+        return (L_COMP_DATA *)ERROR_PTR("data not extracted", __func__, NULL);
 
         /* Optionally, encode the compressed data */
     if (ascii85flag == 1) {
         data85 = encodeAscii85(data, nbytes, &nbytes85);
         LEPT_FREE(data);
         if (!data85)
-            return (L_COMP_DATA *)ERROR_PTR("data85 not made", procName, NULL);
+            return (L_COMP_DATA *)ERROR_PTR("data85 not made", __func__, NULL);
         else
             data85[nbytes85 - 1] = '\0';  /* remove the newline */
     }
@@ -1008,15 +993,13 @@ l_int32       w, h, xres, yres, bps, spp;
 size_t        nbytes85;
 L_COMP_DATA  *cid;
 
-    PROCNAME("l_generateJpegDataMem");
-
     if (!data)
-        return (L_COMP_DATA *)ERROR_PTR("data not defined", procName, NULL);
+        return (L_COMP_DATA *)ERROR_PTR("data not defined", __func__, NULL);
 
         /* Read the metadata */
     if (readHeaderMemJpeg(data, nbytes, &w, &h, &spp, NULL, NULL)) {
         LEPT_FREE(data);
-        return (L_COMP_DATA *)ERROR_PTR("bad jpeg metadata", procName, NULL);
+        return (L_COMP_DATA *)ERROR_PTR("bad jpeg metadata", __func__, NULL);
     }
     bps = 8;
     readResolutionMemJpeg(data, nbytes, &xres, &yres);
@@ -1026,7 +1009,7 @@ L_COMP_DATA  *cid;
         data85 = encodeAscii85(data, nbytes, &nbytes85);
         LEPT_FREE(data);
         if (!data85)
-            return (L_COMP_DATA *)ERROR_PTR("data85 not made", procName, NULL);
+            return (L_COMP_DATA *)ERROR_PTR("data85 not made", __func__, NULL);
         else
             data85[nbytes85 - 1] = '\0';  /* remove the newline */
     }
@@ -1068,19 +1051,17 @@ size_t        nbytes;
 L_COMP_DATA  *cid;
 FILE         *fp;
 
-    PROCNAME("l_generateJp2kData");
-
     if (!fname)
-        return (L_COMP_DATA *)ERROR_PTR("fname not defined", procName, NULL);
+        return (L_COMP_DATA *)ERROR_PTR("fname not defined", __func__, NULL);
 
     if (readHeaderJp2k(fname, &w, &h, &bps, &spp, NULL))
-        return (L_COMP_DATA *)ERROR_PTR("bad jp2k metadata", procName, NULL);
+        return (L_COMP_DATA *)ERROR_PTR("bad jp2k metadata", __func__, NULL);
 
         /* The returned jp2k data in memory is the entire jp2k file */
     cid = (L_COMP_DATA *)LEPT_CALLOC(1, sizeof(L_COMP_DATA));
     if ((cid->datacomp = l_binaryRead(fname, &nbytes)) == NULL) {
         l_CIDataDestroy(&cid);
-        return (L_COMP_DATA *)ERROR_PTR("data not extracted", procName, NULL);
+        return (L_COMP_DATA *)ERROR_PTR("data not extracted", __func__, NULL);
     }
 
     xres = yres = 0;
@@ -1126,23 +1107,22 @@ size_t        nbytes85, nbytescomp;
 L_COMP_DATA  *cid;
 FILE         *fp;
 
-    PROCNAME("l_generateG4Data");
-
     if (!fname)
-        return (L_COMP_DATA *)ERROR_PTR("fname not defined", procName, NULL);
+        return (L_COMP_DATA *)ERROR_PTR("fname not defined", __func__, NULL);
 
         /* Make sure this is a single page tiff file */
     if ((fp = fopenReadStream(fname)) == NULL)
-        return (L_COMP_DATA *)ERROR_PTR("stream not opened", procName, NULL);
+        return (L_COMP_DATA *)ERROR_PTR("stream not opened", __func__, NULL);
     tiffGetCount(fp, &npages);
     fclose(fp);
     if (npages != 1) {
-        L_ERROR(" %d page tiff; only works with 1 page\n", procName, npages);
+        L_ERROR(" %d page tiff; only works with 1 page\n", __func__, npages);
         return NULL;
     }
 
         /* Read the resolution */
-    fp = fopenReadStream(fname);
+    if ((fp = fopenReadStream(fname)) == NULL)
+        return (L_COMP_DATA *)ERROR_PTR("stream not opened", __func__, NULL);
     getTiffResolution(fp, &xres, &yres);
     fclose(fp);
 
@@ -1152,7 +1132,7 @@ FILE         *fp;
     if (extractG4DataFromFile(fname, &datacomp, &nbytescomp,
                               &w, &h, &minisblack)) {
         return (L_COMP_DATA *)ERROR_PTR("datacomp not extracted",
-                                        procName, NULL);
+                                        __func__, NULL);
     }
 
         /* Optionally, encode the compressed data */
@@ -1160,7 +1140,7 @@ FILE         *fp;
         data85 = encodeAscii85(datacomp, nbytescomp, &nbytes85);
         LEPT_FREE(datacomp);
         if (!data85)
-            return (L_COMP_DATA *)ERROR_PTR("data85 not made", procName, NULL);
+            return (L_COMP_DATA *)ERROR_PTR("data85 not made", __func__, NULL);
         else
             data85[nbytes85 - 1] = '\0';  /* remove the newline */
     }
@@ -1201,6 +1181,7 @@ FILE         *fp;
  *      (1) Set ascii85:
  *           ~ 0 for binary data (PDF only)
  *           ~ 1 for ascii85 (5 for 4) encoded binary data (PostScript only)
+ *      (2) Do not accept images with an asperity ratio greater than 10.
  * </pre>
  */
 l_ok
@@ -1210,41 +1191,45 @@ pixGenerateCIData(PIX           *pixs,
                   l_int32        ascii85,
                   L_COMP_DATA  **pcid)
 {
-l_int32   d;
+l_int32   w, h, d, maxAsp;
 PIXCMAP  *cmap;
 
-    PROCNAME("pixGenerateCIData");
-
     if (!pcid)
-        return ERROR_INT("&cid not defined", procName, 1);
+        return ERROR_INT("&cid not defined", __func__, 1);
     *pcid = NULL;
     if (!pixs)
-        return ERROR_INT("pixs not defined", procName, 1);
+        return ERROR_INT("pixs not defined", __func__, 1);
     if (type != L_G4_ENCODE && type != L_JPEG_ENCODE &&
         type != L_FLATE_ENCODE && type != L_JP2K_ENCODE) {
         selectDefaultPdfEncoding(pixs, &type);
     }
     if (ascii85 != 0 && ascii85 != 1)
-        return ERROR_INT("invalid ascii85", procName, 1);
+        return ERROR_INT("invalid ascii85", __func__, 1);
+    pixGetDimensions(pixs, &w, &h, NULL);
+    if (w == 0 || h == 0)
+        return ERROR_INT("invalid w or h", __func__, 1);
+    maxAsp = L_MAX(w / h, h / w);
+    if (maxAsp > 10)
+        return ERROR_INT("max asperity > 10", __func__, 1);
 
         /* Conditionally modify the encoding type if libz is
          * available and the requested library is missing. */
 #if defined(HAVE_LIBZ)
 # if !defined(HAVE_LIBJPEG)
     if (type == L_JPEG_ENCODE) {
-        L_WARNING("no libjpeg; using flate encoding\n", procName);
+        L_WARNING("no libjpeg; using flate encoding\n", __func__);
         type = L_FLATE_ENCODE;
     }
 # endif /* !defined(HAVE_LIBJPEG) */
 # if !defined(HAVE_LIBJP2K)
     if (type == L_JP2K_ENCODE) {
-        L_WARNING("no libjp2k; using flate encoding\n", procName);
+        L_WARNING("no libjp2k; using flate encoding\n", __func__);
         type = L_FLATE_ENCODE;
     }
 # endif /* !defined(HAVE_LIBJP2K) */
 # if !defined(HAVE_LIBTIFF)
     if (type == L_G4_ENCODE) {
-        L_WARNING("no libtiff; using flate encoding\n", procName);
+        L_WARNING("no libtiff; using flate encoding\n", __func__);
         type = L_FLATE_ENCODE;
     }
 # endif /* !defined(HAVE_LIBTIFF) */
@@ -1254,28 +1239,28 @@ PIXCMAP  *cmap;
     d = pixGetDepth(pixs);
     cmap = pixGetColormap(pixs);
     if (cmap && type != L_FLATE_ENCODE) {
-        L_WARNING("pixs has cmap; using flate encoding\n", procName);
+        L_WARNING("pixs has cmap; using flate encoding\n", __func__);
         type = L_FLATE_ENCODE;
     } else if (d < 8 && (type == L_JPEG_ENCODE || type == L_JP2K_ENCODE)) {
-        L_WARNING("pixs has < 8 bpp; using flate encoding\n", procName);
+        L_WARNING("pixs has < 8 bpp; using flate encoding\n", __func__);
         type = L_FLATE_ENCODE;
     } else if (d > 1 && type == L_G4_ENCODE) {
-        L_WARNING("pixs has > 1 bpp; using flate encoding\n", procName);
+        L_WARNING("pixs has > 1 bpp; using flate encoding\n", __func__);
         type = L_FLATE_ENCODE;
     }
 
     if (type == L_JPEG_ENCODE) {
         if ((*pcid = pixGenerateJpegData(pixs, ascii85, quality)) == NULL)
-            return ERROR_INT("jpeg data not made", procName, 1);
+            return ERROR_INT("jpeg data not made", __func__, 1);
     } else if (type == L_JP2K_ENCODE) {
         if ((*pcid = pixGenerateJp2kData(pixs, quality)) == NULL)
-            return ERROR_INT("jp2k data not made", procName, 1);
+            return ERROR_INT("jp2k data not made", __func__, 1);
     } else if (type == L_G4_ENCODE) {
         if ((*pcid = pixGenerateG4Data(pixs, ascii85)) == NULL)
-            return ERROR_INT("g4 data not made", procName, 1);
+            return ERROR_INT("g4 data not made", __func__, 1);
     } else {  /* type == L_FLATE_ENCODE */
         if ((*pcid = pixGenerateFlateData(pixs, ascii85)) == NULL)
-            return ERROR_INT("flate data not made", procName, 1);
+            return ERROR_INT("flate data not made", __func__, 1);
     }
     return 0;
 }
@@ -1308,13 +1293,11 @@ l_generateFlateData(const char  *fname,
 L_COMP_DATA  *cid;
 PIX          *pixs;
 
-    PROCNAME("l_generateFlateData");
-
     if (!fname)
-        return (L_COMP_DATA *)ERROR_PTR("fname not defined", procName, NULL);
+        return (L_COMP_DATA *)ERROR_PTR("fname not defined", __func__, NULL);
 
     if ((pixs = pixRead(fname)) == NULL)
-        return (L_COMP_DATA *)ERROR_PTR("pixs not made", procName, NULL);
+        return (L_COMP_DATA *)ERROR_PTR("pixs not made", __func__, NULL);
     cid = pixGenerateFlateData(pixs, ascii85flag);
     pixDestroy(&pixs);
     return cid;
@@ -1359,10 +1342,8 @@ L_COMP_DATA  *cid;
 PIX          *pixt;
 PIXCMAP      *cmap;
 
-    PROCNAME("pixGenerateFlateData");
-
     if (!pixs)
-        return (L_COMP_DATA *)ERROR_PTR("pixs not defined", procName, NULL);
+        return (L_COMP_DATA *)ERROR_PTR("pixs not defined", __func__, NULL);
 
         /* Convert the image to one of these 4 types:
          *     1 bpp
@@ -1381,6 +1362,8 @@ PIXCMAP      *cmap;
     } else {
         pixt = pixClone(pixs);
     }
+    if (!pixt)
+        return (L_COMP_DATA *)ERROR_PTR("pixt not made", __func__, NULL);
     spp = (d == 32) ? 3 : 1;
     bps = (d == 32) ? 8 : d;
 
@@ -1391,7 +1374,7 @@ PIXCMAP      *cmap;
         if (!cmapdata) {
             pixDestroy(&pixt);
             return (L_COMP_DATA *)ERROR_PTR("cmapdata not made",
-                                            procName, NULL);
+                                            __func__, NULL);
         }
 
         cmapdata85 = encodeAscii85(cmapdata, 3 * ncolors, &ncmapbytes85);
@@ -1402,12 +1385,17 @@ PIXCMAP      *cmap;
         /* Extract and compress the raster data */
     pixGetRasterData(pixt, &data, &nbytes);
     pixDestroy(&pixt);
+    if (!data) {
+        LEPT_FREE(cmapdata85);
+        LEPT_FREE(cmapdatahex);
+        return (L_COMP_DATA *)ERROR_PTR("data not returned", __func__, NULL);
+    }
     datacomp = zlibCompress(data, nbytes, &nbytescomp);
     LEPT_FREE(data);
     if (!datacomp) {
         LEPT_FREE(cmapdata85);
         LEPT_FREE(cmapdatahex);
-        return (L_COMP_DATA *)ERROR_PTR("datacomp not made", procName, NULL);
+        return (L_COMP_DATA *)ERROR_PTR("datacomp not made", __func__, NULL);
     }
 
         /* Optionally, encode the compressed data */
@@ -1417,7 +1405,7 @@ PIXCMAP      *cmap;
         if (!data85) {
             LEPT_FREE(cmapdata85);
             LEPT_FREE(cmapdatahex);
-            return (L_COMP_DATA *)ERROR_PTR("data85 not made", procName, NULL);
+            return (L_COMP_DATA *)ERROR_PTR("data85 not made", __func__, NULL);
         } else {
             data85[nbytes85 - 1] = '\0';  /* remove the newline */
         }
@@ -1448,7 +1436,7 @@ PIXCMAP      *cmap;
 /*!
  * \brief   pixGenerateJpegData()
  *
- * \param[in]    pixs           8 or 32 bpp, no colormap
+ * \param[in]    pixs           8, 16 or 32 bpp, no colormap
  * \param[in]    ascii85flag    0 for jpeg; 1 for ascii85-encoded jpeg
  * \param[in]    quality        0 for default, which is 75
  * \return  cid jpeg compressed data, or NULL on error
@@ -1458,6 +1446,7 @@ PIXCMAP      *cmap;
  *      (1) Set ascii85flag:
  *           ~ 0 for binary data (PDF only)
  *           ~ 1 for ascii85 (5 for 4) encoded binary data (PostScript only)
+ *      (2) If 16 bpp, convert first to 8 bpp, using the MSB
  * </pre>
  */
 static L_COMP_DATA *
@@ -1469,15 +1458,14 @@ l_int32       d;
 char         *fname;
 L_COMP_DATA  *cid;
 
-    PROCNAME("pixGenerateJpegData");
-
     if (!pixs)
-        return (L_COMP_DATA *)ERROR_PTR("pixs not defined", procName, NULL);
+        return (L_COMP_DATA *)ERROR_PTR("pixs not defined", __func__, NULL);
     if (pixGetColormap(pixs))
-        return (L_COMP_DATA *)ERROR_PTR("pixs has colormap", procName, NULL);
+        return (L_COMP_DATA *)ERROR_PTR("pixs has colormap", __func__, NULL);
     d = pixGetDepth(pixs);
-    if (d != 8 && d != 32)
-        return (L_COMP_DATA *)ERROR_PTR("pixs not 8 or 32 bpp", procName, NULL);
+    if (d != 8 && d != 16 && d != 32)
+        return (L_COMP_DATA *)ERROR_PTR("pixs not 8, 16 or 32 bpp",
+                __func__, NULL);
 
         /* Compress to a temp jpeg file */
     fname = l_makeTempFilename();
@@ -1489,7 +1477,7 @@ L_COMP_DATA  *cid;
         /* Generate the data */
     cid = l_generateJpegData(fname, ascii85flag);
     if (lept_rmfile(fname) != 0)
-        L_ERROR("temp file %s was not deleted\n", procName, fname);
+        L_ERROR("temp file %s was not deleted\n", __func__, fname);
     LEPT_FREE(fname);
     return cid;
 }
@@ -1517,15 +1505,13 @@ l_int32       d;
 char         *fname;
 L_COMP_DATA  *cid;
 
-    PROCNAME("pixGenerateJp2kData");
-
     if (!pixs)
-        return (L_COMP_DATA *)ERROR_PTR("pixs not defined", procName, NULL);
+        return (L_COMP_DATA *)ERROR_PTR("pixs not defined", __func__, NULL);
     if (pixGetColormap(pixs))
-        return (L_COMP_DATA *)ERROR_PTR("pixs has colormap", procName, NULL);
+        return (L_COMP_DATA *)ERROR_PTR("pixs has colormap", __func__, NULL);
     d = pixGetDepth(pixs);
     if (d != 8 && d != 32)
-        return (L_COMP_DATA *)ERROR_PTR("pixs not 8 or 32 bpp", procName, NULL);
+        return (L_COMP_DATA *)ERROR_PTR("pixs not 8 or 32 bpp", __func__, NULL);
 
         /* Compress to a temp jp2k file */
     fname = l_makeTempFilename();
@@ -1537,7 +1523,7 @@ L_COMP_DATA  *cid;
         /* Generate the data */
     cid = l_generateJp2kData(fname);
     if (lept_rmfile(fname) != 0)
-        L_ERROR("temp file %s was not deleted\n", procName, fname);
+        L_ERROR("temp file %s was not deleted\n", __func__, fname);
     LEPT_FREE(fname);
     return cid;
 }
@@ -1564,14 +1550,12 @@ pixGenerateG4Data(PIX     *pixs,
 char         *fname;
 L_COMP_DATA  *cid;
 
-    PROCNAME("pixGenerateG4Data");
-
     if (!pixs)
-        return (L_COMP_DATA *)ERROR_PTR("pixs not defined", procName, NULL);
+        return (L_COMP_DATA *)ERROR_PTR("pixs not defined", __func__, NULL);
     if (pixGetDepth(pixs) != 1)
-        return (L_COMP_DATA *)ERROR_PTR("pixs not 1 bpp", procName, NULL);
+        return (L_COMP_DATA *)ERROR_PTR("pixs not 1 bpp", __func__, NULL);
     if (pixGetColormap(pixs))
-        return (L_COMP_DATA *)ERROR_PTR("pixs has colormap", procName, NULL);
+        return (L_COMP_DATA *)ERROR_PTR("pixs has colormap", __func__, NULL);
 
         /* Compress to a temp tiff g4 file */
     fname = l_makeTempFilename();
@@ -1582,7 +1566,7 @@ L_COMP_DATA  *cid;
 
     cid = l_generateG4Data(fname, ascii85flag);
     if (lept_rmfile(fname) != 0)
-        L_ERROR("temp file %s was not deleted\n", procName, fname);
+        L_ERROR("temp file %s was not deleted\n", __func__, fname);
     LEPT_FREE(fname);
     return cid;
 }
@@ -1592,7 +1576,7 @@ L_COMP_DATA  *cid;
  * \brief   cidConvertToPdfData()
  *
  * \param[in]    cid       compressed image data
- * \param[in]    title     [optional] pdf title; can be NULL
+ * \param[in]    title     [optional] pdf title; can be null
  * \param[out]   pdata     output pdf data for image
  * \param[out]   pnbytes   size of output pdf data
  * \return  0 if OK, 1 on error
@@ -1613,14 +1597,12 @@ l_int32      res, ret;
 l_float32    wpt, hpt;
 L_PDF_DATA  *lpd = NULL;
 
-    PROCNAME("cidConvertToPdfData");
-
     if (!pdata || !pnbytes)
-        return ERROR_INT("&data and &nbytes not both defined", procName, 1);
+        return ERROR_INT("&data and &nbytes not both defined", __func__, 1);
     *pdata = NULL;
     *pnbytes = 0;
     if (!cid)
-        return ERROR_INT("cid not defined", procName, 1);
+        return ERROR_INT("cid not defined", __func__, 1);
 
         /* Get media box parameters, in pts */
     res = cid->res;
@@ -1631,7 +1613,7 @@ L_PDF_DATA  *lpd = NULL;
 
         /* Set up the pdf data struct (lpd) */
     if ((lpd = pdfdataCreate(title)) == NULL)
-        return ERROR_INT("lpd not made", procName, 1);
+        return ERROR_INT("lpd not made", __func__, 1);
     ptraAdd(lpd->cida, cid);
     lpd->n++;
     ptaAddPt(lpd->xy, 0, 0);   /* xpt = ypt = 0 */
@@ -1641,7 +1623,7 @@ L_PDF_DATA  *lpd = NULL;
     ret = l_generatePdf(pdata, pnbytes, lpd);
     pdfdataDestroy(&lpd);
     if (ret)
-        return ERROR_INT("pdf output not made", procName, 1);
+        return ERROR_INT("pdf output not made", __func__, 1);
     return 0;
 }
 
@@ -1657,10 +1639,8 @@ l_CIDataDestroy(L_COMP_DATA  **pcid)
 {
 L_COMP_DATA  *cid;
 
-    PROCNAME("l_CIDataDestroy");
-
     if (pcid == NULL) {
-        L_WARNING("ptr address is null!\n", procName);
+        L_WARNING("ptr address is null!\n", __func__);
         return;
     }
     if ((cid = *pcid) == NULL)
@@ -1704,16 +1684,14 @@ l_generatePdf(l_uint8    **pdata,
               size_t      *pnbytes,
               L_PDF_DATA  *lpd)
 {
-    PROCNAME("l_generatePdf");
-
     if (!pdata)
-        return ERROR_INT("&data not defined", procName, 1);
+        return ERROR_INT("&data not defined", __func__, 1);
     *pdata = NULL;
     if (!pnbytes)
-        return ERROR_INT("&nbytes not defined", procName, 1);
+        return ERROR_INT("&nbytes not defined", __func__, 1);
     *pnbytes = 0;
     if (!lpd)
-        return ERROR_INT("lpd not defined", procName, 1);
+        return ERROR_INT("lpd not defined", __func__, 1);
 
     generateFixedStringsPdf(lpd);
     generateMediaboxPdf(lpd);
@@ -1732,8 +1710,6 @@ generateFixedStringsPdf(L_PDF_DATA  *lpd)
 char     buf[L_SMALLBUF];
 char    *version, *datestr;
 SARRAY  *sa;
-
-    PROCNAME("generateFixedStringsPdf");
 
         /* Accumulate data for the header and objects 1-3 */
     lpd->id = stringNew("%PDF-1.5\n");
@@ -1769,7 +1745,7 @@ SARRAY  *sa;
             snprintf(buf, sizeof(buf), "/Title %s\n", hexstr);
             sarrayAddString(sa, buf, L_COPY);
         } else {
-            L_ERROR("title string is not ascii\n", procName);
+            L_ERROR("title string is not ascii\n", __func__);
         }
         LEPT_FREE(hexstr);
     }
@@ -1818,14 +1794,12 @@ char     smallbuf[8];
 char    *buffer;
 l_int32  i, nchar, buflen;
 
-    PROCNAME("generateEscapeString");
-
     if (!str)
-        return (char *)ERROR_PTR("str not defined", procName, NULL);
+        return (char *)ERROR_PTR("str not defined", __func__, NULL);
     nchar = strlen(str);
     for (i = 0; i < nchar; i++) {
         if (str[i] < 0)
-            return (char *)ERROR_PTR("str not all ascii", procName, NULL);
+            return (char *)ERROR_PTR("str not all ascii", __func__, NULL);
     }
 
     buflen = 4 * nchar + 10;
@@ -1879,14 +1853,12 @@ char    *xstr;
 l_int32  bufsize, i, wpt, hpt;
 SARRAY  *sa;
 
-    PROCNAME("generatePageStringPdf");
-
         /* Allocate 1000 bytes for the boilerplate text, and
          * 50 bytes for each reference to an image in the
          * ProcSet array.  */
     bufsize = 1000 + 50 * lpd->n;
     if ((buf = (char *)LEPT_CALLOC(bufsize, sizeof(char))) == NULL)
-        return ERROR_INT("calloc fail for buf", procName, 1);
+        return ERROR_INT("calloc fail for buf", __func__, 1);
 
     boxGetGeometry(lpd->mediabox, NULL, NULL, &wpt, &hpt);
     sa = sarrayCreate(lpd->n);
@@ -1898,7 +1870,7 @@ SARRAY  *sa;
     sarrayDestroy(&sa);
     if (!xstr) {
         LEPT_FREE(buf);
-        return ERROR_INT("xstr not made", procName, 1);
+        return ERROR_INT("xstr not made", __func__, 1);
     }
 
     snprintf(buf, bufsize, "4 0 obj\n"
@@ -1934,11 +1906,9 @@ l_int32    i, bufsize;
 l_float32  xpt, ypt, wpt, hpt;
 SARRAY    *sa;
 
-    PROCNAME("generateContentStringPdf");
-
     bufsize = 1000 + 200 * lpd->n;
     if ((buf = (char *)LEPT_CALLOC(bufsize, sizeof(char))) == NULL)
-        return ERROR_INT("calloc fail for buf", procName, 1);
+        return ERROR_INT("calloc fail for buf", __func__, 1);
 
     sa = sarrayCreate(lpd->n);
     for (i = 0; i < lpd->n; i++) {
@@ -1953,7 +1923,7 @@ SARRAY    *sa;
     sarrayDestroy(&sa);
     if (!cstr) {
         LEPT_FREE(buf);
-        return ERROR_INT("cstr not made", procName, 1);
+        return ERROR_INT("cstr not made", __func__, 1);
     }
 
     snprintf(buf, bufsize, "5 0 obj\n"
@@ -1983,14 +1953,12 @@ l_int32       i, cmindex;
 L_COMP_DATA  *cid;
 SARRAY       *sa;
 
-    PROCNAME("generatePreXStringsPdf");
-
     sa = lpd->saprex;
     cmindex = 6 + lpd->n;  /* starting value */
     for (i = 0; i < lpd->n; i++) {
         pstr = cstr = NULL;
         if ((cid = pdfdataGetCid(lpd, i)) == NULL)
-            return ERROR_INT("cid not found", procName, 1);
+            return ERROR_INT("cid not found", __func__, 1);
 
         if (cid->type == L_G4_ENCODE) {
             if (var_WRITE_G4_IMAGE_MASK) {
@@ -2001,7 +1969,12 @@ SARRAY       *sa;
             }
             bstr = stringNew("/BitsPerComponent 1\n"
                              "/Interpolate true");
-                /* Note: the reversal is deliberate */
+                /* Note: the reversal is deliberate.  The BlackIs1 flag
+                 * is misleadingly named: it says whether to invert the
+                 * image on decoding because the black pixels are 0,
+                 * not whether the black pixels are 1!  The default for
+                 * BlackIs1 is "false", which means "don't invert because
+                 * black is 1."  Yikes. */
             photometry = (cid->minisblack) ? stringNew("true")
                                            : stringNew("false");
             snprintf(buff, sizeof(buff),
@@ -2022,7 +1995,7 @@ SARRAY       *sa;
             else if (cid->spp == 4)   /* pdf supports cmyk */
                 cstr = stringNew("/ColorSpace /DeviceCMYK");
             else
-                L_ERROR("in jpeg: spp != 1, 3 or 4\n", procName);
+                L_ERROR("in jpeg: spp != 1, 3 or 4\n", __func__);
             bstr = stringNew("/BitsPerComponent 8");
             fstr = stringNew("/Filter /DCTDecode");
         } else if (cid->type == L_JP2K_ENCODE) {
@@ -2031,7 +2004,7 @@ SARRAY       *sa;
             else if (cid->spp == 3)
                 cstr = stringNew("/ColorSpace /DeviceRGB");
             else
-                L_ERROR("in jp2k: spp != 1 && spp != 3\n", procName);
+                L_ERROR("in jp2k: spp != 1 && spp != 3\n", __func__);
             bstr = stringNew("/BitsPerComponent 8");
             fstr = stringNew("/Filter /JPXDecode");
         } else {  /* type == L_FLATE_ENCODE */
@@ -2048,7 +2021,7 @@ SARRAY       *sa;
                     cstr = stringNew("/ColorSpace /DeviceRGB");
                 else
                     L_ERROR("unknown colorspace: spp = %d\n",
-                            procName, cid->spp);
+                            __func__, cid->spp);
             }
             snprintf(buff, sizeof(buff), "/BitsPerComponent %d", cid->bps);
             bstr = stringNew(buff);
@@ -2106,8 +2079,6 @@ l_int32       i, cmindex, ncmap;
 L_COMP_DATA  *cid;
 SARRAY       *sa;
 
-    PROCNAME("generateColormapStringsPdf");
-
         /* In our canonical format, we have 5 objects, followed
          * by n XObjects, followed by m colormaps, so the index of
          * the first colormap object is 6 + n. */
@@ -2116,7 +2087,7 @@ SARRAY       *sa;
     ncmap = 0;
     for (i = 0; i < lpd->n; i++) {
         if ((cid = pdfdataGetCid(lpd, i)) == NULL)
-            return ERROR_INT("cid not found", procName, 1);
+            return ERROR_INT("cid not found", __func__, 1);
         if (cid->ncolors == 0) continue;
 
         ncmap++;
@@ -2187,10 +2158,8 @@ char     buf[L_BIGBUF];
 l_int32  i, n, linestart, xrefloc;
 SARRAY  *sa;
 
-    PROCNAME("makeTrailerStringPdf");
-
     if (!daloc)
-        return (char *)ERROR_PTR("daloc not defined", procName, NULL);
+        return (char *)ERROR_PTR("daloc not defined", __func__, NULL);
     n = l_dnaGetCount(daloc) - 1;  /* numbered objects + 1 (yes, +1) */
 
     sa = sarrayCreate(0);
@@ -2246,17 +2215,15 @@ l_int32      *sizes, *locs;
 size_t        nbytes;
 L_COMP_DATA  *cid;
 
-    PROCNAME("generateOutputDataPdf");
-
     if (!pdata)
-        return ERROR_INT("&data not defined", procName, 1);
+        return ERROR_INT("&data not defined", __func__, 1);
     *pdata = NULL;
     if (!pnbytes)
-        return ERROR_INT("&nbytes not defined", procName, 1);
+        return ERROR_INT("&nbytes not defined", __func__, 1);
     nbytes = lpd->xrefloc + strlen(lpd->trailer);
     *pnbytes = nbytes;
     if ((data = (l_uint8 *)LEPT_CALLOC(nbytes, sizeof(l_uint8))) == NULL)
-        return ERROR_INT("calloc fail for data", procName, 1);
+        return ERROR_INT("calloc fail for data", __func__, 1);
     *pdata = data;
 
     sizes = l_dnaGetIArray(lpd->objsize);
@@ -2275,7 +2242,7 @@ L_COMP_DATA  *cid;
         if ((cid = pdfdataGetCid(lpd, i)) == NULL) {  /* should not happen */
             LEPT_FREE(sizes);
             LEPT_FREE(locs);
-            return ERROR_INT("cid not found", procName, 1);
+            return ERROR_INT("cid not found", __func__, 1);
         }
         str = sarrayGetString(lpd->saprex, i, L_NOCOPY);
         len = strlen(str);
@@ -2322,16 +2289,14 @@ size_t    size;
 L_DNA    *da, *daobj, *daxref;
 SARRAY   *sa;
 
-    PROCNAME("parseTrailerPdf");
-
     if (!pda)
-        return ERROR_INT("&da not defined", procName, 1);
+        return ERROR_INT("&da not defined", __func__, 1);
     *pda = NULL;
     if (!bas)
-        return ERROR_INT("bas not defined", procName, 1);
+        return ERROR_INT("bas not defined", __func__, 1);
     data = l_byteaGetData(bas, &size);
     if (memcmp(data, "%PDF-1.", 7) != 0)
-        return ERROR_INT("PDF header signature not found", procName, 1);
+        return ERROR_INT("PDF header signature not found", __func__, 1);
 
         /* Search for "startxref" starting 50 bytes from the EOF */
     start = 0;
@@ -2340,16 +2305,16 @@ SARRAY   *sa;
     arrayFindSequence(data + start, size - start,
                       (l_uint8 *)"startxref\n", 10, &loc, &found);
     if (!found)
-        return ERROR_INT("startxref not found!", procName, 1);
+        return ERROR_INT("startxref not found!", __func__, 1);
     if (sscanf((char *)(data + start + loc + 10), "%d\n", &xrefloc) != 1)
-        return ERROR_INT("xrefloc not found!", procName, 1);
+        return ERROR_INT("xrefloc not found!", __func__, 1);
     if (xrefloc < 0 || xrefloc >= size)
-        return ERROR_INT("invalid xrefloc!", procName, 1);
+        return ERROR_INT("invalid xrefloc!", __func__, 1);
     sa = sarrayCreateLinesFromString((char *)(data + xrefloc), 0);
     str = sarrayGetString(sa, 1, L_NOCOPY);
     if ((sscanf(str, "0 %d", &nobj)) != 1) {
         sarrayDestroy(&sa);
-        return ERROR_INT("nobj not found", procName, 1);
+        return ERROR_INT("nobj not found", __func__, 1);
     }
 
         /* Get starting locations.  The numa index is the
@@ -2378,7 +2343,7 @@ SARRAY   *sa;
     for (i = 1; i < nobj; i++) {
         l_dnaGetIValue(da, i, &startloc);
         if ((sscanf((char *)(data + startloc), "%d 0 obj", &objno)) != 1) {
-            L_ERROR("bad trailer for object %d\n", procName, i);
+            L_ERROR("bad trailer for object %d\n", __func__, i);
             trailer_ok = FALSE;
             break;
         }
@@ -2386,7 +2351,7 @@ SARRAY   *sa;
 
         /* If the trailer is broken, reconstruct the correct obj locations */
     if (!trailer_ok) {
-        L_INFO("rebuilding pdf trailer\n", procName);
+        L_INFO("rebuilding pdf trailer\n", __func__);
         l_dnaEmpty(da);
         l_dnaAddNumber(da, 0);
         l_byteaFindEachSequence(bas, (l_uint8 *)" 0 obj\n", 7, &daobj);
@@ -2418,10 +2383,8 @@ char    *buf;
 l_int32  i, n, index, bufsize;
 SARRAY  *sa;
 
-    PROCNAME("generatePagesObjStringPdf");
-
     if (!napage)
-        return (char *)ERROR_PTR("napage not defined", procName, NULL);
+        return (char *)ERROR_PTR("napage not defined", __func__, NULL);
 
     n = numaGetCount(napage);
     bufsize = 100 + 16 * n;  /* large enough to hold the output string */
@@ -2439,7 +2402,9 @@ SARRAY  *sa;
                                "/Type /Pages\n"
                                "/Kids [%s]\n"
                                "/Count %d\n"
-                               ">>\n", str, n);
+                               ">>\n"
+                               "endobj\n",
+                               str, n);
     sarrayDestroy(&sa);
     LEPT_FREE(str);
     return buf;
@@ -2476,11 +2441,10 @@ size_t    size;
 L_BYTEA  *bad;
 L_DNA    *da_match;
 
-    PROCNAME("substituteObjectNumbers");
     if (!bas)
-        return (L_BYTEA *)ERROR_PTR("bas not defined", procName, NULL);
+        return (L_BYTEA *)ERROR_PTR("bas not defined", __func__, NULL);
     if (!na_objs)
-        return (L_BYTEA *)ERROR_PTR("na_objs not defined", procName, NULL);
+        return (L_BYTEA *)ERROR_PTR("na_objs not defined", __func__, NULL);
 
     datas = l_byteaGetData(bas, &size);
     bad = l_byteaCreate(100);
@@ -2490,7 +2454,7 @@ L_DNA    *da_match;
         /* Substitute the object number on the first line */
     sscanf((char *)datas, "%d", &objin);
     if (objin < 0 || objin >= nobjs) {
-        L_ERROR("index %d into array of size %d\n", procName, objin, nobjs);
+        L_ERROR("index %d into array of size %d\n", __func__, objin, nobjs);
         LEPT_FREE(objs);
         return bad;
     }
@@ -2520,7 +2484,7 @@ L_DNA    *da_match;
         l_byteaAppendData(bad, datas + start, j - start + 1);
         sscanf((char *)(datas + j + 1), "%d", &objin);
         if (objin < 0 || objin >= nobjs) {
-            L_ERROR("index %d into array of size %d\n", procName, objin, nobjs);
+            L_ERROR("index %d into array of size %d\n", __func__, objin, nobjs);
             LEPT_FREE(objs);
             LEPT_FREE(matches);
             l_dnaDestroy(&da_match);
@@ -2567,10 +2531,8 @@ l_int32       i;
 L_COMP_DATA  *cid;
 L_PDF_DATA   *lpd;
 
-    PROCNAME("pdfdataDestroy");
-
     if (plpd== NULL) {
-        L_WARNING("ptr address is null!\n", procName);
+        L_WARNING("ptr address is null!\n", __func__);
         return;
     }
     if ((lpd = *plpd) == NULL)
@@ -2607,12 +2569,10 @@ static L_COMP_DATA *
 pdfdataGetCid(L_PDF_DATA  *lpd,
               l_int32      index)
 {
-    PROCNAME("pdfdataGetCid");
-
     if (!lpd)
-        return (L_COMP_DATA *)ERROR_PTR("lpd not defined", procName, NULL);
+        return (L_COMP_DATA *)ERROR_PTR("lpd not defined", __func__, NULL);
     if (index < 0 || index >= lpd->n)
-        return (L_COMP_DATA *)ERROR_PTR("invalid image index", procName, NULL);
+        return (L_COMP_DATA *)ERROR_PTR("invalid image index", __func__, NULL);
 
     return (L_COMP_DATA *)ptraGetPtrToItem(lpd->cida, index);
 }

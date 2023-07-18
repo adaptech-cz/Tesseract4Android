@@ -29,14 +29,15 @@
  *
  *    This program concatenates all pdfs in a directory by rendering them
  *    as images, optionally scaling the images, and generating an output pdf.
- *    The pdfs are taken in lexical order.
+ *    The pdfs are taken in lexical order.  It chooses an encoding for each
+ *    page that gives good compression without sacrificing much image quality.
  *
  *    It makes no other changes to the images, which are rendered
  *    by Poppler's pdftoppm.  Compare with cleanpdf.c, which carries
  *    out several operations to make high resolution, 1 bpp g4-tiff
  *    encoded images in the pdf.
  *
- *     Syntax:  cconcatpdf basedir scalefactor outfile
+ *     Syntax:  concatpdf basedir scalefactor quality title outfile
  *
  *    The %basedir is a directory where the input pdf files are located.
  *    The program will operate on every file in this directory with
@@ -49,6 +50,14 @@
  *    We compute an output resolution for that pdf that will cause it
  *    to print 11 inches high, based on the height in pixels of the
  *    first image in the set.
+ *
+ *    The %quality is the jpeg quality factor that is used.  Use 0 for
+ *    the default value, which is 50, which is satisfactory for many
+ *    purposes.  75 is standard jpeq quality; 85-95 are very high quality.
+ *    Allowed values are between 25 and 95.
+ *
+ *    The %title is the title given to the pdf.  Use %title == "none"
+ *    to omit the title.
  *
  *    The pdf encoding for each page is chosen by the default mechanism.
  *    See selectDefaultPdfEncoding() for details.
@@ -85,31 +94,39 @@
 l_int32 main(int    argc,
              char **argv)
 {
-char         buf[256];
-char        *basedir, *fname, *tail, *basename, *imagedir, *outfile;
-l_int32      res, i, n, ret;
-l_float32    scalefactor;
-PIX         *pixs, *pix1;
-PIXA        *pixa1;
-SARRAY      *sa;
-static char  mainName[] = "concatpdf";
+char       buf[256];
+char      *basedir, *fname, *tail, *basename, *imagedir, *title, *outfile;
+l_int32    res, quality, i, n, ret;
+l_float32  scalefactor;
+PIX       *pixs, *pix1;
+PIXA      *pixa1;
+SARRAY    *sa;
 
-    if (argc != 4)
+    if (argc != 6)
         return ERROR_INT(
-            "Syntax: concatpdf basedir scalefactor outfile",
-            mainName, 1);
+            "Syntax: concatpdf basedir scalefactor quality title outfile",
+            __func__, 1);
     basedir = argv[1];
     scalefactor = atof(argv[2]);
-    outfile = argv[3];
+    quality = atoi(argv[3]);  /* jpeg quality */
+    title = argv[4];
+    outfile = argv[5];
     setLeptDebugOK(1);
+    if (quality <= 0) quality = 50;  /* default value */
+    if (quality < 25) {
+        L_WARNING("quality %d too low; setting to 25\n", __func__, quality);
+        quality = 25;
+    }
+    if (quality > 95) {
+        L_WARNING("quality %d too high; setting to 95\n", __func__, quality);
+        quality = 95;
+    }
 
-#if 1
         /* Get the names of the pdf files */
     if ((sa = getSortedPathnamesInDirectory(basedir, "pdf", 0, 0)) == NULL)
-        return ERROR_INT("files not found", mainName, 1);
+        return ERROR_INT("files not found", __func__, 1);
     sarrayWriteStderr(sa);
     n = sarrayGetCount(sa);
-#endif
 
         /* Rasterize:
          *     pdftoppm -r 150 fname outroot
@@ -120,7 +137,6 @@ static char  mainName[] = "concatpdf";
          *    and is very fast.  If you want higher resolution 1 bpp output,
          *    use cleanpdf.c. */
     imagedir = stringJoin(basedir, "/image");
-#if 1
 #ifndef _WIN32
     mkdir(imagedir, 0777);
 #else
@@ -138,9 +154,7 @@ static char  mainName[] = "concatpdf";
         ret = system(buf);
     }
     sarrayDestroy(&sa);
-#endif
 
-#if 1
         /* Scale and collect */
     sa = getSortedPathnamesInDirectory(imagedir, NULL, 0, 0);
     sarrayWriteStderr(sa);
@@ -157,9 +171,7 @@ static char  mainName[] = "concatpdf";
         pixDestroy(&pixs);
     }
     sarrayDestroy(&sa);
-#endif
 
-#if 1
         /* Generate the pdf.  Compute the actual input resolution from
          * the pixel dimensions of the first image.  This will cause each
          * page to be printed to cover an 8.5 x 11 inch sheet of paper. */
@@ -167,10 +179,10 @@ static char  mainName[] = "concatpdf";
     pix1 = pixaGetPix(pixa1, 0, L_CLONE);
     pixInferResolution(pix1, 11.0, &res);
     pixDestroy(&pix1);
-    pixaConvertToPdf(pixa1, res, 1.0, L_DEFAULT_ENCODE, 50, NULL, outfile);
+    if (strcmp(title, "none") == 0)
+        title = NULL;
+    pixaConvertToPdf(pixa1, res, 1.0, L_DEFAULT_ENCODE, quality, title, outfile);
     pixaDestroy(&pixa1);
-#endif
-
     return 0;
 }
 

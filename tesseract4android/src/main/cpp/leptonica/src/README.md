@@ -1,11 +1,8 @@
 # Leptonica Library #
 
-[![Build Status](https://travis-ci.com/DanBloomberg/leptonica.svg?branch=master)](https://travis-ci.com/DanBloomberg/leptonica)
+[![Build Status](https://api.travis-ci.com/DanBloomberg/leptonica.svg?branch=master)](https://app.travis-ci.com/github/DanBloomberg/leptonica)
 [![Build status](https://ci.appveyor.com/api/projects/status/vsk607rr6n4j2tmk?svg=true)](https://ci.appveyor.com/project/DanBloomberg/leptonica)
-![Build status](https://github.com/DanBloomberg/leptonica/workflows/sw/badge.svg)<br>
-[![Coverity Scan Build Status](https://scan.coverity.com/projects/leptonica/badge.svg)](https://scan.coverity.com/projects/leptonica)
-[![Code Quality: Cpp](https://img.shields.io/lgtm/grade/cpp/g/DanBloomberg/leptonica.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/DanBloomberg/leptonica/context:cpp)
-[![Total Alerts](https://img.shields.io/lgtm/alerts/g/DanBloomberg/leptonica.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/DanBloomberg/leptonica/alerts)
+![Build status](https://github.com/DanBloomberg/leptonica/workflows/sw/badge.svg)
 
 www.leptonica.org
 
@@ -77,7 +74,19 @@ www.leptonica.org
   * Jeff Breidenbach: Jeff has built every Debian distribution for Leptonica. He has also made many improvements to formatted image I/O, including tiff, png and pdf. He is a continuous advocate for simplification.
   * Egor Pugin: Egor is co-maintainer of Leptonica on GitHub. He ported everything, including all the old distributions, from Google Code when it shut down. He set Leptonica up for appveyor and travis testing, and has implemented the sw project, which simplifies building executables on Windows.
   * Jürgen Buchmüller: Jürgen wrote text converters to modify Leptonica source code so that it generates documentation using doxygen. He also wrote tiff wrappers for memory I/O.
-  * Stefan Weil: Stefan has worked from the beginning to clean up the Leptonica GitHub distribution, including removing errors in the source code.  He also suggested and implemented the use of Coverity Scan.
+  * Stefan Weil: Stefan has worked from the beginning to clean up the Leptonica GitHub distribution, including removing errors in the source code.  He also: suggested and implemented the use of Coverity Scan; implemented atomic ops for ref counting; helped removing internal struct data from the public interface.
   * Zdenko Podobny: Zdenko has worked, mostly behind the scenes as a primary maintainer of tesseract, to help with leptonica builds on all platforms, and coordinate with its use in tesseract.
   * Adam Korczynski: Adam is an expert in testing libraries for safety.  He has built most of the open source fuzzers for leptonica in the oss-fuzz project, with significant code coverage.
 
+## Installing leptonica (vcpkg)
+  * You can build and install leptonica using [vcpkg](https://github.com/Microsoft/vcpkg/) dependency manager:
+
+  ``` sh or powershell
+      git clone https://github.com/Microsoft/vcpkg.git
+      cd vcpkg
+      ./bootstrap-vcpkg.sh # "./bootstrap-vcpkg.bat" for powershell
+      ./vcpkg integrate install
+      ./vcpkg install leptonica
+  ```
+
+  * The leptonica port in vcpkg is kept up to date by Microsoft team members and community contributors. If the version is out of date, please [create an issue or pull request](https://github.com/Microsoft/vcpkg) on the vcpkg repository.

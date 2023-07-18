@@ -65,6 +65,13 @@ typedef unsigned int uintptr_t;
 
 #endif /* _MSC_VER */
 
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L) && !defined(__STDC_NO_ATOMICS__)
+#include <stdatomic.h>
+typedef atomic_int l_atomic;
+#else
+typedef int l_atomic;
+#endif
+
 #ifndef LEPT_DLL
   /* Windows specifics */
   #ifdef _WIN32
@@ -84,6 +91,10 @@ typedef unsigned int uintptr_t;
 #ifndef _WIN32  /* non-Windows specifics */
   #include <stdint.h>
 #endif  /* _WIN32 */
+
+#ifdef __APPLE__
+  #include <Availability.h>
+#endif /* __APPLE__ */
 
 typedef intptr_t l_intptr_t;
 typedef uintptr_t l_uintptr_t;
@@ -162,16 +173,25 @@ typedef uintptr_t l_uintptr_t;
 
 
 /*-------------------------------------------------------------------------*
- * On linux systems, you can do I/O between Pix and memory.  Specifically,
- * you can compress (write compressed data to memory from a Pix) and
- * uncompress (read from compressed data in memory to a Pix).
- * For jpeg, png, jp2k, gif, pnm and bmp, these use the non-posix GNU
- * functions fmemopen() and open_memstream().  These functions are not
- * available on other systems.
- * To use these functions in linux, you must define HAVE_FMEMOPEN to 1.
- * To use them on MacOS, which does not support these functions, set it to 0.
+ * On linux, BSD, macOS (> 10.12), android (sdk >= 23) and iOS(>= 11.0),
+ * you can redirect writing data from a filestream to memory using
+ * open_memstream() and redirect reading data from a filestream to
+ * reading from memory using fmemopen().
+ * Specifically, you can compress (write compressed data to memory
+ * from raster data in a Pix) and uncompress (read from compressed data
+ * in memory to raster data in a Pix).
+ * For png, tiff and webp, data is compressed and uncompressed directly
+ * to memory without the use of the POSIX.1 (2008) functions fmemopen()
+ * and open_memstream().
+ * For jpeg, jp2k, gif, pnm and bmp, these functions are used on systems
+ * that support them, and for those we define HAVE_FMEMOPEN to 1.
  *-------------------------------------------------------------------------*/
-#if !defined(HAVE_CONFIG_H) && !defined(ANDROID_BUILD) && !defined(OS_IOS) && \
+#if !defined(HAVE_CONFIG_H) && \
+    (!defined(ANDROID_BUILD) || __ANDROID_API__ >= 23) && \
+    (!defined(__IPHONE_OS_VERSION_MIN_REQUIRED) || \
+              __IPHONE_OS_VERSION_MIN_REQUIRED >= 110000) && \
+    (!defined(__MAC_OS_X_VERSION_MIN_REQUIRED) || \
+              __MAC_OS_X_VERSION_MIN_REQUIRED > 101200) && \
     !defined(_WIN32)
 #define  HAVE_FMEMOPEN    1
 #endif  /* ! HAVE_CONFIG_H etc. */
@@ -179,10 +199,12 @@ typedef uintptr_t l_uintptr_t;
 /*-------------------------------------------------------------------------*
  * fstatat() is defined by POSIX, but some systems do not support it.      *
  * One example is older macOS systems (pre-10.10).                         *
- * Play it safe and set the default value to 0.                            *
+ * Also, dirfd() is required by fstatat().                                 *
+ * Play it safe and set the default values to 0.                           *
  *-------------------------------------------------------------------------*/
 #if !defined(HAVE_CONFIG_H)
 #define  HAVE_FSTATAT     0
+#define  HAVE_DIRFD       0
 #endif /* ! HAVE_CONFIG_H */
 
 /*--------------------------------------------------------------------*
