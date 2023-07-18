@@ -21,51 +21,50 @@
 extern "C" {
 #endif  /* __cplusplus */
 
-jlong Java_com_googlecode_leptonica_android_Box_nativeCreate(JNIEnv *env, jclass clazz, jint x,
-                                                             jint y, jint w, jint h) {
+jlong Java_com_googlecode_leptonica_android_Box_nativeCreate(JNIEnv *env, jclass clazz, jint x, jint y, jint w, jint h) {
   BOX *box = boxCreate((l_int32) x, (l_int32) y, (l_int32) w, (l_int32) h);
 
   return (jlong) box;
 }
 
-jint Java_com_googlecode_leptonica_android_Box_nativeGetRefCount(JNIEnv *env, jclass clazz,
-                                                                 jlong nativeBox) {
-  BOX *box = (BOX *) nativeBox;
-
-  return (jint) boxGetRefcount(box);
-}
-
-void Java_com_googlecode_leptonica_android_Box_nativeDestroy(JNIEnv *env, jclass clazz,
-                                                             jlong nativeBox) {
+void Java_com_googlecode_leptonica_android_Box_nativeDestroy(JNIEnv *env, jclass clazz, jlong nativeBox) {
   BOX *box = (BOX *) nativeBox;
 
   boxDestroy(&box);
 }
 
-jint Java_com_googlecode_leptonica_android_Box_nativeGetX(JNIEnv *env, jclass clazz, jlong nativeBox) {
+jint Java_com_googlecode_leptonica_android_Box_nativeGetX(JNIEnv *env, jclass clazz,
+                                                          jlong nativeBox) {
   BOX *box = (BOX *) nativeBox;
 
-  return (jint) box->x;
+  l_int32 x;
+  boxGetGeometry(box, &x, nullptr, nullptr, nullptr);
+  return (jint) x;
 }
 
 jint Java_com_googlecode_leptonica_android_Box_nativeGetY(JNIEnv *env, jclass clazz, jlong nativeBox) {
   BOX *box = (BOX *) nativeBox;
 
-  return (jint) box->y;
+  l_int32 y;
+  boxGetGeometry(box, nullptr, &y, nullptr, nullptr);
+  return (jint) y;
 }
 
-jint Java_com_googlecode_leptonica_android_Box_nativeGetWidth(JNIEnv *env, jclass clazz,
-                                                              jlong nativeBox) {
+jint Java_com_googlecode_leptonica_android_Box_nativeGetWidth(JNIEnv *env, jclass clazz, jlong nativeBox) {
   BOX *box = (BOX *) nativeBox;
 
-  return (jint) box->w;
+  l_int32 w;
+  boxGetGeometry(box, nullptr, nullptr, &w, nullptr);
+  return (jint) w;
 }
 
 jint Java_com_googlecode_leptonica_android_Box_nativeGetHeight(JNIEnv *env, jclass clazz,
                                                                jlong nativeBox) {
   BOX *box = (BOX *) nativeBox;
 
-  return (jint) box->h;
+  l_int32 h;
+  boxGetGeometry(box, nullptr, nullptr, nullptr, &h);
+  return (jint) h;
 }
 
 jboolean Java_com_googlecode_leptonica_android_Box_nativeGetGeometry(JNIEnv *env, jclass clazz,

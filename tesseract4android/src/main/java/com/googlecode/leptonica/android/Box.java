@@ -63,7 +63,7 @@ public class Box {
 	 */
 	private final long mNativeBox;
 
-	private boolean mRecycled = false;
+	private boolean mRecycled;
 
 	/**
 	 * Creates a new Box wrapper for the specified native BOX.
@@ -208,10 +208,6 @@ public class Box {
 		return nativeGetGeometry(mNativeBox, geometry);
 	}
 
-	public int getRefCount() {
-		return nativeGetRefCount(mNativeBox);
-	}
-
 	/**
 	 * Releases resources and frees any memory associated with this Box.
 	 */
@@ -236,8 +232,6 @@ public class Box {
 	private static native int nativeGetWidth(long nativeBox);
 
 	private static native int nativeGetHeight(long nativeBox);
-
-	private static native int nativeGetRefCount(long nativePix);
 
 	private static native void nativeDestroy(long nativeBox);
 

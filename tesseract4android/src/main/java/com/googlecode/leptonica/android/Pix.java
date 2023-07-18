@@ -338,10 +338,6 @@ public class Pix {
 		return nativeGetInputFormat(mNativePix);
 	}
 
-	public int getRefCount() {
-		return nativeGetRefCount(mNativePix);
-	}
-
 	/**
 	 * Returns the {@link android.graphics.Color} at the specified location.
 	 *
@@ -389,8 +385,6 @@ public class Pix {
 	// ***************
 	// * NATIVE CODE *
 	// ***************
-
-	private static native int nativeGetRefCount(long nativePix);
 
 	private static native long nativeCreatePix(int w, int h, int d);
 

@@ -43,7 +43,7 @@ public class Boxa {
 	 */
 	private final long mNativeBoxa;
 
-	private boolean mRecycled = false;
+	private boolean mRecycled;
 
 	/**
 	 * Creates a new Box wrapper for the specified native BOX.

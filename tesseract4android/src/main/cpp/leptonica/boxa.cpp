@@ -51,7 +51,7 @@ jboolean Java_com_googlecode_leptonica_android_Boxa_nativeGetGeometry(JNIEnv *en
 
 jint Java_com_googlecode_leptonica_android_Boxa_nativeGetCount(JNIEnv *env, jclass clazz, jlong nativeBoxa) {
   BOXA *boxa = (BOXA *) nativeBoxa;
-  return boxa->n;
+  return boxaGetCount(boxa);
 }
 
 #ifdef __cplusplus
