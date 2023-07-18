@@ -1,8 +1,4 @@
-# NOTE: sdkmanager doesn't support Java 11, so we must run it with Java 8, and enable Java 11 afterwards
 jdk:
-  - openjdk8
-#  - openjdk11
+  - openjdk17
 before_install:
   - yes | sdkmanager "cmake;3.22.1"
-  - sdk install java 11.0.2-open
-  - sdk use java 11.0.2-open
