@@ -42,16 +42,19 @@
 .deps/
 .dirstamp
 Makefile
+autom4te.cache/
 config.h
+config.h.in~
 config.log
 config.status
+configure~
 libpng-config
 libpng.pc
 libpng.vers
 libpng16-config
 libpng16.pc
 libtool
-#pnglibconf.[ch] # Tesseract4Android: Don't ignore this
+pnglibconf.[ch]
 pnglibconf.dfn
 pnglibconf.out
 pnglibconf.pre

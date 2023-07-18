@@ -1,6 +1,5 @@
 /* pngfix.c
  *
- * Last changed in libpng 1.6.31 [July 27, 2017]
  * Copyright (c) 2014-2017 John Cunningham Bowler
  *
  * This code is released under the libpng license.
@@ -10,6 +9,7 @@
  * Tool to check and fix the zlib inflate 'too far back' problem.
  * See the usage message for more information.
  */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -867,7 +867,7 @@ struct file
     * signature (in length,type).
     *
     * When a chunk control structure is instantiated these values are copied
-    * into the structure and can then be overritten with the data for the next
+    * into the structure and can then be overwritten with the data for the next
     * chunk.
     */
    fpos_t         data_pos;      /* Position of first byte of chunk data */
@@ -3961,6 +3961,14 @@ main(int argc, const char **argv)
       {
          size_t outlen = strlen(*argv);
 
+         if (outlen > FILENAME_MAX)
+         {
+            fprintf(stderr, "%s: output file name too long: %s%s%s\n",
+               prog, prefix, *argv, suffix ? suffix : "");
+            global.status_code |= WRITE_ERROR;
+            continue;
+         }
+
          if (outfile == NULL) /* else this takes precedence */
          {
             /* Consider the prefix/suffix options */
@@ -4046,4 +4054,3 @@ main(void)
    return 77;
 }
 #endif /* PNG_SETJMP_SUPPORTED */
-

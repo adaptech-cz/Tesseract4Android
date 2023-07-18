@@ -1,5 +1,5 @@
-libpng 1.6.38 - September 14, 2022
-==================================
+libpng 1.6.40 - June 21, 2023
+=============================
 
 This is a public release of libpng, intended for use in production code.
 
@@ -9,13 +9,13 @@ Files available for download
 
 Source files with LF line endings (for Unix/Linux):
 
- * libpng-1.6.38.tar.xz (LZMA-compressed, recommended)
- * libpng-1.6.38.tar.gz
+ * libpng-1.6.40.tar.xz (LZMA-compressed, recommended)
+ * libpng-1.6.40.tar.gz
 
 Source files with CRLF line endings (for Windows):
 
- * lp1638.7z (LZMA-compressed, recommended)
- * lp1638.zip
+ * lpng1640.7z (LZMA-compressed, recommended)
+ * lpng1640.zip
 
 Other information:
 
@@ -25,13 +25,15 @@ Other information:
  * TRADEMARK.md
 
 
-Changes since the previous public release (version 1.6.37)
-----------------------------------------------------------
+Changes from version 1.6.39 to version 1.6.40
+---------------------------------------------
 
- * Added configurations and scripts for continuous integration.
- * Fixed various errors in the handling of tRNS, hIST and eXIf.
- * Implemented many stability improvements across all platforms.
- * Updated the internal documentation.
+ * Fixed the eXIf chunk multiplicity checks.
+ * Fixed a memory leak in pCAL processing.
+ * Corrected the validity report about tRNS inside png_get_valid().
+ * Fixed various build issues on *BSD, Mac and Windows.
+ * Updated the configurations and the scripts for continuous integration.
+ * Cleaned up the code, the build scripts, and the documentation.
 
 
 Send comments/corrections/commendations to png-mng-implement at lists.sf.net.

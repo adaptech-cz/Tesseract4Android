@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -e
 
-# ci_legacy.sh
+# ci_verify_makefiles.sh
 # Continuously integrate libpng using the legacy makefiles.
 #
-# Copyright (c) 2019-2022 Cosmin Truta.
+# Copyright (c) 2019-2023 Cosmin Truta.
 #
 # This software is released under the libpng license.
 # For conditions of distribution and use, see the disclaimer
@@ -13,7 +13,6 @@ set -e
 CI_SCRIPTNAME="$(basename "$0")"
 CI_SCRIPTDIR="$(cd "$(dirname "$0")" && pwd)"
 CI_SRCDIR="$(dirname "$CI_SCRIPTDIR")"
-CI_BUILDDIR="$CI_SRCDIR"
 
 function ci_info {
     printf >&2 "%s: %s\\n" "$CI_SCRIPTNAME" "$*"
@@ -31,36 +30,26 @@ function ci_spawn {
     "$@"
 }
 
-function ci_init_legacy {
+function ci_init_makefiles_build {
     CI_SYSTEM_NAME="$(uname -s)"
     CI_MACHINE_NAME="$(uname -m)"
     CI_MAKE="${CI_MAKE:-make}"
-    case "$CI_SYSTEM_NAME" in
-    ( Darwin | *BSD | DragonFly )
-        [[ -x $(command -v clang) ]] && CI_CC="${CI_CC:-clang}" ;;
-    ( * )
-        [[ -x $(command -v gcc) ]] && CI_CC="${CI_CC:-gcc}" ;;
-    esac
-    CI_CC="${CI_CC:-cc}"
     case "$CI_CC" in
     ( *clang* )
-        CI_LEGACY_MAKEFILES="${CI_LEGACY_MAKEFILES:-"scripts/makefile.clang"}" ;;
+        CI_MAKEFILES="${CI_MAKEFILES:-"scripts/makefile.clang"}" ;;
     ( *gcc* )
-        CI_LEGACY_MAKEFILES="${CI_LEGACY_MAKEFILES:-"scripts/makefile.gcc"}" ;;
-    ( cc | c89 | c99 )
-        CI_LEGACY_MAKEFILES="${CI_LEGACY_MAKEFILES:-"scripts/makefile.std"}" ;;
+        CI_MAKEFILES="${CI_MAKEFILES:-"scripts/makefile.gcc"}" ;;
+    ( * )
+        CI_MAKEFILES="${CI_MAKEFILES:-"scripts/makefile.std"}" ;;
     esac
-    CI_LD="${CI_LD:-"$CI_CC"}"
-    CI_LIBS="${CI_LIBS:-"-lz -lm"}"
 }
 
-function ci_trace_legacy {
+function ci_trace_makefiles_build {
     ci_info "## START OF CONFIGURATION ##"
     ci_info "system name: $CI_SYSTEM_NAME"
     ci_info "machine hardware name: $CI_MACHINE_NAME"
     ci_info "source directory: $CI_SRCDIR"
-    ci_info "build directory: $CI_BUILDDIR"
-    ci_info "environment option: \$CI_LEGACY_MAKEFILES: '$CI_LEGACY_MAKEFILES'"
+    ci_info "environment option: \$CI_MAKEFILES: '$CI_MAKEFILES'"
     ci_info "environment option: \$CI_MAKE: '$CI_MAKE'"
     ci_info "environment option: \$CI_MAKE_FLAGS: '$CI_MAKE_FLAGS'"
     ci_info "environment option: \$CI_MAKE_VARS: '$CI_MAKE_VARS'"
@@ -90,7 +79,20 @@ function ci_trace_legacy {
     ci_info "## END OF CONFIGURATION ##"
 }
 
-function ci_build_legacy {
+function ci_cleanup_old_makefiles_build {
+    # Any old makefile-based build will most likely leave a mess
+    # of object files behind if interrupted, e.g., via Ctrl+C.
+    # There may be other files behind, depending on what makefile
+    # had been used. We cannot easily enumerate all of those.
+    # Fortunately, for a clean makefiles-based build, it should be
+    # sufficient to remove the old object files only.
+    [[ -z $(find "$CI_SRCDIR" -maxdepth 1 -name "*.o") ]] ||
+        ci_spawn rm -f "$CI_SRCDIR"/*.o
+    [[ -z $(find "$CI_SRCDIR" -maxdepth 1 -name "*.obj") ]] ||
+        ci_spawn rm -f "$CI_SRCDIR"/*.obj
+}
+
+function ci_build_makefiles {
     ci_info "## START OF BUILD ##"
     # Initialize ALL_CC_FLAGS and ALL_LD_FLAGS as strings.
     local ALL_CC_FLAGS="$CI_CC_FLAGS"
@@ -100,8 +102,8 @@ function ci_build_legacy {
         ALL_LD_FLAGS="-fsanitize=$CI_SANITIZERS $ALL_LD_FLAGS"
     }
     # Initialize ALL_MAKE_FLAGS and ALL_MAKE_VARS as arrays.
-    local -a ALL_MAKE_FLAGS=($CI_MAKE_FLAGS)
-    local -a ALL_MAKE_VARS=()
+    local ALL_MAKE_FLAGS=($CI_MAKE_FLAGS)
+    local ALL_MAKE_VARS=()
     [[ $CI_CC ]] && ALL_MAKE_VARS+=(CC="$CI_CC")
     [[ $ALL_CC_FLAGS ]] && ALL_MAKE_VARS+=(CFLAGS="$ALL_CC_FLAGS")
     [[ $CI_CPP ]] && ALL_MAKE_VARS+=(CPP="$CI_CPP")
@@ -113,12 +115,12 @@ function ci_build_legacy {
     [[ $CI_RANLIB ]] && ALL_MAKE_VARS+=(RANLIB="$CI_RANLIB")
     [[ $CI_LD ]] && ALL_MAKE_VARS+=(LD="$CI_LD")
     [[ $ALL_LD_FLAGS ]] && ALL_MAKE_VARS+=(LDFLAGS="$ALL_LD_FLAGS")
-    ALL_MAKE_VARS+=(LIBS="$CI_LIBS")
+    [[ $CI_LIBS ]] && ALL_MAKE_VARS+=(LIBS="$CI_LIBS")
     ALL_MAKE_VARS+=($CI_MAKE_VARS)
     # Build!
-    ci_spawn cd "$CI_SRCDIR"
+    cd "$CI_SRCDIR"
     local MY_MAKEFILE
-    for MY_MAKEFILE in $CI_LEGACY_MAKEFILES
+    for MY_MAKEFILE in $CI_MAKEFILES
     do
         ci_info "using makefile: $MY_MAKEFILE"
         ci_spawn "$CI_MAKE" -f "$MY_MAKEFILE" \
@@ -138,10 +140,15 @@ function ci_build_legacy {
     ci_info "## END OF BUILD ##"
 }
 
-ci_init_legacy
-ci_trace_legacy
-[[ $# -eq 0 ]] || {
-    ci_info "note: this program accepts environment options only"
-    ci_err "unexpected command arguments: '$*'"
+function main {
+    [[ $# -eq 0 ]] || {
+        ci_info "note: this program accepts environment options only"
+        ci_err "unexpected command arguments: '$*'"
+    }
+    ci_init_makefiles_build
+    ci_trace_makefiles_build
+    ci_cleanup_old_makefiles_build
+    ci_build_makefiles
 }
-ci_build_legacy
+
+main "$@"

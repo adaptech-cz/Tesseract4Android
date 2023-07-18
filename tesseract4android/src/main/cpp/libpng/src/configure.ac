@@ -25,7 +25,7 @@ AC_PREREQ([2.68])
 
 dnl Version number stuff here:
 
-AC_INIT([libpng],[1.6.38],[png-mng-implement@lists.sourceforge.net])
+AC_INIT([libpng],[1.6.40],[png-mng-implement@lists.sourceforge.net])
 AC_CONFIG_MACRO_DIR([scripts])
 
 # libpng does not follow GNU file name conventions (hence 'foreign')
@@ -46,10 +46,10 @@ dnl automake, so the following is not necessary (and is not defined anyway):
 dnl AM_PREREQ([1.11.2])
 dnl stop configure from automagically running automake
 
-PNGLIB_VERSION=1.6.38
+PNGLIB_VERSION=1.6.40
 PNGLIB_MAJOR=1
 PNGLIB_MINOR=6
-PNGLIB_RELEASE=38
+PNGLIB_RELEASE=40
 
 dnl End of version number stuff
 
@@ -138,7 +138,8 @@ AC_STRUCT_TM
 AC_C_RESTRICT
 
 # Checks for library functions.
-AC_CHECK_FUNCS([pow], , AC_CHECK_LIB(m, pow, , AC_MSG_ERROR(cannot find pow)))
+AC_CHECK_FUNCS([pow], ,
+  [AC_CHECK_LIB([m], [pow], , [AC_MSG_ERROR([cannot find pow])])])
 
 # Some later POSIX 1003.1 functions are required for test programs, failure
 # here is soft (the corresponding test program is not built).
@@ -150,8 +151,9 @@ AC_ARG_WITH(zlib-prefix,
       [prefix that may have been used in installed zlib]),
       [ZPREFIX=${withval}],
       [ZPREFIX='z_'])
-AC_CHECK_LIB(z, zlibVersion, ,
-    AC_CHECK_LIB(z, ${ZPREFIX}zlibVersion, , AC_MSG_ERROR(zlib not installed)))
+AC_CHECK_LIB([z], [zlibVersion], ,
+  [AC_CHECK_LIB([z], [${ZPREFIX}zlibVersion], ,
+     [AC_MSG_ERROR([zlib not installed])])])
 
 # The following is for pngvalid, to ensure it catches FP errors even on
 # platforms that don't enable FP exceptions, the function appears in the math
