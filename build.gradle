@@ -24,7 +24,7 @@ allprojects {
 }
 
 ext {
-    tesseract4AndroidVersion = '4.4.0'
+    tesseract4AndroidVersion = '4.5.0'
 }
 
 task clean(type: Delete) {
