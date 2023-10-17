@@ -49,7 +49,7 @@ android {
 			}
 		}
 	}
-	flavorDimensions "parallelization"
+	flavorDimensions = ["parallelization"]
 	productFlavors {
 		standard {
 		}

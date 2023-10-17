@@ -40,7 +40,7 @@ android {
         // Choose 'standard' or 'openmp' flavor of the library
         missingDimensionStrategy 'parallelization', 'standard'
     }
-    flavorDimensions 'parallelization'
+    flavorDimensions = ['parallelization']
 }*/
 
 dependencies {
