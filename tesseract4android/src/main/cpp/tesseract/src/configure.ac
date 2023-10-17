@@ -7,7 +7,7 @@
 # ----------------------------------------
 AC_PREREQ([2.69])
 AC_INIT([tesseract],
-        [m4_esyscmd_s([git describe --abbrev=4 2>/dev/null || cat VERSION])],
+        [m4_esyscmd_s([test -d .git && git describe --abbrev=4 2>/dev/null || cat VERSION])],
         [https://github.com/tesseract-ocr/tesseract/issues],,
         [https://github.com/tesseract-ocr/tesseract/])
 
@@ -29,7 +29,7 @@ AM_INIT_AUTOMAKE([foreign subdir-objects nostdinc])
 # Define date of package, etc. Could be useful in auto-generated
 # documentation.
 PACKAGE_YEAR=2023
-PACKAGE_DATE="07/11"
+PACKAGE_DATE="10/05"
 
 abs_top_srcdir=`AS_DIRNAME([$0])`
 
