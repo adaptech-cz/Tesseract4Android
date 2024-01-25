@@ -4,12 +4,12 @@ plugins {
 
 android {
     namespace 'cz.adaptech.tesseract4android.sample'
-    compileSdk 33
+    compileSdk 34
 
     defaultConfig {
         applicationId "cz.adaptech.tesseract4android.sample"
         minSdk 21
-        targetSdk 33
+        targetSdk 34
         versionCode 1
         versionName "1.0"
 
@@ -57,19 +57,13 @@ dependencies {
 
     // To use library compiled locally
     // Which flavor to use is determined by missingDimensionStrategy parameter above.
-//    implementation project(':tesseract4android')
-
-    // TODO: This is workaround for Duplicate class kotlin.* build errors caused by this change:
-    //  https://kotlinlang.org/docs/whatsnew18.html#updated-jvm-compilation-target
-    //  Remove this when affected libraries are updated to target only kotlin-stdlib
-    //  without additional kotlin-stdlib-jdk7 and kotlin-stdlib-jdk8 dependencies.
-    implementation platform("org.jetbrains.kotlin:kotlin-bom:1.8.20")
+    implementation project(':tesseract4android')
 
     implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'com.google.android.material:material:1.9.0'
+    implementation 'com.google.android.material:material:1.11.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    implementation 'androidx.lifecycle:lifecycle-livedata:2.6.1'
-    implementation 'androidx.lifecycle:lifecycle-viewmodel:2.6.1'
+    implementation 'androidx.lifecycle:lifecycle-livedata:2.7.0'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel:2.7.0'
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
