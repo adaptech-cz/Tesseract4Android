@@ -2,3 +2,4 @@ include ':tesseract4android'
 if (!System.env.JITPACK) {
     include ':sample'
 }
+include ':leptonica'

@@ -10,6 +10,7 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/leptonica" />
             <option value="$PROJECT_DIR$/sample" />
             <option value="$PROJECT_DIR$/tesseract4android" />
           </set>
