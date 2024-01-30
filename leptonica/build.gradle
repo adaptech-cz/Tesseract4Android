@@ -47,9 +47,7 @@ android {
 	}
 	prefab {
 		leptonica {
-			// TODO: This includes all files in the directory. We should move the *.h files
-			//  to a separate directory and include here that one.
-			headers "src/main/cpp/leptonica/src/src"
+			headers "src/main/cpp/leptonica/include"
 		}
 	}
 	externalNativeBuild {
