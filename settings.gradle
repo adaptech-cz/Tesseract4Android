@@ -3,3 +3,4 @@ if (!System.env.JITPACK) {
     include ':sample'
 }
 include ':leptonica'
+include ':tesseract'
