@@ -19,16 +19,33 @@
 
 # Sets the minimum version of CMake required to build the native library.
 
-cmake_minimum_required(VERSION 3.18.1)
-project(Tesseract4Android)
+cmake_minimum_required(VERSION 3.22.1)
 
-# Tesseract requires newer C++ standard, so let's enable it for all libraries
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
+project(tesseract4Android)
 
-# Adds the CMakeLists.txt file located in the specified directory as a build dependency.
-add_subdirectory(libjpeg)
-add_subdirectory(libpng)
-add_subdirectory(leptonica)
-add_subdirectory(tesseract)
+file(GLOB leptonica_src leptonica/*.cpp)
+file(GLOB tesseract_src tesseract/*.cpp)
+
+add_library( # Sets the name of the library.
+        tesseract4android
+
+        # Sets the library as a shared library.
+        SHARED
+
+        # Provides a relative path to your source file(s).
+        ${leptonica_src}
+        ${tesseract_src}
+        jni.cpp
+        )
+
+find_package(leptonica REQUIRED CONFIG)
+find_package(tesseract REQUIRED CONFIG)
+
+target_link_libraries(tesseract4android
+
+        # List libraries link to the target library
+        log
+        jnigraphics
+        leptonica::leptonica
+        tesseract::tesseract
+        )

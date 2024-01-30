@@ -23,10 +23,7 @@ import com.googlecode.tesseract.android.TessBaseAPI.PageIteratorLevel;
 
 public class PageIterator {
 	static {
-		System.loadLibrary("jpeg");
-		System.loadLibrary("pngx");
-		System.loadLibrary("leptonica");
-		System.loadLibrary("tesseract");
+		System.loadLibrary("tesseract4android");
 	}
 
 	/**

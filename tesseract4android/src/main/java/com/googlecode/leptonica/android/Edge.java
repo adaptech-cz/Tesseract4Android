@@ -29,9 +29,7 @@ import static java.lang.annotation.RetentionPolicy.SOURCE;
 @SuppressWarnings("WeakerAccess")
 public class Edge {
 	static {
-		System.loadLibrary("jpeg");
-		System.loadLibrary("pngx");
-		System.loadLibrary("leptonica");
+		System.loadLibrary("tesseract4android");
 	}
 
 	// Edge orientation flags

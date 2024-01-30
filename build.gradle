@@ -24,6 +24,10 @@ allprojects {
 }
 
 ext {
+    ndkVersion = '25.1.8937393'
+    cmakeVersion = '3.22.1'
+    leptonicaVersion = '1.83.1'
+    tesseractVersion = '5.3.4'
     tesseract4AndroidVersion = '4.7.0'
 }
 

@@ -27,9 +27,7 @@ import java.io.File;
 @SuppressWarnings("WeakerAccess")
 public class WriteFile {
 	static {
-		System.loadLibrary("jpeg");
-		System.loadLibrary("pngx");
-		System.loadLibrary("leptonica");
+		System.loadLibrary("tesseract4android");
 	}
 
 	/**

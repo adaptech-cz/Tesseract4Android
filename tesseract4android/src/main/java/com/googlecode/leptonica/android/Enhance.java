@@ -25,9 +25,7 @@ package com.googlecode.leptonica.android;
 @SuppressWarnings("WeakerAccess")
 public class Enhance {
 	static {
-		System.loadLibrary("jpeg");
-		System.loadLibrary("pngx");
-		System.loadLibrary("leptonica");
+		System.loadLibrary("tesseract4android");
 	}
 
 	// Unsharp masking constants

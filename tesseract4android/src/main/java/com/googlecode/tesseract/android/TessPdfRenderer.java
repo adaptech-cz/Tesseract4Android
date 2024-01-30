@@ -28,10 +28,7 @@ public class TessPdfRenderer {
 	private final long mNativePdfRenderer;
 
 	static {
-		System.loadLibrary("jpeg");
-		System.loadLibrary("pngx");
-		System.loadLibrary("leptonica");
-		System.loadLibrary("tesseract");
+		System.loadLibrary("tesseract4android");
 	}
 
 	private boolean mRecycled;

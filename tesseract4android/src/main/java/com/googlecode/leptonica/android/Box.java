@@ -30,9 +30,7 @@ import androidx.annotation.Size;
 @SuppressWarnings("WeakerAccess")
 public class Box {
 	static {
-		System.loadLibrary("jpeg");
-		System.loadLibrary("pngx");
-		System.loadLibrary("leptonica");
+		System.loadLibrary("tesseract4android");
 	}
 
 	private static final String TAG = Box.class.getSimpleName();

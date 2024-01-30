@@ -54,10 +54,7 @@ public class TessBaseAPI {
 	private long mNativeData;
 
 	static {
-		System.loadLibrary("jpeg");
-		System.loadLibrary("pngx");
-		System.loadLibrary("leptonica");
-		System.loadLibrary("tesseract");
+		System.loadLibrary("tesseract4android");
 
 		nativeClassInit();
 	}
@@ -946,7 +943,7 @@ public class TessBaseAPI {
 	 * @return For example "standard" or "openmp".
 	 */
 	public String getLibraryFlavor() {
-		return BuildConfig.FLAVOR;
+		return "standard";//return BuildConfig.FLAVOR;
 	}
 
 	/**

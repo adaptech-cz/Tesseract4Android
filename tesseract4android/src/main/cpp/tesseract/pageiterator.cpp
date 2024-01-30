@@ -18,10 +18,6 @@
 #include <stdio.h>
 #include "common.h"
 #include <tesseract/pageiterator.h>
-#include "allheaders.h"
-#include "helpers.h"
-#include "pageres.h"
-#include "tesseractclass.h"
 
 using namespace tesseract;
 

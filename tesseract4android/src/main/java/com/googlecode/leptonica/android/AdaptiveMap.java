@@ -25,9 +25,7 @@ package com.googlecode.leptonica.android;
 @SuppressWarnings("WeakerAccess")
 public class AdaptiveMap {
 	static {
-		System.loadLibrary("jpeg");
-		System.loadLibrary("pngx");
-		System.loadLibrary("leptonica");
+		System.loadLibrary("tesseract4android");
 	}
 
 	// Background normalization constants

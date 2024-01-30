@@ -18,11 +18,11 @@
 
 #include <stdio.h>
 #include <malloc.h>
-#include "android/bitmap.h"
+#include <android/bitmap.h>
 #include "common.h"
 #include <tesseract/baseapi.h>
 #include <tesseract/ocrclass.h>
-#include "allheaders.h"
+#include <allheaders.h>
 #include <tesseract/renderer.h>
 
 static jmethodID method_onProgressValues;
@@ -114,17 +114,6 @@ bool progressJavaCallback(tesseract::ETEXT_DESC* monitor, int left, int right, i
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-jint JNI_OnLoad(JavaVM* vm, void* reserved) {
-  JNIEnv *env;
-
-  if (vm->GetEnv((void**) &env, JNI_VERSION_1_6) != JNI_OK) {
-    LOGE("Failed to get the environment using GetEnv()");
-    return -1;
-  }
-
-  return JNI_VERSION_1_6;
-}
 
 void Java_com_googlecode_tesseract_android_TessBaseAPI_nativeClassInit(JNIEnv* env, 
                                                                        jclass clazz) {

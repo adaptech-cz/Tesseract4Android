@@ -33,9 +33,7 @@ import androidx.annotation.IntRange;
 @SuppressWarnings("WeakerAccess")
 public class JpegIO {
 	static {
-		System.loadLibrary("jpeg");
-		System.loadLibrary("pngx");
-		System.loadLibrary("leptonica");
+		System.loadLibrary("tesseract4android");
 	}
 
 	/**

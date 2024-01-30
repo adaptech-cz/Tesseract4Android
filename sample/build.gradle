@@ -35,19 +35,19 @@ android {
 // uncomment this to specify which flavor you want to build.
 // Or you can specify *same* flavors also for the app - then they will be matched automatically.
 // See more: https://developer.android.com/studio/build/build-variants#variant_aware
-/*android {
+android {
     defaultConfig {
         // Choose 'standard' or 'openmp' flavor of the library
         missingDimensionStrategy 'parallelization', 'standard'
     }
     flavorDimensions = ['parallelization']
-}*/
+}
 
 dependencies {
     // To use library from JitPack
     // Note that since we have 2 artifacts, we must use cz.adaptech.tesseract4android groupId,
     // instead of just cz.adaptech groupId we use when using local maven repository.
-    implementation "cz.adaptech.tesseract4android:tesseract4android:$tesseract4AndroidVersion" // standard flavor
+//    implementation "cz.adaptech.tesseract4android:tesseract4android:$tesseract4AndroidVersion" // standard flavor
 //    implementation "cz.adaptech.tesseract4android:tesseract4android-openmp:$tesseract4AndroidVersion" // openmp flavor
 
     // To use library from local maven repository
@@ -57,7 +57,7 @@ dependencies {
 
     // To use library compiled locally
     // Which flavor to use is determined by missingDimensionStrategy parameter above.
-//    implementation project(':tesseract4android')
+    implementation project(':tesseract4android')
 
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.11.0'

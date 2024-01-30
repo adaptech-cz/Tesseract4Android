@@ -30,9 +30,7 @@ import java.io.File;
  */
 public class ReadFile {
 	static {
-		System.loadLibrary("jpeg");
-		System.loadLibrary("pngx");
-		System.loadLibrary("leptonica");
+		System.loadLibrary("tesseract4android");
 	}
 
 	private static final String LOG_TAG = ReadFile.class.getSimpleName();
