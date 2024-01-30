@@ -21,6 +21,11 @@
 
 cmake_minimum_required(VERSION 3.4.1)
 
+# Tesseract requires newer C++ standard
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 # Creates and names a library, sets it as either STATIC
 # or SHARED, and provides the relative paths to its source code.
 # You can define multiple libraries, and CMake builds them for you.
@@ -28,7 +33,6 @@ cmake_minimum_required(VERSION 3.4.1)
 
 set(TESS_PATH "src/src/")
 set(TESS_INCLUDE_PATH "src/include/")
-set(LEPT_PATH "../leptonica/src/src/")
 
 # Get version with components from VERSION file.
 file(STRINGS "src/VERSION" VERSION_PLAIN)
@@ -117,15 +121,9 @@ add_library( # Sets the name of the library.
         ${tesseract_src}
         ${arch_files}
         ${tesseract_hdr}
-        pageiterator.cpp
-        resultiterator.cpp
-        tessbaseapi.cpp
-        common.h
         )
 
 # Specifies a path to native header files.
-include_directories(${LEPT_PATH})
-
 include_directories(${TESS_INCLUDE_PATH})
 include_directories(${TESS_PATH}api)
 include_directories(${TESS_PATH}arch)
@@ -153,6 +151,8 @@ target_compile_options(tesseract PRIVATE "-Wno-null-dereference")
 # can link multiple libraries, such as libraries you define in this
 # build script, prebuilt third-party libraries, or system libraries.
 
+find_package(leptonica REQUIRED CONFIG)
+
 target_link_libraries( # Specifies the target library.
         tesseract
 
@@ -162,5 +162,5 @@ target_link_libraries( # Specifies the target library.
         log
         ${LIBRARY_CPU_FEATURES}
         jnigraphics
-        leptonica
+        leptonica::leptonica
         )
