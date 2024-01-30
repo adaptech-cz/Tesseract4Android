@@ -92,3 +92,20 @@ afterEvaluate {
 		}
 	}
 }
+
+// Workaround for errors caused by building modules in parallel
+// See https://issuetracker.google.com/issues/265544858#comment22
+afterEvaluate {
+	android.libraryVariants.configureEach { variant ->
+		variant.preBuildProvider.configure {
+			// Add all the project dependencies here
+			dependsOn.add(":leptonica:prefab${variant.name.capitalize()}ConfigurePackage")
+		}
+
+		// Add this to any package that publishes a prefab
+		tasks.named("prefab${variant.name.capitalize()}ConfigurePackage").configure {
+			outputs.upToDateWhen { false }
+		}
+	}
+}
+
