@@ -32,7 +32,7 @@ add_library( # Sets the name of the library.
         jpeg
 
         # Sets the library as a shared library.
-        SHARED
+        STATIC
 
         # Provides a relative path to your source file(s).
         ${SRC_PATH}jaricom.c
