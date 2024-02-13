@@ -29,6 +29,11 @@ android {
     buildFeatures {
         viewBinding true
     }
+//    packagingOptions {
+//        jniLibs {
+//            pickFirsts += ['**/libtesseract.so']
+//        }
+//    }
 }
 
 // In case you are using dependency on local library (the project(':tesseract4android') below),

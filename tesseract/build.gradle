@@ -57,8 +57,31 @@ android {
 			version rootProject.ext.cmakeVersion
 		}
 	}
+	flavorDimensions = ["parallelization"]
+	productFlavors {
+		standard {
+		}
+		openmp {
+			externalNativeBuild {
+				cmake {
+					// NOTE: We must add -static-openmp argument to build it statically,
+					// because shared library is not being included in the resulting APK.
+					// See: https://github.com/android/ndk/issues/1028
+					// Use of that argument shows warnings during build:
+					// > C/C++: clang: warning: argument unused during compilation: '-static-openmp' [-Wunused-command-line-argument]
+					// But it has no effect on the result.
+					cFlags "-fopenmp -static-openmp -Wno-unused-command-line-argument"
+					cppFlags "-fopenmp -static-openmp -Wno-unused-command-line-argument"
+				}
+			}
+		}
+	}
 	publishing {
 		singleVariant("release") {
+			withSourcesJar()
+			withJavadocJar()
+		}
+		singleVariant("openmpRelease") {
 			withSourcesJar()
 			withJavadocJar()
 		}
@@ -83,10 +106,17 @@ afterEvaluate {
 	publishing {
 		publications {
 			standard(MavenPublication) {
-				from components.release
+				from components.findByName('standardRelease')
 
 				groupId 'cz.adaptech.thirdparty'
 				artifactId 'tesseract'
+				version rootProject.ext.tesseractVersion
+			}
+			openmp(MavenPublication) {
+				from components.findByName('openmpRelease')
+
+				groupId 'cz.adaptech.thirdparty'
+				artifactId 'tesseract-openmp'
 				version rootProject.ext.tesseractVersion
 			}
 		}
@@ -99,7 +129,8 @@ afterEvaluate {
 	android.libraryVariants.configureEach { variant ->
 		variant.preBuildProvider.configure {
 			// Add all the project dependencies here
-			dependsOn.add(":leptonica:prefab${variant.name.capitalize()}ConfigurePackage")
+			// NOTE: Leptonica doesn't use any flavor, so use just name of buildType
+			dependsOn.add(":leptonica:prefab${variant.buildType.name.capitalize()}ConfigurePackage")
 		}
 
 		// Add this to any package that publishes a prefab

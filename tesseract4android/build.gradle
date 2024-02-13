@@ -51,34 +51,37 @@ android {
 			}
 		}
 	}
-//	flavorDimensions = ["parallelization"]
-//	productFlavors {
-//		standard {
-//		}
-//		openmp {
-//			externalNativeBuild {
-//				cmake {
-//					// NOTE: We must add -static-openmp argument to build it statically,
-//					// because shared library is not being included in the resulting APK.
-//					// See: https://github.com/android/ndk/issues/1028
-//					// Use of that argument shows warnings during build:
-//					// > C/C++: clang: warning: argument unused during compilation: '-static-openmp' [-Wunused-command-line-argument]
-//					// But it has no effect on the result.
-//					cFlags "-fopenmp -static-openmp -Wno-unused-command-line-argument"
-//					cppFlags "-fopenmp -static-openmp -Wno-unused-command-line-argument"
-//				}
-//			}
-//		}
-//	}
+	flavorDimensions = ["parallelization"]
+	productFlavors {
+		standard {
+		}
+		openmp {
+			externalNativeBuild {
+				// NOTE: This must be also here in tesseract4android module for some reason.
+				// Otherwise it uses the openmp variant of tesseract for both standard and openmp
+				// variants in here.
+				cmake {
+					// NOTE: We must add -static-openmp argument to build it statically,
+					// because shared library is not being included in the resulting APK.
+					// See: https://github.com/android/ndk/issues/1028
+					// Use of that argument shows warnings during build:
+					// > C/C++: clang: warning: argument unused during compilation: '-static-openmp' [-Wunused-command-line-argument]
+					// But it has no effect on the result.
+					cFlags "-fopenmp -static-openmp -Wno-unused-command-line-argument"
+					cppFlags "-fopenmp -static-openmp -Wno-unused-command-line-argument"
+				}
+			}
+		}
+	}
 	publishing {
 		singleVariant("standardRelease") {
 			withSourcesJar()
 			withJavadocJar()
 		}
-//		singleVariant("openmpRelease") {
-//			withSourcesJar()
-//			withJavadocJar()
-//		}
+		singleVariant("openmpRelease") {
+			withSourcesJar()
+			withJavadocJar()
+		}
 	}
 	compileOptions {
 		sourceCompatibility JavaVersion.VERSION_17
@@ -89,14 +92,6 @@ android {
 		prefab true
 	}
 }
-
-//android {
-//	defaultConfig {
-//		// Choose 'standard' or 'openmp' flavor of the library
-//		missingDimensionStrategy 'parallelization', 'standard'
-//	}
-//	flavorDimensions = ['parallelization']
-//}
 
 dependencies {
 	// Intentionally use old version of annotation library which doesn't depend on kotlin-stdlib
@@ -125,13 +120,13 @@ afterEvaluate {
 				artifactId 'tesseract4android'
 				version rootProject.ext.tesseract4AndroidVersion
 			}
-//			openmp(MavenPublication) {
-//				from components.findByName('openmpRelease')
-//
-//				groupId 'cz.adaptech'
-//				artifactId 'tesseract4android-openmp'
-//				version rootProject.ext.tesseract4AndroidVersion
-//			}
+			openmp(MavenPublication) {
+				from components.findByName('openmpRelease')
+
+				groupId 'cz.adaptech'
+				artifactId 'tesseract4android-openmp'
+				version rootProject.ext.tesseract4AndroidVersion
+			}
 		}
 	}
 }
@@ -142,7 +137,8 @@ afterEvaluate {
 	android.libraryVariants.configureEach { variant ->
 		variant.preBuildProvider.configure {
 			// Add all the project dependencies here
-			dependsOn.add(":leptonica:prefab${variant.name.capitalize()}ConfigurePackage")
+			// NOTE: Leptonica doesn't use any flavor, so use just name of buildType
+			dependsOn.add(":leptonica:prefab${variant.buildType.name.capitalize()}ConfigurePackage")
 			dependsOn.add(":tesseract:prefab${variant.name.capitalize()}ConfigurePackage")
 		}
 	}

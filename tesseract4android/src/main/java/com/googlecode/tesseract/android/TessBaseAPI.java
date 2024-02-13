@@ -943,7 +943,7 @@ public class TessBaseAPI {
 	 * @return For example "standard" or "openmp".
 	 */
 	public String getLibraryFlavor() {
-		return "standard";//return BuildConfig.FLAVOR;
+		return BuildConfig.FLAVOR;
 	}
 
 	/**
