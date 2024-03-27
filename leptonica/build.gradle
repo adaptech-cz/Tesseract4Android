@@ -62,6 +62,18 @@ android {
 			withJavadocJar()
 		}
 	}
+	packagingOptions {
+		jniLibs {
+			// Avoid packing the unnecessary libraries into final AAR. For details
+			// refer to https://issuetracker.google.com/issues/168777344#comment5
+			// Note that if your AAR also contains Java/Kotlin APIs, you should not
+			// exclude libraries that are used by those APIs.
+			excludes += [
+					'**/libc++_shared.so',
+					'**/libleptonica.so',
+			]
+		}
+	}
 }
 
 dependencies {
