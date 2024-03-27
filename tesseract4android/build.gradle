@@ -9,7 +9,7 @@ android {
 	ndkVersion rootProject.ext.ndkVersion
 
 	defaultConfig {
-		minSdk 16
+		minSdk 19
 		targetSdk 33
 
 		testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
