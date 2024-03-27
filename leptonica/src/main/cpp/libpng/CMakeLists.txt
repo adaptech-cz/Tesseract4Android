@@ -51,8 +51,25 @@ add_library( # Sets the name of the library.
         ${SRC_PATH}pngwtran.c
         ${SRC_PATH}pngwutil.c
         ${SRC_PATH}arm/arm_init.c
+        ${SRC_PATH}arm/filter_neon.S
         ${SRC_PATH}arm/filter_neon_intrinsics.c
         ${SRC_PATH}arm/palette_neon_intrinsics.c)
+
+# Enable NEON support
+if (TARGET_ARCH MATCHES "^arm64" OR
+        TARGET_ARCH MATCHES "^aarch64")
+    add_definitions(-DPNG_ARM_NEON_OPT=2)
+
+    # TODO: I don't know if these are really needed
+    set_source_files_properties(${SRC_PATH}arm/arm_init.c
+            PROPERTIES COMPILE_FLAGS -mfpu=neon)
+    set_source_files_properties(${SRC_PATH}arm/filter_neon.S
+            PROPERTIES COMPILE_FLAGS -mfpu=neon)
+    set_source_files_properties(${SRC_PATH}arm/filter_neon_intrinsics.c
+            PROPERTIES COMPILE_FLAGS -mfpu=neon)
+    set_source_files_properties(${SRC_PATH}arm/palette_neon_intrinsics.c
+            PROPERTIES COMPILE_FLAGS -mfpu=neon)
+endif ()
 
 # Specifies libraries CMake should link to your target library. You
 # can link multiple libraries, such as libraries you define in this
