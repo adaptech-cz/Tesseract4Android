@@ -26,7 +26,11 @@ cmake_minimum_required(VERSION 3.4.1)
 # You can define multiple libraries, and CMake builds them for you.
 # Gradle automatically packages shared libraries with your APK.
 
-set(SRC_PATH "src/")
+set(SRC_PATH ${CMAKE_CURRENT_SOURCE_DIR}/src)
+
+configure_file(${SRC_PATH}/scripts/pnglibconf.h.prebuilt
+        ${SRC_PATH}/pnglibconf.h
+        COPYONLY)
 
 add_library( # Sets the name of the library.
         pngx
@@ -35,25 +39,25 @@ add_library( # Sets the name of the library.
         STATIC
 
         # Provides a relative path to your source file(s).
-        ${SRC_PATH}png.c
-        ${SRC_PATH}pngerror.c
-        ${SRC_PATH}pngget.c
-        ${SRC_PATH}pngmem.c
-        ${SRC_PATH}pngpread.c
-        ${SRC_PATH}pngread.c
-        ${SRC_PATH}pngrio.c
-        ${SRC_PATH}pngrtran.c
-        ${SRC_PATH}pngrutil.c
-        ${SRC_PATH}pngset.c
-        ${SRC_PATH}pngtrans.c
-        ${SRC_PATH}pngwio.c
-        ${SRC_PATH}pngwrite.c
-        ${SRC_PATH}pngwtran.c
-        ${SRC_PATH}pngwutil.c
-        ${SRC_PATH}arm/arm_init.c
-        ${SRC_PATH}arm/filter_neon.S
-        ${SRC_PATH}arm/filter_neon_intrinsics.c
-        ${SRC_PATH}arm/palette_neon_intrinsics.c)
+        ${SRC_PATH}/png.c
+        ${SRC_PATH}/pngerror.c
+        ${SRC_PATH}/pngget.c
+        ${SRC_PATH}/pngmem.c
+        ${SRC_PATH}/pngpread.c
+        ${SRC_PATH}/pngread.c
+        ${SRC_PATH}/pngrio.c
+        ${SRC_PATH}/pngrtran.c
+        ${SRC_PATH}/pngrutil.c
+        ${SRC_PATH}/pngset.c
+        ${SRC_PATH}/pngtrans.c
+        ${SRC_PATH}/pngwio.c
+        ${SRC_PATH}/pngwrite.c
+        ${SRC_PATH}/pngwtran.c
+        ${SRC_PATH}/pngwutil.c
+        ${SRC_PATH}/arm/arm_init.c
+        ${SRC_PATH}/arm/filter_neon.S
+        ${SRC_PATH}/arm/filter_neon_intrinsics.c
+        ${SRC_PATH}/arm/palette_neon_intrinsics.c)
 
 # Enable NEON support
 if (TARGET_ARCH MATCHES "^arm64" OR
@@ -61,13 +65,13 @@ if (TARGET_ARCH MATCHES "^arm64" OR
     add_definitions(-DPNG_ARM_NEON_OPT=2)
 
     # TODO: I don't know if these are really needed
-    set_source_files_properties(${SRC_PATH}arm/arm_init.c
+    set_source_files_properties(${SRC_PATH}/arm/arm_init.c
             PROPERTIES COMPILE_FLAGS -mfpu=neon)
-    set_source_files_properties(${SRC_PATH}arm/filter_neon.S
+    set_source_files_properties(${SRC_PATH}/arm/filter_neon.S
             PROPERTIES COMPILE_FLAGS -mfpu=neon)
-    set_source_files_properties(${SRC_PATH}arm/filter_neon_intrinsics.c
+    set_source_files_properties(${SRC_PATH}/arm/filter_neon_intrinsics.c
             PROPERTIES COMPILE_FLAGS -mfpu=neon)
-    set_source_files_properties(${SRC_PATH}arm/palette_neon_intrinsics.c
+    set_source_files_properties(${SRC_PATH}/arm/palette_neon_intrinsics.c
             PROPERTIES COMPILE_FLAGS -mfpu=neon)
 endif ()
 
