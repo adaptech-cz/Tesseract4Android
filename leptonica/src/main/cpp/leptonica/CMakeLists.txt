@@ -78,3 +78,8 @@ target_link_libraries( # Specifies the target library.
         jpeg
         pngx
         )
+
+# Copy all header files to our include directory to be available for prefab
+file(GLOB HEADER_FILES "${LEPT_PATH}/*.h")
+file(COPY ${HEADER_FILES} DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/include/")
+file(COPY ${HEADER_FILES} DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/include/leptonica/")
