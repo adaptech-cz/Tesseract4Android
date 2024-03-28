@@ -100,11 +100,8 @@ dependencies {
 	//noinspection GradleDependency
 	implementation 'androidx.annotation:annotation:1.3.0'
 
-	// We use `compileOnly`, because we use it only as prefab dependency for CMake
-	// In case we would use `implementation` the project consuming this library would have conflict
-	// with same .so files being included from both tesseract4android and leptonica / tesseract.
-	compileOnly project(':leptonica')
-	compileOnly project(':tesseract')
+	implementation project(':leptonica')
+	implementation project(':tesseract')
 
 	testImplementation 'junit:junit:4.13.2'
 	androidTestImplementation 'androidx.test:runner:1.5.2'
