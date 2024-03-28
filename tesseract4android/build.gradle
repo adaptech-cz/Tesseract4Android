@@ -131,6 +131,11 @@ afterEvaluate {
 	}
 }
 
+tasks.named("assemble").configure {
+	dependsOn ':leptonica:publishToMavenLocal'
+	dependsOn ':tesseract:publishToMavenLocal'
+}
+
 // Workaround for errors caused by building modules in parallel
 // See https://issuetracker.google.com/issues/265544858#comment22
 afterEvaluate {
