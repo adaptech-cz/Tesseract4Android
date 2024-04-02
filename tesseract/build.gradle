@@ -77,11 +77,9 @@ android {
 		}
 	}
 	publishing {
-		singleVariant("release") {
-			withSourcesJar()
-			withJavadocJar()
-		}
-		singleVariant("openmpRelease") {
+		multipleVariants("all") {
+			includeBuildTypeValues("release")
+			includeFlavorDimensionAndValues("parallelization", "openmp", "standard")
 			withSourcesJar()
 			withJavadocJar()
 		}
@@ -115,25 +113,14 @@ dependencies {
 	androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 }
 
-tasks.named("assemble").configure {
-	dependsOn ':leptonica:publishToMavenLocal'
-}
-
 afterEvaluate {
 	publishing {
 		publications {
-			standard(MavenPublication) {
-				from components.findByName('standardRelease')
+			all(MavenPublication) {
+				from components.findByName('all')
 
 				groupId 'cz.adaptech.thirdparty'
 				artifactId 'tesseract'
-				version rootProject.ext.tesseractVersion
-			}
-			openmp(MavenPublication) {
-				from components.findByName('openmpRelease')
-
-				groupId 'cz.adaptech.thirdparty'
-				artifactId 'tesseract-openmp'
 				version rootProject.ext.tesseractVersion
 			}
 		}

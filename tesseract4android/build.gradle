@@ -113,14 +113,14 @@ dependencies {
 afterEvaluate {
 	publishing {
 		publications {
-			standard(MavenPublication) {
+			standardRelease(MavenPublication) {
 				from components.findByName('standardRelease')
 
 				groupId 'cz.adaptech'
 				artifactId 'tesseract4android'
 				version rootProject.ext.tesseract4AndroidVersion
 			}
-			openmp(MavenPublication) {
+			openmpRelease(MavenPublication) {
 				from components.findByName('openmpRelease')
 
 				groupId 'cz.adaptech'
@@ -129,11 +129,6 @@ afterEvaluate {
 			}
 		}
 	}
-}
-
-tasks.named("assemble").configure {
-	dependsOn ':leptonica:publishToMavenLocal'
-	dependsOn ':tesseract:publishToMavenLocal'
 }
 
 // Workaround for errors caused by building modules in parallel

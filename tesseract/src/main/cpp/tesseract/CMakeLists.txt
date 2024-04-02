@@ -31,8 +31,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # You can define multiple libraries, and CMake builds them for you.
 # Gradle automatically packages shared libraries with your APK.
 
-set(TESS_PATH "src/src/")
-set(TESS_INCLUDE_PATH "src/include/")
+set(TESS_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src/src")
+set(TESS_INCLUDE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src/include")
 
 # Get version with components from VERSION file.
 file(STRINGS "src/VERSION" VERSION_PLAIN)
@@ -49,44 +49,45 @@ set(GENERIC_MINOR_VERSION ${VERSION_MINOR})
 set(GENERIC_MICRO_VERSION ${VERSION_PATCH})
 
 configure_file(
-        ${TESS_INCLUDE_PATH}tesseract/version.h.in
-        ${CMAKE_CURRENT_SOURCE_DIR}/${TESS_INCLUDE_PATH}tesseract/version.h @ONLY)
+        ${TESS_INCLUDE_PATH}/tesseract/version.h.in
+        ${TESS_INCLUDE_PATH}/tesseract/version.h @ONLY)
 
 configure_file(
-        config_auto.h.in
-        ${CMAKE_CURRENT_SOURCE_DIR}/${TESS_PATH}api/config_auto.h @ONLY)
+        ${CMAKE_CURRENT_SOURCE_DIR}/config_auto.h.in
+        ${TESS_PATH}/api/config_auto.h @ONLY)
 
 file(GLOB tesseract_src
-        ${TESS_PATH}api/*.cpp
-        ${TESS_PATH}ccmain/*.cpp
-        ${TESS_PATH}ccstruct/*.cpp
-        ${TESS_PATH}ccutil/*.cpp
-        ${TESS_PATH}classify/*.cpp
-        ${TESS_PATH}cutil/*.cpp
-        ${TESS_PATH}dict/*.cpp
-        ${TESS_PATH}lstm/*.cpp
-        ${TESS_PATH}opencl/*.cpp
-        ${TESS_PATH}textord/*.cpp
-        ${TESS_PATH}viewer/*.cpp
-        ${TESS_PATH}wordrec/*.cpp
+        ${TESS_PATH}/api/*.cpp
+        ${TESS_PATH}/ccmain/*.cpp
+        ${TESS_PATH}/ccstruct/*.cpp
+        ${TESS_PATH}/ccutil/*.cpp
+        ${TESS_PATH}/classify/*.cpp
+        ${TESS_PATH}/cutil/*.cpp
+        ${TESS_PATH}/dict/*.cpp
+        ${TESS_PATH}/lstm/*.cpp
+        ${TESS_PATH}/opencl/*.cpp
+        ${TESS_PATH}/textord/*.cpp
+        ${TESS_PATH}/viewer/*.cpp
+        ${TESS_PATH}/wordrec/*.cpp
         )
 
-list(APPEND arch_files
-        ${TESS_PATH}arch/dotproduct.cpp
-        ${TESS_PATH}arch/simddetect.cpp
-        ${TESS_PATH}arch/intsimdmatrix.cpp
+# Append architecture specific files
+list(APPEND tesseract_src
+        ${TESS_PATH}/arch/dotproduct.cpp
+        ${TESS_PATH}/arch/simddetect.cpp
+        ${TESS_PATH}/arch/intsimdmatrix.cpp
         # NEON support (we can include these files on any architecture without explicit checks)
-        ${TESS_PATH}arch/intsimdmatrixneon.cpp
-        ${TESS_PATH}arch/dotproductneon.cpp
+        ${TESS_PATH}/arch/intsimdmatrixneon.cpp
+        ${TESS_PATH}/arch/dotproductneon.cpp
         )
 
 # Enable use of NEON on armeabi-v7a
 if (${ANDROID_ABI} STREQUAL "armeabi-v7a")
     add_definitions("-DHAVE_NEON")
 
-    set_source_files_properties(${TESS_PATH}arch/intsimdmatrixneon.cpp
+    set_source_files_properties(${TESS_PATH}/arch/intsimdmatrixneon.cpp
         PROPERTIES COMPILE_FLAGS -mfpu=neon)
-    set_source_files_properties(${TESS_PATH}arch/dotproductneon.cpp
+    set_source_files_properties(${TESS_PATH}/arch/dotproductneon.cpp
         PROPERTIES COMPILE_FLAGS -mfpu=neon)
 
     # Include cpu-features for runtime detection of NEON support
@@ -96,20 +97,38 @@ if (${ANDROID_ABI} STREQUAL "armeabi-v7a")
 endif()
 
 file(GLOB tesseract_hdr
-        ${TESS_PATH}api/*.h
-        ${TESS_PATH}arch/*.h
-        ${TESS_PATH}ccmain/*.h
-        ${TESS_PATH}ccstruct/*.h
-        ${TESS_PATH}ccutil/*.h
-        ${TESS_PATH}classify/*.h
-        ${TESS_PATH}cutil/*.h
-        ${TESS_PATH}dict/*.h
-        ${TESS_PATH}lstm/*.h
-        ${TESS_PATH}opencl/*.h
-        ${TESS_PATH}textord/*.h
-        ${TESS_PATH}viewer/*.h
-        ${TESS_PATH}wordrec/*.h
+        ${TESS_PATH}/api/*.h
+        ${TESS_PATH}/arch/*.h
+        ${TESS_PATH}/ccmain/*.h
+        ${TESS_PATH}/ccstruct/*.h
+        ${TESS_PATH}/ccutil/*.h
+        ${TESS_PATH}/classify/*.h
+        ${TESS_PATH}/cutil/*.h
+        ${TESS_PATH}/dict/*.h
+        ${TESS_PATH}/lstm/*.h
+        ${TESS_PATH}/opencl/*.h
+        ${TESS_PATH}/textord/*.h
+        ${TESS_PATH}/viewer/*.h
+        ${TESS_PATH}/wordrec/*.h
         )
+
+LIST(APPEND tesseract_include_dirs
+        ${TESS_INCLUDE_PATH}
+        ${TESS_PATH}/api
+        ${TESS_PATH}/arch
+        ${TESS_PATH}/ccmain
+        ${TESS_PATH}/ccstruct
+        ${TESS_PATH}/ccutil
+        ${TESS_PATH}/classify
+        ${TESS_PATH}/cutil
+        ${TESS_PATH}/dict
+        ${TESS_PATH}/lstm
+        ${TESS_PATH}/opencl
+        ${TESS_PATH}/textord
+        ${TESS_PATH}/viewer
+        ${TESS_PATH}/wordrec
+        ${TESS_PATH}/training
+)
 
 add_library( # Sets the name of the library.
         tesseract
@@ -119,25 +138,14 @@ add_library( # Sets the name of the library.
 
         # Provides a relative path to your source file(s).
         ${tesseract_src}
-        ${arch_files}
-        ${tesseract_hdr}
+#        ${tesseract_hdr}
         )
 
 # Specifies a path to native header files.
-include_directories(${TESS_INCLUDE_PATH})
-include_directories(${TESS_PATH}api)
-include_directories(${TESS_PATH}arch)
-include_directories(${TESS_PATH}ccmain)
-include_directories(${TESS_PATH}ccstruct)
-include_directories(${TESS_PATH}ccutil)
-include_directories(${TESS_PATH}classify)
-include_directories(${TESS_PATH}cutil)
-include_directories(${TESS_PATH}dict)
-include_directories(${TESS_PATH}lstm)
-include_directories(${TESS_PATH}opencl)
-include_directories(${TESS_PATH}textord)
-include_directories(${TESS_PATH}viewer)
-include_directories(${TESS_PATH}wordrec)
+target_include_directories(
+        tesseract BEFORE
+        PUBLIC ${tesseract_include_dirs}
+)
 
 # Define preprocessor constants
 add_definitions(-DHAVE_CONFIG_H)
@@ -157,10 +165,13 @@ target_link_libraries( # Specifies the target library.
         tesseract
 
         # Links the target library to the z library included in the NDK.
+        PRIVATE
         atomic
         dl
         log
         ${LIBRARY_CPU_FEATURES}
         jnigraphics
+
+        PUBLIC
         leptonica::leptonica
         )

@@ -26,16 +26,16 @@ cmake_minimum_required(VERSION 3.4.1)
 # You can define multiple libraries, and CMake builds them for you.
 # Gradle automatically packages shared libraries with your APK.
 
-set(LEPT_PATH "src/src/")
-set(JPEG_PATH "../libjpeg/src/")
-set(PNG_PATH "../libpng/src/")
+set(LEPT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src/src")
+set(JPEG_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../libjpeg/src")
+set(PNG_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../libpng/src")
 
 configure_file(
-        endianness.h.in
-        ${CMAKE_CURRENT_SOURCE_DIR}/${LEPT_PATH}endianness.h @ONLY)
+        "${CMAKE_CURRENT_SOURCE_DIR}/endianness.h.in"
+        "${LEPT_PATH}/endianness.h" @ONLY)
 
-file(GLOB leptonica_src "${LEPT_PATH}*.c")
-file(GLOB leptonica_hdr "${LEPT_PATH}*.h")
+file(GLOB leptonica_src "${LEPT_PATH}/*.c")
+file(GLOB leptonica_hdr "${LEPT_PATH}/*.h")
 
 add_library( # Sets the name of the library.
         leptonica
@@ -45,13 +45,12 @@ add_library( # Sets the name of the library.
 
         # Provides a relative path to your source file(s).
         ${leptonica_src}
-        ${leptonica_hdr}
+#        ${leptonica_hdr}
         )
 
 # Specifies a path to native header files.
-include_directories(${LEPT_PATH})
-include_directories(${JPEG_PATH})
-include_directories(${PNG_PATH})
+target_include_directories(leptonica PUBLIC ${LEPT_PATH})
+target_include_directories(leptonica PUBLIC ${JPEG_PATH} ${PNG_PATH})
 
 # Define preprocessor constants
 add_definitions(-DANDROID_BUILD)
@@ -72,6 +71,7 @@ target_link_libraries( # Specifies the target library.
         leptonica
 
         # Links the target library to the z library included in the NDK.
+        PRIVATE
         log
         jnigraphics
         z
@@ -81,5 +81,5 @@ target_link_libraries( # Specifies the target library.
 
 # Copy all header files to our include directory to be available for prefab
 file(GLOB HEADER_FILES "${LEPT_PATH}/*.h")
-file(COPY ${HEADER_FILES} DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/include/")
-file(COPY ${HEADER_FILES} DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/include/leptonica/")
+file(COPY ${HEADER_FILES} DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/include")
+file(COPY ${HEADER_FILES} DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/include/leptonica")

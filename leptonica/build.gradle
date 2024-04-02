@@ -49,6 +49,12 @@ android {
 		leptonica {
 			headers "src/main/cpp/leptonica/include"
 		}
+//		jpeg {
+//			headers "src/main/cpp/libjpeg/include"
+//		}
+//		pngx {
+//			headers "src/main/cpp/libpng/include"
+//		}
 	}
 	externalNativeBuild {
 		cmake {

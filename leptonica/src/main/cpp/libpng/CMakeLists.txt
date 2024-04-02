@@ -84,3 +84,8 @@ target_link_libraries( # Specifies the target library.
 
         # Links the target library to the z library included in the NDK.
         z)
+
+# Copy all header files to our include directory to be available for prefab
+file(GLOB HEADER_FILES "${SRC_PATH}/*.h")
+file(COPY ${HEADER_FILES} DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/include")
+file(COPY ${HEADER_FILES} DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/include/png")

@@ -44,8 +44,11 @@ find_package(tesseract REQUIRED CONFIG)
 target_link_libraries(tesseract4android
 
         # List libraries link to the target library
+        PRIVATE
         log
         jnigraphics
+
+        PUBLIC
         leptonica::leptonica
         tesseract::tesseract
         )

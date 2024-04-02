@@ -81,3 +81,8 @@ add_library( # Sets the name of the library.
         ${SRC_PATH}jutils.c
         ${SRC_PATH}jmemmgr.c
         ${SRC_PATH}jmemansi.c)
+
+# Copy all header files to our include directory to be available for prefab
+file(GLOB HEADER_FILES "${SRC_PATH}/*.h")
+file(COPY ${HEADER_FILES} DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/include")
+file(COPY ${HEADER_FILES} DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/include/jpeg")
