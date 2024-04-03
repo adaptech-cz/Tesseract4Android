@@ -100,8 +100,13 @@ dependencies {
 	//noinspection GradleDependency
 	implementation 'androidx.annotation:annotation:1.3.0'
 
-	implementation project(':leptonica')
-	implementation project(':tesseract')
+	// We use compileOnly because we just want to access the native libraries, which will be copied
+	// to the output AAR without the need to use these projects themselves. If we would have this
+	// as implementation, the consumer wouldn't be able to use this library at all, because the pom
+	// file in maven repository would contain dependency on the tesseract library, but it doesn't
+	// specify on which flavor it should depend on. It's probably bug in AGP or maven-publish?
+	compileOnly project(':leptonica')
+	compileOnly project(':tesseract')
 
 	testImplementation 'junit:junit:4.13.2'
 	androidTestImplementation 'androidx.test:runner:1.5.2'
