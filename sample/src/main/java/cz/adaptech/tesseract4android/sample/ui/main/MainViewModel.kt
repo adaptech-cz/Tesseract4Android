@@ -1,66 +1,124 @@
 package cz.adaptech.tesseract4android.sample.ui.main
 
 import android.app.Application
+import android.graphics.Bitmap
 import android.os.SystemClock
 import android.util.Log
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.viewModelScope
 import com.googlecode.tesseract.android.TessBaseAPI
-import java.io.File
-import java.util.Locale
-import kotlin.concurrent.Volatile
+import cz.adaptech.tesseract4android.sample.Assets
+import cz.adaptech.tesseract4android.sample.Assets.extractAssets
+import cz.adaptech.tesseract4android.sample.Assets.getTessDataPath
+import cz.adaptech.tesseract4android.sample.Config
+import cz.adaptech.tesseract4android.sample.OCRState
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
+/**
+ * View Model for Main View.
+ */
 class MainViewModel(application: Application) : AndroidViewModel(application) {
+	/**
+	 * Tesseract API
+	 */
 	private val tessApi: TessBaseAPI
 
-	private val processing = MutableLiveData(false)
+	/**
+	 * Is the OCR in progress?
+	 */
+	private val processing = MutableStateFlow(false)
 
-	private val progress = MutableLiveData<String>()
+	/**
+	 * The current state of the OCR
+	 */
+	private val _progress = MutableStateFlow<OCRState>(OCRState.Loading)
 
-	private val result = MutableLiveData<String>()
+	/**
+	 * The resulting text from the OCR.
+	 */
+	private val _result = MutableStateFlow("")
 
-	var isInitialized: Boolean = false
-		private set
+	/**
+	 * Has the tesseract API been initialized?
+	 */
+	private var isInitialized = false
 
-	@Volatile
-	private var stopped = false
+	/**
+	 * If the OCR has been stopped by the user or not.
+	 */
+	private var stopped: Boolean = false
 
-	@Volatile
-	private var tessProcessing = false
+	/**
+	 * Holds the bitmap of the sample image.
+	 */
+	private val _image = MutableStateFlow<Bitmap?>(null)
 
-	@Volatile
-	private var recycleAfterProcessing = false
+	/**
+	 * Immutable version for view access.
+	 */
+	val status: StateFlow<OCRState> = _progress
 
-	private val recycleLock = Any()
+	/**
+	 * Immutable version for view access.
+	 */
+	val result: StateFlow<String> = _result
+
+	/**
+	 * Is the start button enabled or not.
+	 */
+	val isStartEnabled: StateFlow<Boolean> = processing.map { !it }
+		.stateIn(viewModelScope, SharingStarted.Lazily, false)
+
+	/**
+	 * Is the stop button enabled or not.
+	 */
+	val isStopEnabled: StateFlow<Boolean> = processing
+
+	/**
+	 * Converts the sample image into an ImageBitmap for UI
+	 */
+	val image: StateFlow<ImageBitmap?> = _image.map {
+		it?.asImageBitmap()
+	}.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
 	init {
+		// Instantiate the API
 		tessApi = TessBaseAPI { progressValues: TessBaseAPI.ProgressValues ->
-			progress.postValue("Progress: " + progressValues.percent + " %")
+			_progress.tryEmit(OCRState.Progress(progressValues.percent))
+		}
+
+		// IO Tasks
+		viewModelScope.launch(Dispatchers.IO) {
+			// Copy sample image and language data to storage
+			extractAssets(application)
+
+			// Load the image
+			_image.emit(Assets.getImageBitmap(application))
+
+			// Initialize tesseract
+			initTesseract(getTessDataPath(application), Config.TESS_LANG, Config.TESS_ENGINE)
 		}
 
 		// Show Tesseract version and library flavor at startup
-		progress.value = String.format(
-			Locale.ENGLISH, "Tesseract %s (%s)",
-			tessApi.version, tessApi.libraryFlavor
-		)
+		_progress.value = OCRState.StartUp(tessApi.version, tessApi.libraryFlavor)
 	}
 
 	override fun onCleared() {
-		synchronized(recycleLock) {
-			if (tessProcessing) {
-				// Processing is active, set flag to recycle tessApi after processing is completed
-				recycleAfterProcessing = true
-				// Stop the processing as we don't care about the result anymore
-				tessApi.stop()
-			} else {
-				// No ongoing processing, we must recycle it here
-				tessApi.recycle()
-			}
-		}
+		tessApi.stop()
+		tessApi.recycle()
 	}
 
-	fun initTesseract(dataPath: String, language: String, engineMode: Int) {
+	private fun initTesseract(dataPath: String, language: String, engineMode: Int) {
 		Log.i(
 			TAG, "Initializing Tesseract with: dataPath = [" + dataPath + "], " +
 					"language = [" + language + "], engineMode = [" + engineMode + "]"
@@ -73,27 +131,25 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 		}
 	}
 
-	fun recognizeImage(imagePath: File) {
+	private fun recognizeImage() {
 		if (!this.isInitialized) {
 			Log.e(TAG, "recognizeImage: Tesseract is not initialized")
 			return
 		}
-		if (tessProcessing) {
+		if (processing.value) {
 			Log.e(TAG, "recognizeImage: Processing is in progress")
 			return
 		}
-		tessProcessing = true
-
-		result.value = ""
+		_result.value = ""
 		processing.value = true
-		progress.value = "Processing..."
+		_progress.value = OCRState.Processing
 		stopped = false
 
 		// Start process in another thread
-		Thread {
-			tessApi.setImage(imagePath)
-			// Or set it as Bitmap, Pix,...
-			// tessApi.setImage(imageBitmap);
+		viewModelScope.launch(Dispatchers.IO) {
+			tessApi.setImage(_image.value!!)
+			// Or set it via a File.
+			// tessApi.setImage(imageFile);
 			val startTime = SystemClock.uptimeMillis()
 
 			// Use getHOCRText(0) method to trigger recognition with progress notifications and
@@ -113,48 +169,34 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 			tessApi.clear()
 
 			// Publish the results
-			result.postValue(text)
-			processing.postValue(false)
+			_result.emit(text)
+			processing.emit(false)
 			if (stopped) {
-				progress.postValue("Stopped.")
+				_progress.emit(OCRState.Stopped)
 			} else {
 				val duration = SystemClock.uptimeMillis() - startTime
-				progress.postValue(
-					String.format(
-						Locale.ENGLISH,
-						"Completed in %.3fs.", (duration / 1000f)
-					)
-				)
+				_progress.emit(OCRState.Finished(duration / 1000f))
 			}
-			synchronized(recycleLock) {
-				tessProcessing = false
-				// Recycle the instance here if the view model is already destroyed
-				if (recycleAfterProcessing) {
-					tessApi.recycle()
-				}
-			}
-		}.start()
+		}
 	}
 
+	/**
+	 * Stops the OCR.
+	 */
 	fun stop() {
-		if (!tessProcessing) {
+		if (!processing.value) {
 			return
 		}
-		progress.value = "Stopping..."
+		_progress.value = OCRState.Stopping
 		stopped = true
 		tessApi.stop()
 	}
 
-	fun getProcessing(): LiveData<Boolean> {
-		return processing
-	}
-
-	fun getProgress(): LiveData<String> {
-		return progress
-	}
-
-	fun getResult(): LiveData<String> {
-		return result
+	/**
+	 * Start the OCR
+	 */
+	fun start() {
+		recognizeImage()
 	}
 
 	companion object {
