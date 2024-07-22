@@ -1,5 +1,6 @@
 plugins {
 	id("com.android.application")
+	alias(libs.plugins.jetbrains.kotlin.android)
 }
 
 android {
@@ -31,6 +32,9 @@ android {
 	}
 	buildFeatures {
 		viewBinding = true
+	}
+	kotlinOptions {
+		jvmTarget = "17"
 	}
 }
 
@@ -65,6 +69,7 @@ dependencies {
 	implementation(libs.androidx.constraintlayout)
 	implementation(libs.androidx.lifecycle.livedata)
 	implementation(libs.androidx.lifecycle.viewmodel)
+	implementation(libs.androidx.core.ktx)
 	testImplementation(libs.junit)
 	androidTestImplementation(libs.androidx.junit)
 	androidTestImplementation(libs.androidx.espresso.core)

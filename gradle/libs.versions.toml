@@ -14,6 +14,8 @@ material = "1.11.0"
 constraintlayout = "2.1.4"
 test = "1.6.1"
 tesseract4android = "4.7.0"
+coreKtx = "1.13.1"
+kotlin = "2.0.0"
 
 [libraries]
 androidx-annotation = { module = "androidx.annotation:annotation", version.ref = "annotation" }
@@ -35,5 +37,7 @@ tesseract4android-jitpack = { group = "cz.adaptech.tesseract4android", name = "t
 tesseract4android-jitpack-openmp = { group = "cz.adaptech.tesseract4android", name = "tesseract4android-openmp", version.ref = "tesseract4android" }
 tesseract4android-local = { group = "cz.adaptech", name = "tesseract4android", version.ref = "tesseract4android" }
 tesseract4android-local-openmp = { group = "cz.adaptech", name = "tesseract4android-openmp", version.ref = "tesseract4android" }
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 
 [plugins]
+jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
