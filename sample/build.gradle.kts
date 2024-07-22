@@ -46,31 +46,26 @@ android {
     flavorDimensions = ["parallelization"]
 }*/
 
-val tesseract4AndroidVersion: String by rootProject.extra
-
 dependencies {
 	// To use library from JitPack
-	// Note that since we have 2 artifacts, we must use cz.adaptech.tesseract4android groupId,
-	// instead of just cz.adaptech groupId we use when using local maven repository.
-	implementation("cz.adaptech.tesseract4android:tesseract4android:$tesseract4AndroidVersion")
-	// standard flavor
-//    implementation "cz.adaptech.tesseract4android:tesseract4android-openmp:$tesseract4AndroidVersion" // openmp flavor
+	implementation(libs.tesseract4android.jitpack) // standard flavor
+	//implementation(libs.tesseract4android.jitpack.openmp) // openmp flavor
 
 	// To use library from local maven repository
 	// Don't forget to specify mavenLocal() in repositories block in project's build.gradle file
-//    implementation "cz.adaptech:tesseract4android:$tesseract4AndroidVersion" // standard flavor
-//    implementation "cz.adaptech:tesseract4android-openmp:$tesseract4AndroidVersion" // openmp flavor
+	//implementation(libs.tesseract4android.local) // standard flavor
+	//implementation(libs.tesseract4android.local.openmp) // openmp flavor
 
 	// To use library compiled locally
 	// Which flavor to use is determined by missingDimensionStrategy parameter above.
-//    implementation project(":tesseract4android")
+	//implementation(project(":tesseract4android"))
 
-	implementation("androidx.appcompat:appcompat:1.6.1")
-	implementation("com.google.android.material:material:1.11.0")
-	implementation("androidx.constraintlayout:constraintlayout:2.1.4")
-	implementation("androidx.lifecycle:lifecycle-livedata:2.7.0")
-	implementation("androidx.lifecycle:lifecycle-viewmodel:2.7.0")
-	testImplementation("junit:junit:4.13.2")
-	androidTestImplementation("androidx.test.ext:junit:1.1.5")
-	androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+	implementation(libs.androidx.appcompat)
+	implementation(libs.material)
+	implementation(libs.androidx.constraintlayout)
+	implementation(libs.androidx.lifecycle.livedata)
+	implementation(libs.androidx.lifecycle.viewmodel)
+	testImplementation(libs.junit)
+	androidTestImplementation(libs.androidx.junit)
+	androidTestImplementation(libs.androidx.espresso.core)
 }

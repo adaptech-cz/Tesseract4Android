@@ -1,0 +1,39 @@
+[versions]
+# Intentionally use old version of annotation library which doesn"t depend on kotlin-stdlib
+# to not unnecessarily complicate client projects due to potential duplicate class build errors
+# caused by https://kotlinlang.org/docs/whatsnew18.html#updated-jvm-compilation-target
+#noinspection GradleDependency
+annotation = "1.3.0"
+appcompat = "1.6.1"
+espressoCore = "3.5.1"
+gradle = "8.5.0"
+junit = "4.13.2"
+androidJUnit = "1.1.5"
+lifecycleLivedata = "2.7.0"
+material = "1.11.0"
+constraintlayout = "2.1.4"
+test = "1.6.1"
+tesseract4android = "4.7.0"
+
+[libraries]
+androidx-annotation = { module = "androidx.annotation:annotation", version.ref = "annotation" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+androidx-constraintlayout = { module = "androidx.constraintlayout:constraintlayout", version.ref = "constraintlayout" }
+androidx-espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "espressoCore" }
+androidx-junit = { module = "androidx.test.ext:junit", version.ref = "androidJUnit" }
+androidx-lifecycle-livedata = { module = "androidx.lifecycle:lifecycle-livedata", version.ref = "lifecycleLivedata" }
+androidx-lifecycle-viewmodel = { module = "androidx.lifecycle:lifecycle-viewmodel", version.ref = "lifecycleLivedata" }
+androidx-rules = { module = "androidx.test:rules", version.ref = "test" }
+androidx-runner = { module = "androidx.test:runner", version.ref = "test" }
+gradle = { module = "com.android.tools.build:gradle", version.ref = "gradle" }
+junit = { module = "junit:junit", version.ref = "junit" }
+material = { module = "com.google.android.material:material", version.ref = "material" }
+
+# Note that since we have 2 artifacts, we must use cz.adaptech.tesseract4android groupId,
+# instead of just cz.adaptech groupId we use when using local maven repository.
+tesseract4android-jitpack = { group = "cz.adaptech.tesseract4android", name = "tesseract4android", version.ref = "tesseract4android" }
+tesseract4android-jitpack-openmp = { group = "cz.adaptech.tesseract4android", name = "tesseract4android-openmp", version.ref = "tesseract4android" }
+tesseract4android-local = { group = "cz.adaptech", name = "tesseract4android", version.ref = "tesseract4android" }
+tesseract4android-local-openmp = { group = "cz.adaptech", name = "tesseract4android-openmp", version.ref = "tesseract4android" }
+
+[plugins]

@@ -91,20 +91,14 @@ android {
 }
 
 dependencies {
-	// Intentionally use old version of annotation library which doesn"t depend on kotlin-stdlib
-	// to not unnecessarily complicate client projects due to potential duplicate class build errors
-	// caused by https://kotlinlang.org/docs/whatsnew18.html#updated-jvm-compilation-target
-	//noinspection GradleDependency
-	implementation("androidx.annotation:annotation:1.3.0")
+	implementation(libs.androidx.annotation)
 
-	testImplementation("junit:junit:4.13.2")
-	androidTestImplementation("androidx.test:runner:1.5.2")
-	androidTestImplementation("androidx.test:rules:1.5.0")
-	androidTestImplementation("androidx.test.ext:junit:1.1.5")
-	androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+	testImplementation(libs.junit)
+	androidTestImplementation(libs.androidx.runner)
+	androidTestImplementation(libs.androidx.rules)
+	androidTestImplementation(libs.androidx.junit)
+	androidTestImplementation(libs.androidx.espresso.core)
 }
-
-val tesseract4AndroidVersion: String by rootProject.extra
 
 afterEvaluate {
 	publishing {
@@ -114,14 +108,14 @@ afterEvaluate {
 
 				groupId = "cz.adaptech"
 				artifactId = "tesseract4android"
-				version = tesseract4AndroidVersion
+				version = libs.versions.tesseract4android.get()
 			}
 			create<MavenPublication>("openmp") {
 				from(components.findByName("openmpRelease"))
 
 				groupId = "cz.adaptech"
 				artifactId = "tesseract4android-openmp"
-				version = tesseract4AndroidVersion
+				version = libs.versions.tesseract4android.get()
 			}
 		}
 	}
