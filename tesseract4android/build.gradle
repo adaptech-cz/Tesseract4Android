@@ -5,12 +5,12 @@ plugins {
 
 android {
 	namespace 'cz.adaptech.tesseract4android'
-	compileSdk 33
+	compileSdk 34
 	ndkVersion "25.1.8937393"
 
 	defaultConfig {
 		minSdk 16
-		targetSdk 33
+		targetSdk 34
 
 		testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 		externalNativeBuild {
