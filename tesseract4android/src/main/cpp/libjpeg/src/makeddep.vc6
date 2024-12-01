@@ -1,4 +1,4 @@
-# Microsoft Developer Studio erstellte Abhängigkeitsdatei, einbezogen von djpeg.mak
+# Microsoft Developer Studio erstellte Abh„ngigkeitsdatei, einbezogen von djpeg.mak
 
 .\cdjpeg.c : \
 	".\cderror.h"\

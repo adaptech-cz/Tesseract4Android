@@ -5,17 +5,17 @@ CFG=cjpeg - Win32
 !ENDIF 
 
 !IF "$(CFG)" != "cjpeg - Win32"
-!MESSAGE UngÅltige Konfiguration "$(CFG)" angegeben.
-!MESSAGE Sie kînnen beim AusfÅhren von NMAKE eine Konfiguration angeben
+!MESSAGE Ung¸ltige Konfiguration "$(CFG)" angegeben.
+!MESSAGE Sie kˆnnen beim Ausf¸hren von NMAKE eine Konfiguration angeben
 !MESSAGE durch Definieren des Makros CFG in der Befehlszeile. Zum Beispiel:
 !MESSAGE 
 !MESSAGE NMAKE /f "cjpeg.mak" CFG="cjpeg - Win32"
 !MESSAGE 
-!MESSAGE FÅr die Konfiguration stehen zur Auswahl:
+!MESSAGE F¸r die Konfiguration stehen zur Auswahl:
 !MESSAGE 
 !MESSAGE "cjpeg - Win32" (basierend auf  "Win32 (x86) Console Application")
 !MESSAGE 
-!ERROR Eine ungÅltige Konfiguration wurde angegeben.
+!ERROR Eine ung¸ltige Konfiguration wurde angegeben.
 !ENDIF 
 
 !IF "$(OS)" == "Windows_NT"

@@ -1,4 +1,4 @@
-# Microsoft Developer Studio erstellte Abhängigkeitsdatei, einbezogen von rdjpgcom.mak
+# Microsoft Developer Studio erstellte Abh„ngigkeitsdatei, einbezogen von rdjpgcom.mak
 
 .\rdjpgcom.c : \
 	".\jconfig.h"\

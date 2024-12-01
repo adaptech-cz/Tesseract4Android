@@ -5,17 +5,17 @@
 # TARGTYPE "Win32 (x86) Static Library" 0x0104
 
 CFG=jpeg - Win32
-!MESSAGE Dies ist kein gültiges Makefile. Zum Erstellen dieses Projekts mit NMAKE
-!MESSAGE verwenden Sie den Befehl "Makefile exportieren" und führen Sie den Befehl
+!MESSAGE Dies ist kein gltiges Makefile. Zum Erstellen dieses Projekts mit NMAKE
+!MESSAGE verwenden Sie den Befehl "Makefile exportieren" und fhren Sie den Befehl
 !MESSAGE 
 !MESSAGE NMAKE /f "jpeg.mak".
 !MESSAGE 
-!MESSAGE Sie können beim Ausführen von NMAKE eine Konfiguration angeben
+!MESSAGE Sie k÷nnen beim Ausfhren von NMAKE eine Konfiguration angeben
 !MESSAGE durch Definieren des Makros CFG in der Befehlszeile. Zum Beispiel:
 !MESSAGE 
 !MESSAGE NMAKE /f "jpeg.mak" CFG="jpeg - Win32"
 !MESSAGE 
-!MESSAGE Für die Konfiguration stehen zur Auswahl:
+!MESSAGE Fr die Konfiguration stehen zur Auswahl:
 !MESSAGE 
 !MESSAGE "jpeg - Win32" (basierend auf  "Win32 (x86) Static Library")
 !MESSAGE 

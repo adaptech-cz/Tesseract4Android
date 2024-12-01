@@ -5,17 +5,17 @@ CFG=jpegtran - Win32
 !ENDIF 
 
 !IF "$(CFG)" != "jpegtran - Win32"
-!MESSAGE Ungltige Konfiguration "$(CFG)" angegeben.
-!MESSAGE Sie k”nnen beim Ausfhren von NMAKE eine Konfiguration angeben
+!MESSAGE Ungültige Konfiguration "$(CFG)" angegeben.
+!MESSAGE Sie können beim Ausführen von NMAKE eine Konfiguration angeben
 !MESSAGE durch Definieren des Makros CFG in der Befehlszeile. Zum Beispiel:
 !MESSAGE 
 !MESSAGE NMAKE /f "jpegtran.mak" CFG="jpegtran - Win32"
 !MESSAGE 
-!MESSAGE Fr die Konfiguration stehen zur Auswahl:
+!MESSAGE Für die Konfiguration stehen zur Auswahl:
 !MESSAGE 
 !MESSAGE "jpegtran - Win32" (basierend auf  "Win32 (x86) Console Application")
 !MESSAGE 
-!ERROR Eine ungltige Konfiguration wurde angegeben.
+!ERROR Eine ungültige Konfiguration wurde angegeben.
 !ENDIF 
 
 !IF "$(OS)" == "Windows_NT"
