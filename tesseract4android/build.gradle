@@ -6,7 +6,7 @@ plugins {
 android {
 	namespace 'cz.adaptech.tesseract4android'
 	compileSdk 34
-	ndkVersion "25.1.8937393"
+	ndkVersion "27.2.12479018"
 
 	defaultConfig {
 		minSdk 16
