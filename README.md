@@ -11,14 +11,14 @@ which is based on [Tesseract Tools for Android][tesseract-android-tools].
 
 This project uses additional libraries (with their own specific licenses):
 
- - [Tesseract OCR][tesseract-ocr] 5.3.4
- - [Leptonica][leptonica] 1.83.1
- - [libjpeg][jpeg] v9e
- - [libpng][png] 1.6.40
+ - [Tesseract OCR][tesseract-ocr] 5.5.0
+ - [Leptonica][leptonica] 1.85.0
+ - [libjpeg][jpeg] v9f
+ - [libpng][png] 1.6.44
 
 ## Prerequisites
 
- - Android 4.1 (API 16) or higher
+ - Android 5.0 (API 21) or higher
  - A v4.0.0 [trained data file(s)][tessdata] for language(s) you want to use.
    - These files must be placed in the (sub)directory named `tessdata` and the path must be readable
 by the app. When targeting API >=29, only suitable places for this are app's private directories
@@ -53,10 +53,10 @@ allprojects {
 ```gradle
 dependencies {
     // To use Standard variant:
-    implementation 'cz.adaptech.tesseract4android:tesseract4android:4.7.0'
+    implementation 'cz.adaptech.tesseract4android:tesseract4android:4.8.0'
 
     // To use OpenMP variant:
-    implementation 'cz.adaptech.tesseract4android:tesseract4android-openmp:4.7.0'
+    implementation 'cz.adaptech.tesseract4android:tesseract4android-openmp:4.8.0'
 }
 ```
 
