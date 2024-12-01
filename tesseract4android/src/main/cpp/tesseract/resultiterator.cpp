@@ -72,10 +72,19 @@ jobjectArray Java_com_googlecode_tesseract_android_ResultIterator_nativeGetSymbo
     // Create the string output
     const char *utfText = cb.GetUTF8Text();
 
-    // Add each string to the object array elements
-    char newString[strlen(utfText) + 7];
+    // Dynamically allocate memory for the string
+    size_t bufferSize = strlen(utfText) + 7;
+    char *newString = (char *)malloc(bufferSize);
+    if (newString == nullptr) {
+        return nullptr;
+    }
     sprintf(newString, "%s|%.2f", utfText, cb.Confidence());
+
+    // Add each string to the object array elements
     env->SetObjectArrayElement(ret, i, env->NewStringUTF(newString));
+
+    // Free the dynamically allocated memory
+    free(newString);
 
     // Move to the next element in the list
     i++;
