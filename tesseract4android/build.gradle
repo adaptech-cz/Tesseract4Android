@@ -18,6 +18,10 @@ android {
 				// Specifies which native libraries or executables to build and package.
 				// TODO: Include eyes-two in some build flavor of the library?
 				//targets "jpeg", "pngx", "leptonica", "tesseract"
+
+				// Support 16 KB page sizes with NDK r27
+				// This can be removed with NDK r28, which supports it by default.
+				arguments "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
 			}
 		}
 		ndk {
@@ -44,7 +48,7 @@ android {
 					// This is for projects that has direct dependency on this library,
 					// but doesn't really want its debug version, which is very slow.
 					// Note that this only affects native code.
-					arguments "-DCMAKE_BUILD_TYPE=Release"
+					arguments += "-DCMAKE_BUILD_TYPE=Release"
 				}
 			}
 		}
