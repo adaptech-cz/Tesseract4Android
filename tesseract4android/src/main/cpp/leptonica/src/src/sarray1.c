@@ -170,7 +170,7 @@ sarrayCreate(l_int32  n)
 {
 SARRAY  *sa;
 
-    if (n <= 0 || n > MaxPtrArraySize)
+    if (n <= 0 || n > (l_int32)MaxPtrArraySize)
         n = InitialPtrArraySize;
 
     sa = (SARRAY *)LEPT_CALLOC(1, sizeof(SARRAY));
@@ -479,12 +479,12 @@ size_t  oldsize, newsize;
 
     if (!sa)
         return ERROR_INT("sa not defined", __func__, 1);
-    if (sa->nalloc >= MaxPtrArraySize)
+    if (sa->nalloc >= (l_int32)MaxPtrArraySize)  /* belt & suspenders */
         return ERROR_INT("sa at maximum ptr size; can't extend", __func__, 1);
     oldsize = sa->nalloc * sizeof(char *);
-    if (sa->nalloc > MaxPtrArraySize / 2) {
+    if (sa->nalloc > (l_int32)(MaxPtrArraySize / 2)) {
         newsize = MaxPtrArraySize * sizeof(char *);
-        sa->nalloc = MaxPtrArraySize;
+        sa->nalloc = (l_int32)MaxPtrArraySize;
     } else {
         newsize = 2 * oldsize;
         sa->nalloc *= 2;
@@ -1356,11 +1356,12 @@ SARRAY  *sa;
         return (SARRAY *)ERROR_PTR("filename not defined", __func__, NULL);
 
     if ((fp = fopenReadStream(filename)) == NULL)
-        return (SARRAY *)ERROR_PTR("stream not opened", __func__, NULL);
+        return (SARRAY *)ERROR_PTR_1("stream not opened",
+                                     filename, __func__, NULL);
     sa = sarrayReadStream(fp);
     fclose(fp);
     if (!sa)
-        return (SARRAY *)ERROR_PTR("sa not read", __func__, NULL);
+        return (SARRAY *)ERROR_PTR_1("sa not read", filename, __func__, NULL);
     return sa;
 }
 
@@ -1400,7 +1401,7 @@ SARRAY  *sa;
         return (SARRAY *)ERROR_PTR("error on # strings", __func__, NULL);
     if (n < 0)
         return (SARRAY *)ERROR_PTR("num string ptrs <= 0", __func__, NULL);
-    if (n > MaxPtrArraySize)
+    if (n > (l_int32)MaxPtrArraySize)
         return (SARRAY *)ERROR_PTR("too many string ptrs", __func__, NULL);
     if (n == 0) L_INFO("the sarray is empty\n", __func__);
 
@@ -1489,11 +1490,11 @@ FILE    *fp;
         return ERROR_INT("sa not defined", __func__, 1);
 
     if ((fp = fopenWriteStream(filename, "w")) == NULL)
-        return ERROR_INT("stream not opened", __func__, 1);
+        return ERROR_INT_1("stream not opened", filename, __func__, 1);
     ret = sarrayWriteStream(fp, sa);
     fclose(fp);
     if (ret)
-        return ERROR_INT("sa not written to stream", __func__, 1);
+        return ERROR_INT_1("sa not written to stream", filename, __func__, 1);
     return 0;
 }
 
@@ -1597,9 +1598,9 @@ FILE    *fp;
     ret = sarrayWriteStream(fp, sa);
     fputc('\0', fp);
     fclose(fp);
-    *psize = *psize - 1;
+    if (*psize > 0) *psize = *psize - 1;
 #else
-    L_INFO("work-around: writing to a temp file\n", __func__);
+    L_INFO("no fmemopen API --> work-around: write to temp file\n", __func__);
   #ifdef _WIN32
     if ((fp = fopenWriteWinTempfile()) == NULL)
         return ERROR_INT("tmpfile stream not opened", __func__, 1);
@@ -1635,10 +1636,10 @@ FILE  *fp;
         return ERROR_INT("sa not defined", __func__, 1);
 
     if ((fp = fopenWriteStream(filename, "a")) == NULL)
-        return ERROR_INT("stream not opened", __func__, 1);
+        return ERROR_INT_1("stream not opened", filename, __func__, 1);
     if (sarrayWriteStream(fp, sa)) {
         fclose(fp);
-        return ERROR_INT("sa not appended to stream", __func__, 1);
+        return ERROR_INT_1("sa not appended to stream", filename, __func__, 1);
     }
 
     fclose(fp);
@@ -1868,6 +1869,9 @@ SARRAY  *saout;
  *          On these systems, this function will return directories
  *          (except for '.' and '..', which are eliminated using
  *          the d_name field).
+ *      (5) For unix, we avoid the bug in earlier versions of realpath()
+ *          by requiring either POSIX 2008 or use of glibc.
+ *          
  * </pre>
  */
 
@@ -1876,8 +1880,7 @@ SARRAY  *saout;
 SARRAY *
 getFilenamesInDirectory(const char  *dirname)
 {
-char            dir[PATH_MAX + 1];
-char           *realdir, *stat_path, *ignore;
+char           *gendir, *realdir, *stat_path;
 size_t          size;
 SARRAY         *safiles;
 DIR            *pdir;
@@ -1893,24 +1896,22 @@ struct stat     st;
         /* Who would have thought it was this fiddly to open a directory
            and get the files inside?  fstatat() works with relative
            directory paths, and stat() requires using the absolute path.
-           realpath works as follows for files and directories:
+           realpath() works as follows for files and directories:
             * If the file or directory exists, realpath returns its path;
               else it returns NULL.
-            * If the second arg to realpath is passed in, the canonical path
-              is returned there.  Use a buffer of sufficient size.  If the
-              second arg is NULL, the path is malloc'd and returned if the
-              file or directory exists.
-           We pass in a buffer for the second arg, and check that the canonical
-           directory path was made.  The existence of the directory is checked
-           later, after its actual path is returned by genPathname().  */
-    dir[0] = '\0';  /* init empty in case realpath() fails to write it */
-    ignore = realpath(dirname, dir);
-    if (dir[0] == '\0')
-        return (SARRAY *)ERROR_PTR("dir not made", __func__, NULL);
-    realdir = genPathname(dir, NULL);
+            * For realpath() we use the POSIX 2008 implementation, where
+              the second arg is NULL and the path is malloc'd and returned
+              if the file or directory exists.  All versions of glibc
+              support this.  */
+    gendir = genPathname(dirname, NULL);
+    realdir = realpath(gendir, NULL);
+    LEPT_FREE(gendir);
+    if (realdir == NULL)
+        return (SARRAY *)ERROR_PTR("realdir not made", __func__, NULL);
     if ((pdir = opendir(realdir)) == NULL) {
+        L_ERROR("directory %s not opened\n", __func__, realdir);
         LEPT_FREE(realdir);
-        return (SARRAY *)ERROR_PTR("pdir not opened", __func__, NULL);
+        return NULL;
     }
     safiles = sarrayCreate(0);
     while ((pdirentry = readdir(pdir))) {
@@ -1921,10 +1922,6 @@ struct stat     st;
         stat_ret = fstatat(dfd, pdirentry->d_name, &st, 0);
 #else
         size = strlen(realdir) + strlen(pdirentry->d_name) + 2;
-        if (size > PATH_MAX) {
-            L_ERROR("size = %zu too large; skipping\n", __func__, size);
-            continue;
-        }
         stat_path = (char *)LEPT_CALLOC(size, 1);
         snprintf(stat_path, size, "%s/%s", realdir, pdirentry->d_name);
         stat_ret = stat(stat_path, &st);

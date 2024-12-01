@@ -109,7 +109,8 @@ static const char *tests[] = {
                               "fhmtauto_reg",
                          /*   "files_reg",  */
                               "findcorners_reg",
-                              "findpattern_reg",
+                              "findpattern1_reg",
+                              "findpattern2_reg",
                               "flipdetect_reg",
                               "fpix1_reg",
                               "fpix2_reg",
@@ -145,12 +146,14 @@ static const char *tests[] = {
                               "multitype_reg",
                               "numa1_reg",
                               "numa2_reg",
+                              "numa3_reg",
                               "nearline_reg",
                               "newspaper_reg",
                               "overlap_reg",
                               "pageseg_reg",
                               "paint_reg",
                               "paintmask_reg",
+                              "partition_reg",
                               "pdfio1_reg",
                               "pdfio2_reg",
                               "pdfseg_reg",
@@ -250,7 +253,7 @@ SARRAY  *sa;
 #else  /* windows interprets '/' as a commandline flag */
         snprintf(command, sizeof(command) - 2, "%s %s", tests[i], argv[1]);
 #endif  /* ! _WIN32 */
-        ret = system(command);
+        ret = callSystemDebug(command);
         if (ret) {
             snprintf(buf, sizeof(buf), "Failed to complete %s\n", tests[i]);
             if (dotest) {

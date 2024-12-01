@@ -77,7 +77,7 @@ This work is licensed under a <a rel="license" href="http://creativecommons.org/
 
 
 <h2 align=center>Version Notes for Leptonica</h2>
-<h3 align=center>22 Sept 2021</h3>
+<h3 align=center>3 Jan 2024</h3>
 
 <hr>
 <h2 align=center>  <IMG SRC="moller52.jpg" border=1 ALIGN_MIDDLE> </h2>
@@ -89,8 +89,77 @@ They are <i>not</i> a complete listing of the modifications.
 
 <pre>
 
-1.83.1  Jan 26, 2023
-        * Cherry-pick two bug fixes from 1.84.0.
+1.85.0  Oct 16, 2024
+        * Use wrapper callSystemDebug() instead of system() in programs.
+        * Fixed Issue #730: artifacts and bad compression with pixWriteJp2k.
+          Results are now identical with ImageMagick convert (to jp2).
+        * With PR732, Anton Tykhyy made pix(Read,Write)MemJp2k work with
+          direct memory access using openjpeg opj_stream functions. This
+          removes need for temp file on Windows when writing to/from memory.
+        * Achieve consistency with fclose() in library and lept_fclose()
+          in progs.  Ditto for lept_free, lept_calloc, lept_fopen(), etc.
+        * Fix generation of bad colormap indices in
+          jbcorrelation and jbrankhaus
+        * Fixed coverity scan issues.
+        * Added findpattern2_reg.c to show generation of sels and their use.
+        * Added misctest2.c to show crop and clean page functions.
+        * Added page crop option for removing noise on left and right sides.
+        * Added page crop option to allow printing to full width of paper.
+        * Added page crop option to extract page within larger black image.
+        * Added renderpdf.c to library, to render pdfs as page images with
+          a specified resolution.
+        * Modified cleanpdf.c to use l_pdfRenderFiles().
+        * Issues #750, #752: problems in bmpio.c with taking address of
+          packed member.
+        * Source files changed: adaptmap.c affinecompose.c,
+          bmpio.c, boxbasic.c, colormap.c, compare.c,
+          dewarp1.c, dnabasic.c, fpix1.c, gifio.c,
+          gplot.c, grayquant.c, jbclass.c, jp2kheader.c,
+          jp2kheaderstub.c, jp2kio.c, jpegio.c, libversions.c,
+          morphseq.c, numabasic.c, pageseg.c partify.c, pdfapp.c,
+          pdfio2.c, pix2.c, pixabasic.c, pixcomp.c, pixconv.c,
+          pnmio.c, psio2.c, ptabasic.c,
+          readfile.c, recogbasic.c, renderpdf.c,
+          sarray1.c, sel1.c, utils2.c, writefile.c,
+          allheaders.h, environ.h
+        * Prog files changed: alltests_reg.c, binmorph3_reg.c,
+          blend2_reg.c, blend4_reg.c cleanpdf.c, compressedpdf.c, croppdf.c,
+          findpattern_reg.c, findpattern1_reg.c findpattern2_reg.c,
+          htmlviewer.c, jbcorrelation.c, jbrankhaus.c,
+          jp2kio_reg.c, libre_makefigs.c, misctest1.c, misctest2.c,
+          pdfio2_reg.c, printimage.c, printsplitimage.c,
+          printtiff.c, psioseg_reg.c, splitpdf.c,
+          string_reg.c, tiffpdftest.c, xtractprotos.c
+
+1.84.1  Jan 3, 2024
+        * Remove support for openjpeg versions < 2.1.
+        * Improve error handling for stringLength() and stringCat(), and
+          add tests in prog/string_reg.
+        * Source files changed: blend.c, dnafunc1.c, jp2kio.c, pageseg.c,
+          partify.c, pix1.c, ptafunc2.c, sarray2.c, utils2.c
+        * Prog files changed: boxa3_reg.c, string_reg.c, writetext_reg.c,
+          deskew_it.c
+
+1.84.0  Dec 23, 2023
+        * Add getPdfPageCount() to find the number of pages in a pdf file.
+        * Add getPdfPageSizes() and getPdfMediaBoxSizes() to find the
+          information necessary to render images properly.  Modify cleanpdf.c
+          and concatpdf.c to use this information.
+        * Add prog/splitpdf.c to split a pdf file into nearly equal page sets.
+        * Add ability to read and write rgba in bmp format, and
+          test in ioformats_reg.
+        * Add regression test prog/partition_reg.c
+        * Change the autotools library name from liblept to libleptonica,
+          to be consistent with the cmake library name.  (Apologies to Jeff!)
+        * Add tests for 24 bit pix reading and writing in bmp and png in
+          ioformats_reg.  Test new pixDisplayDiff() for visualizing diffs.
+        * Allow prog/concatpdf to output pdf with tiffg4 encoding and with
+          mixed tiffg4 and DCT encoding depending on image color content.
+        * Rename prog/concatpdf --> prog/compresspdf
+        * Put image processing and generation of output pdf from compresspdf
+          and cleanpdf into functions in new files: pdfapp.c, pdfappstub.c.
+        * Add versatile function for cropping an image and filling to
+          page size, along with prog/croppdf to do this on pdf file.
 
 1.83.0  Dec 20, 2022
         * Simplify setting the title of pdf files.
@@ -618,7 +687,7 @@ They are <i>not</i> a complete listing of the modifications.
        Fixed fpix serialization (now version 2).
        New version (5) of xtractprotos, allows putting prototypes in-line in
         allheaders.h.  Having them separately in leptprotos.h still an option
-       New copyright (BDS, 2 clause) on src files.
+       New copyright (BSD, 2 clause) on src files.
        Removed all trailing whitespace in src files.
        New src files: boxfunc4.c coloring.c, dnabasic.c
        New prog files: dna_reg.c, alphaops_reg.c

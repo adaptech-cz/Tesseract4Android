@@ -143,7 +143,7 @@
  *  -----------------------------------------
  *
  *  Memory management of the (image) data field in the pix is
- *  handled differently from that in the colormap or text fields.
+ *  handled differently from that in the colormap and text fields.
  *  For colormap and text, the functions pixSetColormap() and
  *  pixSetText() remove the existing heap data and insert the
  *  new data.  For the image data, pixSetData() just reassigns the
@@ -539,7 +539,8 @@ PIX      *pixd;
     }
 #endif   /* FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION */
 
-    pixd = (PIX *)LEPT_CALLOC(1, sizeof(PIX));
+    if ((pixd = (PIX *)LEPT_CALLOC(1, sizeof(PIX))) == NULL)
+        return (PIX *)ERROR_PTR("pixd not made", __func__, NULL);
     pixSetWidth(pixd, width);
     pixSetHeight(pixd, height);
     pixSetDepth(pixd, depth);

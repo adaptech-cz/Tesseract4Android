@@ -23,7 +23,7 @@ AUTO_REG_PROGS = adaptmap_reg adaptnorm_reg affine_reg alphaops_reg \
 	dither_reg dna_reg dwamorph1_reg edge_reg encoding_reg \
 	enhance_reg equal_reg expand_reg extrema_reg \
 	falsecolor_reg fhmtauto_reg \
-	findcorners_reg findpattern_reg flipdetect_reg \
+	findcorners_reg findpattern1_reg findpattern2_reg flipdetect_reg \
 	fpix1_reg fpix2_reg genfonts_reg \
 	grayfill_reg graymorph1_reg graymorph2_reg \
 	grayquant_reg hardlight_reg hash_reg heap_reg \
@@ -34,7 +34,7 @@ AUTO_REG_PROGS = adaptmap_reg adaptnorm_reg affine_reg alphaops_reg \
 	maze_reg mtiff_reg multitype_reg \
 	nearline_reg newspaper_reg numa1_reg numa2_reg numa3_reg \
 	overlap_reg pageseg_reg paint_reg paintmask_reg \
-	pdfio1_reg pdfio2_reg pdfseg_reg \
+	partition_reg pdfio1_reg pdfio2_reg pdfseg_reg \
 	pixa1_reg pixa2_reg pixadisp_reg pixcomp_reg \
 	pixmem_reg pixserial_reg pngio_reg pnmio_reg \
 	projection_reg projective_reg \
@@ -82,9 +82,9 @@ OTHER_PROGS = adaptmap_dark \
 	blendcmaptest buffertest \
 	ccbordtest cctest1 cleanpdf \
 	colorsegtest comparepages comparepixa \
-	comparetest concatpdf \
+	comparetest compresspdf \
 	contrasttest converttogray \
-	cornertest corrupttest croptext deskew_it \
+	cornertest corrupttest croppdf croptext deskew_it \
 	dewarprules dewarptest1 dewarptest2 \
 	dewarptest3 dewarptest4 dewarptest5 \
 	digitprep1 displayboxa displayboxes_on_pixa \
@@ -98,7 +98,7 @@ OTHER_PROGS = adaptmap_dark \
 	listtest lightcolortest livre_adapt livre_hmt \
 	livre_makefigs livre_orient \
 	livre_pageseg livre_seedgen livre_tophat \
-	maketile maptest messagetest misctest1 \
+	maketile maptest messagetest misctest1 misctest2 \
 	modifyhuesat morphtest1 \
 	numaranktest otsutest1 otsutest2 \
 	pagesegtest1 pagesegtest2 \
@@ -113,11 +113,11 @@ OTHER_PROGS = adaptmap_dark \
 	renderfonts replacebytes \
 	rotatefastalt rotate_it \
 	rotateorthtest1 rotatetest1 \
-	runlengthtest scaleandtile \
+	runlengthtest scaleandtile scaleimages \
 	scale_it scaletest1 scaletest2 \
 	seedfilltest settest sharptest \
 	sheartest showedges skewtest \
-	sorttest splitimage2pdf sudokutest \
+	sorttest splitimage2pdf splitpdf sudokutest \
 	textorient tiffpdftest trctest \
 	underlinetest warpertest wordsinorder \
 	writemtiff yuvtest

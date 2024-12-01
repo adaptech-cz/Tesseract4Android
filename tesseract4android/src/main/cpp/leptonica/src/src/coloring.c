@@ -288,7 +288,7 @@ PIXCMAP   *cmap;
 
     data = pixGetData(pixs);
     wpl = pixGetWpl(pixs);
-    factor = 1. / 255.;
+    factor = 1.f / 255.f;
     for (i = y1; i <= y2; i++) {
         if (i < 0 || i >= h)
             continue;
@@ -416,7 +416,7 @@ PIXCMAP   *cmap;
     wpl = pixGetWpl(pixd);
     datam = pixGetData(pixm);
     wplm = pixGetWpl(pixm);
-    factor = 1. / 255.;
+    factor = 1.f / 255.f;
     for (i = 0; i < hmin; i++) {
         line = data + i * wpl;
         linem = datam + i * wplm;
@@ -459,7 +459,7 @@ PIXCMAP   *cmap;
  * \param[in]    srcval   color center to be selected for change: 0xrrggbb00
  * \param[in]    dstval   target color for pixels: 0xrrggbb00
  * \param[in]    diff     max absolute difference, applied to all components
- * \return  pixd   with all pixels within diff of pixval set to pixval,
+ * \return  pixd   with all pixels within diff of srcval set to dstval,
  *                 or pixd on error
  *
  * <pre>

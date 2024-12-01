@@ -144,11 +144,11 @@ typedef uintptr_t l_uintptr_t;
 
 
   /*-----------------------------------------------------------------------*
-   * Leptonica supports OpenJPEG 2.0+.  If you have a version of openjpeg  *
-   * (HAVE_LIBJP2K == 1) that is >= 2.0, set the path to the openjpeg.h    *
+   * Leptonica supports OpenJPEG 2.1+.  If you have a version of openjpeg  *
+   * (HAVE_LIBJP2K == 1) that is >= 2.1, set the path to the openjpeg.h    *
    * header in angle brackets here.                                        *
    *-----------------------------------------------------------------------*/
-  #define  LIBJP2K_HEADER   <openjpeg-2.3/openjpeg.h>
+  #define  LIBJP2K_HEADER   <openjpeg-2.5/openjpeg.h>
 
 #endif  /* ! HAVE_CONFIG_H etc. */
 
@@ -220,7 +220,7 @@ typedef uintptr_t l_uintptr_t;
 /*--------------------------------------------------------------------*
  *                          Built-in types                            *
  *--------------------------------------------------------------------*/
-typedef int                     l_ok;    /*!< return type 0 if OK, 1 on error */
+typedef int                     l_ok;       /*!< return 0 if OK, 1 on error */
 typedef signed char             l_int8;     /*!< signed 8-bit value */
 typedef unsigned char           l_uint8;    /*!< unsigned 8-bit value */
 typedef short                   l_int16;    /*!< signed 16-bit value */
@@ -492,19 +492,30 @@ LEPT_DLL extern l_int32  LeptMsgSeverity;
  * <pre>
  *  Usage
  *  =====
- *  Messages are of two types.
+ *  Messages are of three types.
  *
  *  (1) The messages
  *      ERROR_INT(a,b,c)       : returns l_int32
  *      ERROR_FLOAT(a,b,c)     : returns l_float32
  *      ERROR_PTR(a,b,c)       : returns void*
- *  are used to return from functions and take a fixed set of parameters:
+ *  are used to return from functions and take three parameters:
  *      a : <message string>
- *      b : procName
+ *      b : __func__   (the procedure name)
  *      c : <return value from function>
- *  where procName is the name of the local variable naming the function.
+ *  A newline is added by the function after the message.
  *
- *  (2) The purely informational L_* messages
+ *  (2) The messages
+ *      ERROR_INT_1(a,f,b,c)     : returns l_int32
+ *      ERROR_FLOAT_1(a,f,b,c)   : returns l_float32
+ *      ERROR_PTR_1(a,f,b,c)     : returns void*
+ *  are used to return from functions and take four parameters:
+ *      a : <message string>
+ *      f : <second message string> (typically, a filename for an fopen()))
+ *      b : __func__   (the procedure name)
+ *      c : <return value from function>
+ *  A newline is added by the function after the message.
+ *
+ *  (3) The purely informational L_* messages
  *      L_ERROR(a,...)
  *      L_WARNING(a,...)
  *      L_INFO(a,...)
@@ -512,6 +523,8 @@ LEPT_DLL extern l_int32  LeptMsgSeverity;
  *      a  :  <message string> with optional format conversions
  *      v1 : procName    (this must be included as the first vararg)
  *      v2, ... :  optional varargs to match format converters in the message
+ *  Unlike the messages that return a value in (2) and (3) above,
+ *  here a newline needs to be included at the end of the message string.
  *
  *  To return an error from a function that returns void, use:
  *      L_ERROR(<message string>, procName, [...])
@@ -546,6 +559,9 @@ LEPT_DLL extern l_int32  LeptMsgSeverity;
   #define ERROR_INT(a, b, c)            ((l_int32)(c))
   #define ERROR_FLOAT(a, b, c)          ((l_float32)(c))
   #define ERROR_PTR(a, b, c)            ((void *)(c))
+  #define ERROR_INT_1(a, f, b, c)       ((l_int32)(c))
+  #define ERROR_FLOAT_1(a, f, b, c)     ((l_float32)(c))
+  #define ERROR_PTR_1(a, f, b, c)       ((void *)(c))
   #define L_ERROR(a, ...)
   #define L_WARNING(a, ...)
   #define L_INFO(a, ...)
@@ -562,6 +578,16 @@ LEPT_DLL extern l_int32  LeptMsgSeverity;
       IF_SEV(L_SEVERITY_ERROR, returnErrorFloat((a), (b), (c)), (l_float32)(c))
   #define ERROR_PTR(a, b, c) \
       IF_SEV(L_SEVERITY_ERROR, returnErrorPtr((a), (b), (c)), (void *)(c))
+
+  #define ERROR_INT_1(a, f, b, c) \
+      IF_SEV(L_SEVERITY_ERROR, returnErrorInt1((a), (f), (b), (c)), \
+             (l_int32)(c))
+  #define ERROR_FLOAT_1(a, f, b, c) \
+      IF_SEV(L_SEVERITY_ERROR, returnErrorFloat1((a), (f), (b), (c)), \
+             (l_float32)(c))
+  #define ERROR_PTR_1(a, f, b, c) \
+      IF_SEV(L_SEVERITY_ERROR, returnErrorPtr1((a), (f), (b), (c)), \
+             (void *)(c))
 
   #define L_ERROR(a, ...) \
       IF_SEV(L_SEVERITY_ERROR, \

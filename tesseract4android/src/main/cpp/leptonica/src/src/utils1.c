@@ -47,6 +47,9 @@
  *           l_int32    returnErrorInt()
  *           l_float32  returnErrorFloat()
  *           void      *returnErrorPtr()
+ *           l_int32    returnErrorInt1()
+ *           l_float32  returnErrorFloat1()
+ *           void      *returnErrorPtr1()
  *
  *       Runtime redirection of stderr
  *           void leptSetStderrHandler()
@@ -69,8 +72,10 @@
  *       Generate random integer in given interval
  *           l_int32    genRandomIntOnInterval()
  *
- *       Simple math function
+ *       Simple math functions
  *           l_int32    lept_roundftoi()
+ *           l_int32    lept_floor()
+ *           l_int32    lept_ceiling()
  *
  *       64-bit hash functions
  *           l_int32    l_hashStringToUint64()
@@ -176,8 +181,11 @@ char    *envsev;
  *                                                                      *
  *    (1) These error functions print messages to stderr and allow      *
  *        exit from the function that called them.                      *
- *    (2) They must be invoked only by the macros ERROR_INT,            *
- *        ERROR_FLOAT and ERROR_PTR, which are in environ.h             *
+ *    (2) They must be invoked only by the three argument macros        *
+ *           ERROR_INT, ERROR_FLOAT, ERROR_PTR                          *
+ *        or the four argument macros                                   *
+ *           ERROR_INT_1, ERROR_FLOAT_1, ERROR_PTR_1                    *
+ *        which are in environ.h.                                       *
  *    (3) The print output can be disabled at compile time, either      *
  *        by using -DNO_CONSOLE_IO or by setting LeptMsgSeverity.       *
  *----------------------------------------------------------------------*/
@@ -185,9 +193,9 @@ char    *envsev;
  * \brief   returnErrorInt()
  *
  * \param[in]    msg        error message
- * \param[in]    procname
- * \param[in]    ival       return error val
- * \return  ival typically 1 for an error return
+ * \param[in]    procname   use __func__
+ * \param[in]    ival       return error val (typically 1 for an error)  
+ * \return  ival
  */
 l_int32
 returnErrorInt(const char  *msg,
@@ -203,8 +211,8 @@ returnErrorInt(const char  *msg,
  * \brief   returnErrorFloat()
  *
  * \param[in]    msg        error message
- * \param[in]    procname
- * \param[in]    fval       return error val
+ * \param[in]    procname   use __func__
+ * \param[in]    fval       return float error val
  * \return  fval
  */
 l_float32
@@ -221,9 +229,9 @@ returnErrorFloat(const char  *msg,
  * \brief   returnErrorPtr()
  *
  * \param[in]    msg        error message
- * \param[in]    procname
- * \param[in]    pval       return error val
- * \return  pval  typically null for an error return
+ * \param[in]    procname   use __func__
+ * \param[in]    pval       return error val (typically null for an error)
+ * \return  pval
  */
 void *
 returnErrorPtr(const char  *msg,
@@ -231,6 +239,69 @@ returnErrorPtr(const char  *msg,
                void        *pval)
 {
     lept_stderr("Error in %s: %s\n", procname, msg);
+    return pval;
+}
+
+
+/*!
+ * \brief   returnErrorInt1()
+ *
+ * \param[in]    msg        error message
+ * \param[in]    arg        additional error message argument
+ *                          (will be appended to the error message)
+ * \param[in]    procname   use __func__
+ * \param[in]    ival       return error val; typically 1 for an error return
+ * \return  ival   typically 1 for an error return
+ */
+l_int32
+returnErrorInt1(const char  *msg,
+                const char  *arg,
+                const char  *procname,
+                l_int32      ival)
+{
+    lept_stderr("Leptonica Error in %s: %s: %s\n", procname, msg, arg);
+    return ival;
+}
+
+
+/*!
+ * \brief   returnErrorFloat1()
+ *
+ * \param[in]    msg        error message
+ * \param[in]    arg        additional error message argument
+ *                          (will be appended to the error message)
+ * \param[in]    procname   use __func__
+ * \param[in]    fval       return float error val
+ * \return  fval
+ */
+l_float32
+returnErrorFloat1(const char  *msg,
+                  const char  *arg,
+                  const char  *procname,
+                  l_float32    fval)
+{
+    lept_stderr("Leptonica Error in %s: %s: %s\n", procname, msg, arg);
+    return fval;
+}
+
+
+/*!
+ * \brief   returnErrorPtr1()
+ *
+ * \param[in]    msg        error message
+ * \param[in]    arg        additional error message argument
+ *                          (will be appended to the error message)
+ * \param[in]    procname   use __func__
+ * \param[in]    pval       return error val (typically null for an error)
+ * \return  pval
+ */
+void *
+returnErrorPtr1(const char  *msg,
+                const char  *arg,
+                const char  *procname,
+                void        *pval)
+{
+    lept_stderr("Leptonica Error in %s: %s: %s\n", procname, msg, arg);
     return pval;
 }
 
@@ -489,7 +560,7 @@ l_uint8  *datain, *dataout;
     if (size <= 0.0)
         return ERROR_INT("size must be > 0.0", __func__, 1);
     if (loc + size > 1.0)
-        size = 1.0 - loc;
+        size = 1.0f - loc;
 
     datain = l_binaryRead(filein, &inbytes);
     locb = (l_int32)(loc * inbytes + 0.5);
@@ -551,7 +622,7 @@ l_uint8  *data;
     if (size <= 0.0)
         return ERROR_INT("size must be > 0.0", __func__, 1);
     if (loc + size > 1.0)
-        size = 1.0 - loc;
+        size = 1.0f - loc;
 
     data = l_binaryRead(filein, &bytes);
     locb = (l_int32)(loc * bytes + 0.5);
@@ -670,13 +741,13 @@ l_float64  range;
 
 
 /*---------------------------------------------------------------------*
- *                         Simple math function                        *
+ *                        Simple math functions                        *
  *---------------------------------------------------------------------*/
 /*!
  * \brief   lept_roundftoi()
  *
  * \param[in]    fval
- * \return  value rounded to int
+ * \return  value rounded to the nearest integer
  *
  * <pre>
  * Notes:
@@ -690,6 +761,41 @@ l_int32
 lept_roundftoi(l_float32  fval)
 {
     return (fval >= 0.0) ? (l_int32)(fval + 0.5) : (l_int32)(fval - 0.5);
+}
+
+
+/*!
+ * \brief   lept_floor()
+ *
+ * \param[in]    fval
+ * \return  largest integer that is not greater than %fval
+ */
+l_int32
+lept_floor(l_float32  fval)
+{
+    return (fval >= 0.0) ? (l_int32)(fval) : -(l_int32)(-fval);
+}
+
+
+/*!
+ * \brief   lept_ceiling()
+ *
+ * \param[in]    fval
+ * \return  smallest integer that is not less than %fval
+ *
+ * <pre>
+ * Notes:
+ *      (1) If fval is equal to its interger value, return that.
+ *          Otherwise:
+ *            For fval > 0, fval --> 1 + floor(fval)
+ *            For fval < 0, fval --> -(1 + floor(-fval))
+ * </pre>
+ */
+l_int32
+lept_ceiling(l_float32  fval)
+{
+    return (fval == (l_int32)fval ? (l_int32)fval :
+            fval > 0.0 ? 1 + (l_int32)(fval) : -(1 + (l_int32)(-fval)));
 }
 
 
@@ -1164,7 +1270,7 @@ ULONGLONG  hnsec;  /* in units of hecto-nanosecond (100 ns) intervals */
     utime_after.LowPart  = user.dwLowDateTime;
     utime_after.HighPart = user.dwHighDateTime;
     hnsec = utime_after.QuadPart - utime_before.QuadPart;
-    return (l_float32)(signed)hnsec / 10000000.0;
+    return (l_float32)(signed)hnsec / 10000000.0f;
 }
 
 L_TIMER
@@ -1200,7 +1306,7 @@ ULONGLONG       hnsec;  /* in units of 100 ns intervals */
     utime_stop.HighPart = user.dwHighDateTime;
     hnsec = utime_stop.QuadPart - ((ULARGE_INTEGER *)utime_start)->QuadPart;
     LEPT_FREE(utime_start);
-    return (l_float32)(signed)hnsec / 10000000.0;
+    return (l_float32)(signed)hnsec / 10000000.0f;
 }
 
 void
@@ -1275,7 +1381,7 @@ L_WALLTIMER  *timer;
     tusec = timer->stop_usec - timer->start_usec;
     LEPT_FREE(timer);
     *ptimer = NULL;
-    return (tsec + ((l_float32)tusec) / 1000000.0);
+    return (tsec + ((l_float32)tusec) / 1000000.0f);
 }
 
 

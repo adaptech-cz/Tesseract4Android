@@ -1,0 +1,1060 @@
+/home/dan/apps/leptgit/src/sudoku.h:53: warning: Compound L_Sudoku is not documented.
+/home/dan/apps/leptgit/src/seedfill.c:175: warning: Compound L_Pixel is not documented.
+/home/dan/apps/leptgit/src/rbtree.h:78: warning: Compound L_Rbtree_Node is not documented.
+/home/dan/apps/leptgit/src/rbtree.h:70: warning: Compound L_Rbtree is not documented.
+/home/dan/apps/leptgit/src/writefile.c:148: warning: Compound ExtensionMap is not documented.
+/home/dan/apps/leptgit/src/sel1.c:165: warning: Compound CompParameterMap is not documented.
+/home/dan/apps/leptgit/src/colorquant1.c:194: warning: Compound OctcubeQuantCell is not documented.
+/home/dan/apps/leptgit/src/colorquant1.c:209: warning: Compound L_OctcubePop is not documented.
+/home/dan/apps/leptgit/src/colorquant2.c:183: warning: Compound L_Box3d is not documented.
+/home/dan/apps/leptgit/src/recog.h:116: warning: Compound L_Recog is not documented.
+/home/dan/apps/leptgit/src/jbclass.c:242: warning: Compound JbFindTemplatesState is not documented.
+/home/dan/apps/leptgit/src/colorquant1.c:163: warning: Compound ColorQuantCell is not documented.
+/home/dan/apps/leptgit/src/stringcode.h:41: warning: Compound L_StrCode is not documented.
+/home/dan/apps/leptgit/src/array_internal.h:108: warning: Compound L_DnaHash is not documented.
+/home/dan/apps/leptgit/src/colorfill.c:64: warning: Compound ColorEl is not documented.
+/home/dan/apps/leptgit/src/list.h:62: warning: Compound DoubleLinkedList is not documented.
+/home/dan/apps/leptgit/src/maze.c:80: warning: Compound MazeElement is not documented.
+/home/dan/apps/leptgit/src/jpegio.c:159: warning: Compound callback_data is not documented.
+/home/dan/apps/leptgit/src/affine.c:245: warning: Member DEBUG (macro definition) of file affine.c is not documented.
+/home/dan/apps/leptgit/src/affine.c:1291: warning: Member SWAP(a, b) (macro definition) of file affine.c is not documented.
+/home/dan/apps/leptgit/src/affine.c:242: warning: Member AlphaMaskBorderVals[2] (variable) of file affine.c is not documented.
+/home/dan/apps/leptgit/src/array_internal.h:42: warning: explicit link request to 'included' could not be resolved
+/home/dan/apps/leptgit/src/arrayaccess.c:111: warning: documented empty return type of l_clearDataBit
+/home/dan/apps/leptgit/src/arrayaccess.c:195: warning: documented empty return type of l_clearDataDibit
+/home/dan/apps/leptgit/src/arrayaccess.c:248: warning: documented empty return type of l_clearDataQbit
+/home/dan/apps/leptgit/src/arrayaccess.c:94: warning: documented empty return type of l_setDataBit
+/home/dan/apps/leptgit/src/arrayaccess.c:137: warning: documented empty return type of l_setDataBitVal
+/home/dan/apps/leptgit/src/arrayaccess.c:283: warning: documented empty return type of l_setDataByte
+/home/dan/apps/leptgit/src/arrayaccess.c:173: warning: documented empty return type of l_setDataDibit
+/home/dan/apps/leptgit/src/arrayaccess.c:359: warning: documented empty return type of l_setDataFourBytes
+/home/dan/apps/leptgit/src/arrayaccess.c:226: warning: documented empty return type of l_setDataQbit
+/home/dan/apps/leptgit/src/arrayaccess.c:323: warning: documented empty return type of l_setDataTwoBytes
+/home/dan/apps/leptgit/src/arrayaccess.h:111: warning: Member USE_INLINE_ACCESSORS (macro definition) of file arrayaccess.h is not documented.
+/home/dan/apps/leptgit/src/bardecode.c:82: warning: Member DEBUG_CODES (macro definition) of file bardecode.c is not documented.
+/home/dan/apps/leptgit/src/baseline.c:58: warning: Member MinDistInPeak (variable) of file baseline.c is not documented.
+/home/dan/apps/leptgit/src/baseline.c:61: warning: Member PeakThresholdRatio (variable) of file baseline.c is not documented.
+/home/dan/apps/leptgit/src/baseline.c:62: warning: Member ZeroThresholdRatio (variable) of file baseline.c is not documented.
+/home/dan/apps/leptgit/src/baseline.c:65: warning: Member DefaultSlices (variable) of file baseline.c is not documented.
+/home/dan/apps/leptgit/src/baseline.c:66: warning: Member DefaultSweepReduction (variable) of file baseline.c is not documented.
+/home/dan/apps/leptgit/src/baseline.c:67: warning: Member DefaultBsReduction (variable) of file baseline.c is not documented.
+/home/dan/apps/leptgit/src/baseline.c:68: warning: Member DefaultSweepRange (variable) of file baseline.c is not documented.
+/home/dan/apps/leptgit/src/baseline.c:69: warning: Member DefaultSweepDelta (variable) of file baseline.c is not documented.
+/home/dan/apps/leptgit/src/baseline.c:70: warning: Member DefaultMinbsDelta (variable) of file baseline.c is not documented.
+/home/dan/apps/leptgit/src/baseline.c:73: warning: Member OverlapFraction (variable) of file baseline.c is not documented.
+/home/dan/apps/leptgit/src/baseline.c:76: warning: Member MinAllowedConfidence (variable) of file baseline.c is not documented.
+/home/dan/apps/leptgit/src/bbuffer.c:108: warning: Member MaxArraySize (variable) of file bbuffer.c is not documented.
+/home/dan/apps/leptgit/src/bbuffer.c:170: warning: documented empty return type of bbufferDestroy
+/home/dan/apps/leptgit/src/bbuffer.h:1: warning: Member L_BBUFFER (typedef) of file bbuffer.h is not documented.
+/home/dan/apps/leptgit/src/bilateral.c:92: warning: Member DEBUG_BILATERAL (macro definition) of file bilateral.c is not documented.
+/home/dan/apps/leptgit/src/bilateral.c:531: warning: return type of member bilateralDestroy is not documented
+/home/dan/apps/leptgit/src/bilateral.h:1: warning: Member L_BILATERAL (typedef) of file bilateral.h is not documented.
+/home/dan/apps/leptgit/src/bilinear.c:120: warning: Member AlphaMaskBorderVals[2] (variable) of file bilinear.c is not documented.
+/home/dan/apps/leptgit/src/binarize.c:1141: warning: Unsupported symbol &pixd; found
+/home/dan/apps/leptgit/src/binexpand.c:225: warning: Member makeExpandTab2x(void) (function) of file binexpand.c is not documented.
+/home/dan/apps/leptgit/src/binexpand.c:254: warning: Member makeExpandTab4x(void) (function) of file binexpand.c is not documented.
+/home/dan/apps/leptgit/src/binexpand.c:283: warning: Member makeExpandTab8x(void) (function) of file binexpand.c is not documented.
+/home/dan/apps/leptgit/src/binexpand.c:55: warning: Member expandtab16[] (variable) of file binexpand.c is not documented.
+/home/dan/apps/leptgit/src/binexpand.c:55: warning: parameters of member expandtab16 are not (all) documented
+/home/dan/apps/leptgit/src/blend.c:1007: warning: Member blendComponents(l_int32 a, l_int32 b, l_float32 fract) (function) of file blend.c is not documented.
+/home/dan/apps/leptgit/src/blend.c:1512: warning: Member blendHardLightComponents(l_int32 a, l_int32 b, l_float32 fract) (function) of file blend.c is not documented.
+/home/dan/apps/leptgit/src/blend.c:936: warning: Member pixBlendColorByChannel(PIX *pixd, PIX *pixs1, PIX *pixs2, l_int32 x, l_int32 y, l_float32 rfract, l_float32 gfract, l_float32 bfract, l_int32 transparent, l_uint32 transpix) (function) of file blend.c is not documented.
+/home/dan/apps/leptgit/src/blend.c:1350: warning: Member pixBlendHardLight(PIX *pixd, PIX *pixs1, PIX *pixs2, l_int32 x, l_int32 y, l_float32 fract) (function) of file blend.c is not documented.
+/home/dan/apps/leptgit/src/blend.c:688: warning: argument 'pixd' from the argument list of pixBlendGrayInverse has multiple @param documentation sections
+/home/dan/apps/leptgit/src/bmf.c:81: warning: Member DEBUG_BASELINE (macro definition) of file bmf.c is not documented.
+/home/dan/apps/leptgit/src/bmf.c:82: warning: Member DEBUG_CHARS (macro definition) of file bmf.c is not documented.
+/home/dan/apps/leptgit/src/bmf.c:83: warning: Member DEBUG_FONT_GEN (macro definition) of file bmf.c is not documented.
+/home/dan/apps/leptgit/src/bmf.c:78: warning: Member VertFractSep (variable) of file bmf.c is not documented.
+/home/dan/apps/leptgit/src/bmf.c:168: warning: documented empty return type of bmfDestroy
+/home/dan/apps/leptgit/src/bmf.h:1: warning: Member L_BMF (typedef) of file bmf.h is not documented.
+/home/dan/apps/leptgit/src/bmfdata.h:49: warning: Member NUM_FONTS (macro definition) of file bmfdata.h is not documented.
+/home/dan/apps/leptgit/src/bmfdata.h:50: warning: Member inputfonts[] (variable) of file bmfdata.h is not documented.
+/home/dan/apps/leptgit/src/bmfdata.h:55: warning: Member outputfonts[] (variable) of file bmfdata.h is not documented.
+/home/dan/apps/leptgit/src/bmfdata.h:60: warning: Member baselines[NUM_FONTS][3] (variable) of file bmfdata.h is not documented.
+/home/dan/apps/leptgit/src/bmfdata.h:66: warning: Member fontdata_4[] (variable) of file bmfdata.h is not documented.
+/home/dan/apps/leptgit/src/bmfdata.h:96: warning: Member fontdata_6[] (variable) of file bmfdata.h is not documented.
+/home/dan/apps/leptgit/src/bmfdata.h:134: warning: Member fontdata_8[] (variable) of file bmfdata.h is not documented.
+/home/dan/apps/leptgit/src/bmfdata.h:181: warning: Member fontdata_10[] (variable) of file bmfdata.h is not documented.
+/home/dan/apps/leptgit/src/bmfdata.h:236: warning: Member fontdata_12[] (variable) of file bmfdata.h is not documented.
+/home/dan/apps/leptgit/src/bmfdata.h:300: warning: Member fontdata_14[] (variable) of file bmfdata.h is not documented.
+/home/dan/apps/leptgit/src/bmfdata.h:371: warning: Member fontdata_16[] (variable) of file bmfdata.h is not documented.
+/home/dan/apps/leptgit/src/bmfdata.h:450: warning: Member fontdata_18[] (variable) of file bmfdata.h is not documented.
+/home/dan/apps/leptgit/src/bmfdata.h:538: warning: Member fontdata_20[] (variable) of file bmfdata.h is not documented.
+/home/dan/apps/leptgit/src/bmfdata.h:60: warning: parameters of member baselines are not (all) documented
+/home/dan/apps/leptgit/src/bmfdata.h:66: warning: parameters of member fontdata_4 are not (all) documented
+/home/dan/apps/leptgit/src/bmfdata.h:50: warning: parameters of member inputfonts are not (all) documented
+/home/dan/apps/leptgit/src/bmfdata.h:55: warning: parameters of member outputfonts are not (all) documented
+/home/dan/apps/leptgit/src/bmp.h:1: warning: Member BMP_FH (typedef) of file bmp.h is not documented.
+/home/dan/apps/leptgit/src/bmp.h:1: warning: Member BMP_IH (typedef) of file bmp.h is not documented.
+/home/dan/apps/leptgit/src/bmpio.c:68: warning: Member DEBUG (macro definition) of file bmpio.c is not documented.
+/home/dan/apps/leptgit/src/bmpio.c:59: warning: Member bwmap[2] (variable) of file bmpio.c is not documented.
+/home/dan/apps/leptgit/src/bmpio.c:62: warning: Member L_MAX_ALLOWED_WIDTH (variable) of file bmpio.c is not documented.
+/home/dan/apps/leptgit/src/bmpio.c:63: warning: Member L_MAX_ALLOWED_HEIGHT (variable) of file bmpio.c is not documented.
+/home/dan/apps/leptgit/src/bmpio.c:64: warning: Member L_MAX_ALLOWED_PIXELS (variable) of file bmpio.c is not documented.
+/home/dan/apps/leptgit/src/bmpio.c:65: warning: Member L_MAX_ALLOWED_RES (variable) of file bmpio.c is not documented.
+/home/dan/apps/leptgit/src/bootnumgen1.c:63: warning: Member l_bootnum1 (variable) of file bootnumgen1.c is not documented.
+/home/dan/apps/leptgit/src/bootnumgen2.c:63: warning: Member l_bootnum2 (variable) of file bootnumgen2.c is not documented.
+/home/dan/apps/leptgit/src/bootnumgen4.c:66: warning: Member l_bootnum4 (variable) of file bootnumgen4.c is not documented.
+/home/dan/apps/leptgit/src/boxbasic.c:141: warning: Member MaxBoxaPtrArraySize (variable) of file boxbasic.c is not documented.
+/home/dan/apps/leptgit/src/boxbasic.c:142: warning: Member MaxBoxaaPtrArraySize (variable) of file boxbasic.c is not documented.
+/home/dan/apps/leptgit/src/boxbasic.c:519: warning: documented empty return type of boxaDestroy
+/home/dan/apps/leptgit/src/boxbasic.c:273: warning: documented empty return type of boxDestroy
+/home/dan/apps/leptgit/src/boxfunc1.c:1868: warning: argument 'boxas' of command @param is not found in the argument list of boxaAdjustBoxSides(BOXA *boxa, l_int32 index, l_int32 delleft, l_int32 delright, l_int32 deltop, l_int32 delbot)
+/home/dan/apps/leptgit/src/boxfunc1.c:1886: warning: The following parameter of boxaAdjustBoxSides(BOXA *boxa, l_int32 index, l_int32 delleft, l_int32 delright, l_int32 deltop, l_int32 delbot) is not documented:
+  parameter 'boxa'
+/home/dan/apps/leptgit/src/boxfunc2.c:78: warning: Member MinCompsForBinSort (variable) of file boxfunc2.c is not documented.
+/home/dan/apps/leptgit/src/boxfunc3.c:75: warning: Member DEBUG_SPLIT (macro definition) of file boxfunc3.c is not documented.
+/home/dan/apps/leptgit/src/boxfunc5.c:902: warning: Member adjustSidePlotName(char *buf, size_t size, const char *preface, l_int32 select) (function) of file boxfunc5.c is not documented.
+/home/dan/apps/leptgit/src/boxfunc5.c:582: warning: return type of member boxaSizeConsistency is not documented
+/home/dan/apps/leptgit/src/bytearray.c:76: warning: Member MaxArraySize (variable) of file bytearray.c is not documented.
+/home/dan/apps/leptgit/src/bytearray.c:242: warning: documented empty return type of l_byteaDestroy
+/home/dan/apps/leptgit/src/ccbord.c:304: warning: Member DEBUG_PRINT (macro definition) of file ccbord.c is not documented.
+/home/dan/apps/leptgit/src/ccbord.c:259: warning: Member INITIAL_PTR_ARRAYSIZE (variable) of file ccbord.c is not documented.
+/home/dan/apps/leptgit/src/ccbord.c:263: warning: Member NMAX_HOLES (variable) of file ccbord.c is not documented.
+/home/dan/apps/leptgit/src/ccbord.c:278: warning: Member xpostab[] (variable) of file ccbord.c is not documented.
+/home/dan/apps/leptgit/src/ccbord.c:279: warning: Member ypostab[] (variable) of file ccbord.c is not documented.
+/home/dan/apps/leptgit/src/ccbord.c:280: warning: Member qpostab[] (variable) of file ccbord.c is not documented.
+/home/dan/apps/leptgit/src/ccbord.c:350: warning: documented empty return type of ccbaDestroy
+/home/dan/apps/leptgit/src/ccbord.c:1101: warning: return type of member locateOutsideSeedPixel is not documented
+/home/dan/apps/leptgit/src/classapp.c:877: warning: Member testLineAlignmentX(NUMA *na1, NUMA *na2, l_int32 shiftx, l_int32 delx, l_int32 nperline) (function) of file classapp.c is not documented.
+/home/dan/apps/leptgit/src/classapp.c:927: warning: Member countAlignedMatches(NUMA *nai1, NUMA *nai2, NUMA *nasx, NUMA *nasy, l_int32 n1, l_int32 n2, l_int32 delx, l_int32 dely, l_int32 nreq, l_int32 *psame, l_int32 debugflag) (function) of file classapp.c is not documented.
+/home/dan/apps/leptgit/src/classapp.c:1014: warning: Member printRowIndices(l_int32 *index1, l_int32 n1, l_int32 *index2, l_int32 n2) (function) of file classapp.c is not documented.
+/home/dan/apps/leptgit/src/colorfill.c:1: warning: Member COLOREL (typedef) of file colorfill.c is not documented.
+/home/dan/apps/leptgit/src/colorfill.c:491: warning: Member colorelCreate(l_int32 x, l_int32 y, l_uint32 color) (function) of file colorfill.c is not documented.
+/home/dan/apps/leptgit/src/colorfill.c:72: warning: Member DefaultMinMax (variable) of file colorfill.c is not documented.
+/home/dan/apps/leptgit/src/colorfill.c:156: warning: documented empty return type of l_colorfillDestroy
+/home/dan/apps/leptgit/src/colorfill.c:399: warning: found </pre> at different nesting level (5) than expected (2)
+/home/dan/apps/leptgit/src/colorfill.c:400: warning: end of comment block while expecting command </pre>
+/home/dan/apps/leptgit/src/colorfill.h:1: warning: Member L_COLORFILL (typedef) of file colorfill.h is not documented.
+/home/dan/apps/leptgit/src/colormap.c:272: warning: documented empty return type of pixcmapDestroy
+/home/dan/apps/leptgit/src/colorquant1.c:266: warning: Member DEBUG_COLORQUANT (macro definition) of file colorquant1.c is not documented.
+/home/dan/apps/leptgit/src/colorquant1.c:267: warning: Member DEBUG_OCTINDEX (macro definition) of file colorquant1.c is not documented.
+/home/dan/apps/leptgit/src/colorquant1.c:268: warning: Member DEBUG_OCTCUBE_CMAP (macro definition) of file colorquant1.c is not documented.
+/home/dan/apps/leptgit/src/colorquant1.c:269: warning: Member DEBUG_POP (macro definition) of file colorquant1.c is not documented.
+/home/dan/apps/leptgit/src/colorquant1.c:270: warning: Member DEBUG_FEW_COLORS (macro definition) of file colorquant1.c is not documented.
+/home/dan/apps/leptgit/src/colorquant1.c:271: warning: Member PRINT_OCTCUBE_STATS (macro definition) of file colorquant1.c is not documented.
+/home/dan/apps/leptgit/src/colorquant1.c:1: warning: Member CQCELL (typedef) of file colorquant1.c is not documented.
+/home/dan/apps/leptgit/src/colorquant1.c:178: warning: Member OQCELL (typedef) of file colorquant1.c is not documented.
+/home/dan/apps/leptgit/src/colorquant1.c:178: warning: Member L_OCTCUBE_POP (typedef) of file colorquant1.c is not documented.
+/home/dan/apps/leptgit/src/colorquant1.c:173: warning: Member CqNLevels (variable) of file colorquant1.c is not documented.
+/home/dan/apps/leptgit/src/colorquant1.c:174: warning: Member CqReservedColors (variable) of file colorquant1.c is not documented.
+/home/dan/apps/leptgit/src/colorquant1.c:176: warning: Member ExtraReservedColors (variable) of file colorquant1.c is not documented.
+/home/dan/apps/leptgit/src/colorquant1.c:177: warning: Member TreeGenWidth (variable) of file colorquant1.c is not documented.
+/home/dan/apps/leptgit/src/colorquant1.c:178: warning: Member MinDitherSize (variable) of file colorquant1.c is not documented.
+/home/dan/apps/leptgit/src/colorquant1.c:229: warning: Member FIXED_DIF_CAP (variable) of file colorquant1.c is not documented.
+/home/dan/apps/leptgit/src/colorquant1.c:230: warning: Member POP_DIF_CAP (variable) of file colorquant1.c is not documented.
+/home/dan/apps/leptgit/src/colorquant1.c:1280: warning: return type of member cqcellTreeDestroy is not documented
+/home/dan/apps/leptgit/src/colorquant1.c:1449: warning: documented empty return type of getOctcubeIndexFromRGB
+/home/dan/apps/leptgit/src/colorquant2.c:239: warning: Member DEBUG_MC_COLORS (macro definition) of file colorquant2.c is not documented.
+/home/dan/apps/leptgit/src/colorquant2.c:240: warning: Member DEBUG_SPLIT_AXES (macro definition) of file colorquant2.c is not documented.
+/home/dan/apps/leptgit/src/colorquant2.c:1: warning: Member L_BOX3D (typedef) of file colorquant2.c is not documented.
+/home/dan/apps/leptgit/src/colorquant2.c:226: warning: Member DefaultSigBits (variable) of file colorquant2.c is not documented.
+/home/dan/apps/leptgit/src/colorquant2.c:227: warning: Member MaxItersAllowed (variable) of file colorquant2.c is not documented.
+/home/dan/apps/leptgit/src/colorquant2.c:231: warning: Member FractByPopulation (variable) of file colorquant2.c is not documented.
+/home/dan/apps/leptgit/src/colorquant2.c:235: warning: Member DifCap (variable) of file colorquant2.c is not documented.
+/home/dan/apps/leptgit/src/colorseg.c:49: warning: Member MAX_ALLOWED_ITERATIONS (variable) of file colorseg.c is not documented.
+/home/dan/apps/leptgit/src/colorseg.c:52: warning: Member DIST_EXPAND_FACT (variable) of file colorseg.c is not documented.
+/home/dan/apps/leptgit/src/colorseg.c:58: warning: Member LEVEL_IN_OCTCUBE (variable) of file colorseg.c is not documented.
+/home/dan/apps/leptgit/src/colorspace.c:94: warning: Member DEBUG_HISTO (macro definition) of file colorspace.c is not documented.
+/home/dan/apps/leptgit/src/colorspace.c:95: warning: Member SLOW_CUBE_ROOT (macro definition) of file colorspace.c is not documented.
+/home/dan/apps/leptgit/src/colorspace.c:2132: warning: Member lab_forward(l_float32 v) (function) of file colorspace.c is not documented.
+/home/dan/apps/leptgit/src/colorspace.c:2158: warning: Member lab_reverse(l_float32 v) (function) of file colorspace.c is not documented.
+/home/dan/apps/leptgit/src/compare.c:115: warning: Member TINY (variable) of file compare.c is not documented.
+/home/dan/apps/leptgit/src/conncomp.c:129: warning: Member DEBUG (macro definition) of file conncomp.c is not documented.
+/home/dan/apps/leptgit/src/conncomp.c:1: warning: Member FILLSEG (typedef) of file conncomp.c is not documented.
+/home/dan/apps/leptgit/src/convolve.c:500: warning: Member blockconvAccumLow(l_uint32 *datad, l_int32 w, l_int32 h, l_int32 wpld, l_uint32 *datas, l_int32 d, l_int32 wpls) (function) of file convolve.c is not documented.
+/home/dan/apps/leptgit/src/convolve.c:97: warning: Member ConvolveSamplingFactX (variable) of file convolve.c is not documented.
+/home/dan/apps/leptgit/src/convolve.c:98: warning: Member ConvolveSamplingFactY (variable) of file convolve.c is not documented.
+/home/dan/apps/leptgit/src/convolve.c:2416: warning: documented empty return type of l_setConvolveSampling
+/home/dan/apps/leptgit/src/dewarp.h:1: warning: Member L_DEWARPA (typedef) of file dewarp.h is not documented.
+/home/dan/apps/leptgit/src/dewarp.h:1: warning: Member L_DEWARP (typedef) of file dewarp.h is not documented.
+/home/dan/apps/leptgit/src/dewarp1.c:422: warning: Member InitialPtrArraySize (variable) of file dewarp1.c is not documented.
+/home/dan/apps/leptgit/src/dewarp1.c:423: warning: Member MaxPtrArraySize (variable) of file dewarp1.c is not documented.
+/home/dan/apps/leptgit/src/dewarp1.c:424: warning: Member DefaultArraySampling (variable) of file dewarp1.c is not documented.
+/home/dan/apps/leptgit/src/dewarp1.c:425: warning: Member MinArraySampling (variable) of file dewarp1.c is not documented.
+/home/dan/apps/leptgit/src/dewarp1.c:426: warning: Member DefaultMinLines (variable) of file dewarp1.c is not documented.
+/home/dan/apps/leptgit/src/dewarp1.c:427: warning: Member MinMinLines (variable) of file dewarp1.c is not documented.
+/home/dan/apps/leptgit/src/dewarp1.c:428: warning: Member DefaultMaxRefDist (variable) of file dewarp1.c is not documented.
+/home/dan/apps/leptgit/src/dewarp1.c:429: warning: Member DefaultUseBoth (variable) of file dewarp1.c is not documented.
+/home/dan/apps/leptgit/src/dewarp1.c:430: warning: Member DefaultCheckColumns (variable) of file dewarp1.c is not documented.
+/home/dan/apps/leptgit/src/dewarp1.c:433: warning: Member DefaultMaxLineCurv (variable) of file dewarp1.c is not documented.
+/home/dan/apps/leptgit/src/dewarp1.c:434: warning: Member DefaultMinDiffLineCurv (variable) of file dewarp1.c is not documented.
+/home/dan/apps/leptgit/src/dewarp1.c:435: warning: Member DefaultMaxDiffLineCurv (variable) of file dewarp1.c is not documented.
+/home/dan/apps/leptgit/src/dewarp1.c:436: warning: Member DefaultMaxEdgeCurv (variable) of file dewarp1.c is not documented.
+/home/dan/apps/leptgit/src/dewarp1.c:437: warning: Member DefaultMaxDiffEdgeCurv (variable) of file dewarp1.c is not documented.
+/home/dan/apps/leptgit/src/dewarp1.c:438: warning: Member DefaultMaxEdgeSlope (variable) of file dewarp1.c is not documented.
+/home/dan/apps/leptgit/src/dewarp1.c:722: warning: documented empty return type of dewarpaDestroy
+/home/dan/apps/leptgit/src/dewarp1.c:516: warning: documented empty return type of dewarpDestroy
+/home/dan/apps/leptgit/src/dewarp2.c:88: warning: Member DEBUG_TEXTLINE_CENTERS (macro definition) of file dewarp2.c is not documented.
+/home/dan/apps/leptgit/src/dewarp2.c:89: warning: Member DEBUG_SHORT_LINES (macro definition) of file dewarp2.c is not documented.
+/home/dan/apps/leptgit/src/dewarp2.c:96: warning: Member MinRatioLinesToHeight (variable) of file dewarp2.c is not documented.
+/home/dan/apps/leptgit/src/dewarp2.c:97: warning: Member MinLinesForHoriz1 (variable) of file dewarp2.c is not documented.
+/home/dan/apps/leptgit/src/dewarp2.c:98: warning: Member MinLinesForHoriz2 (variable) of file dewarp2.c is not documented.
+/home/dan/apps/leptgit/src/dewarp2.c:99: warning: Member AllowedWidthFract (variable) of file dewarp2.c is not documented.
+/home/dan/apps/leptgit/src/dewarp4.c:68: warning: Member DEBUG_INVALID_MODELS (macro definition) of file dewarp4.c is not documented.
+/home/dan/apps/leptgit/src/dewarp4.c:72: warning: Member GrayInValue (variable) of file dewarp4.c is not documented.
+/home/dan/apps/leptgit/src/dnabasic.c:161: warning: Member MaxDoubleArraySize (variable) of file dnabasic.c is not documented.
+/home/dan/apps/leptgit/src/dnabasic.c:162: warning: Member MaxPtrArraySize (variable) of file dnabasic.c is not documented.
+/home/dan/apps/leptgit/src/dnabasic.c:1283: warning: documented empty return type of l_dnaaDestroy
+/home/dan/apps/leptgit/src/dnabasic.c:323: warning: documented empty return type of l_dnaDestroy
+/home/dan/apps/leptgit/src/dnahash.c:104: warning: documented empty return type of l_dnaHashDestroy
+/home/dan/apps/leptgit/src/edge.c:512: warning: Member pixGetLastOffPixelInRun(PIX *pixs, l_int32 x, l_int32 y, l_int32 direction, l_int32 *ploc) (function) of file edge.c is not documented.
+/home/dan/apps/leptgit/src/edge.c:584: warning: Member pixGetLastOnPixelInRun(PIX *pixs, l_int32 x, l_int32 y, l_int32 direction, l_int32 *ploc) (function) of file edge.c is not documented.
+/home/dan/apps/leptgit/src/enhance.c:127: warning: Member EnhanceScaleFactor (variable) of file enhance.c is not documented.
+/home/dan/apps/leptgit/src/fhmtauto.c:102: warning: Member OUTROOT (macro definition) of file fhmtauto.c is not documented.
+/home/dan/apps/leptgit/src/fhmtauto.c:103: warning: Member TEMPLATE1 (macro definition) of file fhmtauto.c is not documented.
+/home/dan/apps/leptgit/src/fhmtauto.c:104: warning: Member TEMPLATE2 (macro definition) of file fhmtauto.c is not documented.
+/home/dan/apps/leptgit/src/fhmtauto.c:106: warning: Member PROTOARGS (macro definition) of file fhmtauto.c is not documented.
+/home/dan/apps/leptgit/src/fhmtauto.c:108: warning: Member L_BUF_SIZE (macro definition) of file fhmtauto.c is not documented.
+/home/dan/apps/leptgit/src/fhmtauto.c:744: warning: parameters of member makeBarrelshiftString are not (all) documented
+/home/dan/apps/leptgit/src/fhmtauto.c:744: warning: return type of member makeBarrelshiftString is not documented
+/home/dan/apps/leptgit/src/fhmtauto.c:694: warning: parameters of member sarrayMakeInnerLoopDWACode are not (all) documented
+/home/dan/apps/leptgit/src/fhmtauto.c:694: warning: return type of member sarrayMakeInnerLoopDWACode is not documented
+/home/dan/apps/leptgit/src/fhmtauto.c:637: warning: parameters of member sarrayMakeWplsCode are not (all) documented
+/home/dan/apps/leptgit/src/fhmtauto.c:637: warning: return type of member sarrayMakeWplsCode is not documented
+/home/dan/apps/leptgit/src/fhmtauto.c:114: warning: Member wpldecls[][60] (variable) of file fhmtauto.c is not documented.
+/home/dan/apps/leptgit/src/fhmtauto.c:146: warning: Member wpldefs[][24] (variable) of file fhmtauto.c is not documented.
+/home/dan/apps/leptgit/src/fhmtauto.c:178: warning: Member wplstrp[][10] (variable) of file fhmtauto.c is not documented.
+/home/dan/apps/leptgit/src/fhmtauto.c:187: warning: Member wplstrm[][10] (variable) of file fhmtauto.c is not documented.
+/home/dan/apps/leptgit/src/fhmtauto.c:187: warning: parameters of member wplstrm are not (all) documented
+/home/dan/apps/leptgit/src/fhmtauto.c:178: warning: parameters of member wplstrp are not (all) documented
+/home/dan/apps/leptgit/src/flipdetect.c:795: warning: Member pixDebugFlipDetect(const char *filename, PIX *pixs, PIX *pixhm, l_int32 enable) (function) of file flipdetect.c is not documented.
+/home/dan/apps/leptgit/src/flipdetect.c:209: warning: Member textsel1 (variable) of file flipdetect.c is not documented.
+/home/dan/apps/leptgit/src/flipdetect.c:215: warning: Member textsel2 (variable) of file flipdetect.c is not documented.
+/home/dan/apps/leptgit/src/flipdetect.c:221: warning: Member textsel3 (variable) of file flipdetect.c is not documented.
+/home/dan/apps/leptgit/src/flipdetect.c:227: warning: Member textsel4 (variable) of file flipdetect.c is not documented.
+/home/dan/apps/leptgit/src/flipdetect.c:234: warning: Member DefaultMinUpDownCount (variable) of file flipdetect.c is not documented.
+/home/dan/apps/leptgit/src/flipdetect.c:235: warning: Member DefaultMinUpDownConf (variable) of file flipdetect.c is not documented.
+/home/dan/apps/leptgit/src/flipdetect.c:236: warning: Member DefaultMinUpDownRatio (variable) of file flipdetect.c is not documented.
+/home/dan/apps/leptgit/src/flipdetect.c:239: warning: Member DefaultMinMirrorFlipCount (variable) of file flipdetect.c is not documented.
+/home/dan/apps/leptgit/src/flipdetect.c:240: warning: Member DefaultMinMirrorFlipConf (variable) of file flipdetect.c is not documented.
+/home/dan/apps/leptgit/src/flipdetect.c:209: warning: parameters of member textsel1 are not (all) documented
+/home/dan/apps/leptgit/src/flipdetect.c:215: warning: parameters of member textsel2 are not (all) documented
+/home/dan/apps/leptgit/src/flipdetect.c:221: warning: parameters of member textsel3 are not (all) documented
+/home/dan/apps/leptgit/src/flipdetect.c:227: warning: parameters of member textsel4 are not (all) documented
+/home/dan/apps/leptgit/src/fmorphauto.c:106: warning: Member OUTROOT (macro definition) of file fmorphauto.c is not documented.
+/home/dan/apps/leptgit/src/fmorphauto.c:107: warning: Member TEMPLATE1 (macro definition) of file fmorphauto.c is not documented.
+/home/dan/apps/leptgit/src/fmorphauto.c:108: warning: Member TEMPLATE2 (macro definition) of file fmorphauto.c is not documented.
+/home/dan/apps/leptgit/src/fmorphauto.c:110: warning: Member PROTOARGS (macro definition) of file fmorphauto.c is not documented.
+/home/dan/apps/leptgit/src/fmorphauto.c:112: warning: Member L_BUF_SIZE (macro definition) of file fmorphauto.c is not documented.
+/home/dan/apps/leptgit/src/fmorphauto.c:828: warning: parameters of member makeBarrelshiftString are not (all) documented
+/home/dan/apps/leptgit/src/fmorphauto.c:828: warning: return type of member makeBarrelshiftString is not documented
+/home/dan/apps/leptgit/src/fmorphauto.c:755: warning: parameters of member sarrayMakeInnerLoopDWACode are not (all) documented
+/home/dan/apps/leptgit/src/fmorphauto.c:755: warning: return type of member sarrayMakeInnerLoopDWACode is not documented
+/home/dan/apps/leptgit/src/fmorphauto.c:675: warning: parameters of member sarrayMakeWplsCode are not (all) documented
+/home/dan/apps/leptgit/src/fmorphauto.c:675: warning: return type of member sarrayMakeWplsCode is not documented
+/home/dan/apps/leptgit/src/fmorphauto.c:492: warning: Member fmorphautogen2(SELA *sela, l_int32 fileindex, const char *filename) (function) of file fmorphauto.c is not documented.
+/home/dan/apps/leptgit/src/fmorphauto.c:118: warning: Member wpldecls[][53] (variable) of file fmorphauto.c is not documented.
+/home/dan/apps/leptgit/src/fmorphauto.c:150: warning: Member wplgendecls[][30] (variable) of file fmorphauto.c is not documented.
+/home/dan/apps/leptgit/src/fmorphauto.c:182: warning: Member wpldefs[][25] (variable) of file fmorphauto.c is not documented.
+/home/dan/apps/leptgit/src/fmorphauto.c:214: warning: Member wplstrp[][10] (variable) of file fmorphauto.c is not documented.
+/home/dan/apps/leptgit/src/fmorphauto.c:223: warning: Member wplstrm[][10] (variable) of file fmorphauto.c is not documented.
+/home/dan/apps/leptgit/src/fmorphauto.c:223: warning: parameters of member wplstrm are not (all) documented
+/home/dan/apps/leptgit/src/fmorphauto.c:214: warning: parameters of member wplstrp are not (all) documented
+/home/dan/apps/leptgit/src/fpix1.c:128: warning: Member MaxPtrArraySize (variable) of file fpix1.c is not documented.
+/home/dan/apps/leptgit/src/fpix1.c:1085: warning: documented empty return type of dpixDestroy
+/home/dan/apps/leptgit/src/fpix1.c:633: warning: documented empty return type of fpixaDestroy
+/home/dan/apps/leptgit/src/fpix1.c:280: warning: documented empty return type of fpixDestroy
+/home/dan/apps/leptgit/src/gifiostub.c:45: warning: Member pixReadStreamGif(FILE *fp) (function) of file gifiostub.c is not documented.
+/home/dan/apps/leptgit/src/gifiostub.c:52: warning: Member pixReadMemGif(const l_uint8 *cdata, size_t size) (function) of file gifiostub.c is not documented.
+/home/dan/apps/leptgit/src/gifiostub.c:59: warning: Member pixWriteStreamGif(FILE *fp, PIX *pix) (function) of file gifiostub.c is not documented.
+/home/dan/apps/leptgit/src/gifiostub.c:66: warning: Member pixWriteMemGif(l_uint8 **pdata, size_t *psize, PIX *pix) (function) of file gifiostub.c is not documented.
+/home/dan/apps/leptgit/src/gplot.c:155: warning: Member Bufsize (macro definition) of file gplot.c is not documented.
+/home/dan/apps/leptgit/src/gplot.c:125: warning: Unsupported xml/html tag <rootname> found
+/home/dan/apps/leptgit/src/gplot.c:126: warning: Unsupported xml/html tag <latexname> found
+/home/dan/apps/leptgit/src/gplot.c:128: warning: Found unknown command '\documentclass'
+/home/dan/apps/leptgit/src/gplot.c:129: warning: Found unknown command '\begin'
+/home/dan/apps/leptgit/src/gplot.c:131: warning: Found unknown command '\end'
+/home/dan/apps/leptgit/src/gplot.c:132: warning: Unsupported xml/html tag <latexname> found
+/home/dan/apps/leptgit/src/gplot.c:133: warning: Unsupported xml/html tag <latexname> found
+/home/dan/apps/leptgit/src/gplot.c:134: warning: Unsupported xml/html tag <psname> found
+/home/dan/apps/leptgit/src/gplot.c:135: warning: Unsupported xml/html tag <psname> found
+/home/dan/apps/leptgit/src/gplot.c:135: warning: Unsupported xml/html tag <latexname> found
+/home/dan/apps/leptgit/src/gplot.c:136: warning: Unsupported xml/html tag <psname> found
+/home/dan/apps/leptgit/src/gplot.c:137: warning: Unsupported xml/html tag <psname> found
+/home/dan/apps/leptgit/src/gplot.c:137: warning: Unsupported xml/html tag <pdfname> found
+/home/dan/apps/leptgit/src/gplot.h:44: warning: Member GPLOT_VERSION_NUMBER (macro definition) of file gplot.h is not documented.
+/home/dan/apps/leptgit/src/gplot.h:46: warning: Member NUM_GPLOT_STYLES (macro definition) of file gplot.h is not documented.
+/home/dan/apps/leptgit/src/gplot.h:55: warning: Member NUM_GPLOT_OUTPUTS (macro definition) of file gplot.h is not documented.
+/home/dan/apps/leptgit/src/gplot.h:73: warning: Member GPLOT (typedef) of file gplot.h is not documented.
+/home/dan/apps/leptgit/src/gplot.h:47: warning: Member GPLOT_STYLE (enumeration) of file gplot.h is not documented.
+/home/dan/apps/leptgit/src/gplot.h:56: warning: Member GPLOT_OUTPUT (enumeration) of file gplot.h is not documented.
+/home/dan/apps/leptgit/src/gplot.h:65: warning: Member GPLOT_SCALING (enumeration) of file gplot.h is not documented.
+/home/dan/apps/leptgit/src/gplot.h:65: warning: parameters of member GPLOT_SCALING are not (all) documented
+/home/dan/apps/leptgit/src/graphics.c:503: warning: argument 'orient' from the argument list of generatePtaHashBoxa has multiple @param documentation sections
+/home/dan/apps/leptgit/src/graphics.c:2057: warning: argument 'box' of command @param is not found in the argument list of pixRenderHashBoxaArb(PIX *pix, BOXA *boxa, l_int32 spacing, l_int32 width, l_int32 orient, l_int32 outline, l_int32 rval, l_int32 gval, l_int32 bval)
+/home/dan/apps/leptgit/src/graphics.c:2072: warning: The following parameter of pixRenderHashBoxaArb(PIX *pix, BOXA *boxa, l_int32 spacing, l_int32 width, l_int32 orient, l_int32 outline, l_int32 rval, l_int32 gval, l_int32 bval) is not documented:
+  parameter 'boxa'
+/home/dan/apps/leptgit/src/grayquant.c:138: warning: Member DEBUG_UNROLLING (macro definition) of file grayquant.c is not documented.
+/home/dan/apps/leptgit/src/grayquant.c:517: warning: Member thresholdToBinaryLineLow(l_uint32 *lined, l_int32 w, l_uint32 *lines, l_int32 d, l_int32 thresh) (function) of file grayquant.c is not documented.
+/home/dan/apps/leptgit/src/grayquant.c:1115: warning: parameters of member ditherTo2bppLow are not (all) documented
+/home/dan/apps/leptgit/src/grayquant.c:1115: warning: return type of member ditherTo2bppLow is not documented
+/home/dan/apps/leptgit/src/grayquant.c:322: warning: documented empty return type of ditherToBinaryLineLow
+/home/dan/apps/leptgit/src/grayquant.c:266: warning: parameters of member ditherToBinaryLow are not (all) documented
+/home/dan/apps/leptgit/src/grayquant.c:266: warning: return type of member ditherToBinaryLow is not documented
+/home/dan/apps/leptgit/src/grayquant.c:1418: warning: parameters of member thresholdTo2bppLow are not (all) documented
+/home/dan/apps/leptgit/src/grayquant.c:1418: warning: return type of member thresholdTo2bppLow is not documented
+/home/dan/apps/leptgit/src/grayquant.c:1558: warning: parameters of member thresholdTo4bppLow are not (all) documented
+/home/dan/apps/leptgit/src/grayquant.c:1558: warning: return type of member thresholdTo4bppLow is not documented
+/home/dan/apps/leptgit/src/grayquant.c:492: warning: parameters of member thresholdToBinaryLow are not (all) documented
+/home/dan/apps/leptgit/src/grayquant.c:492: warning: return type of member thresholdToBinaryLow is not documented
+/home/dan/apps/leptgit/src/heap.c:91: warning: Member SWAP_ITEMS(i, j) (macro definition) of file heap.c is not documented.
+/home/dan/apps/leptgit/src/heap.c:88: warning: Member MaxPtrArraySize (variable) of file heap.c is not documented.
+/home/dan/apps/leptgit/src/heap.c:91: warning: parameters of member SWAP_ITEMS are not (all) documented
+/home/dan/apps/leptgit/src/heap.c:152: warning: documented empty return type of lheapDestroy
+/home/dan/apps/leptgit/src/heap.h:1: warning: Member L_HEAP (typedef) of file heap.h is not documented.
+/home/dan/apps/leptgit/src/imageio.h:115: warning: Member L_FORMAT_IS_TIFF(f) (macro definition) of file imageio.h is not documented.
+/home/dan/apps/leptgit/src/imageio.h:1: warning: Member L_COMP_DATA (typedef) of file imageio.h is not documented.
+/home/dan/apps/leptgit/src/imageio.h:1: warning: Member L_PDF_DATA (typedef) of file imageio.h is not documented.
+/home/dan/apps/leptgit/src/imageio.h:115: warning: parameters of member L_FORMAT_IS_TIFF are not (all) documented
+/home/dan/apps/leptgit/src/jbclass.h:139: warning: Member JB_DATA_EXT (macro definition) of file jbclass.h is not documented.
+/home/dan/apps/leptgit/src/jbclass.h:1: warning: Member JBCLASSER (typedef) of file jbclass.h is not documented.
+/home/dan/apps/leptgit/src/jbclass.h:1: warning: Member JBDATA (typedef) of file jbclass.h is not documented.
+/home/dan/apps/leptgit/src/jp2kheader.c:54: warning: Member DEBUG_CODEC (macro definition) of file jp2kheader.c is not documented.
+/home/dan/apps/leptgit/src/jp2kheader.c:273: warning: Member fgetJp2kResolution(FILE *fp, l_int32 *pxres, l_int32 *pyres) (function) of file jp2kheader.c is not documented.
+/home/dan/apps/leptgit/src/jp2kheader.c:62: warning: Member MAX_JP2K_WIDTH (variable) of file jp2kheader.c is not documented.
+/home/dan/apps/leptgit/src/jp2kheader.c:63: warning: Member MAX_JP2K_HEIGHT (variable) of file jp2kheader.c is not documented.
+/home/dan/apps/leptgit/src/jp2kiostub.c:47: warning: Member pixReadJp2k(const char *filename, l_uint32 reduction, BOX *box, l_int32 hint, l_int32 debug) (function) of file jp2kiostub.c is not documented.
+/home/dan/apps/leptgit/src/jp2kiostub.c:55: warning: Member pixReadStreamJp2k(FILE *fp, l_uint32 reduction, BOX *box, l_int32 hint, l_int32 debug) (function) of file jp2kiostub.c is not documented.
+/home/dan/apps/leptgit/src/jp2kiostub.c:63: warning: Member pixWriteJp2k(const char *filename, PIX *pix, l_int32 quality, l_int32 nlevels, l_int32 hint, l_int32 debug) (function) of file jp2kiostub.c is not documented.
+/home/dan/apps/leptgit/src/jp2kiostub.c:71: warning: Member pixWriteStreamJp2k(FILE *fp, PIX *pix, l_int32 quality, l_int32 nlevels, l_int32 codec, l_int32 hint, l_int32 debug) (function) of file jp2kiostub.c is not documented.
+/home/dan/apps/leptgit/src/jp2kiostub.c:80: warning: Member pixReadMemJp2k(const l_uint8 *data, size_t size, l_uint32 reduction, BOX *box, l_int32 hint, l_int32 debug) (function) of file jp2kiostub.c is not documented.
+/home/dan/apps/leptgit/src/jp2kiostub.c:88: warning: Member pixWriteMemJp2k(l_uint8 **pdata, size_t *psize, PIX *pix, l_int32 quality, l_int32 nlevels, l_int32 hint, l_int32 debug) (function) of file jp2kiostub.c is not documented.
+/home/dan/apps/leptgit/src/jpegio.c:165: warning: Member DEBUG_INFO (macro definition) of file jpegio.c is not documented.
+/home/dan/apps/leptgit/src/jpegio.c:1229: warning: Member jpeg_getc(j_decompress_ptr cinfo) (function) of file jpegio.c is not documented.
+/home/dan/apps/leptgit/src/jpegio.c:622: warning: Member fgetJpegResolution(FILE *fp, l_int32 *pxres, l_int32 *pyres) (function) of file jpegio.c is not documented.
+/home/dan/apps/leptgit/src/jpegio.c:680: warning: Member fgetJpegComment(FILE *fp, l_uint8 **pcomment) (function) of file jpegio.c is not documented.
+/home/dan/apps/leptgit/src/jpegio.c:1252: warning: parameters of member jpeg_comment_callback are not (all) documented
+/home/dan/apps/leptgit/src/jpegio.c:1252: warning: return type of member jpeg_comment_callback is not documented
+/home/dan/apps/leptgit/src/jpegio.c:1200: warning: parameters of member jpeg_error_catch_all_1 are not (all) documented
+/home/dan/apps/leptgit/src/jpegio.c:1200: warning: return type of member jpeg_error_catch_all_1 is not documented
+/home/dan/apps/leptgit/src/jpegio.c:1217: warning: parameters of member jpeg_error_catch_all_2 are not (all) documented
+/home/dan/apps/leptgit/src/jpegio.c:1217: warning: return type of member jpeg_error_catch_all_2 is not documented
+/home/dan/apps/leptgit/src/kernel.c:92: warning: Member MaxArraySize (variable) of file kernel.c is not documented.
+/home/dan/apps/leptgit/src/kernel.c:148: warning: documented empty return type of kernelDestroy
+/home/dan/apps/leptgit/src/libversions.c:102: warning: return type of member getImagelibVersions is not documented
+/home/dan/apps/leptgit/src/list.c:147: warning: Unsupported xml/html tag <do> found
+/home/dan/apps/leptgit/src/list.c:239: warning: documented empty return type of listDestroy
+/home/dan/apps/leptgit/src/list.h:1: warning: Member DLLIST (typedef) of file list.h is not documented.
+/home/dan/apps/leptgit/src/map.c:111: warning: Member l_amapCreate(l_int32 keytype) (function) of file map.c is not documented.
+/home/dan/apps/leptgit/src/map.c:125: warning: Member l_amapFind(L_AMAP *m, RB_TYPE key) (function) of file map.c is not documented.
+/home/dan/apps/leptgit/src/map.c:132: warning: Member l_amapInsert(L_AMAP *m, RB_TYPE key, RB_TYPE value) (function) of file map.c is not documented.
+/home/dan/apps/leptgit/src/map.c:140: warning: Member l_amapDelete(L_AMAP *m, RB_TYPE key) (function) of file map.c is not documented.
+/home/dan/apps/leptgit/src/map.c:147: warning: Member l_amapDestroy(L_AMAP **pm) (function) of file map.c is not documented.
+/home/dan/apps/leptgit/src/map.c:153: warning: Member l_amapGetFirst(L_AMAP *m) (function) of file map.c is not documented.
+/home/dan/apps/leptgit/src/map.c:159: warning: Member l_amapGetNext(L_AMAP_NODE *n) (function) of file map.c is not documented.
+/home/dan/apps/leptgit/src/map.c:165: warning: Member l_amapGetLast(L_AMAP *m) (function) of file map.c is not documented.
+/home/dan/apps/leptgit/src/map.c:171: warning: Member l_amapGetPrev(L_AMAP_NODE *n) (function) of file map.c is not documented.
+/home/dan/apps/leptgit/src/map.c:177: warning: Member l_amapSize(L_AMAP *m) (function) of file map.c is not documented.
+/home/dan/apps/leptgit/src/map.c:187: warning: Member l_asetCreate(l_int32 keytype) (function) of file map.c is not documented.
+/home/dan/apps/leptgit/src/map.c:207: warning: Member l_asetFind(L_ASET *s, RB_TYPE key) (function) of file map.c is not documented.
+/home/dan/apps/leptgit/src/map.c:214: warning: Member l_asetInsert(L_ASET *s, RB_TYPE key) (function) of file map.c is not documented.
+/home/dan/apps/leptgit/src/map.c:224: warning: Member l_asetDelete(L_ASET *s, RB_TYPE key) (function) of file map.c is not documented.
+/home/dan/apps/leptgit/src/map.c:231: warning: Member l_asetDestroy(L_ASET **ps) (function) of file map.c is not documented.
+/home/dan/apps/leptgit/src/map.c:237: warning: Member l_asetGetFirst(L_ASET *s) (function) of file map.c is not documented.
+/home/dan/apps/leptgit/src/map.c:243: warning: Member l_asetGetNext(L_ASET_NODE *n) (function) of file map.c is not documented.
+/home/dan/apps/leptgit/src/map.c:249: warning: Member l_asetGetLast(L_ASET *s) (function) of file map.c is not documented.
+/home/dan/apps/leptgit/src/map.c:255: warning: Member l_asetGetPrev(L_ASET_NODE *n) (function) of file map.c is not documented.
+/home/dan/apps/leptgit/src/map.c:261: warning: Member l_asetSize(L_ASET *s) (function) of file map.c is not documented.
+/home/dan/apps/leptgit/src/maze.c:95: warning: Member DEBUG_PATH (macro definition) of file maze.c is not documented.
+/home/dan/apps/leptgit/src/maze.c:96: warning: Member DEBUG_MAZE (macro definition) of file maze.c is not documented.
+/home/dan/apps/leptgit/src/maze.c:70: warning: Member MAZEEL (typedef) of file maze.c is not documented.
+/home/dan/apps/leptgit/src/maze.c:72: warning: parameters of member @18 are not (all) documented
+/home/dan/apps/leptgit/src/maze.c:279: warning: Member mazeelCreate(l_int32 x, l_int32 y, l_int32 dir) (function) of file maze.c is not documented.
+/home/dan/apps/leptgit/src/maze.c:66: warning: Member MinMazeWidth (variable) of file maze.c is not documented.
+/home/dan/apps/leptgit/src/maze.c:67: warning: Member MinMazeHeight (variable) of file maze.c is not documented.
+/home/dan/apps/leptgit/src/maze.c:69: warning: Member DefaultWallProbability (variable) of file maze.c is not documented.
+/home/dan/apps/leptgit/src/maze.c:70: warning: Member DefaultAnisotropyRatio (variable) of file maze.c is not documented.
+/home/dan/apps/leptgit/src/morph.c:1051: warning: Member selectComposableSels(l_int32 size, l_int32 direction, SEL **psel1, SEL **psel2) (function) of file morph.c is not documented.
+/home/dan/apps/leptgit/src/morph.c:176: warning: Member MORPH_BC (variable) of file morph.c is not documented.
+/home/dan/apps/leptgit/src/morph.c:179: warning: Member ACCEPTABLE_COST (variable) of file morph.c is not documented.
+/home/dan/apps/leptgit/src/morph.c:1846: warning: parameters of member processMorphArgs2 are not (all) documented
+/home/dan/apps/leptgit/src/morph.c:1846: warning: return type of member processMorphArgs2 is not documented
+/home/dan/apps/leptgit/src/morph.c:1742: warning: documented empty return type of resetMorphBoundaryCondition
+/home/dan/apps/leptgit/src/morph.h:58: warning: Member SEL_VERSION_NUMBER (macro definition) of file morph.h is not documented.
+/home/dan/apps/leptgit/src/morph.h:85: warning: Member KERNEL_VERSION_NUMBER (macro definition) of file morph.h is not documented.
+/home/dan/apps/leptgit/src/morph.h:1: warning: Member SEL (typedef) of file morph.h is not documented.
+/home/dan/apps/leptgit/src/morph.h:1: warning: Member SELA (typedef) of file morph.h is not documented.
+/home/dan/apps/leptgit/src/morph.h:1: warning: Member L_KERNEL (typedef) of file morph.h is not documented.
+/home/dan/apps/leptgit/src/morphapp.c:93: warning: Member SWAP(x, y) (macro definition) of file morphapp.c is not documented.
+/home/dan/apps/leptgit/src/morphdwa.c:139: warning: Member DEBUG_SEL_LOOKUP (macro definition) of file morphdwa.c is not documented.
+/home/dan/apps/leptgit/src/numabasic.c:175: warning: Member MaxFloatArraySize (variable) of file numabasic.c is not documented.
+/home/dan/apps/leptgit/src/numabasic.c:176: warning: Member MaxPtrArraySize (variable) of file numabasic.c is not documented.
+/home/dan/apps/leptgit/src/numabasic.c:1405: warning: documented empty return type of numaaDestroy
+/home/dan/apps/leptgit/src/numabasic.c:357: warning: documented empty return type of numaDestroy
+/home/dan/apps/leptgit/src/numafunc1.c:3040: warning: argument 'ploc' of command @param is not found in the argument list of numaFindSortedLoc(NUMA *na, l_float32 val, l_int32 *pindex)
+/home/dan/apps/leptgit/src/numafunc1.c:3042: warning: Found unknown command '\val'
+/home/dan/apps/leptgit/src/numafunc1.c:3047: warning: Found unknown command '\na'
+/home/dan/apps/leptgit/src/numafunc1.c:3063: warning: The following parameter of numaFindSortedLoc(NUMA *na, l_float32 val, l_int32 *pindex) is not documented:
+  parameter 'pindex'
+/home/dan/apps/leptgit/src/numafunc2.c:153: warning: Member DEBUG_HISTO (macro definition) of file numafunc2.c is not documented.
+/home/dan/apps/leptgit/src/numafunc2.c:154: warning: Member DEBUG_CROSSINGS (macro definition) of file numafunc2.c is not documented.
+/home/dan/apps/leptgit/src/numafunc2.c:155: warning: Member DEBUG_FREQUENCY (macro definition) of file numafunc2.c is not documented.
+/home/dan/apps/leptgit/src/numafunc2.c:145: warning: Member BinSizeArray[] (variable) of file numafunc2.c is not documented.
+/home/dan/apps/leptgit/src/numafunc2.c:149: warning: Member NBinSizes (variable) of file numafunc2.c is not documented.
+/home/dan/apps/leptgit/src/numafunc2.c:2259: warning: Unsupported xml/html tag <v> found
+/home/dan/apps/leptgit/src/numafunc2.c:2261: warning: Unsupported xml/html tag <v> found
+/home/dan/apps/leptgit/src/numafunc2.c:2261: warning: Unsupported xml/html tag <v> found
+/home/dan/apps/leptgit/src/numafunc2.c:2261: warning: Unsupported xml/html tag <v> found
+/home/dan/apps/leptgit/src/numafunc2.c:2261: warning: Unsupported xml/html tag <v> found
+/home/dan/apps/leptgit/src/numafunc2.c:2570: warning: argument 'nas' of command @param is not found in the argument list of numaFindLocForThreshold(NUMA *na, l_int32 skip, l_int32 *pthresh, l_float32 *pfract)
+/home/dan/apps/leptgit/src/numafunc2.c:2597: warning: The following parameter of numaFindLocForThreshold(NUMA *na, l_int32 skip, l_int32 *pthresh, l_float32 *pfract) is not documented:
+  parameter 'na'
+/home/dan/apps/leptgit/src/numafunc2.c:145: warning: parameters of member BinSizeArray are not (all) documented
+/home/dan/apps/leptgit/src/pageseg.c:93: warning: Member MinWidth (variable) of file pageseg.c is not documented.
+/home/dan/apps/leptgit/src/pageseg.c:94: warning: Member MinHeight (variable) of file pageseg.c is not documented.
+/home/dan/apps/leptgit/src/pageseg.c:2414: warning: argument 'boxs' of command @param is not found in the argument list of pixAutoPhotoinvert(PIX *pixs, l_int32 thresh, PIX **ppixm, PIXA *pixadb)
+/home/dan/apps/leptgit/src/pageseg.c:2414: warning: argument 'fract' of command @param is not found in the argument list of pixAutoPhotoinvert(PIX *pixs, l_int32 thresh, PIX **ppixm, PIXA *pixadb)
+/home/dan/apps/leptgit/src/pageseg.c:2414: warning: argument 'dir' of command @param is not found in the argument list of pixAutoPhotoinvert(PIX *pixs, l_int32 thresh, PIX **ppixm, PIXA *pixadb)
+/home/dan/apps/leptgit/src/pageseg.c:2414: warning: argument 'select' of command @param is not found in the argument list of pixAutoPhotoinvert(PIX *pixs, l_int32 thresh, PIX **ppixm, PIXA *pixadb)
+/home/dan/apps/leptgit/src/pageseg.c:2414: warning: argument 'debug' of command @param is not found in the argument list of pixAutoPhotoinvert(PIX *pixs, l_int32 thresh, PIX **ppixm, PIXA *pixadb)
+/home/dan/apps/leptgit/src/pageseg.c:2629: warning: end of comment block while expecting command </pre>
+/home/dan/apps/leptgit/src/pageseg.c:2633: warning: argument 'pixs' from the argument list of pixAutoPhotoinvert has multiple @param documentation sections
+/home/dan/apps/leptgit/src/pageseg.c:727: warning: explicit link request to 'opensize' could not be resolved
+/home/dan/apps/leptgit/src/pageseg.c:282: warning: parameters of member pixGenHalftoneMask are not (all) documented
+/home/dan/apps/leptgit/src/pageseg.c:282: warning: return type of member pixGenHalftoneMask is not documented
+/home/dan/apps/leptgit/src/partify.c:249: warning: Member pixLocateStaveSets(PIX *pixs, l_int32 pageno, PIXA *pixadb) (function) of file partify.c is not documented.
+/home/dan/apps/leptgit/src/partify.c:297: warning: Member boxaRemoveVGaps(BOXA *boxa) (function) of file partify.c is not documented.
+/home/dan/apps/leptgit/src/partition.c:73: warning: Member OUTPUT_HEAP_STATS (macro definition) of file partition.c is not documented.
+/home/dan/apps/leptgit/src/partition.c:1: warning: Member PARTEL (typedef) of file partition.c is not documented.
+/home/dan/apps/leptgit/src/partition.c:69: warning: Member DefaultMaxPops (variable) of file partition.c is not documented.
+/home/dan/apps/leptgit/src/pdfapp.c:356: warning: explicit link request to 'opensize' could not be resolved
+/home/dan/apps/leptgit/src/pdfio1.c:213: warning: Member DefaultInputRes (variable) of file pdfio1.c is not documented.
+/home/dan/apps/leptgit/src/pdfio2.c:157: warning: Member L_SMALLBUF (macro definition) of file pdfio2.c is not documented.
+/home/dan/apps/leptgit/src/pdfio2.c:158: warning: Member L_BIGBUF (macro definition) of file pdfio2.c is not documented.
+/home/dan/apps/leptgit/src/pdfio2.c:162: warning: Member DEBUG_MULTIPAGE (macro definition) of file pdfio2.c is not documented.
+/home/dan/apps/leptgit/src/pdfio2.c:1724: warning: Member generateFixedStringsPdf(L_PDF_DATA *lpd) (function) of file pdfio2.c is not documented.
+/home/dan/apps/leptgit/src/pdfio2.c:1834: warning: Member generateMediaboxPdf(L_PDF_DATA *lpd) (function) of file pdfio2.c is not documented.
+/home/dan/apps/leptgit/src/pdfio2.c:1865: warning: Member generatePageStringPdf(L_PDF_DATA *lpd) (function) of file pdfio2.c is not documented.
+/home/dan/apps/leptgit/src/pdfio2.c:1917: warning: Member generateContentStringPdf(L_PDF_DATA *lpd) (function) of file pdfio2.c is not documented.
+/home/dan/apps/leptgit/src/pdfio2.c:1963: warning: Member generatePreXStringsPdf(L_PDF_DATA *lpd) (function) of file pdfio2.c is not documented.
+/home/dan/apps/leptgit/src/pdfio2.c:2090: warning: Member generateColormapStringsPdf(L_PDF_DATA *lpd) (function) of file pdfio2.c is not documented.
+/home/dan/apps/leptgit/src/pdfio2.c:2129: warning: Member generateTrailerPdf(L_PDF_DATA *lpd) (function) of file pdfio2.c is not documented.
+/home/dan/apps/leptgit/src/pdfio2.c:2170: warning: Member makeTrailerStringPdf(L_DNA *daloc) (function) of file pdfio2.c is not documented.
+/home/dan/apps/leptgit/src/pdfio2.c:2395: warning: Member generatePagesObjStringPdf(NUMA *napage) (function) of file pdfio2.c is not documented.
+/home/dan/apps/leptgit/src/pdfio2.c:2527: warning: Member pdfdataCreate(const char *title) (function) of file pdfio2.c is not documented.
+/home/dan/apps/leptgit/src/pdfio2.c:2544: warning: Member pdfdataDestroy(L_PDF_DATA **plpd) (function) of file pdfio2.c is not documented.
+/home/dan/apps/leptgit/src/pdfio2.c:2585: warning: Member pdfdataGetCid(L_PDF_DATA *lpd, l_int32 index) (function) of file pdfio2.c is not documented.
+/home/dan/apps/leptgit/src/pdfio2.c:118: warning: Member DefaultInputRes (variable) of file pdfio2.c is not documented.
+/home/dan/apps/leptgit/src/pdfio2.c:153: warning: Member var_WRITE_G4_IMAGE_MASK (variable) of file pdfio2.c is not documented.
+/home/dan/apps/leptgit/src/pdfio2.c:155: warning: Member var_WRITE_DATE_AND_VERSION (variable) of file pdfio2.c is not documented.
+/home/dan/apps/leptgit/src/pdfio2.c:1654: warning: documented empty return type of l_CIDataDestroy
+/home/dan/apps/leptgit/src/pdfio2.c:3049: warning: documented empty return type of l_pdfSetDateAndVersion
+/home/dan/apps/leptgit/src/pdfio2.c:3029: warning: documented empty return type of l_pdfSetG4ImageMask
+/home/dan/apps/leptgit/src/pix.h:334: warning: Member L_RED_SHIFT (variable) of file pix.h is not documented.
+/home/dan/apps/leptgit/src/pix.h:336: warning: Member L_GREEN_SHIFT (variable) of file pix.h is not documented.
+/home/dan/apps/leptgit/src/pix.h:338: warning: Member L_BLUE_SHIFT (variable) of file pix.h is not documented.
+/home/dan/apps/leptgit/src/pix.h:340: warning: Member L_ALPHA_SHIFT (variable) of file pix.h is not documented.
+/home/dan/apps/leptgit/src/pix.h:340: warning: parameters of member L_ALPHA_SHIFT are not (all) documented
+/home/dan/apps/leptgit/src/pix.h:338: warning: parameters of member L_BLUE_SHIFT are not (all) documented
+/home/dan/apps/leptgit/src/pix.h:336: warning: parameters of member L_GREEN_SHIFT are not (all) documented
+/home/dan/apps/leptgit/src/pix.h:334: warning: parameters of member L_RED_SHIFT are not (all) documented
+/home/dan/apps/leptgit/src/pix1.c:247: warning: Member pixdata_malloc(size_t size) (function) of file pix1.c is not documented.
+/home/dan/apps/leptgit/src/pix1.c:259: warning: Member pixdata_free(void *ptr) (function) of file pix1.c is not documented.
+/home/dan/apps/leptgit/src/pix1.c:992: warning: Member pixGetWidth(const PIX *pix) (function) of file pix1.c is not documented.
+/home/dan/apps/leptgit/src/pix1.c:1002: warning: Member pixSetWidth(PIX *pix, l_int32 width) (function) of file pix1.c is not documented.
+/home/dan/apps/leptgit/src/pix1.c:1018: warning: Member pixGetHeight(const PIX *pix) (function) of file pix1.c is not documented.
+/home/dan/apps/leptgit/src/pix1.c:1028: warning: Member pixSetHeight(PIX *pix, l_int32 height) (function) of file pix1.c is not documented.
+/home/dan/apps/leptgit/src/pix1.c:1044: warning: Member pixGetDepth(const PIX *pix) (function) of file pix1.c is not documented.
+/home/dan/apps/leptgit/src/pix1.c:1054: warning: Member pixSetDepth(PIX *pix, l_int32 depth) (function) of file pix1.c is not documented.
+/home/dan/apps/leptgit/src/pix1.c:1141: warning: Member pixGetSpp(const PIX *pix) (function) of file pix1.c is not documented.
+/home/dan/apps/leptgit/src/pix1.c:1167: warning: Member pixSetSpp(PIX *pix, l_int32 spp) (function) of file pix1.c is not documented.
+/home/dan/apps/leptgit/src/pix1.c:1204: warning: Member pixGetWpl(const PIX *pix) (function) of file pix1.c is not documented.
+/home/dan/apps/leptgit/src/pix1.c:1213: warning: Member pixSetWpl(PIX *pix, l_int32 wpl) (function) of file pix1.c is not documented.
+/home/dan/apps/leptgit/src/pix1.c:1225: warning: Member pixGetXRes(const PIX *pix) (function) of file pix1.c is not documented.
+/home/dan/apps/leptgit/src/pix1.c:1234: warning: Member pixSetXRes(PIX *pix, l_int32 res) (function) of file pix1.c is not documented.
+/home/dan/apps/leptgit/src/pix1.c:1246: warning: Member pixGetYRes(const PIX *pix) (function) of file pix1.c is not documented.
+/home/dan/apps/leptgit/src/pix1.c:1255: warning: Member pixSetYRes(PIX *pix, l_int32 res) (function) of file pix1.c is not documented.
+/home/dan/apps/leptgit/src/pix1.c:1311: warning: Member pixCopyResolution(PIX *pixd, const PIX *pixs) (function) of file pix1.c is not documented.
+/home/dan/apps/leptgit/src/pix1.c:1328: warning: Member pixScaleResolution(PIX *pix, l_float32 xscale, l_float32 yscale) (function) of file pix1.c is not documented.
+/home/dan/apps/leptgit/src/pix1.c:1349: warning: Member pixGetInputFormat(const PIX *pix) (function) of file pix1.c is not documented.
+/home/dan/apps/leptgit/src/pix1.c:1358: warning: Member pixSetInputFormat(PIX *pix, l_int32 informat) (function) of file pix1.c is not documented.
+/home/dan/apps/leptgit/src/pix1.c:1369: warning: Member pixCopyInputFormat(PIX *pixd, const PIX *pixs) (function) of file pix1.c is not documented.
+/home/dan/apps/leptgit/src/pix1.c:1385: warning: Member pixSetSpecial(PIX *pix, l_int32 special) (function) of file pix1.c is not documented.
+/home/dan/apps/leptgit/src/pix1.c:1473: warning: Member pixCopyText(PIX *pixd, const PIX *pixs) (function) of file pix1.c is not documented.
+/home/dan/apps/leptgit/src/pix1.c:1551: warning: Member pixGetColormap(PIX *pix) (function) of file pix1.c is not documented.
+/home/dan/apps/leptgit/src/pix1.c:1929: warning: Member ImageFileFormatExtensions[] (variable) of file pix1.c is not documented.
+/home/dan/apps/leptgit/src/pix1.c:609: warning: documented empty return type of pixDestroy
+/home/dan/apps/leptgit/src/pix1.c:1731: warning: argument 'pix' of command @param is not found in the argument list of pixExtractData(PIX *pixs)
+/home/dan/apps/leptgit/src/pix1.c:1748: warning: The following parameter of pixExtractData(PIX *pixs) is not documented:
+  parameter 'pixs'
+/home/dan/apps/leptgit/src/pix1.c:296: warning: documented empty return type of setPixMemoryManager
+/home/dan/apps/leptgit/src/pix2.c:161: warning: Member DEBUG_SERIALIZE (macro definition) of file pix2.c is not documented.
+/home/dan/apps/leptgit/src/pix2.c:144: warning: Member rmask32[] (variable) of file pix2.c is not documented.
+/home/dan/apps/leptgit/src/pix2.c:157: warning: Member AlphaMaskBorderVals[2] (variable) of file pix2.c is not documented.
+/home/dan/apps/leptgit/src/pix2.c:2827: warning: documented empty return type of extractRGBAValues
+/home/dan/apps/leptgit/src/pix2.c:2805: warning: documented empty return type of extractRGBValues
+/home/dan/apps/leptgit/src/pix2.c:3529: warning: documented empty return type of l_setAlphaMaskBorder
+/home/dan/apps/leptgit/src/pix2.c:430: warning: found </pre> at different nesting level (5) than expected (2)
+/home/dan/apps/leptgit/src/pix2.c:431: warning: end of comment block while expecting command </pre>
+/home/dan/apps/leptgit/src/pix2.c:665: warning: documented empty return type of setPixelLow
+/home/dan/apps/leptgit/src/pix2.c:144: warning: parameters of member rmask32 are not (all) documented
+/home/dan/apps/leptgit/src/pix3.c:125: warning: Member EQUAL_SIZE_WARNING (macro definition) of file pix3.c is not documented.
+/home/dan/apps/leptgit/src/pix5.c:124: warning: Member DEBUG_EDGES (macro definition) of file pix5.c is not documented.
+/home/dan/apps/leptgit/src/pix5.c:113: warning: Member rmask32[] (variable) of file pix5.c is not documented.
+/home/dan/apps/leptgit/src/pix5.c:1325: warning: argument 'pixs' of command @param is not found in the argument list of pixMakeSymmetricMask(l_int32 w, l_int32 h, l_float32 hf, l_float32 vf, l_int32 type)
+/home/dan/apps/leptgit/src/pix5.c:1325: warning: argument 'rankorder' of command @param is not found in the argument list of pixMakeSymmetricMask(l_int32 w, l_int32 h, l_float32 hf, l_float32 vf, l_int32 type)
+/home/dan/apps/leptgit/src/pix5.c:1325: warning: argument 'connectivity' of command @param is not found in the argument list of pixMakeSymmetricMask(l_int32 w, l_int32 h, l_float32 hf, l_float32 vf, l_int32 type)
+/home/dan/apps/leptgit/src/pix5.c:1325: warning: argument 'pbox' of command @param is not found in the argument list of pixMakeSymmetricMask(l_int32 w, l_int32 h, l_float32 hf, l_float32 vf, l_int32 type)
+/home/dan/apps/leptgit/src/pix5.c:1325: warning: argument 'pixs' of command @param is not found in the argument list of pixMakeSymmetricMask(l_int32 w, l_int32 h, l_float32 hf, l_float32 vf, l_int32 type)
+/home/dan/apps/leptgit/src/pix5.c:1325: warning: argument 'rankorder' of command @param is not found in the argument list of pixMakeSymmetricMask(l_int32 w, l_int32 h, l_float32 hf, l_float32 vf, l_int32 type)
+/home/dan/apps/leptgit/src/pix5.c:1325: warning: argument 'connectivity' of command @param is not found in the argument list of pixMakeSymmetricMask(l_int32 w, l_int32 h, l_float32 hf, l_float32 vf, l_int32 type)
+/home/dan/apps/leptgit/src/pix5.c:1325: warning: argument 'pbox' of command @param is not found in the argument list of pixMakeSymmetricMask(l_int32 w, l_int32 h, l_float32 hf, l_float32 vf, l_int32 type)
+/home/dan/apps/leptgit/src/pix5.c:1483: warning: end of comment block while expecting command </pre>
+/home/dan/apps/leptgit/src/pix5.c:1483: warning: end of comment block while expecting command </pre>
+/home/dan/apps/leptgit/src/pix5.c:1484: warning: argument 'type' from the argument list of pixMakeSymmetricMask has multiple @param documentation sections
+/home/dan/apps/leptgit/src/pix5.c:113: warning: parameters of member rmask32 are not (all) documented
+/home/dan/apps/leptgit/src/pix_internal.h:32: warning: found <pre> tag in heading
+
+/home/dan/apps/leptgit/src/pix_internal.h:70: warning: explicit link request to 'included' could not be resolved
+/home/dan/apps/leptgit/src/pix_internal.h:169: warning: found <pre> tag in heading
+
+/home/dan/apps/leptgit/src/pix_internal.h:171: warning: Unexpected token TK_LISTITEM found as part of a <h2>tag
+/home/dan/apps/leptgit/src/pixabasic.c:143: warning: Member MaxInitPtrArraySize (variable) of file pixabasic.c is not documented.
+/home/dan/apps/leptgit/src/pixabasic.c:144: warning: Member MaxPixaPtrArraySize (variable) of file pixabasic.c is not documented.
+/home/dan/apps/leptgit/src/pixabasic.c:145: warning: Member MaxPixaaPtrArraySize (variable) of file pixabasic.c is not documented.
+/home/dan/apps/leptgit/src/pixabasic.c:1859: warning: documented empty return type of pixaaDestroy
+/home/dan/apps/leptgit/src/pixacc.c:159: warning: documented empty return type of pixaccDestroy
+/home/dan/apps/leptgit/src/pixafunc1.c:106: warning: Member MinCompsForBinSort (variable) of file pixafunc1.c is not documented.
+/home/dan/apps/leptgit/src/pixafunc1.c:109: warning: Member MinAngleToRotate (variable) of file pixafunc1.c is not documented.
+/home/dan/apps/leptgit/src/pixafunc1.c:2012: warning: return type of member pixaScaleToSizeRel is not documented
+/home/dan/apps/leptgit/src/pixafunc2.c:2130: warning: Unsupported xml/html tag <number> found
+/home/dan/apps/leptgit/src/pixafunc2.c:2137: warning: found </pre> at different nesting level (5) than expected (2)
+/home/dan/apps/leptgit/src/pixafunc2.c:2138: warning: end of comment block while expecting command </pre>
+/home/dan/apps/leptgit/src/pixafunc2.c:2208: warning: Unsupported xml/html tag <number> found
+/home/dan/apps/leptgit/src/pixalloc.c:1: warning: Member L_PIX_MEM_STORE (typedef) of file pixalloc.c is not documented.
+/home/dan/apps/leptgit/src/pixalloc.c:140: warning: Member CustomPMS (variable) of file pixalloc.c is not documented.
+/home/dan/apps/leptgit/src/pixalloc.c:352: warning: documented empty return type of pmsCustomDealloc
+/home/dan/apps/leptgit/src/pixarith.c:1558: warning: Member makeLogBase2Tab(void) (function) of file pixarith.c is not documented.
+/home/dan/apps/leptgit/src/pixarith.c:1583: warning: Member getLogBase2(l_int32 val, l_float32 *logtab) (function) of file pixarith.c is not documented.
+/home/dan/apps/leptgit/src/pixcomp.c:160: warning: Member MaxPtrArraySize (variable) of file pixcomp.c is not documented.
+/home/dan/apps/leptgit/src/pixcomp.c:164: warning: Member MaxDataSize (variable) of file pixcomp.c is not documented.
+/home/dan/apps/leptgit/src/pixcomp.c:167: warning: Member NumImageFileFormatExtensions (variable) of file pixcomp.c is not documented.
+/home/dan/apps/leptgit/src/pixcomp.c:168: warning: Member ImageFileFormatExtensions[] (variable) of file pixcomp.c is not documented.
+/home/dan/apps/leptgit/src/pixcomp.c:851: warning: documented empty return type of pixacompDestroy
+/home/dan/apps/leptgit/src/pixcomp.c:356: warning: documented empty return type of pixcompDestroy
+/home/dan/apps/leptgit/src/pixconv.c:171: warning: Member DEBUG_CONVERT_TO_COLORMAP (macro definition) of file pixconv.c is not documented.
+/home/dan/apps/leptgit/src/pixconv.c:172: warning: Member DEBUG_UNROLLING (macro definition) of file pixconv.c is not documented.
+/home/dan/apps/leptgit/src/pixconv.c:167: warning: Member var_NEUTRAL_BOOST_VAL (variable) of file pixconv.c is not documented.
+/home/dan/apps/leptgit/src/pixconv.c:4172: warning: documented empty return type of l_setNeutralBoostVal
+/home/dan/apps/leptgit/src/pixtiling.c:178: warning: documented empty return type of pixTilingDestroy
+/home/dan/apps/leptgit/src/pngio.c:146: warning: Member DEBUG_READ (macro definition) of file pngio.c is not documented.
+/home/dan/apps/leptgit/src/pngio.c:147: warning: Member DEBUG_WRITE (macro definition) of file pngio.c is not documented.
+/home/dan/apps/leptgit/src/pngio.c:1329: warning: Member MEMIODATA (typedef) of file pngio.c is not documented.
+/home/dan/apps/leptgit/src/pngio.c:763: warning: Member fgetPngResolution(FILE *fp, l_int32 *pxres, l_int32 *pyres) (function) of file pngio.c is not documented.
+/home/dan/apps/leptgit/src/pngio.c:860: warning: Member fgetPngColormapInfo(FILE *fp, PIXCMAP **pcmap, l_int32 *ptransparency) (function) of file pngio.c is not documented.
+/home/dan/apps/leptgit/src/pngio.c:1446: warning: Member memio_png_flush(MEMIODATA *pthing) (function) of file pngio.c is not documented.
+/home/dan/apps/leptgit/src/pngio.c:1509: warning: Member memio_png_read_data(png_structp png_ptr, png_bytep outBytes, png_size_t byteCountToRead) (function) of file pngio.c is not documented.
+/home/dan/apps/leptgit/src/pngio.c:1536: warning: Member memio_free(MEMIODATA *pthing) (function) of file pngio.c is not documented.
+/home/dan/apps/leptgit/src/pngio.c:143: warning: Member var_PNG_STRIP_16_TO_8 (variable) of file pngio.c is not documented.
+/home/dan/apps/leptgit/src/pngio.c:1365: warning: Member MEMIO_BUFFER_SIZE (variable) of file pngio.c is not documented.
+/home/dan/apps/leptgit/src/pngio.c:1329: warning: documented empty return type of l_pngSetReadStrip16To8
+/home/dan/apps/leptgit/src/pngio.c:1381: warning: parameters of member memio_png_write_data are not (all) documented
+/home/dan/apps/leptgit/src/pngio.c:1381: warning: return type of member memio_png_write_data is not documented
+/home/dan/apps/leptgit/src/pnmio.c:136: warning: Member MAX_PNM_WIDTH (variable) of file pnmio.c is not documented.
+/home/dan/apps/leptgit/src/pnmio.c:137: warning: Member MAX_PNM_HEIGHT (variable) of file pnmio.c is not documented.
+/home/dan/apps/leptgit/src/pnmio.c:93: warning: Unsupported xml/html tag <int> found
+/home/dan/apps/leptgit/src/pnmio.c:94: warning: Unsupported xml/html tag <int> found
+/home/dan/apps/leptgit/src/pnmio.c:95: warning: Unsupported xml/html tag <int> found
+/home/dan/apps/leptgit/src/pnmio.c:97: warning: Unsupported xml/html tag <int> found
+/home/dan/apps/leptgit/src/pnmio.c:98: warning: Unsupported xml/html tag <string> found
+/home/dan/apps/leptgit/src/pnmio.c:1327: warning: parameters of member pnmReadNextAsciiValue are not (all) documented
+/home/dan/apps/leptgit/src/pnmio.c:1327: warning: return type of member pnmReadNextAsciiValue is not documented
+/home/dan/apps/leptgit/src/pnmio.c:1463: warning: parameters of member pnmSkipCommentLines are not (all) documented
+/home/dan/apps/leptgit/src/pnmio.c:1463: warning: return type of member pnmSkipCommentLines is not documented
+/home/dan/apps/leptgit/src/projective.c:119: warning: Member AlphaMaskBorderVals[2] (variable) of file projective.c is not documented.
+/home/dan/apps/leptgit/src/psio1.c:163: warning: Member convertFilesToPS(const char *dirin, const char *substr, l_int32 res, const char *fileout) (function) of file psio1.c is not documented.
+/home/dan/apps/leptgit/src/psio1.c:208: warning: Member sarrayConvertFilesToPS(SARRAY *sa, l_int32 res, const char *fileout) (function) of file psio1.c is not documented.
+/home/dan/apps/leptgit/src/psio1.c:273: warning: Member convertFilesFittedToPS(const char *dirin, const char *substr, l_float32 xpts, l_float32 ypts, const char *fileout) (function) of file psio1.c is not documented.
+/home/dan/apps/leptgit/src/psio1.c:323: warning: Member sarrayConvertFilesFittedToPS(SARRAY *sa, l_float32 xpts, l_float32 ypts, const char *fileout) (function) of file psio1.c is not documented.
+/home/dan/apps/leptgit/src/psio1.c:389: warning: Member writeImageCompressedToPSFile(const char *filein, const char *fileout, l_int32 res, l_int32 *pindex) (function) of file psio1.c is not documented.
+/home/dan/apps/leptgit/src/psio1.c:482: warning: Member convertSegmentedPagesToPS(const char *pagedir, const char *pagestr, l_int32 page_numpre, const char *maskdir, const char *maskstr, l_int32 mask_numpre, l_int32 numpost, l_int32 maxnum, l_float32 textscale, l_float32 imagescale, l_int32 threshold, const char *fileout) (function) of file psio1.c is not documented.
+/home/dan/apps/leptgit/src/psio1.c:578: warning: Member pixWriteSegmentedPageToPS(PIX *pixs, PIX *pixm, l_float32 textscale, l_float32 imagescale, l_int32 threshold, l_int32 pageno, const char *fileout) (function) of file psio1.c is not documented.
+/home/dan/apps/leptgit/src/psio1.c:727: warning: Member pixWriteMixedToPS(PIX *pixb, PIX *pixc, l_float32 scale, l_int32 pageno, const char *fileout) (function) of file psio1.c is not documented.
+/home/dan/apps/leptgit/src/psio1.c:812: warning: Member convertToPSEmbed(const char *filein, const char *fileout, l_int32 level) (function) of file psio1.c is not documented.
+/home/dan/apps/leptgit/src/psio1.c:914: warning: Member pixaWriteCompressedToPS(PIXA *pixa, const char *fileout, l_int32 res, l_int32 level) (function) of file psio1.c is not documented.
+/home/dan/apps/leptgit/src/psio1.c:986: warning: Member pixWriteCompressedToPS(PIX *pix, const char *fileout, l_int32 res, l_int32 level, l_int32 *pindex) (function) of file psio1.c is not documented.
+/home/dan/apps/leptgit/src/psio2.c:110: warning: Member Bufsize (macro definition) of file psio2.c is not documented.
+/home/dan/apps/leptgit/src/psio2.c:123: warning: Member DEBUG_JPEG (macro definition) of file psio2.c is not documented.
+/home/dan/apps/leptgit/src/psio2.c:124: warning: Member DEBUG_G4 (macro definition) of file psio2.c is not documented.
+/home/dan/apps/leptgit/src/psio2.c:125: warning: Member DEBUG_FLATE (macro definition) of file psio2.c is not documented.
+/home/dan/apps/leptgit/src/psio2.c:1998: warning: Member l_psWriteBoundingBox(l_int32 flag) (function) of file psio2.c is not documented.
+/home/dan/apps/leptgit/src/psio2.c:108: warning: Member var_PS_WRITE_BOUNDING_BOX (variable) of file psio2.c is not documented.
+/home/dan/apps/leptgit/src/psio2.c:111: warning: Member DefaultInputRes (variable) of file psio2.c is not documented.
+/home/dan/apps/leptgit/src/psio2.c:112: warning: Member MinRes (variable) of file psio2.c is not documented.
+/home/dan/apps/leptgit/src/psio2.c:113: warning: Member MaxRes (variable) of file psio2.c is not documented.
+/home/dan/apps/leptgit/src/psio2.c:116: warning: Member LetterWidth (variable) of file psio2.c is not documented.
+/home/dan/apps/leptgit/src/psio2.c:117: warning: Member LetterHeight (variable) of file psio2.c is not documented.
+/home/dan/apps/leptgit/src/psio2.c:118: warning: Member A4Width (variable) of file psio2.c is not documented.
+/home/dan/apps/leptgit/src/psio2.c:119: warning: Member A4Height (variable) of file psio2.c is not documented.
+/home/dan/apps/leptgit/src/psio2.c:120: warning: Member DefaultFillFraction (variable) of file psio2.c is not documented.
+/home/dan/apps/leptgit/src/ptabasic.c:102: warning: Member MaxArraySize (variable) of file ptabasic.c is not documented.
+/home/dan/apps/leptgit/src/ptabasic.c:103: warning: Member MaxPtrArraySize (variable) of file ptabasic.c is not documented.
+/home/dan/apps/leptgit/src/ptabasic.c:931: warning: documented empty return type of ptaaDestroy
+/home/dan/apps/leptgit/src/ptabasic.c:191: warning: documented empty return type of ptaDestroy
+/home/dan/apps/leptgit/src/ptafunc1.c:111: warning: Member M_PI (macro definition) of file ptafunc1.c is not documented.
+/home/dan/apps/leptgit/src/ptafunc2.c:294: warning: argument 'ptas' of command @param is not found in the argument list of ptaSort2d(PTA *pta)
+/home/dan/apps/leptgit/src/ptafunc2.c:307: warning: The following parameter of ptaSort2d(PTA *pta) is not documented:
+  parameter 'pta'
+/home/dan/apps/leptgit/src/ptra.c:128: warning: Member MaxInitPtraSize (variable) of file ptra.c is not documented.
+/home/dan/apps/leptgit/src/ptra.c:802: warning: documented empty return type of ptraaDestroy
+/home/dan/apps/leptgit/src/ptra.c:192: warning: documented empty return type of ptraDestroy
+/home/dan/apps/leptgit/src/ptra.h:46: warning: Member L_PTRA (typedef) of file ptra.h is not documented.
+/home/dan/apps/leptgit/src/ptra.h:46: warning: Member L_PTRAA (typedef) of file ptra.h is not documented.
+/home/dan/apps/leptgit/src/ptra.h:46: warning: Member MaxInitPtraSize (variable) of file ptra.h is not documented.
+/home/dan/apps/leptgit/src/quadtree.c:72: warning: Member DEBUG_BOXES (macro definition) of file quadtree.c is not documented.
+/home/dan/apps/leptgit/src/queue.c:72: warning: Member MIN_BUFFER_SIZE (variable) of file queue.c is not documented.
+/home/dan/apps/leptgit/src/queue.c:73: warning: Member INITIAL_BUFFER_ARRAYSIZE (variable) of file queue.c is not documented.
+/home/dan/apps/leptgit/src/queue.c:132: warning: documented empty return type of lqueueDestroy
+/home/dan/apps/leptgit/src/queue.h:1: warning: Member L_QUEUE (typedef) of file queue.h is not documented.
+/home/dan/apps/leptgit/src/rbtree.c:122: warning: Member VERIFY_RBTREE (macro definition) of file rbtree.c is not documented.
+/home/dan/apps/leptgit/src/rbtree.c:492: warning: Member INDENT_STEP (macro definition) of file rbtree.c is not documented.
+/home/dan/apps/leptgit/src/rbtree.c:87: warning: Member node (typedef) of file rbtree.c is not documented.
+/home/dan/apps/leptgit/src/rbtree.c:81: warning: parameters of member @91 are not (all) documented
+/home/dan/apps/leptgit/src/rbtree.c:296: warning: Member destroy_helper(node *n) (function) of file rbtree.c is not documented.
+/home/dan/apps/leptgit/src/rbtree.c:456: warning: Member count_helper(node *n, l_int32 *pcount) (function) of file rbtree.c is not documented.
+/home/dan/apps/leptgit/src/rbtree.c:495: warning: Member print_tree_helper(FILE *fp, node *n, l_int32 keytype, l_int32 indent) (function) of file rbtree.c is not documented.
+/home/dan/apps/leptgit/src/rbtree.c:536: warning: Member compareKeys(l_int32 keytype, RB_TYPE left, RB_TYPE right) (function) of file rbtree.c is not documented.
+/home/dan/apps/leptgit/src/rbtree.c:574: warning: Member grandparent(node *n) (function) of file rbtree.c is not documented.
+/home/dan/apps/leptgit/src/rbtree.c:582: warning: Member sibling(node *n) (function) of file rbtree.c is not documented.
+/home/dan/apps/leptgit/src/rbtree.c:593: warning: Member uncle(node *n) (function) of file rbtree.c is not documented.
+/home/dan/apps/leptgit/src/rbtree.c:601: warning: Member node_color(node *n) (function) of file rbtree.c is not documented.
+/home/dan/apps/leptgit/src/rbtree.c:606: warning: Member new_node(RB_TYPE key, RB_TYPE value, l_int32 node_color, node *left, node *right) (function) of file rbtree.c is not documented.
+/home/dan/apps/leptgit/src/rbtree.c:620: warning: Member lookup_node(L_RBTREE *t, RB_TYPE key) (function) of file rbtree.c is not documented.
+/home/dan/apps/leptgit/src/rbtree.c:635: warning: Member rotate_left(L_RBTREE *t, node *n) (function) of file rbtree.c is not documented.
+/home/dan/apps/leptgit/src/rbtree.c:646: warning: Member rotate_right(L_RBTREE *t, node *n) (function) of file rbtree.c is not documented.
+/home/dan/apps/leptgit/src/rbtree.c:657: warning: Member replace_node(L_RBTREE *t, node *oldn, node *newn) (function) of file rbtree.c is not documented.
+/home/dan/apps/leptgit/src/rbtree.c:671: warning: Member insert_case1(L_RBTREE *t, node *n) (function) of file rbtree.c is not documented.
+/home/dan/apps/leptgit/src/rbtree.c:678: warning: Member insert_case2(L_RBTREE *t, node *n) (function) of file rbtree.c is not documented.
+/home/dan/apps/leptgit/src/rbtree.c:685: warning: Member insert_case3(L_RBTREE *t, node *n) (function) of file rbtree.c is not documented.
+/home/dan/apps/leptgit/src/rbtree.c:696: warning: Member insert_case4(L_RBTREE *t, node *n) (function) of file rbtree.c is not documented.
+/home/dan/apps/leptgit/src/rbtree.c:707: warning: Member insert_case5(L_RBTREE *t, node *n) (function) of file rbtree.c is not documented.
+/home/dan/apps/leptgit/src/rbtree.c:719: warning: Member maximum_node(node *root) (function) of file rbtree.c is not documented.
+/home/dan/apps/leptgit/src/rbtree.c:730: warning: Member delete_case1(L_RBTREE *t, node *n) (function) of file rbtree.c is not documented.
+/home/dan/apps/leptgit/src/rbtree.c:737: warning: Member delete_case2(L_RBTREE *t, node *n) (function) of file rbtree.c is not documented.
+/home/dan/apps/leptgit/src/rbtree.c:749: warning: Member delete_case3(L_RBTREE *t, node *n) (function) of file rbtree.c is not documented.
+/home/dan/apps/leptgit/src/rbtree.c:761: warning: Member delete_case4(L_RBTREE *t, node *n) (function) of file rbtree.c is not documented.
+/home/dan/apps/leptgit/src/rbtree.c:773: warning: Member delete_case5(L_RBTREE *t, node *n) (function) of file rbtree.c is not documented.
+/home/dan/apps/leptgit/src/rbtree.c:792: warning: Member delete_case6(L_RBTREE *t, node *n) (function) of file rbtree.c is not documented.
+/home/dan/apps/leptgit/src/rbtree.c:825: warning: Member verify_properties(L_RBTREE *t) (function) of file rbtree.c is not documented.
+/home/dan/apps/leptgit/src/rbtree.c:236: warning: documented empty return type of l_rbtreeDelete
+/home/dan/apps/leptgit/src/rbtree.c:282: warning: documented empty return type of l_rbtreeDestroy
+/home/dan/apps/leptgit/src/rbtree.c:184: warning: documented empty return type of l_rbtreeInsert
+/home/dan/apps/leptgit/src/rbtree.c:476: warning: documented empty return type of l_rbtreePrint
+/home/dan/apps/leptgit/src/readbarcode.c:123: warning: Member DEBUG_DESKEW (macro definition) of file readbarcode.c is not documented.
+/home/dan/apps/leptgit/src/readbarcode.c:124: warning: Member DEBUG_WIDTHS (macro definition) of file readbarcode.c is not documented.
+/home/dan/apps/leptgit/src/readbarcode.c:92: warning: Member MAX_SPACE_WIDTH (variable) of file readbarcode.c is not documented.
+/home/dan/apps/leptgit/src/readbarcode.c:93: warning: Member MAX_NOISE_WIDTH (variable) of file readbarcode.c is not documented.
+/home/dan/apps/leptgit/src/readbarcode.c:94: warning: Member MAX_NOISE_HEIGHT (variable) of file readbarcode.c is not documented.
+/home/dan/apps/leptgit/src/readbarcode.c:97: warning: Member MIN_BC_WIDTH (variable) of file readbarcode.c is not documented.
+/home/dan/apps/leptgit/src/readbarcode.c:98: warning: Member MIN_BC_HEIGHT (variable) of file readbarcode.c is not documented.
+/home/dan/apps/leptgit/src/readfile.c:82: warning: Member FILE_BMP (variable) of file readfile.c is not documented.
+/home/dan/apps/leptgit/src/readfile.c:83: warning: Member FILE_PNG (variable) of file readfile.c is not documented.
+/home/dan/apps/leptgit/src/readfile.c:84: warning: Member FILE_PNM (variable) of file readfile.c is not documented.
+/home/dan/apps/leptgit/src/readfile.c:85: warning: Member FILE_G3 (variable) of file readfile.c is not documented.
+/home/dan/apps/leptgit/src/readfile.c:86: warning: Member FILE_G4 (variable) of file readfile.c is not documented.
+/home/dan/apps/leptgit/src/readfile.c:87: warning: Member FILE_RLE (variable) of file readfile.c is not documented.
+/home/dan/apps/leptgit/src/readfile.c:88: warning: Member FILE_PB (variable) of file readfile.c is not documented.
+/home/dan/apps/leptgit/src/readfile.c:89: warning: Member FILE_LZW (variable) of file readfile.c is not documented.
+/home/dan/apps/leptgit/src/readfile.c:90: warning: Member FILE_ZIP (variable) of file readfile.c is not documented.
+/home/dan/apps/leptgit/src/readfile.c:91: warning: Member FILE_TIFF_JPEG (variable) of file readfile.c is not documented.
+/home/dan/apps/leptgit/src/readfile.c:92: warning: Member FILE_TIFF (variable) of file readfile.c is not documented.
+/home/dan/apps/leptgit/src/readfile.c:93: warning: Member FILE_JPG (variable) of file readfile.c is not documented.
+/home/dan/apps/leptgit/src/readfile.c:94: warning: Member FILE_GIF (variable) of file readfile.c is not documented.
+/home/dan/apps/leptgit/src/readfile.c:95: warning: Member FILE_WEBP (variable) of file readfile.c is not documented.
+/home/dan/apps/leptgit/src/readfile.c:96: warning: Member FILE_JP2K (variable) of file readfile.c is not documented.
+/home/dan/apps/leptgit/src/readfile.c:101: warning: Member JP2K_CODESTREAM[4] (variable) of file readfile.c is not documented.
+/home/dan/apps/leptgit/src/readfile.c:102: warning: Member JP2K_IMAGE_DATA[12] (variable) of file readfile.c is not documented.
+/home/dan/apps/leptgit/src/readfile.c:1078: warning: Member ImageFileFormatExtensions[] (variable) of file readfile.c is not documented.
+/home/dan/apps/leptgit/src/readfile.c:102: warning: parameters of member JP2K_IMAGE_DATA are not (all) documented
+/home/dan/apps/leptgit/src/recog.h:114: warning: Member RECOG_VERSION_NUMBER (macro definition) of file recog.h is not documented.
+/home/dan/apps/leptgit/src/recog.h:1: warning: Member L_RECOG (typedef) of file recog.h is not documented.
+/home/dan/apps/leptgit/src/recog.h:1: warning: Member L_RCH (typedef) of file recog.h is not documented.
+/home/dan/apps/leptgit/src/recog.h:1: warning: Member L_RCHA (typedef) of file recog.h is not documented.
+/home/dan/apps/leptgit/src/recog.h:1: warning: Member L_RDID (typedef) of file recog.h is not documented.
+/home/dan/apps/leptgit/src/recogbasic.c:196: warning: Member MaxExamplesInClass (variable) of file recogbasic.c is not documented.
+/home/dan/apps/leptgit/src/recogbasic.c:199: warning: Member DefaultCharsetType (variable) of file recogbasic.c is not documented.
+/home/dan/apps/leptgit/src/recogbasic.c:200: warning: Member DefaultMinNopad (variable) of file recogbasic.c is not documented.
+/home/dan/apps/leptgit/src/recogbasic.c:201: warning: Member DefaultMaxWHRatio (variable) of file recogbasic.c is not documented.
+/home/dan/apps/leptgit/src/recogbasic.c:203: warning: Member DefaultMaxHTRatio (variable) of file recogbasic.c is not documented.
+/home/dan/apps/leptgit/src/recogbasic.c:205: warning: Member DefaultThreshold (variable) of file recogbasic.c is not documented.
+/home/dan/apps/leptgit/src/recogbasic.c:206: warning: Member DefaultMaxYShift (variable) of file recogbasic.c is not documented.
+/home/dan/apps/leptgit/src/recogbasic.c:472: warning: documented empty return type of recogDestroy
+/home/dan/apps/leptgit/src/recogdid.c:176: warning: Member SetwidthFraction (variable) of file recogdid.c is not documented.
+/home/dan/apps/leptgit/src/recogdid.c:177: warning: Member MaxYShift (variable) of file recogdid.c is not documented.
+/home/dan/apps/leptgit/src/recogdid.c:185: warning: Member DefaultAlpha2[] (variable) of file recogdid.c is not documented.
+/home/dan/apps/leptgit/src/recogdid.c:186: warning: Member DefaultAlpha4[] (variable) of file recogdid.c is not documented.
+/home/dan/apps/leptgit/src/recogident.c:102: warning: Member SPLIT_WITH_DID (macro definition) of file recogident.c is not documented.
+/home/dan/apps/leptgit/src/recogident.c:105: warning: Member LeftRightPadding (variable) of file recogident.c is not documented.
+/home/dan/apps/leptgit/src/recogident.c:108: warning: Member MinFillFactor (variable) of file recogident.c is not documented.
+/home/dan/apps/leptgit/src/recogident.c:109: warning: Member DefaultMinHeight (variable) of file recogident.c is not documented.
+/home/dan/apps/leptgit/src/recogident.c:110: warning: Member MinOverlap1 (variable) of file recogident.c is not documented.
+/home/dan/apps/leptgit/src/recogident.c:111: warning: Member MinOverlap2 (variable) of file recogident.c is not documented.
+/home/dan/apps/leptgit/src/recogident.c:112: warning: Member MinHeightPass1 (variable) of file recogident.c is not documented.
+/home/dan/apps/leptgit/src/recogident.c:1817: warning: return type of member l_showIndicatorSplitValues is not documented
+/home/dan/apps/leptgit/src/recogident.c:1135: warning: return type of member rchaCreate is not documented
+/home/dan/apps/leptgit/src/recogtrain.c:182: warning: Member DefaultMinSetSize (variable) of file recogtrain.c is not documented.
+/home/dan/apps/leptgit/src/recogtrain.c:184: warning: Member DefaultMinSetFract (variable) of file recogtrain.c is not documented.
+/home/dan/apps/leptgit/src/recogtrain.c:188: warning: Member DefaultMinScore (variable) of file recogtrain.c is not documented.
+/home/dan/apps/leptgit/src/recogtrain.c:189: warning: Member DefaultMinTarget (variable) of file recogtrain.c is not documented.
+/home/dan/apps/leptgit/src/recogtrain.c:190: warning: Member LowerScoreThreshold (variable) of file recogtrain.c is not documented.
+/home/dan/apps/leptgit/src/recogtrain.c:2218: warning: found </pre> at different nesting level (5) than expected (2)
+/home/dan/apps/leptgit/src/recogtrain.c:2219: warning: end of comment block while expecting command </pre>
+/home/dan/apps/leptgit/src/recogtrain.c:1834: warning: found </pre> at different nesting level (5) than expected (2)
+/home/dan/apps/leptgit/src/recogtrain.c:1835: warning: end of comment block while expecting command </pre>
+/home/dan/apps/leptgit/src/regutils.c:75: warning: Member NumImageFileFormatExtensions (variable) of file regutils.c is not documented.
+/home/dan/apps/leptgit/src/regutils.c:76: warning: Member ImageFileFormatExtensions[] (variable) of file regutils.c is not documented.
+/home/dan/apps/leptgit/src/regutils.h:1: warning: Member L_REGPARAMS (typedef) of file regutils.h is not documented.
+/home/dan/apps/leptgit/src/roplow.c:80: warning: Member COMBINE_PARTIAL(d, s, m) (macro definition) of file roplow.c is not documented.
+/home/dan/apps/leptgit/src/roplow.c:82: warning: Member SHIFT_LEFT (variable) of file roplow.c is not documented.
+/home/dan/apps/leptgit/src/roplow.c:83: warning: Member SHIFT_RIGHT (variable) of file roplow.c is not documented.
+/home/dan/apps/leptgit/src/roplow.c:85: warning: Member lmask32[] (variable) of file roplow.c is not documented.
+/home/dan/apps/leptgit/src/roplow.c:95: warning: Member rmask32[] (variable) of file roplow.c is not documented.
+/home/dan/apps/leptgit/src/roplow.c:2386: warning: documented empty return type of rasteropHipLow
+/home/dan/apps/leptgit/src/roplow.c:485: warning: documented empty return type of rasteropLow
+/home/dan/apps/leptgit/src/roplow.c:128: warning: documented empty return type of rasteropUniLow
+/home/dan/apps/leptgit/src/roplow.c:2173: warning: documented empty return type of rasteropVipLow
+/home/dan/apps/leptgit/src/roplow.c:85: warning: parameters of member lmask32 are not (all) documented
+/home/dan/apps/leptgit/src/roplow.c:95: warning: parameters of member rmask32 are not (all) documented
+/home/dan/apps/leptgit/src/rotate.c:62: warning: Member AlphaMaskBorderVals[2] (variable) of file rotate.c is not documented.
+/home/dan/apps/leptgit/src/rotate.c:63: warning: Member MinAngleToRotate (variable) of file rotate.c is not documented.
+/home/dan/apps/leptgit/src/rotate.c:64: warning: Member Max1BppShearAngle (variable) of file rotate.c is not documented.
+/home/dan/apps/leptgit/src/rotate.c:65: warning: Member LimitShearAngle (variable) of file rotate.c is not documented.
+/home/dan/apps/leptgit/src/rotateam.c:315: warning: Member rotateAMColorLow(l_uint32 *datad, l_int32 w, l_int32 h, l_int32 wpld, l_uint32 *datas, l_int32 wpls, l_float32 angle, l_uint32 colorval) (function) of file rotateam.c is not documented.
+/home/dan/apps/leptgit/src/rotateam.c:386: warning: Member rotateAMGrayLow(l_uint32 *datad, l_int32 w, l_int32 h, l_int32 wpld, l_uint32 *datas, l_int32 wpls, l_float32 angle, l_uint8 grayval) (function) of file rotateam.c is not documented.
+/home/dan/apps/leptgit/src/rotateam.c:605: warning: Member rotateAMColorCornerLow(l_uint32 *datad, l_int32 w, l_int32 h, l_int32 wpld, l_uint32 *datas, l_int32 wpls, l_float32 angle, l_uint32 colorval) (function) of file rotateam.c is not documented.
+/home/dan/apps/leptgit/src/rotateam.c:672: warning: Member rotateAMGrayCornerLow(l_uint32 *datad, l_int32 w, l_int32 h, l_int32 wpld, l_uint32 *datas, l_int32 wpls, l_float32 angle, l_uint8 grayval) (function) of file rotateam.c is not documented.
+/home/dan/apps/leptgit/src/rotateam.c:150: warning: Member MinAngleToRotate (variable) of file rotateam.c is not documented.
+/home/dan/apps/leptgit/src/rotateam.c:849: warning: parameters of member rotateAMColorFastLow are not (all) documented
+/home/dan/apps/leptgit/src/rotateam.c:849: warning: return type of member rotateAMColorFastLow is not documented
+/home/dan/apps/leptgit/src/rotateorth.c:646: warning: return type of member makeReverseByteTab1 is not documented
+/home/dan/apps/leptgit/src/rotateorth.c:673: warning: return type of member makeReverseByteTab2 is not documented
+/home/dan/apps/leptgit/src/rotateorth.c:696: warning: return type of member makeReverseByteTab4 is not documented
+/home/dan/apps/leptgit/src/rotateshear.c:178: warning: Member MinAngleToRotate (variable) of file rotateshear.c is not documented.
+/home/dan/apps/leptgit/src/rotateshear.c:179: warning: Member MaxTwoShearAngle (variable) of file rotateshear.c is not documented.
+/home/dan/apps/leptgit/src/rotateshear.c:180: warning: Member MaxThreeShearAngle (variable) of file rotateshear.c is not documented.
+/home/dan/apps/leptgit/src/rotateshear.c:181: warning: Member MaxShearAngle (variable) of file rotateshear.c is not documented.
+/home/dan/apps/leptgit/src/sarray1.c:1111: warning: Member sarraySplitString(SARRAY *sa, const char *str, const char *separators) (function) of file sarray1.c is not documented.
+/home/dan/apps/leptgit/src/sarray1.c:152: warning: Member MaxPtrArraySize (variable) of file sarray1.c is not documented.
+/home/dan/apps/leptgit/src/sarray1.c:134: warning: found </pre> at different nesting level (5) than expected (2)
+/home/dan/apps/leptgit/src/sarray1.c:135: warning: end of comment block while expecting command </pre>
+/home/dan/apps/leptgit/src/sarray1.c:353: warning: documented empty return type of sarrayDestroy
+/home/dan/apps/leptgit/src/scale1.c:170: warning: Member DEBUG_OVERFLOW (macro definition) of file scale1.c is not documented.
+/home/dan/apps/leptgit/src/scale1.c:171: warning: Member DEBUG_UNROLLING (macro definition) of file scale1.c is not documented.
+/home/dan/apps/leptgit/src/scale1.c:3729: warning: Member scaleBinaryLow(l_uint32 *datad, l_int32 wd, l_int32 hd, l_int32 wpld, l_uint32 *datas, l_int32 ws, l_int32 hs, l_int32 wpls, l_float32 shiftx, l_float32 shifty) (function) of file scale1.c is not documented.
+/home/dan/apps/leptgit/src/scale1.c:2098: warning: found </pre> at different nesting level (5) than expected (2)
+/home/dan/apps/leptgit/src/scale1.c:2099: warning: end of comment block while expecting command </pre>
+/home/dan/apps/leptgit/src/scale1.c:2179: warning: Found unknown command '\shiftx'
+/home/dan/apps/leptgit/src/scale1.c:2179: warning: Found unknown command '\shifty'
+/home/dan/apps/leptgit/src/scale1.c:1336: warning: Found unknown command '\shiftx'
+/home/dan/apps/leptgit/src/scale1.c:1336: warning: Found unknown command '\shifty'
+/home/dan/apps/leptgit/src/scale1.c:760: warning: found </pre> at different nesting level (5) than expected (2)
+/home/dan/apps/leptgit/src/scale1.c:761: warning: end of comment block while expecting command </pre>
+/home/dan/apps/leptgit/src/scale1.c:1789: warning: found </pre> at different nesting level (5) than expected (2)
+/home/dan/apps/leptgit/src/scale1.c:1790: warning: end of comment block while expecting command </pre>
+/home/dan/apps/leptgit/src/scale1.c:3657: warning: parameters of member scaleAreaMapLow2 are not (all) documented
+/home/dan/apps/leptgit/src/scale1.c:3657: warning: return type of member scaleAreaMapLow2 is not documented
+/home/dan/apps/leptgit/src/scale1.c:3095: warning: parameters of member scaleBySamplingLow are not (all) documented
+/home/dan/apps/leptgit/src/scale1.c:3095: warning: return type of member scaleBySamplingLow is not documented
+/home/dan/apps/leptgit/src/scale1.c:2472: warning: parameters of member scaleColor2xLILow are not (all) documented
+/home/dan/apps/leptgit/src/scale1.c:2472: warning: return type of member scaleColor2xLILow is not documented
+/home/dan/apps/leptgit/src/scale1.c:3392: warning: parameters of member scaleColorAreaMapLow are not (all) documented
+/home/dan/apps/leptgit/src/scale1.c:3392: warning: return type of member scaleColorAreaMapLow is not documented
+/home/dan/apps/leptgit/src/scale1.c:2250: warning: parameters of member scaleColorLILow are not (all) documented
+/home/dan/apps/leptgit/src/scale1.c:2250: warning: return type of member scaleColorLILow is not documented
+/home/dan/apps/leptgit/src/scale1.c:2674: warning: parameters of member scaleGray2xLILow are not (all) documented
+/home/dan/apps/leptgit/src/scale1.c:2674: warning: return type of member scaleGray2xLILow is not documented
+/home/dan/apps/leptgit/src/scale1.c:2915: warning: parameters of member scaleGray4xLILow are not (all) documented
+/home/dan/apps/leptgit/src/scale1.c:2915: warning: return type of member scaleGray4xLILow is not documented
+/home/dan/apps/leptgit/src/scale1.c:3550: warning: parameters of member scaleGrayAreaMapLow are not (all) documented
+/home/dan/apps/leptgit/src/scale1.c:3550: warning: return type of member scaleGrayAreaMapLow is not documented
+/home/dan/apps/leptgit/src/scale1.c:2355: warning: parameters of member scaleGrayLILow are not (all) documented
+/home/dan/apps/leptgit/src/scale1.c:2355: warning: return type of member scaleGrayLILow is not documented
+/home/dan/apps/leptgit/src/scale1.c:3327: warning: parameters of member scaleRGBToGray2Low are not (all) documented
+/home/dan/apps/leptgit/src/scale1.c:3327: warning: return type of member scaleRGBToGray2Low is not documented
+/home/dan/apps/leptgit/src/scale1.c:3228: warning: parameters of member scaleSmoothLow are not (all) documented
+/home/dan/apps/leptgit/src/scale1.c:3228: warning: return type of member scaleSmoothLow is not documented
+/home/dan/apps/leptgit/src/scale2.c:135: warning: Member AlphaMaskBorderVals[2] (variable) of file scale2.c is not documented.
+/home/dan/apps/leptgit/src/scale2.c:1571: warning: return type of member makeSumTabSG2 is not documented
+/home/dan/apps/leptgit/src/scale2.c:1726: warning: return type of member makeSumTabSG3 is not documented
+/home/dan/apps/leptgit/src/scale2.c:1843: warning: return type of member makeSumTabSG4 is not documented
+/home/dan/apps/leptgit/src/scale2.c:1599: warning: return type of member makeValTabSG2 is not documented
+/home/dan/apps/leptgit/src/scale2.c:1753: warning: return type of member makeValTabSG3 is not documented
+/home/dan/apps/leptgit/src/scale2.c:1870: warning: return type of member makeValTabSG4 is not documented
+/home/dan/apps/leptgit/src/scale2.c:2015: warning: return type of member makeValTabSG6 is not documented
+/home/dan/apps/leptgit/src/scale2.c:2107: warning: return type of member makeValTabSG8 is not documented
+/home/dan/apps/leptgit/src/scale2.c:2222: warning: parameters of member scaleMipmapLow are not (all) documented
+/home/dan/apps/leptgit/src/scale2.c:2222: warning: return type of member scaleMipmapLow is not documented
+/home/dan/apps/leptgit/src/seedfill.c:205: warning: Member DEBUG_PRINT_ITERS (macro definition) of file seedfill.c is not documented.
+/home/dan/apps/leptgit/src/seedfill.c:1: warning: Member L_PIXEL (typedef) of file seedfill.c is not documented.
+/home/dan/apps/leptgit/src/seedfill.c:2548: warning: parameters of member distanceFunctionLow are not (all) documented
+/home/dan/apps/leptgit/src/seedfill.c:2548: warning: return type of member distanceFunctionLow is not documented
+/home/dan/apps/leptgit/src/seedfill.c:209: warning: Member MaxIters (variable) of file seedfill.c is not documented.
+/home/dan/apps/leptgit/src/seedfill.c:399: warning: parameters of member seedfillBinaryLow are not (all) documented
+/home/dan/apps/leptgit/src/seedfill.c:399: warning: return type of member seedfillBinaryLow is not documented
+/home/dan/apps/leptgit/src/seedfill.c:1492: warning: parameters of member seedfillGrayInvLow are not (all) documented
+/home/dan/apps/leptgit/src/seedfill.c:1492: warning: return type of member seedfillGrayInvLow is not documented
+/home/dan/apps/leptgit/src/seedfill.c:2247: warning: parameters of member seedfillGrayInvLowSimple are not (all) documented
+/home/dan/apps/leptgit/src/seedfill.c:2247: warning: return type of member seedfillGrayInvLowSimple is not documented
+/home/dan/apps/leptgit/src/seedfill.c:1043: warning: parameters of member seedfillGrayLow are not (all) documented
+/home/dan/apps/leptgit/src/seedfill.c:1043: warning: return type of member seedfillGrayLow is not documented
+/home/dan/apps/leptgit/src/seedfill.c:2093: warning: parameters of member seedfillGrayLowSimple are not (all) documented
+/home/dan/apps/leptgit/src/seedfill.c:2093: warning: return type of member seedfillGrayLowSimple is not documented
+/home/dan/apps/leptgit/src/seedfill.c:2804: warning: parameters of member seedspreadLow are not (all) documented
+/home/dan/apps/leptgit/src/seedfill.c:2804: warning: return type of member seedspreadLow is not documented
+/home/dan/apps/leptgit/src/sel1.c:150: warning: Member MaxPtrArraySize (variable) of file sel1.c is not documented.
+/home/dan/apps/leptgit/src/sel1.c:154: warning: Member MaxKernelSize (variable) of file sel1.c is not documented.
+/home/dan/apps/leptgit/src/sel1.c:157: warning: Member MaxPixTemplateSize (variable) of file sel1.c is not documented.
+/home/dan/apps/leptgit/src/sel1.c:158: warning: Member MaxPixTemplateHits (variable) of file sel1.c is not documented.
+/home/dan/apps/leptgit/src/sel1.c:162: warning: Member comp_parameter_map[] (variable) of file sel1.c is not documented.
+/home/dan/apps/leptgit/src/sel1.c:274: warning: documented empty return type of selaDestroy
+/home/dan/apps/leptgit/src/sel1.c:336: warning: documented empty return type of selDestroy
+/home/dan/apps/leptgit/src/sel2.c:71: warning: Member L_BUF_SIZE (macro definition) of file sel2.c is not documented.
+/home/dan/apps/leptgit/src/sel2.c:75: warning: Member num_linear (variable) of file sel2.c is not documented.
+/home/dan/apps/leptgit/src/sel2.c:76: warning: Member basic_linear[] (variable) of file sel2.c is not documented.
+/home/dan/apps/leptgit/src/sel2.c:674: warning: Member sel_4_1 (variable) of file sel2.c is not documented.
+/home/dan/apps/leptgit/src/sel2.c:677: warning: Member sel_4_2 (variable) of file sel2.c is not documented.
+/home/dan/apps/leptgit/src/sel2.c:680: warning: Member sel_4_3 (variable) of file sel2.c is not documented.
+/home/dan/apps/leptgit/src/sel2.c:683: warning: Member sel_4_4 (variable) of file sel2.c is not documented.
+/home/dan/apps/leptgit/src/sel2.c:686: warning: Member sel_4_5 (variable) of file sel2.c is not documented.
+/home/dan/apps/leptgit/src/sel2.c:689: warning: Member sel_4_6 (variable) of file sel2.c is not documented.
+/home/dan/apps/leptgit/src/sel2.c:692: warning: Member sel_4_7 (variable) of file sel2.c is not documented.
+/home/dan/apps/leptgit/src/sel2.c:695: warning: Member sel_4_8 (variable) of file sel2.c is not documented.
+/home/dan/apps/leptgit/src/sel2.c:698: warning: Member sel_4_9 (variable) of file sel2.c is not documented.
+/home/dan/apps/leptgit/src/sel2.c:703: warning: Member sel_8_1 (variable) of file sel2.c is not documented.
+/home/dan/apps/leptgit/src/sel2.c:706: warning: Member sel_8_2 (variable) of file sel2.c is not documented.
+/home/dan/apps/leptgit/src/sel2.c:709: warning: Member sel_8_3 (variable) of file sel2.c is not documented.
+/home/dan/apps/leptgit/src/sel2.c:712: warning: Member sel_8_4 (variable) of file sel2.c is not documented.
+/home/dan/apps/leptgit/src/sel2.c:715: warning: Member sel_8_5 (variable) of file sel2.c is not documented.
+/home/dan/apps/leptgit/src/sel2.c:718: warning: Member sel_8_6 (variable) of file sel2.c is not documented.
+/home/dan/apps/leptgit/src/sel2.c:721: warning: Member sel_8_7 (variable) of file sel2.c is not documented.
+/home/dan/apps/leptgit/src/sel2.c:724: warning: Member sel_8_8 (variable) of file sel2.c is not documented.
+/home/dan/apps/leptgit/src/sel2.c:727: warning: Member sel_8_9 (variable) of file sel2.c is not documented.
+/home/dan/apps/leptgit/src/sel2.c:732: warning: Member sel_48_1 (variable) of file sel2.c is not documented.
+/home/dan/apps/leptgit/src/sel2.c:735: warning: Member sel_48_2 (variable) of file sel2.c is not documented.
+/home/dan/apps/leptgit/src/sel2.c:76: warning: parameters of member basic_linear are not (all) documented
+/home/dan/apps/leptgit/src/sel2.c:732: warning: parameters of member sel_48_1 are not (all) documented
+/home/dan/apps/leptgit/src/sel2.c:735: warning: parameters of member sel_48_2 are not (all) documented
+/home/dan/apps/leptgit/src/sel2.c:674: warning: parameters of member sel_4_1 are not (all) documented
+/home/dan/apps/leptgit/src/sel2.c:677: warning: parameters of member sel_4_2 are not (all) documented
+/home/dan/apps/leptgit/src/sel2.c:680: warning: parameters of member sel_4_3 are not (all) documented
+/home/dan/apps/leptgit/src/sel2.c:683: warning: parameters of member sel_4_4 are not (all) documented
+/home/dan/apps/leptgit/src/sel2.c:686: warning: parameters of member sel_4_5 are not (all) documented
+/home/dan/apps/leptgit/src/sel2.c:689: warning: parameters of member sel_4_6 are not (all) documented
+/home/dan/apps/leptgit/src/sel2.c:692: warning: parameters of member sel_4_7 are not (all) documented
+/home/dan/apps/leptgit/src/sel2.c:695: warning: parameters of member sel_4_8 are not (all) documented
+/home/dan/apps/leptgit/src/sel2.c:698: warning: parameters of member sel_4_9 are not (all) documented
+/home/dan/apps/leptgit/src/sel2.c:703: warning: parameters of member sel_8_1 are not (all) documented
+/home/dan/apps/leptgit/src/sel2.c:706: warning: parameters of member sel_8_2 are not (all) documented
+/home/dan/apps/leptgit/src/sel2.c:709: warning: parameters of member sel_8_3 are not (all) documented
+/home/dan/apps/leptgit/src/sel2.c:712: warning: parameters of member sel_8_4 are not (all) documented
+/home/dan/apps/leptgit/src/sel2.c:715: warning: parameters of member sel_8_5 are not (all) documented
+/home/dan/apps/leptgit/src/sel2.c:718: warning: parameters of member sel_8_6 are not (all) documented
+/home/dan/apps/leptgit/src/sel2.c:721: warning: parameters of member sel_8_7 are not (all) documented
+/home/dan/apps/leptgit/src/sel2.c:724: warning: parameters of member sel_8_8 are not (all) documented
+/home/dan/apps/leptgit/src/sel2.c:727: warning: parameters of member sel_8_9 are not (all) documented
+/home/dan/apps/leptgit/src/selgen.c:91: warning: Member DEBUG_DISPLAY_HM_SEL (macro definition) of file selgen.c is not documented.
+/home/dan/apps/leptgit/src/selgen.c:78: warning: Member DefaultDistanceToBoundary (variable) of file selgen.c is not documented.
+/home/dan/apps/leptgit/src/selgen.c:79: warning: Member MaxDistanceToBoundary (variable) of file selgen.c is not documented.
+/home/dan/apps/leptgit/src/selgen.c:83: warning: Member DefaultMinRunlength (variable) of file selgen.c is not documented.
+/home/dan/apps/leptgit/src/selgen.c:87: warning: Member DefaultSelScalefactor (variable) of file selgen.c is not documented.
+/home/dan/apps/leptgit/src/selgen.c:88: warning: Member MaxSelScalefactor (variable) of file selgen.c is not documented.
+/home/dan/apps/leptgit/src/shear.c:70: warning: Member DEBUG (macro definition) of file shear.c is not documented.
+/home/dan/apps/leptgit/src/shear.c:812: warning: Member normalizeAngleForShear(l_float32 radang, l_float32 mindif) (function) of file shear.c is not documented.
+/home/dan/apps/leptgit/src/shear.c:64: warning: Member MinDiffFromHalfPi (variable) of file shear.c is not documented.
+/home/dan/apps/leptgit/src/skew.c:137: warning: Member DEBUG_PRINT_SCORES (macro definition) of file skew.c is not documented.
+/home/dan/apps/leptgit/src/skew.c:138: warning: Member DEBUG_PRINT_SWEEP (macro definition) of file skew.c is not documented.
+/home/dan/apps/leptgit/src/skew.c:139: warning: Member DEBUG_PRINT_BINARY (macro definition) of file skew.c is not documented.
+/home/dan/apps/leptgit/src/skew.c:140: warning: Member DEBUG_PRINT_ORTH (macro definition) of file skew.c is not documented.
+/home/dan/apps/leptgit/src/skew.c:141: warning: Member DEBUG_THRESHOLD (macro definition) of file skew.c is not documented.
+/home/dan/apps/leptgit/src/skew.c:142: warning: Member DEBUG_PLOT_SCORES (macro definition) of file skew.c is not documented.
+/home/dan/apps/leptgit/src/skew.c:1024: warning: Member pixFindSkewOrthogonalRange(PIX *pixs, l_float32 *pangle, l_float32 *pconf, l_int32 redsweep, l_int32 redsearch, l_float32 sweeprange, l_float32 sweepdelta, l_float32 minbsdelta, l_float32 confprior) (function) of file skew.c is not documented.
+/home/dan/apps/leptgit/src/skew.c:106: warning: Member DefaultSweepRange (variable) of file skew.c is not documented.
+/home/dan/apps/leptgit/src/skew.c:107: warning: Member DefaultSweepDelta (variable) of file skew.c is not documented.
+/home/dan/apps/leptgit/src/skew.c:113: warning: Member DefaultMinbsDelta (variable) of file skew.c is not documented.
+/home/dan/apps/leptgit/src/skew.c:116: warning: Member DefaultSweepReduction (variable) of file skew.c is not documented.
+/home/dan/apps/leptgit/src/skew.c:117: warning: Member DefaultBsReduction (variable) of file skew.c is not documented.
+/home/dan/apps/leptgit/src/skew.c:120: warning: Member MinDeskewAngle (variable) of file skew.c is not documented.
+/home/dan/apps/leptgit/src/skew.c:123: warning: Member MinAllowedConfidence (variable) of file skew.c is not documented.
+/home/dan/apps/leptgit/src/skew.c:126: warning: Member MinValidMaxscore (variable) of file skew.c is not documented.
+/home/dan/apps/leptgit/src/skew.c:131: warning: Member MinscoreThreshFactor (variable) of file skew.c is not documented.
+/home/dan/apps/leptgit/src/skew.c:134: warning: Member DefaultBinaryThreshold (variable) of file skew.c is not documented.
+/home/dan/apps/leptgit/src/spixio.c:72: warning: Member DEBUG_SERIALIZE (macro definition) of file spixio.c is not documented.
+/home/dan/apps/leptgit/src/spixio.c:67: warning: Member MaxAllowedWidth (variable) of file spixio.c is not documented.
+/home/dan/apps/leptgit/src/spixio.c:68: warning: Member MaxAllowedHeight (variable) of file spixio.c is not documented.
+/home/dan/apps/leptgit/src/spixio.c:69: warning: Member MaxAllowedArea (variable) of file spixio.c is not documented.
+/home/dan/apps/leptgit/src/stack.c:66: warning: Member MaxPtrArraySize (variable) of file stack.c is not documented.
+/home/dan/apps/leptgit/src/stack.c:122: warning: documented empty return type of lstackDestroy
+/home/dan/apps/leptgit/src/stack.h:1: warning: Member L_STACK (typedef) of file stack.h is not documented.
+/home/dan/apps/leptgit/src/stringcode.c:95: warning: Member TEMPLATE1 (macro definition) of file stringcode.c is not documented.
+/home/dan/apps/leptgit/src/stringcode.c:96: warning: Member TEMPLATE2 (macro definition) of file stringcode.c is not documented.
+/home/dan/apps/leptgit/src/stringcode.h:1: warning: Member L_STRCODE (typedef) of file stringcode.h is not documented.
+/home/dan/apps/leptgit/src/sudoku.c:337: warning: documented empty return type of sudokuDestroy
+/home/dan/apps/leptgit/src/sudoku.h:1: warning: Member L_SUDOKU (typedef) of file sudoku.h is not documented.
+/home/dan/apps/leptgit/src/tiffiostub.c:45: warning: Member pixReadTiff(const char *filename, l_int32 n) (function) of file tiffiostub.c is not documented.
+/home/dan/apps/leptgit/src/tiffiostub.c:52: warning: Member pixReadStreamTiff(FILE *fp, l_int32 n) (function) of file tiffiostub.c is not documented.
+/home/dan/apps/leptgit/src/tiffiostub.c:59: warning: Member pixWriteTiff(const char *filename, PIX *pix, l_int32 comptype, const char *modestring) (function) of file tiffiostub.c is not documented.
+/home/dan/apps/leptgit/src/tiffiostub.c:67: warning: Member pixWriteTiffCustom(const char *filename, PIX *pix, l_int32 comptype, const char *modestring, NUMA *natags, SARRAY *savals, SARRAY *satypes, NUMA *nasizes) (function) of file tiffiostub.c is not documented.
+/home/dan/apps/leptgit/src/tiffiostub.c:76: warning: Member pixWriteStreamTiff(FILE *fp, PIX *pix, l_int32 comptype) (function) of file tiffiostub.c is not documented.
+/home/dan/apps/leptgit/src/tiffiostub.c:83: warning: Member pixWriteStreamTiffWA(FILE *fp, PIX *pix, l_int32 comptype, const char *modestr) (function) of file tiffiostub.c is not documented.
+/home/dan/apps/leptgit/src/tiffiostub.c:91: warning: Member pixReadFromMultipageTiff(const char *filename, size_t *poffset) (function) of file tiffiostub.c is not documented.
+/home/dan/apps/leptgit/src/tiffiostub.c:98: warning: Member pixaReadMultipageTiff(const char *filename) (function) of file tiffiostub.c is not documented.
+/home/dan/apps/leptgit/src/tiffiostub.c:105: warning: Member pixaWriteMultipageTiff(const char *filename, PIXA *pixa) (function) of file tiffiostub.c is not documented.
+/home/dan/apps/leptgit/src/tiffiostub.c:112: warning: Member writeMultipageTiff(const char *dirin, const char *substr, const char *fileout) (function) of file tiffiostub.c is not documented.
+/home/dan/apps/leptgit/src/tiffiostub.c:120: warning: Member writeMultipageTiffSA(SARRAY *sa, const char *fileout) (function) of file tiffiostub.c is not documented.
+/home/dan/apps/leptgit/src/tiffiostub.c:127: warning: Member fprintTiffInfo(FILE *fpout, const char *tiffile) (function) of file tiffiostub.c is not documented.
+/home/dan/apps/leptgit/src/tiffiostub.c:134: warning: Member tiffGetCount(FILE *fp, l_int32 *pn) (function) of file tiffiostub.c is not documented.
+/home/dan/apps/leptgit/src/tiffiostub.c:141: warning: Member getTiffResolution(FILE *fp, l_int32 *pxres, l_int32 *pyres) (function) of file tiffiostub.c is not documented.
+/home/dan/apps/leptgit/src/tiffiostub.c:148: warning: Member readHeaderTiff(const char *filename, l_int32 n, l_int32 *pwidth, l_int32 *pheight, l_int32 *pbps, l_int32 *pspp, l_int32 *pres, l_int32 *pcmap, l_int32 *pformat) (function) of file tiffiostub.c is not documented.
+/home/dan/apps/leptgit/src/tiffiostub.c:157: warning: Member freadHeaderTiff(FILE *fp, l_int32 n, l_int32 *pwidth, l_int32 *pheight, l_int32 *pbps, l_int32 *pspp, l_int32 *pres, l_int32 *pcmap, l_int32 *pformat) (function) of file tiffiostub.c is not documented.
+/home/dan/apps/leptgit/src/tiffiostub.c:166: warning: Member readHeaderMemTiff(const l_uint8 *cdata, size_t size, l_int32 n, l_int32 *pwidth, l_int32 *pheight, l_int32 *pbps, l_int32 *pspp, l_int32 *pres, l_int32 *pcmap, l_int32 *pformat) (function) of file tiffiostub.c is not documented.
+/home/dan/apps/leptgit/src/tiffiostub.c:176: warning: Member findTiffCompression(FILE *fp, l_int32 *pcomptype) (function) of file tiffiostub.c is not documented.
+/home/dan/apps/leptgit/src/tiffiostub.c:183: warning: Member extractG4DataFromFile(const char *filein, l_uint8 **pdata, size_t *pnbytes, l_int32 *pw, l_int32 *ph, l_int32 *pminisblack) (function) of file tiffiostub.c is not documented.
+/home/dan/apps/leptgit/src/tiffiostub.c:192: warning: Member pixReadMemTiff(const l_uint8 *cdata, size_t size, l_int32 n) (function) of file tiffiostub.c is not documented.
+/home/dan/apps/leptgit/src/tiffiostub.c:199: warning: Member pixReadMemFromMultipageTiff(const l_uint8 *cdata, size_t size, size_t *poffset) (function) of file tiffiostub.c is not documented.
+/home/dan/apps/leptgit/src/tiffiostub.c:207: warning: Member pixaReadMemMultipageTiff(const l_uint8 *data, size_t size) (function) of file tiffiostub.c is not documented.
+/home/dan/apps/leptgit/src/tiffiostub.c:214: warning: Member pixaWriteMemMultipageTiff(l_uint8 **pdata, size_t *psize, PIXA *pixa) (function) of file tiffiostub.c is not documented.
+/home/dan/apps/leptgit/src/tiffiostub.c:221: warning: Member pixWriteMemTiff(l_uint8 **pdata, size_t *psize, PIX *pix, l_int32 comptype) (function) of file tiffiostub.c is not documented.
+/home/dan/apps/leptgit/src/tiffiostub.c:229: warning: Member pixWriteMemTiffCustom(l_uint8 **pdata, size_t *psize, PIX *pix, l_int32 comptype, NUMA *natags, SARRAY *savals, SARRAY *satypes, NUMA *nasizes) (function) of file tiffiostub.c is not documented.
+/home/dan/apps/leptgit/src/utils1.c:126: warning: Member DEBUG_SEV (macro definition) of file utils1.c is not documented.
+/home/dan/apps/leptgit/src/utils1.c:360: warning: Member MAX_DEBUG_MESSAGE (macro definition) of file utils1.c is not documented.
+/home/dan/apps/leptgit/src/utils1.c:327: warning: Member lept_default_stderr_handler(const char *formatted_msg) (function) of file utils1.c is not documented.
+/home/dan/apps/leptgit/src/utils1.c:473: warning: Member convertOnLittleEnd16(l_uint16 shortin) (function) of file utils1.c is not documented.
+/home/dan/apps/leptgit/src/utils1.c:479: warning: Member convertOnBigEnd16(l_uint16 shortin) (function) of file utils1.c is not documented.
+/home/dan/apps/leptgit/src/utils1.c:508: warning: Member convertOnLittleEnd32(l_uint32 wordin) (function) of file utils1.c is not documented.
+/home/dan/apps/leptgit/src/utils1.c:515: warning: Member convertOnBigEnd32(l_uint32 wordin) (function) of file utils1.c is not documented.
+/home/dan/apps/leptgit/src/utils1.c:1131: warning: Member stopTimer(void) (function) of file utils1.c is not documented.
+/home/dan/apps/leptgit/src/utils1.c:1167: warning: Member stopTimerNested(L_TIMER rusage_start) (function) of file utils1.c is not documented.
+/home/dan/apps/leptgit/src/utils1.c:335: warning: Member stderr_handler)(const char *) (variable) of file utils1.c is not documented.
+/home/dan/apps/leptgit/src/utils1.c:1066: warning: Member rusage_before (variable) of file utils1.c is not documented.
+/home/dan/apps/leptgit/src/utils1.c:1066: warning: Member rusage_after (variable) of file utils1.c is not documented.
+/home/dan/apps/leptgit/src/utils1.c:1066: warning: return type of member getLeptonicaVersion is not documented
+/home/dan/apps/leptgit/src/utils1.c:1191: warning: documented empty return type of l_getCurrentTime
+/home/dan/apps/leptgit/src/utils1.c:377: warning: documented empty return type of lept_stderr
+/home/dan/apps/leptgit/src/utils1.c:351: warning: documented empty return type of leptSetStderrHandler
+/home/dan/apps/leptgit/src/utils1.c:1157: warning: return type of member startTimerNested is not documented
+/home/dan/apps/leptgit/src/utils2.c:2667: warning: documented empty return type of callSystemDebug
+/home/dan/apps/leptgit/src/utils2.c:1784: warning: Unsupported xml/html tag <rootpath> found
+/home/dan/apps/leptgit/src/utils2.c:1784: warning: Unsupported xml/html tag <ext> found
+/home/dan/apps/leptgit/src/utils2.c:1788: warning: Unsupported xml/html tag <n> found
+/home/dan/apps/leptgit/src/utils2.c:1788: warning: Unsupported xml/html tag <filename> found
+/home/dan/apps/leptgit/src/utils2.c:2295: warning: documented empty return type of lept_direxists
+/home/dan/apps/leptgit/src/warper.c:79: warning: Member USE_SIN_TABLE (macro definition) of file warper.c is not documented.
+/home/dan/apps/leptgit/src/warper.c:237: warning: Member generateRandomNumberArray(l_int32 size) (function) of file warper.c is not documented.
+/home/dan/apps/leptgit/src/warper.c:83: warning: Member DefaultRedWeight (variable) of file warper.c is not documented.
+/home/dan/apps/leptgit/src/warper.c:84: warning: Member DefaultGreenWeight (variable) of file warper.c is not documented.
+/home/dan/apps/leptgit/src/warper.c:85: warning: Member DefaultBlueWeight (variable) of file warper.c is not documented.
+/home/dan/apps/leptgit/src/warper.c:259: warning: parameters of member applyWarpTransform are not (all) documented
+/home/dan/apps/leptgit/src/warper.c:259: warning: return type of member applyWarpTransform is not documented
+/home/dan/apps/leptgit/src/watershed.c:122: warning: Member DEBUG_WATERSHED (macro definition) of file watershed.c is not documented.
+/home/dan/apps/leptgit/src/watershed.c:125: warning: Member L_NEWPIXEL (typedef) of file watershed.c is not documented.
+/home/dan/apps/leptgit/src/watershed.c:125: warning: Member L_WSPIXEL (typedef) of file watershed.c is not documented.
+/home/dan/apps/leptgit/src/watershed.c:809: warning: Member pushNewPixel(L_QUEUE *lq, l_int32 x, l_int32 y, l_int32 *pminx, l_int32 *pmaxx, l_int32 *pminy, l_int32 *pmaxy) (function) of file watershed.c is not documented.
+/home/dan/apps/leptgit/src/watershed.c:857: warning: Member popNewPixel(L_QUEUE *lq, l_int32 *px, l_int32 *py) (function) of file watershed.c is not documented.
+/home/dan/apps/leptgit/src/watershed.c:893: warning: Member pushWSPixel(L_HEAP *lh, L_STACK *stack, l_int32 val, l_int32 x, l_int32 y, l_int32 index) (function) of file watershed.c is not documented.
+/home/dan/apps/leptgit/src/watershed.c:943: warning: Member popWSPixel(L_HEAP *lh, L_STACK *stack, l_int32 *pval, l_int32 *px, l_int32 *py, l_int32 *pindex) (function) of file watershed.c is not documented.
+/home/dan/apps/leptgit/src/watershed.c:976: warning: Member debugPrintLUT(l_int32 *lut, l_int32 size, l_int32 debug) (function) of file watershed.c is not documented.
+/home/dan/apps/leptgit/src/watershed.c:991: warning: Member debugWshedMerge(L_WSHED *wshed, char *descr, l_int32 x, l_int32 y, l_int32 label, l_int32 index) (function) of file watershed.c is not documented.
+/home/dan/apps/leptgit/src/watershed.c:125: warning: Member MAX_LABEL_VALUE (variable) of file watershed.c is not documented.
+/home/dan/apps/leptgit/src/watershed.c:252: warning: documented empty return type of wshedDestroy
+/home/dan/apps/leptgit/src/watershed.h:1: warning: Member L_WSHED (typedef) of file watershed.h is not documented.
+/home/dan/apps/leptgit/src/webpanimiostub.c:45: warning: Member pixaWriteWebPAnim(const char *filename, PIXA *pixa, l_int32 loopcount, l_int32 duration, l_int32 quality, l_int32 lossless) (function) of file webpanimiostub.c is not documented.
+/home/dan/apps/leptgit/src/webpanimiostub.c:53: warning: Member pixaWriteStreamWebPAnim(FILE *fp, PIXA *pixa, l_int32 loopcount, l_int32 duration, l_int32 quality, l_int32 lossless) (function) of file webpanimiostub.c is not documented.
+/home/dan/apps/leptgit/src/webpanimiostub.c:62: warning: Member pixaWriteMemWebPAnim(l_uint8 **pencdata, size_t *pencsize, PIXA *pixa, l_int32 loopcount, l_int32 duration, l_int32 quality, l_int32 lossless) (function) of file webpanimiostub.c is not documented.
+/home/dan/apps/leptgit/src/webpiostub.c:45: warning: Member pixReadStreamWebP(FILE *fp) (function) of file webpiostub.c is not documented.
+/home/dan/apps/leptgit/src/webpiostub.c:52: warning: Member pixReadMemWebP(const l_uint8 *filedata, size_t filesize) (function) of file webpiostub.c is not documented.
+/home/dan/apps/leptgit/src/webpiostub.c:59: warning: Member readHeaderWebP(const char *filename, l_int32 *pw, l_int32 *ph, l_int32 *pspp) (function) of file webpiostub.c is not documented.
+/home/dan/apps/leptgit/src/webpiostub.c:67: warning: Member readHeaderMemWebP(const l_uint8 *data, size_t size, l_int32 *pw, l_int32 *ph, l_int32 *pspp) (function) of file webpiostub.c is not documented.
+/home/dan/apps/leptgit/src/webpiostub.c:75: warning: Member pixWriteWebP(const char *filename, PIX *pixs, l_int32 quality, l_int32 lossless) (function) of file webpiostub.c is not documented.
+/home/dan/apps/leptgit/src/webpiostub.c:83: warning: Member pixWriteStreamWebP(FILE *fp, PIX *pixs, l_int32 quality, l_int32 lossless) (function) of file webpiostub.c is not documented.
+/home/dan/apps/leptgit/src/webpiostub.c:91: warning: Member pixWriteMemWebP(l_uint8 **pencdata, size_t *pencsize, PIX *pixs, l_int32 quality, l_int32 lossless) (function) of file webpiostub.c is not documented.
+/home/dan/apps/leptgit/src/zlibmem.c:66: warning: Member DEBUG (macro definition) of file zlibmem.c is not documented.
+/home/dan/apps/leptgit/src/zlibmem.c:62: warning: Member L_BUF_SIZE (variable) of file zlibmem.c is not documented.
+/home/dan/apps/leptgit/src/zlibmem.c:63: warning: Member ZLIB_COMPRESSION_LEVEL (variable) of file zlibmem.c is not documented.
+/home/dan/apps/leptgit/src/jpegio.c:160: warning: Member jmpbuf (variable) of class callback_data is not documented.
+/home/dan/apps/leptgit/src/jpegio.c:161: warning: Member comment (variable) of class callback_data is not documented.
+/home/dan/apps/leptgit/src/colorfill.c:65: warning: Member x (variable) of class ColorEl is not documented.
+/home/dan/apps/leptgit/src/colorfill.c:66: warning: Member y (variable) of class ColorEl is not documented.
+/home/dan/apps/leptgit/src/colorfill.c:67: warning: Member color (variable) of class ColorEl is not documented.
+/home/dan/apps/leptgit/src/colorquant1.c:164: warning: Member rc (variable) of class ColorQuantCell is not documented.
+/home/dan/apps/leptgit/src/colorquant1.c:164: warning: Member gc (variable) of class ColorQuantCell is not documented.
+/home/dan/apps/leptgit/src/colorquant1.c:164: warning: Member bc (variable) of class ColorQuantCell is not documented.
+/home/dan/apps/leptgit/src/colorquant1.c:165: warning: Member n (variable) of class ColorQuantCell is not documented.
+/home/dan/apps/leptgit/src/colorquant1.c:166: warning: Member index (variable) of class ColorQuantCell is not documented.
+/home/dan/apps/leptgit/src/colorquant1.c:167: warning: Member nleaves (variable) of class ColorQuantCell is not documented.
+/home/dan/apps/leptgit/src/colorquant1.c:168: warning: Member bleaf (variable) of class ColorQuantCell is not documented.
+/home/dan/apps/leptgit/src/sel1.c:166: warning: Member size (variable) of class CompParameterMap is not documented.
+/home/dan/apps/leptgit/src/sel1.c:167: warning: Member size1 (variable) of class CompParameterMap is not documented.
+/home/dan/apps/leptgit/src/sel1.c:168: warning: Member size2 (variable) of class CompParameterMap is not documented.
+/home/dan/apps/leptgit/src/sel1.c:169: warning: Member selnameh1[20] (variable) of class CompParameterMap is not documented.
+/home/dan/apps/leptgit/src/sel1.c:170: warning: Member selnameh2[20] (variable) of class CompParameterMap is not documented.
+/home/dan/apps/leptgit/src/sel1.c:171: warning: Member selnamev1[20] (variable) of class CompParameterMap is not documented.
+/home/dan/apps/leptgit/src/sel1.c:172: warning: Member selnamev2[20] (variable) of class CompParameterMap is not documented.
+/home/dan/apps/leptgit/src/list.h:63: warning: Member prev (variable) of class DoubleLinkedList is not documented.
+/home/dan/apps/leptgit/src/list.h:64: warning: Member next (variable) of class DoubleLinkedList is not documented.
+/home/dan/apps/leptgit/src/list.h:65: warning: Member data (variable) of class DoubleLinkedList is not documented.
+/home/dan/apps/leptgit/src/writefile.c:149: warning: Member extension[16] (variable) of class ExtensionMap is not documented.
+/home/dan/apps/leptgit/src/writefile.c:150: warning: Member format (variable) of class ExtensionMap is not documented.
+/home/dan/apps/leptgit/src/jbclass.c:243: warning: Member classer (variable) of class JbFindTemplatesState is not documented.
+/home/dan/apps/leptgit/src/jbclass.c:244: warning: Member w (variable) of class JbFindTemplatesState is not documented.
+/home/dan/apps/leptgit/src/jbclass.c:245: warning: Member h (variable) of class JbFindTemplatesState is not documented.
+/home/dan/apps/leptgit/src/jbclass.c:246: warning: Member i (variable) of class JbFindTemplatesState is not documented.
+/home/dan/apps/leptgit/src/jbclass.c:247: warning: Member dna (variable) of class JbFindTemplatesState is not documented.
+/home/dan/apps/leptgit/src/jbclass.c:248: warning: Member n (variable) of class JbFindTemplatesState is not documented.
+/home/dan/apps/leptgit/src/colorquant2.c:184: warning: Member sortparam (variable) of class L_Box3d is not documented.
+/home/dan/apps/leptgit/src/colorquant2.c:185: warning: Member npix (variable) of class L_Box3d is not documented.
+/home/dan/apps/leptgit/src/colorquant2.c:186: warning: Member vol (variable) of class L_Box3d is not documented.
+/home/dan/apps/leptgit/src/colorquant2.c:187: warning: Member r1 (variable) of class L_Box3d is not documented.
+/home/dan/apps/leptgit/src/colorquant2.c:188: warning: Member r2 (variable) of class L_Box3d is not documented.
+/home/dan/apps/leptgit/src/colorquant2.c:189: warning: Member g1 (variable) of class L_Box3d is not documented.
+/home/dan/apps/leptgit/src/colorquant2.c:190: warning: Member g2 (variable) of class L_Box3d is not documented.
+/home/dan/apps/leptgit/src/colorquant2.c:191: warning: Member b1 (variable) of class L_Box3d is not documented.
+/home/dan/apps/leptgit/src/colorquant2.c:192: warning: Member b2 (variable) of class L_Box3d is not documented.
+/home/dan/apps/leptgit/src/array_internal.h:109: warning: Member nbuckets (variable) of class L_DnaHash is not documented.
+/home/dan/apps/leptgit/src/stringcode.c:101: warning: Member index (variable) of class L_GenAssoc is not documented.
+/home/dan/apps/leptgit/src/stringcode.c:102: warning: Member type[16] (variable) of class L_GenAssoc is not documented.
+/home/dan/apps/leptgit/src/stringcode.c:103: warning: Member structname[16] (variable) of class L_GenAssoc is not documented.
+/home/dan/apps/leptgit/src/stringcode.c:104: warning: Member reader[16] (variable) of class L_GenAssoc is not documented.
+/home/dan/apps/leptgit/src/stringcode.c:105: warning: Member memreader[20] (variable) of class L_GenAssoc is not documented.
+/home/dan/apps/leptgit/src/colorquant1.c:210: warning: Member npix (variable) of class L_OctcubePop is not documented.
+/home/dan/apps/leptgit/src/colorquant1.c:211: warning: Member index (variable) of class L_OctcubePop is not documented.
+/home/dan/apps/leptgit/src/colorquant1.c:212: warning: Member rval (variable) of class L_OctcubePop is not documented.
+/home/dan/apps/leptgit/src/colorquant1.c:213: warning: Member gval (variable) of class L_OctcubePop is not documented.
+/home/dan/apps/leptgit/src/colorquant1.c:214: warning: Member bval (variable) of class L_OctcubePop is not documented.
+/home/dan/apps/leptgit/src/seedfill.c:176: warning: Member x (variable) of class L_Pixel is not documented.
+/home/dan/apps/leptgit/src/seedfill.c:177: warning: Member y (variable) of class L_Pixel is not documented.
+/home/dan/apps/leptgit/src/rbtree.h:71: warning: Member root (variable) of class L_Rbtree is not documented.
+/home/dan/apps/leptgit/src/rbtree.h:72: warning: Member keytype (variable) of class L_Rbtree is not documented.
+/home/dan/apps/leptgit/src/rbtree.h:72: warning: Member key (variable) of class L_Rbtree_Node is not documented.
+/home/dan/apps/leptgit/src/rbtree.h:72: warning: Member value (variable) of class L_Rbtree_Node is not documented.
+/home/dan/apps/leptgit/src/rbtree.h:81: warning: Member left (variable) of class L_Rbtree_Node is not documented.
+/home/dan/apps/leptgit/src/rbtree.h:82: warning: Member right (variable) of class L_Rbtree_Node is not documented.
+/home/dan/apps/leptgit/src/rbtree.h:83: warning: Member parent (variable) of class L_Rbtree_Node is not documented.
+/home/dan/apps/leptgit/src/rbtree.h:84: warning: Member color (variable) of class L_Rbtree_Node is not documented.
+/home/dan/apps/leptgit/src/environ.h:340: warning: Member start_sec (variable) of class L_WallTimer is not documented.
+/home/dan/apps/leptgit/src/environ.h:341: warning: Member start_usec (variable) of class L_WallTimer is not documented.
+/home/dan/apps/leptgit/src/environ.h:342: warning: Member stop_sec (variable) of class L_WallTimer is not documented.
+/home/dan/apps/leptgit/src/environ.h:343: warning: Member stop_usec (variable) of class L_WallTimer is not documented.
+/home/dan/apps/leptgit/src/maze.c:81: warning: Member distance (variable) of class MazeElement is not documented.
+/home/dan/apps/leptgit/src/maze.c:82: warning: Member x (variable) of class MazeElement is not documented.
+/home/dan/apps/leptgit/src/maze.c:83: warning: Member y (variable) of class MazeElement is not documented.
+/home/dan/apps/leptgit/src/maze.c:84: warning: Member val (variable) of class MazeElement is not documented.
+/home/dan/apps/leptgit/src/maze.c:85: warning: Member dir (variable) of class MazeElement is not documented.
+/home/dan/apps/leptgit/src/colorquant1.c:195: warning: Member n (variable) of class OctcubeQuantCell is not documented.
+/home/dan/apps/leptgit/src/colorquant1.c:196: warning: Member octindex (variable) of class OctcubeQuantCell is not documented.
+/home/dan/apps/leptgit/src/colorquant1.c:197: warning: Member rcum (variable) of class OctcubeQuantCell is not documented.
+/home/dan/apps/leptgit/src/colorquant1.c:197: warning: Member gcum (variable) of class OctcubeQuantCell is not documented.
+/home/dan/apps/leptgit/src/colorquant1.c:197: warning: Member bcum (variable) of class OctcubeQuantCell is not documented.
+/home/dan/apps/leptgit/src/colorquant1.c:198: warning: Member rval (variable) of class OctcubeQuantCell is not documented.
+/home/dan/apps/leptgit/src/colorquant1.c:198: warning: Member gval (variable) of class OctcubeQuantCell is not documented.
+/home/dan/apps/leptgit/src/colorquant1.c:198: warning: Member bval (variable) of class OctcubeQuantCell is not documented.
+/home/dan/apps/leptgit/src/partition.c:53: warning: Member size (variable) of class PartitionElement is not documented.
+/home/dan/apps/leptgit/src/partition.c:54: warning: Member box (variable) of class PartitionElement is not documented.
+/home/dan/apps/leptgit/src/partition.c:55: warning: Member boxa (variable) of class PartitionElement is not documented.
+/home/dan/apps/leptgit/src/pix1.c:231: warning: Member allocator (variable) of class PixMemoryManager is not documented.
+/home/dan/apps/leptgit/src/pix1.c:232: warning: Member deallocator (variable) of class PixMemoryManager is not documented.
+/home/dan/apps/leptgit/src/pix_internal.h:293: warning: Member x (variable) of class Pta is not documented.
+/home/dan/apps/leptgit/src/rbtree.h:63: warning: Member itype (variable) of class Rb_Type is not documented.
+/home/dan/apps/leptgit/src/rbtree.h:64: warning: Member utype (variable) of class Rb_Type is not documented.
+/home/dan/apps/leptgit/src/rbtree.h:65: warning: Member ftype (variable) of class Rb_Type is not documented.
+/home/dan/apps/leptgit/src/rbtree.h:66: warning: Member ptype (variable) of class Rb_Type is not documented.

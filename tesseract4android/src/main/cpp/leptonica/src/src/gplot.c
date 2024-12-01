@@ -132,11 +132,16 @@
  *           \end{document}
  *         You can then generate a dvi file <latexname>.dvi using
  *           latex <latexname>.tex
- *         and a PostScript file <psname>.ps from that using
+ *         a PostScript file <psname>.ps from that using
  *           dvips -o <psname>.ps <latexname>.dvi
+ *         and pdf file <psname>.pdf from that using Ghostscript's ps2pdf:
+ *           ps2pdf <psname>.ps <pdfname>.pdf
  *
- *     N.B. To generate plots, it is necessary to have gnuplot installed on
- *          your Unix system, or wgnuplot on Windows.
+ *     N.B. To generate plots:
+ *          (1) It is necessary to have gnuplot installed on your Unix system,
+ *              or wgnuplot on Windows.
+ *          (2) You must enable debug operations:
+ *                setLeptDebugOK(1);
  * </pre>
  */
 
@@ -576,8 +581,9 @@ FILE    *fp;
         /* Write command data to file */
     cmdstr = sarrayToString(gplot->cmddata, 1);
     if ((fp = fopenWriteStream(gplot->cmdname, "w")) == NULL) {
+        L_ERROR("stream not opened for command: %s\n", __func__, cmdstr);
         LEPT_FREE(cmdstr);
-        return ERROR_INT("cmd stream not opened", __func__, 1);
+        return 1;
     }
     fwrite(cmdstr, 1, strlen(cmdstr), fp);
     fclose(fp);
@@ -614,7 +620,8 @@ FILE    *fp;
         plotdata = sarrayGetString(gplot->plotdata, i, L_NOCOPY);
         dataname = sarrayGetString(gplot->datanames, i, L_NOCOPY);
         if ((fp = fopen(dataname, "w")) == NULL)
-            return ERROR_INT("datafile stream not opened", __func__, 1);
+            return ERROR_INT_1("datafile stream not opened",
+                               dataname, __func__, 1);
         fwrite(plotdata, 1, strlen(plotdata), fp);
         fclose(fp);
     }
@@ -755,7 +762,7 @@ gplotSimplePix1(NUMA        *na,
                 const char  *title)
 {
 char            buf[64];
-static l_int32  index;
+static l_atomic index;
 GPLOT          *gplot;
 PIX            *pix;
 
@@ -797,7 +804,7 @@ gplotSimplePix2(NUMA        *na1,
                 const char  *title)
 {
 char            buf[64];
-static l_int32  index;
+static l_atomic index;
 GPLOT          *gplot;
 PIX            *pix;
 
@@ -838,7 +845,7 @@ gplotSimplePixN(NUMAA       *naa,
                 const char  *title)
 {
 char            buf[64];
-static l_int32  index;
+static l_atomic index;
 GPLOT          *gplot;
 PIX            *pix;
 
@@ -1208,16 +1215,19 @@ GPLOT   *gplot;
         return (GPLOT *)ERROR_PTR("filename not defined", __func__, NULL);
 
     if ((fp = fopenReadStream(filename)) == NULL)
-        return (GPLOT *)ERROR_PTR("stream not opened", __func__, NULL);
+        return (GPLOT *)ERROR_PTR_1("stream not opened",
+                                    filename, __func__, NULL);
 
     ret = fscanf(fp, "Gplot Version %d\n", &version);
     if (ret != 1) {
         fclose(fp);
-        return (GPLOT *)ERROR_PTR("not a gplot file", __func__, NULL);
+        return (GPLOT *)ERROR_PTR_1("not a gplot file",
+                                    filename, __func__, NULL);
     }
     if (version != GPLOT_VERSION_NUMBER) {
         fclose(fp);
-        return (GPLOT *)ERROR_PTR("invalid gplot version", __func__, NULL);
+        return (GPLOT *)ERROR_PTR_1("invalid gplot version",
+                                    filename, __func__, NULL);
     }
 
     ignore = fscanf(fp, "Rootname: %511s\n", buf);  /* Bufsize - 1 */
@@ -1240,7 +1250,7 @@ GPLOT   *gplot;
     LEPT_FREE(ylabel);
     if (!gplot) {
         fclose(fp);
-        return (GPLOT *)ERROR_PTR("gplot not made", __func__, NULL);
+        return (GPLOT *)ERROR_PTR_1("gplot not made", filename, __func__, NULL);
     }
     sarrayDestroy(&gplot->cmddata);
     sarrayDestroy(&gplot->datanames);
@@ -1248,7 +1258,7 @@ GPLOT   *gplot;
     sarrayDestroy(&gplot->plotlabels);
     numaDestroy(&gplot->plotstyles);
 
-    ignore = fscanf(fp, "Commandfile name: %511s\n", buf);  /* Bufsize - 1 */
+    ignore = fscanf(fp, "Commandfile name: %s\n", buf);  /* Bufsize - 1 */
     stringReplace(&gplot->cmdname, buf);
     ignore = fscanf(fp, "\nCommandfile data:");
     gplot->cmddata = sarrayReadStream(fp);
@@ -1262,7 +1272,7 @@ GPLOT   *gplot;
     gplot->plotstyles = numaReadStream(fp);
 
     ignore = fscanf(fp, "Number of plots: %d\n", &gplot->nplots);
-    ignore = fscanf(fp, "Output file name: %511s\n", buf);
+    ignore = fscanf(fp, "Output file name: %s\n", buf);
     stringReplace(&gplot->outname, buf);
     ignore = fscanf(fp, "Axis scaling: %d\n", &gplot->scaling);
 
@@ -1290,7 +1300,7 @@ FILE  *fp;
         return ERROR_INT("gplot not defined", __func__, 1);
 
     if ((fp = fopenWriteStream(filename, "wb")) == NULL)
-        return ERROR_INT("stream not opened", __func__, 1);
+        return ERROR_INT_1("stream not opened", filename, __func__, 1);
 
     fprintf(fp, "Gplot Version %d\n", GPLOT_VERSION_NUMBER);
     fprintf(fp, "Rootname: %s\n", gplot->rootname);

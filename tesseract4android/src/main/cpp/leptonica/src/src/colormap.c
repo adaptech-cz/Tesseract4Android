@@ -369,12 +369,13 @@ l_int32  d, depth, nalloc, maxindex, maxcolors;
 
         /* Where the colormap or the pix may have been corrupted, and
          * in particular when reading or writing image files, it should
-         * be verified that the image pixel values do not exceed the
-         * max indexing into the colormap array. */
+         * be verified that the largest colormap index value in the image
+         * is less than the number of entries in the colormap array.  */
     if (pix) {
         pixGetMaxColorIndex(pix, &maxindex);
         if (maxindex >= cmap->n) {
-            L_ERROR("(max index = %d) >= (num colors = %d)\n", __func__,
+            L_ERROR("(max index in image = %d) >= "
+                    "(number entries in colormap = %d)\n", __func__,
                     maxindex, cmap->n);
             return 1;
         }
@@ -1657,7 +1658,7 @@ PIXCMAP   *cmapd;
     sum = rwt + gwt + bwt;
     if (sum == 0.0) {
         L_WARNING("all weights zero; setting equal to 1/3\n", __func__);
-        rwt = gwt = bwt = 0.33333;
+        rwt = gwt = bwt = 0.33333f;
         sum = 1.0;
     }
     if (L_ABS(sum - 1.0) > 0.0001) {  /* maintain ratios with sum == 1.0 */
@@ -1767,11 +1768,13 @@ PIXCMAP  *cmap;
         return (PIXCMAP *)ERROR_PTR("filename not defined", __func__, NULL);
 
     if ((fp = fopenReadStream(filename)) == NULL)
-        return (PIXCMAP *)ERROR_PTR("stream not opened", __func__, NULL);
+        return (PIXCMAP *)ERROR_PTR_1("stream not opened",
+                                      filename, __func__, NULL);
     cmap = pixcmapReadStream(fp);
     fclose(fp);
     if (!cmap)
-        return (PIXCMAP *)ERROR_PTR("cmap not read", __func__, NULL);
+        return (PIXCMAP *)ERROR_PTR_1("cmap not read",
+                                     filename, __func__, NULL);
     return cmap;
 }
 
@@ -1861,11 +1864,11 @@ FILE    *fp;
         return ERROR_INT("cmap not defined", __func__, 1);
 
     if ((fp = fopenWriteStream(filename, "w")) == NULL)
-        return ERROR_INT("stream not opened", __func__, 1);
+        return ERROR_INT_1("stream not opened", filename, __func__, 1);
     ret = pixcmapWriteStream(fp, cmap);
     fclose(fp);
     if (ret)
-        return ERROR_INT("cmap not written to stream", __func__, 1);
+        return ERROR_INT_1("cmap not written to stream", filename, __func__, 1);
     return 0;
 }
 
@@ -1945,9 +1948,9 @@ FILE    *fp;
     ret = pixcmapWriteStream(fp, cmap);
     fputc('\0', fp);
     fclose(fp);
-    *psize = *psize - 1;
+    if (*psize > 0) *psize = *psize - 1;
 #else
-    L_INFO("work-around: writing to a temp file\n", __func__);
+    L_INFO("no fmemopen API --> work-around: write to temp file\n", __func__);
   #ifdef _WIN32
     if ((fp = fopenWriteWinTempfile()) == NULL)
         return ERROR_INT("tmpfile stream not opened", __func__, 1);
@@ -1984,7 +1987,7 @@ pixcmapToArrays(const PIXCMAP  *cmap,
                 l_int32       **pbmap,
                 l_int32       **pamap)
 {
-l_int32    *rmap, *gmap, *bmap, *amap;
+l_int32    *rmap, *gmap, *bmap, *amap = NULL;
 l_int32     i, ncolors;
 RGBA_QUAD  *cta;
 

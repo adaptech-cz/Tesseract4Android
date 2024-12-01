@@ -155,7 +155,7 @@ LIBRARIAN_SHARED =	gcc -shared
 #  Links are created among the files <libname>.X.Y,
 #  <libname>.X, and <libname>, where Y is the minor revision number.
 MAJOR_REV = 1
-MINOR_REV = 83
+MINOR_REV = 85
 PATCH_REV = 1
 
 #########################################################
@@ -202,6 +202,7 @@ LEPTLIB_C =	adaptmap.c affine.c \
 		numabasic.c numafunc1.c numafunc2.c \
 		pageseg.c paintcmap.c \
 		parseprotos.c partify.c partition.c \
+		pdfapp.c pdfappstub.c \
 		pdfio1.c pdfio1stub.c pdfio2.c pdfio2stub.c \
 		pix1.c pix2.c pix3.c pix4.c pix5.c \
 		pixabasic.c pixacc.c \
@@ -216,7 +217,7 @@ LEPTLIB_C =	adaptmap.c affine.c \
 		ptra.c quadtree.c queue.c rank.c rbtree.c \
 		readbarcode.c readfile.c \
 		recogbasic.c recogdid.c recogident.c recogtrain.c \
-		regutils.c rop.c roplow.c \
+		regutils.c renderpdf.c rop.c roplow.c \
 		rotate.c rotateam.c rotateorth.c rotateshear.c \
 		runlength.c sarray1.c sarray2.c \
 		scale1.c scale2.c seedfill.c \

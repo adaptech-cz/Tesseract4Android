@@ -702,6 +702,8 @@ PIX       *pixd;
  *      (1) This is a simple convenience function for doing adaptive
  *          thresholding on a grayscale image with variable background.
  *          It uses default parameters appropriate for typical text images.
+ *          Other high-level adaptive thresholding functions are
+ *          pixConvertTo1Adaptive() and pixCleanImage().
  *      (2) %pixm is a 1 bpp mask over "image" regions, which are not
  *          expected to have a white background.  The mask inhibits
  *          background finding under the fg pixels of the mask.  For
@@ -2309,14 +2311,14 @@ l_int32    nc, nestim, i, j, vals, vald;
 l_int32   *lut;
 l_uint32  *datas, *datam, *datad, *lines, *linem, *lined;
 NUMA      *na;
-PIX       *pixmr;  /* resized mask */
+PIX       *pixmr = NULL;  /* resized mask */
 PIXCMAP   *cmap;
 
     if (!pixs || pixGetDepth(pixs) != 8)
         return (PIX *)ERROR_PTR("pixs undefined or not 8 bpp", __func__, NULL);
     if (minfract < 0.01) {
         L_WARNING("minfract < 0.01; setting to 0.05\n", __func__);
-        minfract = 0.05;
+        minfract = 0.05f;
     }
     if (maxsize < 2) {
         L_WARNING("maxsize < 2; setting to 10\n", __func__);
@@ -2546,7 +2548,7 @@ PIX       *pixd;
     pixcmapHasColor(cmap, &hascolor);
     if (hascolor) {
         L_WARNING("Converting colormap colors to gray\n", __func__);
-        cmapd = pixcmapColorToGray(cmap, 0.3, 0.5, 0.2);
+        cmapd = pixcmapColorToGray(cmap, 0.3f, 0.5f, 0.2f);
     } else {
         cmapd = pixcmapCopy(cmap);
     }

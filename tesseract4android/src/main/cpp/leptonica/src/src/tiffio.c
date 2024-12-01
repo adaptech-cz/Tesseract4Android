@@ -103,15 +103,15 @@
  *            tiff library, such as G3, G4, RLE and LZW.
  *          * The exception is the old-style jpeg tiff format (OJPEG), which
  *            is not supported.
- *          * We support only one format, ZIP, that uses an external library.
+ *          * We support two formats requiring external libraries: ZIP and JPEG
+ *            All computers should have the zip library.
  *          * At present we do not support WEBP in tiff, which uses
  *            libwebp and was added in tifflib 4.1.0 in 2019.
- *  Note 3: On Windows with 2 bpp or 4 bpp images, the bytes in the
- *          tiff-compressed file depend on the pad bits, but not on the
- *          decoded raster image when read.  Because it is sometimes
- *          convenient to use a golden file with a byte-by-byte check
- *          to verify invariance, we set the pad bits to 0 before writing,
- *          in pixWriteToTiffStream().
+ *  Note 3: We set the pad bits to 0 before writing in pixWriteToTiffStream().
+ *          Although they don't affect the raster image after decompression,
+ *          it is sometimes convenient to use a golden file with a
+ *          byte-by-byte check to verify invariance.  The issue came up
+ *          on Windows for 2 and 4 bpp images.
  * </pre>
  */
 
@@ -130,9 +130,9 @@
 #include <fcntl.h>
 #include "allheaders.h"
 
-/* --------------------------------------------*/
-#if  HAVE_LIBTIFF   /* defined in environ.h */
-/* --------------------------------------------*/
+/* ---------------------------------------------------------*/
+#if  HAVE_LIBTIFF && HAVE_LIBJPEG   /* defined in environ.h */
+/* ---------------------------------------------------------*/
 
 #include "tiff.h"
 #include "tiffio.h"
@@ -401,7 +401,8 @@ PIX   *pix;
         return (PIX *)ERROR_PTR("filename not defined", __func__, NULL);
 
     if ((fp = fopenReadStream(filename)) == NULL)
-        return (PIX *)ERROR_PTR("image file not found", __func__, NULL);
+        return (PIX *)ERROR_PTR_1("image file not found",
+                                  filename, __func__, NULL);
     pix = pixReadStreamTiff(fp, n);
     fclose(fp);
     return pix;
@@ -1416,16 +1417,19 @@ TIFF    *tif;
         return (PIXA *)ERROR_PTR("filename not defined", __func__, NULL);
 
     if ((fp = fopenReadStream(filename)) == NULL)
-        return (PIXA *)ERROR_PTR("stream not opened", __func__, NULL);
+        return (PIXA *)ERROR_PTR_1("stream not opened",
+                                   filename, __func__, NULL);
     if (fileFormatIsTiff(fp)) {
         tiffGetCount(fp, &npages);
         L_INFO(" Tiff: %d pages\n", __func__, npages);
     } else {
-        return (PIXA *)ERROR_PTR("file not tiff", __func__, NULL);
+        return (PIXA *)ERROR_PTR_1("file is not tiff",
+                                   filename, __func__, NULL);
     }
 
     if ((tif = fopenTiff(fp, "r")) == NULL)
-        return (PIXA *)ERROR_PTR("tif not opened", __func__, NULL);
+        return (PIXA *)ERROR_PTR_1("tif not opened",
+                                   filename, __func__, NULL);
 
     pixa = pixaCreate(npages);
     pix = NULL;
@@ -1800,7 +1804,7 @@ FILE    *fp;
         return ERROR_INT("no results requested", __func__, 1);
 
     if ((fp = fopenReadStream(filename)) == NULL)
-        return ERROR_INT("image file not found", __func__, 1);
+        return ERROR_INT_1("image file not found", filename, __func__, 1);
     ret = freadHeaderTiff(fp, n, pw, ph, pbps, pspp, pres, pcmap, pformat);
     fclose(fp);
     return ret;
@@ -2134,25 +2138,25 @@ TIFF     *tif;
     *pnbytes = 0;
 
     if ((fpin = fopenReadStream(filein)) == NULL)
-        return ERROR_INT("stream not opened to file", __func__, 1);
+        return ERROR_INT_1("stream not opened to file", filein, __func__, 1);
     istiff = fileFormatIsTiff(fpin);
     fclose(fpin);
     if (!istiff)
-        return ERROR_INT("filein not tiff", __func__, 1);
+        return ERROR_INT_1("filein not tiff", filein, __func__, 1);
 
     if ((inarray = l_binaryRead(filein, &fbytes)) == NULL)
-        return ERROR_INT("inarray not made", __func__, 1);
+        return ERROR_INT_1("inarray not made", filein, __func__, 1);
 
         /* Get metadata about the image */
     if ((tif = openTiff(filein, "rb")) == NULL) {
         LEPT_FREE(inarray);
-        return ERROR_INT("tif not open for read", __func__, 1);
+        return ERROR_INT_1("tif not open for read", filein, __func__, 1);
     }
     TIFFGetField(tif, TIFFTAG_COMPRESSION, &comptype);
     if (comptype != COMPRESSION_CCITTFAX4) {
         LEPT_FREE(inarray);
         TIFFClose(tif);
-        return ERROR_INT("filein is not g4 compressed", __func__, 1);
+        return ERROR_INT_1("filein is not g4 compressed", filein, __func__, 1);
     }
 
     TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &w);
@@ -2873,6 +2877,6 @@ TIFF    *tif;
     return ret;
 }
 
-/* --------------------------------------------*/
-#endif  /* HAVE_LIBTIFF */
-/* --------------------------------------------*/
+/* ---------------------------------------*/
+#endif  /* HAVE_LIBTIFF && HAVE_LIBJPEG   */
+/* ---------------------------------------*/

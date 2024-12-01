@@ -39,6 +39,7 @@
  *           l_int32     pixCorrelationBinary()
  *
  *      Difference of two images of same size
+ *           l_int32     pixDisplayDiff()
  *           l_int32     pixDisplayDiffBinary()
  *           l_int32     pixCompareBinary()
  *           l_int32     pixCompareGrayOrRGB()
@@ -111,7 +112,7 @@
 #include "allheaders.h"
 
     /* Small enough to consider equal to 0.0, for plot output */
-static const l_float32  TINY = 0.00001;
+static const l_float32  TINY = 0.00001f;
 
 static l_ok findHistoGridDimensions(l_int32 n, l_int32 w, l_int32 h,
                                     l_int32 *pnx, l_int32 *pny, l_int32 debug);
@@ -630,6 +631,106 @@ PIX      *pixn;
  *                   Difference of two images                       *
  *------------------------------------------------------------------*/
 /*!
+ * \brief   pixDisplayDiff()
+ *
+ * \param[in]    pix1       any depth
+ * \param[in]    pix2       any depth
+ * \param[in]    showall    1 to display input images; 0 to only display result
+ * \param[in]    mindiff    min difference to identify pixel
+ * \param[in]    diffcolor  color of pixel indicating difference >= mindiff
+ * \return  pixd  32 bpp rgb, or NULL on error
+ *
+ * <pre>
+ * Notes:
+ *      (1) This aligns the UL corners of pix1 and pix2, crops to the
+ *          overlapping pixels, and shows which pixels have a significant
+ *          difference in value.
+ *      (2) Requires %pix1 and %pix2 to have the same depth.
+ *      (3) If rgb, a pixel is identified as different if any component
+ *          values of the corresponding pixels equals or exceeds %mindiff.
+ *      (4) %diffcolor is in format 0xrrggbbaa.
+ *      (5) If %pix1 and %pix2 are 1 bpp, ignores %mindiff and %diffcolor,
+ *          and uses the result of pixDisplayDiffBinary().
+ * </pre>
+ */
+PIX *
+pixDisplayDiff(PIX      *pix1,
+               PIX      *pix2,
+               l_int32   showall,
+               l_int32   mindiff,
+               l_uint32  diffcolor)
+{
+l_int32    i, j, w1, h1, d1, w2, h2, d2, minw, minh, wpl1, wpl2, wpl3;
+l_int32    rval1, gval1, bval1, rval2, gval2, bval2;
+l_uint32   val1, val2;
+l_uint32  *data1, *data2, *data3, *line1, *line2, *line3;
+PIX       *pix3 = NULL, *pix4 = NULL, *pixd;
+PIXA      *pixa1;
+
+    if (!pix1 || !pix2)
+        return (PIX *)ERROR_PTR("pix1, pix2 not both defined", __func__, NULL);
+    pixGetDimensions(pix1, &w1, &h1, &d1);
+    pixGetDimensions(pix2, &w2, &h2, &d2);
+    if (d1 != d2)
+        return (PIX *)ERROR_PTR("unequal depths", __func__, NULL);
+    if (mindiff <= 0)
+        return (PIX *)ERROR_PTR("mindiff must be > 0", __func__, NULL);
+
+    if (d1 == 1) {
+        pix3 = pixDisplayDiffBinary(pix1, pix2);
+        pixd = pixConvertTo32(pix3); 
+        pixDestroy(&pix3);
+    } else {
+        minw = L_MIN(w1, w2);
+        minh = L_MIN(h1, h2);
+        pix3 = pixConvertTo32(pix1);
+        pix4 = pixConvertTo32(pix2);
+        pixd = pixCreate(minw, minh, 32);
+        pixRasterop(pixd, 0, 0, minw, minh, PIX_SRC, pix3, 0, 0);
+        data1 = pixGetData(pix3);
+        wpl1 = pixGetWpl(pix3);
+        data2 = pixGetData(pix4);
+        wpl2 = pixGetWpl(pix4);
+        data3 = pixGetData(pixd);
+        wpl3 = pixGetWpl(pixd);
+        for (i = 0; i < minh; i++) {
+            line1 = data1 + i * wpl1;
+            line2 = data2 + i * wpl2;
+            line3 = data3 + i * wpl3;
+            for (j = 0; j < minw; j++) {
+                val1 = GET_DATA_FOUR_BYTES(line1, j);
+                val2 = GET_DATA_FOUR_BYTES(line2, j);
+                extractRGBValues(val1, &rval1, &gval1, &bval1);
+                extractRGBValues(val2, &rval2, &gval2, &bval2);
+                if (L_ABS(rval1 - rval2) >= mindiff ||
+                    L_ABS(gval1 - gval2) >= mindiff ||
+                    L_ABS(bval1 - bval2) >= mindiff)
+                    SET_DATA_FOUR_BYTES(line3, j, diffcolor);
+            }
+        }
+    }
+                
+    if (showall) {
+        pixa1 = pixaCreate(3);
+        if (d1 == 1) {
+            pixaAddPix(pixa1, pix1, L_COPY);
+            pixaAddPix(pixa1, pix2, L_COPY);
+        } else {
+            pixaAddPix(pixa1, pix3, L_INSERT);
+            pixaAddPix(pixa1, pix4, L_INSERT);
+        }
+        pixaAddPix(pixa1, pixd, L_INSERT);  /* save diff image */
+        pixd = pixaDisplayTiledInColumns(pixa1, 2, 1.0, 30, 2);  /* all 3 */
+        pixaDestroy(&pixa1);
+    } else if (d1 != 1) {
+        pixDestroy(&pix3);
+        pixDestroy(&pix4);
+    }
+    return pixd;
+}
+
+
+/*!
  * \brief   pixDisplayDiffBinary()
  *
  * \param[in]    pix1    1 bpp
@@ -873,7 +974,7 @@ pixCompareGray(PIX        *pix1,
                PIX       **ppixdiff)
 {
 char            buf[64];
-static l_int32  index = 0;
+static l_atomic index = 0;
 l_int32         d1, d2, same, first, last;
 GPLOT          *gplot;
 NUMA           *na, *nac;
@@ -980,7 +1081,7 @@ pixCompareRGB(PIX        *pix1,
               PIX       **ppixdiff)
 {
 char            buf[64];
-static l_int32  index = 0;
+static l_atomic index = 0;
 l_int32         rsame, gsame, bsame, same, first, rlast, glast, blast, last;
 l_float32       rdiff, gdiff, bdiff;
 GPLOT          *gplot;
@@ -1171,7 +1272,7 @@ PIXACC    *pixacc;
         pixaccAdd(pixacc, pixrdiff);
         pixaccAdd(pixacc, pixgdiff);
         pixaccAdd(pixacc, pixbdiff);
-        pixaccMultConst(pixacc, 1. / 3.);
+        pixaccMultConst(pixacc, 1.f / 3.f);
         *ppixdiff = pixaccFinal(pixacc, 8);
         pixDestroy(&pixr);
         pixDestroy(&pixg);
@@ -1922,7 +2023,7 @@ PIX        *pix;
         return ERROR_INT("pixa not defined", __func__, 1);
     if (minratio < 0.0 || minratio > 1.0)
         return ERROR_INT("minratio not in [0.0 ... 1.0]", __func__, 1);
-    if (textthresh <= 0.0) textthresh = 1.3;
+    if (textthresh <= 0.0) textthresh = 1.3f;
     if (factor < 1)
         return ERROR_INT("subsampling factor must be >= 1", __func__, 1);
     if (n < 1 || n > 7) {
@@ -2254,7 +2355,7 @@ PIXA   *pixa;
         return ERROR_INT("pixs not defined or 1 bpp", __func__, 1);
     if (factor < 1)
         return ERROR_INT("subsampling factor must be >= 1", __func__, 1);
-    if (thresh <= 0.0) thresh = 1.3;  /* default */
+    if (thresh <= 0.0) thresh = 1.3f;  /* default */
     if (n < 1 || n > 7) {
         L_WARNING("n = %d is invalid; setting to 4\n", __func__, n);
         n = 4;
@@ -2500,7 +2601,7 @@ PIXA      *pixa1, *pixa2, *pixa3;
         L_WARNING("n = %d is invalid; setting to 4\n", __func__, n);
         n = 4;
     }
-    if (thresh <= 0.0) thresh = 1.3;  /* default */
+    if (thresh <= 0.0) thresh = 1.3f;  /* default */
 
         /* Look for text lines */
     pixDecideIfText(pix, NULL, &istext, pixadebug);
@@ -2547,7 +2648,7 @@ PIXA      *pixa1, *pixa2, *pixa3;
         pix1 = pixaDisplayTiledInColumns(pixa1, nx, 1.0, 30, 2);
         pixaAddPix(pixadebug, pix1, L_INSERT);
         pixa2 = pixaReadFiles("/tmp/lept/compplot", ".png");
-        pixa3 = pixaScale(pixa2, 0.4, 0.4);
+        pixa3 = pixaScale(pixa2, 0.4f, 0.4f);
         pix1 = pixaDisplayTiledInColumns(pixa3, nx, 1.0, 30, 2);
         pixaAddPix(pixadebug, pix1, L_INSERT);
         pixaDestroy(&pixa2);
@@ -2567,7 +2668,7 @@ PIXA      *pixa1, *pixa2, *pixa3;
     numaGetSumOnInterval(narv, 50, 150, &sum1);
     numaGetSumOnInterval(narv, 200, 230, &sum2);
     if (sum2 == 0.0) {  /* shouldn't happen */
-        ratio = 0.001;  /* anything very small for debug output */
+        ratio = 0.001f;  /* anything very small for debug output */
         isphoto = 0;  /* be conservative */
     } else {
         ratio = sum1 / sum2;
@@ -3330,7 +3431,7 @@ l_int32    etransx, etransy, maxshift, dbint;
 l_int32   *stab, *ctab;
 l_float32  cx1, cx2, cy1, cy2, score;
 PIX       *pixb1, *pixb2, *pixt1, *pixt2, *pixt3, *pixt4;
-PIXA      *pixa1, *pixa2, *pixadb;
+PIXA      *pixa1, *pixa2, *pixadb = NULL;
 
     if (pdelx) *pdelx = 0;
     if (pdely) *pdely = 0;
@@ -3484,7 +3585,7 @@ pixBestCorrelation(PIX        *pix1,
 l_int32    shiftx, shifty, delx, dely;
 l_int32   *tab;
 l_float32  maxscore, score;
-FPIX      *fpix;
+FPIX      *fpix = NULL;
 PIX       *pix3, *pix4;
 
     if (pdelx) *pdelx = 0;

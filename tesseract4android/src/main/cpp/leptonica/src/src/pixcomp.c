@@ -593,7 +593,7 @@ pixacompCreate(l_int32  n)
 {
 PIXAC  *pixac;
 
-    if (n <= 0 || n > MaxPtrArraySize)
+    if (n <= 0 || n > (l_int32)MaxPtrArraySize)
         n = InitialPtrArraySize;
 
     pixac = (PIXAC *)LEPT_CALLOC(1, sizeof(PIXAC));
@@ -662,7 +662,7 @@ PIX     *pixt;
 PIXC    *pixc;
 PIXAC   *pixac;
 
-    if (n <= 0 || n > MaxPtrArraySize)
+    if (n <= 0 || n > (l_int32)MaxPtrArraySize)
         return (PIXAC *)ERROR_PTR("n out of valid bounds", __func__, NULL);
     if (pix) {
         if (comptype != IFF_DEFAULT && comptype != IFF_TIFF_G4 &&
@@ -982,7 +982,7 @@ size_t  oldsize, newsize;
 
     if (!pixac)
         return ERROR_INT("pixac not defined", __func__, 1);
-    if (pixac->nalloc > MaxPtrArraySize)  /* belt & suspenders */
+    if (pixac->nalloc > (l_int32)MaxPtrArraySize)  /* belt & suspenders */
         return ERROR_INT("pixac has too many ptrs", __func__, 1);
     oldsize = pixac->nalloc * sizeof(PIXC *);
     newsize = 2 * oldsize;
@@ -1607,11 +1607,13 @@ PIXAC  *pixac;
         return (PIXAC *)ERROR_PTR("filename not defined", __func__, NULL);
 
     if ((fp = fopenReadStream(filename)) == NULL)
-        return (PIXAC *)ERROR_PTR("stream not opened", __func__, NULL);
+        return (PIXAC *)ERROR_PTR_1("stream not opened",
+                                    filename, __func__, NULL);
     pixac = pixacompReadStream(fp);
     fclose(fp);
     if (!pixac)
-        return (PIXAC *)ERROR_PTR("pixac not read", __func__, NULL);
+        return (PIXAC *)ERROR_PTR_1("pixac not read",
+                                    filename, __func__, NULL);
     return pixac;
 }
 
@@ -1652,7 +1654,7 @@ PIXAC    *pixac;
         return (PIXAC *)ERROR_PTR("offset not read", __func__, NULL);
     if (n < 0)
         return (PIXAC *)ERROR_PTR("num pixcomp ptrs < 0", __func__, NULL);
-    if (n > MaxPtrArraySize)
+    if (n > (l_int32)MaxPtrArraySize)
         return (PIXAC *)ERROR_PTR("too many pixcomp ptrs", __func__, NULL);
     if (n == 0) L_INFO("the pixacomp is empty\n", __func__);
 
@@ -1780,11 +1782,12 @@ FILE    *fp;
         return ERROR_INT("pixacomp not defined", __func__, 1);
 
     if ((fp = fopenWriteStream(filename, "wb")) == NULL)
-        return ERROR_INT("stream not opened", __func__, 1);
+        return ERROR_INT_1("stream not opened", filename, __func__, 1);
     ret = pixacompWriteStream(fp, pixac);
     fclose(fp);
     if (ret)
-        return ERROR_INT("pixacomp not written to stream", __func__, 1);
+        return ERROR_INT_1("pixacomp not written to stream",
+                           filename, __func__, 1);
     return 0;
 }
 
@@ -1865,9 +1868,9 @@ FILE    *fp;
     ret = pixacompWriteStream(fp, pixac);
     fputc('\0', fp);
     fclose(fp);
-    *psize = *psize - 1;
+    if (*psize > 0) *psize = *psize - 1;
 #else
-    L_INFO("work-around: writing to a temp file\n", __func__);
+    L_INFO("no fmemopen API --> work-around: write to temp file\n", __func__);
   #ifdef _WIN32
     if ((fp = fopenWriteWinTempfile()) == NULL)
         return ERROR_INT("tmpfile stream not opened", __func__, 1);

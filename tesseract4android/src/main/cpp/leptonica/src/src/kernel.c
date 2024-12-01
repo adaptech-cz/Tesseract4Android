@@ -515,10 +515,12 @@ L_KERNEL  *kel;
         return (L_KERNEL *)ERROR_PTR("fname not defined", __func__, NULL);
 
     if ((fp = fopenReadStream(fname)) == NULL)
-        return (L_KERNEL *)ERROR_PTR("stream not opened", __func__, NULL);
+        return (L_KERNEL *)ERROR_PTR_1("stream not opened",
+                                       fname, __func__, NULL);
     if ((kel = kernelReadStream(fp)) == NULL) {
         fclose(fp);
-        return (L_KERNEL *)ERROR_PTR("kel not returned", __func__, NULL);
+        return (L_KERNEL *)ERROR_PTR_1("kel not returned",
+                                       fname, __func__, NULL);
     }
     fclose(fp);
 
@@ -588,7 +590,7 @@ FILE  *fp;
         return ERROR_INT("kel not defined", __func__, 1);
 
     if ((fp = fopenWriteStream(fname, "wb")) == NULL)
-        return ERROR_INT("stream not opened", __func__, 1);
+        return ERROR_INT_1("stream not opened", fname, __func__, 1);
     kernelWriteStream(fp, kel);
     fclose(fp);
 
@@ -752,10 +754,12 @@ L_KERNEL  *kel;
         return (L_KERNEL *)ERROR_PTR("filename not defined", __func__, NULL);
 
     if ((filestr = (char *)l_binaryRead(filename, &size)) == NULL)
-        return (L_KERNEL *)ERROR_PTR("file not found", __func__, NULL);
+        return (L_KERNEL *)ERROR_PTR_1("file not found",
+                                       filename, __func__, NULL);
     if (size == 0) {
         LEPT_FREE(filestr);
-        return (L_KERNEL *)ERROR_PTR("file is empty", __func__, NULL);
+        return (L_KERNEL *)ERROR_PTR_1("file is empty",
+                                       filename, __func__, NULL);
     }
 
     sa = sarrayCreateLinesFromString(filestr, 1);
@@ -918,7 +922,7 @@ PIX       *pixd, *pixt0, *pixt1;
     max = L_MAX(maxval, -minval);
     if (max == 0.0)
         return (PIX *)ERROR_PTR("kernel elements all 0.0", __func__, NULL);
-    norm = 255. / (l_float32)max;
+    norm = 255.f / (l_float32)max;
 
         /* Handle the 1 element/pixel case; typically with large kernels */
     if (size == 1 && gthick == 0) {
@@ -1074,7 +1078,7 @@ L_KERNEL  *kel;
     if ((kel = kernelCreate(height, width)) == NULL)
         return (L_KERNEL *)ERROR_PTR("kel not made", __func__, NULL);
     kernelSetOrigin(kel, cy, cx);
-    normval = 1.0 / (l_float32)(height * width);
+    normval = 1.0f / (l_float32)(height * width);
     for (i = 0; i < height; i++) {
         for (j = 0; j < width; j++) {
             kernelSetElement(kel, i, j, normval);
@@ -1218,12 +1222,12 @@ L_KERNEL  *kel;
         return (L_KERNEL *)ERROR_PTR("kel not made", __func__, NULL);
     kernelSetOrigin(kel, halfh, halfw);
 
-    pi = 3.1415926535;
+    pi = 3.1415926535f;
     for (i = 0; i < sy; i++) {
         for (j = 0; j < sx; j++) {
             squaredist = (l_float32)((i - halfh) * (i - halfh) +
                                      (j - halfw) * (j - halfw));
-            highnorm = 1. / (2 * stdev * stdev);
+            highnorm = 1.f / (2 * stdev * stdev);
             lownorm = highnorm / (ratio * ratio);
             val = (highnorm / pi) * expf(-(highnorm * squaredist))
                   - (lownorm / pi) * expf(-(lownorm * squaredist));

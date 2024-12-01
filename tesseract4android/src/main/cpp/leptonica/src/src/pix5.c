@@ -53,7 +53,8 @@
  *           BOXA       *pixFindRectangleComps()
  *           l_int32     pixConformsToRectangle()
  *
- *    Extract rectangular region
+ *    Extract rectangular regions
+ *           PIX        *pixExtractRectangularRegions()
  *           PIXA       *pixClipRectangles()
  *           PIX        *pixClipRectangle()
  *           PIX        *pixClipRectangleWithBorder()
@@ -405,7 +406,7 @@ PIX      *pixt;
     pixXor(pixt, pixt, pixs);
     pixCountPixels(pixt, &nbound, tab8);
     pixGetDimensions(pixs, &w, &h, NULL);
-    *pratio = (0.5 * nbound) / (l_float32)(w + h);
+    *pratio = (0.5f * nbound) / (l_float32)(w + h);
     pixDestroy(&pixt);
 
     if (!tab) LEPT_FREE(tab8);
@@ -911,8 +912,48 @@ PIX     *pix1, *pix2;
 
 
 /*-----------------------------------------------------------------------*
- *                      Extract rectangular region                       *
+ *                      Extract rectangular regions                      *
  *-----------------------------------------------------------------------*/
+/*!
+ * \brief   pixExtractRectangularRegions()
+ *
+ * \param[in]    pixs
+ * \param[in]    boxa  regions to extract
+ * \return  pix  with extracted regions, or NULL on error
+ *
+ * <pre>
+ * Notes:
+ *     (1) The returned pix has the rectangular regions clipped from
+ *         the input pixs.
+ *     (2) We could equally well do this operation using a mask of 1's over
+ *         the regions determined by the boxa:
+ *           pix1 = pixCreateTemplate(pixs);
+ *           pixMaskBoxa(pix1, pix1, boxa, L_SET_PIXELS);
+ *           pixAnd(pix1, pix1, pixs);
+ * </pre>
+ */
+PIX *
+pixExtractRectangularRegions(PIX   *pixs,
+                             BOXA  *boxa)
+{
+l_int32  w, h;
+PIX     *pix1;
+PIXA    *pixa1;
+
+    if (!pixs)
+        return (PIX *)ERROR_PTR("pixs not defined", __func__, NULL);
+    if (!boxa)
+        return (PIX *)ERROR_PTR("boxa not defined", __func__, NULL);
+
+    if ((pixa1 = pixClipRectangles(pixs, boxa)) == NULL)
+        return (PIX *)ERROR_PTR("pixa1 not made", __func__, NULL);
+    pixGetDimensions(pixs, &w, &h, NULL);
+    pix1 = pixaDisplay(pixa1, w, h);
+    pixaDestroy(&pixa1);
+    return pix1;
+}
+
+
 /*!
  * \brief   pixClipRectangles()
  *
@@ -922,7 +963,7 @@ PIX     *pix1, *pix2;
  *
  * <pre>
  * Notes:
- *     (1) The returned pixa includes the actual regions clipped out from
+ *     (1) The boxa in the returned pixa has the regions clipped from
  *         the input pixs.
  * </pre>
  */
@@ -1567,10 +1608,10 @@ PIX     *pixd;
     }
 
         /* General case */
-    h1 = 0.5 * hf1 * w;
-    h2 = 0.5 * hf2 * w;
-    v1 = 0.5 * vf1 * h;
-    v2 = 0.5 * vf2 * h;
+    h1 = 0.5f * hf1 * w;
+    h2 = 0.5f * hf2 * w;
+    v1 = 0.5f * vf1 * h;
+    v2 = 0.5f * vf2 * h;
     pixRasterop(pixd, h1, v1, w - 2 * h1, h - 2 * v1, PIX_SET, NULL, 0, 0);
     if (hf2 < 1.0 && vf2 < 1.0)
         pixRasterop(pixd, h2, v2, w - 2 * h2, h - 2 * v2, PIX_CLR, NULL, 0, 0);
@@ -2876,7 +2917,7 @@ PTA        *pta;
     nad = numaCreate(n);
     *pnad = nad;
     numaSetParameters(nad, cmin + size / 2, 1);
-    norm = 1.0 / (l_float32)size;
+    norm = 1.0f / (l_float32)size;
     for (i = 0; i < n - size; i++) {  /* along the line */
         sum1 = sum2 = 0;
         for (j = 0; j < size; j++) {  /* over the window */

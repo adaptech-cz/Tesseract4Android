@@ -49,7 +49,9 @@
  *
  *    Section 6. Test writing 24 bpp (not 32 bpp) pix
  *
- *    Section 7. Test header reading
+ *    Section 7. Miscellaneous additional tests
+ *
+ *    Section 8. Test header reading
  *
  *    This test requires the following external I/O libraries
  *        libjpeg, libtiff, libpng, libz
@@ -101,7 +103,7 @@ l_uint8      *data;
 l_int32       i, d, n, success, failure, same;
 l_int32       w, h, bps, spp, iscmap, res;
 size_t        size, nbytes;
-PIX          *pix1, *pix2, *pix3, *pix4, *pix8, *pix16, *pix32;
+PIX          *pix1, *pix2, *pix3, *pix4, *pix5, *pix6, *pix8, *pix16, *pix32;
 PIX          *pix, *pixt, *pixd;
 PIXA         *pixa;
 PIXCMAP      *cmap;
@@ -568,7 +570,7 @@ part6:
     }
     pixDestroy(&pixd);
     pixd = pixRead("/tmp/lept/regout/junk24.jpg");
-    regTestCompareSimilarPix(rp, pix, pixd, 10, 0.0002, 0);
+    regTestCompareSimilarPix(rp, pix, pixd, 10, 0.0002, 0);  /* 0 */
     pixDestroy(&pixd);
     pixd = pixRead("/tmp/lept/regout/junk24.tif");
     pixEqual(pix, pixd, &same);
@@ -587,7 +589,84 @@ part6:
     pixDestroy(&pix);
     pixDestroy(&pixt);
 
-    /* -------------- Part 7: Read header information -------------- */
+    /* ------------- Part 7: Miscellaneous additional tests ------------ */
+        /* Test writing and reading alpha */
+    pix1 = pixRead("test32-alpha.png");
+    lept_stderr("Test write/read of BMP with alpha\n");
+    if (test_writemem(pix1, IFF_BMP, NULL)) success = FALSE;
+    lept_stderr("Test write/read of PNG with alpha\n");
+    if (test_writemem(pix1, IFF_PNG, NULL)) success = FALSE;
+    pixDestroy(&pix1);
+
+    pix1 = pixRead("test-rgba.bmp");
+    pixWrite("/tmp/lept/regout/alpha1.bmp", pix1, IFF_BMP);
+    pixWrite("/tmp/lept/regout/alpha1.png", pix1, IFF_PNG);
+    pix2 = pixRead("/tmp/lept/regout/alpha1.bmp");
+    pix3 = pixRead("/tmp/lept/regout/alpha1.png");
+    pixEqual(pix2, pix1, &same);
+    regTestCompareValues(rp, 1.0, same, 0.0);  /* 1 */
+    pixEqual(pix3, pix1, &same);
+    regTestCompareValues(rp, 1.0, same, 0.0);  /* 2 */
+    pixWrite("/tmp/lept/regout/alpha2.bmp", pix2, IFF_BMP);
+    pix4 = pixRead("/tmp/lept/regout/alpha2.bmp");
+    pixEqual(pix4, pix1, &same);
+    regTestCompareValues(rp, 1.0, same, 0.0);  /* 3 */
+    if (rp->display) {
+        writeImageFileInfo("/tmp/lept/regout/alpha2.bmp", stderr, 0);
+        pixDisplay(pix1, 300, 100);
+    }
+    pixDestroy(&pix1);
+    pixDestroy(&pix2);
+    pixDestroy(&pix3);
+    pixDestroy(&pix4);
+
+        /* Test conversion between 32 and 24 bpp */
+    lept_stderr("Test conversion between 32 and 24 bpp\n");
+    pix1 = pixRead("test-rgba.bmp");
+    pix2 = pixConvert32To24(pix1);
+    pix3 = pixConvert24To32(pix2);
+    pixEqual(pix3, pix1, &same);  /* bmp */
+    regTestCompareValues(rp, 1.0, same, 0.0);  /* 4 */
+    pix4 = pixDisplayDiff(pix1, pix3, 1, 1, 0xff000000);
+    regTestWritePixAndCheck(rp, pix4, IFF_PNG);  /* 5 */
+    pixDestroy(&pix1);
+    pixDestroy(&pix2);
+    pixDestroy(&pix3);
+    pixDestroy(&pix4);
+
+        /* Test writing and reading 24 bpp BMP and PNG */
+    lept_stderr("Test write/read of 24 bpp in BMP and PNG\n");
+    pix1 = pixRead("test-rgba.bmp");
+    pix2 = pixConvert32To24(pix1);
+    pixWrite("/tmp/lept/regout/alpha3.bmp", pix2, IFF_BMP);
+    pixWrite("/tmp/lept/regout/alpha3.png", pix2, IFF_PNG);
+    pix3 = pixRead("/tmp/lept/regout/alpha3.bmp");
+    pix4 = pixRead("/tmp/lept/regout/alpha3.png");
+    pixEqual(pix3, pix1, &same);  /* bmp */
+    regTestCompareValues(rp, 1.0, same, 0.0);  /* 6 */
+    pix5 = pixDisplayDiff(pix1, pix3, 1, 1, 0xff000000);
+    regTestWritePixAndCheck(rp, pix5, IFF_PNG);  /* 7 */
+    pixEqual(pix4, pix1, &same);  /* png */
+    regTestCompareValues(rp, 1.0, same, 0.0);  /* 8 */
+    pix6 = pixDisplayDiff(pix1, pix4, 1, 1, 0xff000000);
+    regTestWritePixAndCheck(rp, pix6, IFF_PNG);  /* 9 */
+    if (rp->display) pixDisplay(pix6, 800, 100);
+    pixDestroy(&pix1);
+    pixDestroy(&pix2);
+    pixDestroy(&pix3);
+    pixDestroy(&pix4);
+    pixDestroy(&pix5);
+    pixDestroy(&pix6);
+    if (rp->success == FALSE) success = FALSE;
+
+    if (success)
+        lept_stderr("\n  ******* Success on misc tests *******\n\n");
+    else
+        lept_stderr("\n  ******* Failure on misc tests *******\n\n");
+    if (!success) failure = TRUE;
+    pixDestroy(&pix);
+
+    /* -------------- Part 8: Read header information -------------- */
     success = TRUE;
     if (get_header_data(FILE_1BPP, IFF_TIFF_G4)) success = FALSE;
     if (get_header_data(FILE_2BPP, IFF_PNG)) success = FALSE;

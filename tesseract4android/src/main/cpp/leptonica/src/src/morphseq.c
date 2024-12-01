@@ -732,7 +732,7 @@ SARRAY  *sa;
 l_int32
 morphSequenceVerify(SARRAY  *sa)
 {
-char    *rawop, *op;
+char    *rawop, *op = NULL;
 l_int32  nops, i, j, nred, fact, valid, w, h, netred, border;
 l_int32  level[4];
 l_int32  intlogbase2[5] = {1, 2, 3, 0, 4};  /* of arg/4 */

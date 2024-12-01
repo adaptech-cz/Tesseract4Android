@@ -19,7 +19,7 @@ void build(Solution &s)
         t += "org.sw.demo.webmproject.webp"_dep;
     };
 
-    auto &leptonica = s.addTarget<LibraryTarget>("danbloomberg.leptonica", "1.83.1");
+    auto &leptonica = s.addTarget<LibraryTarget>("danbloomberg.leptonica", "1.85.0");
     leptonica += Git("https://github.com/DanBloomberg/leptonica");
 
     {
@@ -133,7 +133,8 @@ void build(Solution &s)
             {"fhmtauto_reg", {"fhmtauto_reg.c"}},
             {"files_reg", {"files_reg.c"}},
             {"findcorners_reg", {"findcorners_reg.c"}},
-            {"findpattern_reg", {"findpattern_reg.c"}},
+            {"findpattern1_reg", {"findpattern1_reg.c"}},
+            {"findpattern2_reg", {"findpattern2_reg.c"}},
             {"flipdetect_reg", {"flipdetect_reg.c"}},
             {"fmorphauto_reg", {"fmorphauto_reg.c"}},
             {"fpix1_reg", {"fpix1_reg.c"}},
@@ -173,6 +174,7 @@ void build(Solution &s)
             {"pageseg_reg", {"pageseg_reg.c"}},
             {"paintmask_reg", {"paintmask_reg.c"}},
             {"paint_reg", {"paint_reg.c"}},
+            {"partition_reg", {"partition_reg.c"}},
             {"pdfio1_reg", {"pdfio1_reg.c"}},
             {"pdfio2_reg", {"pdfio2_reg.c"}},
             {"pdfseg_reg", {"pdfseg_reg.c"}},
@@ -241,7 +243,7 @@ void build(Solution &s)
             {"comparepages", {"comparepages.c"}},
             {"comparepixa", {"comparepixa.c"}},
             {"comparetest", {"comparetest.c"}},
-            {"concatpdf", {"concatpdf.c"}},
+            {"compresspdf", {"compresspdf.c"}},
             {"contrasttest", {"contrasttest.c"}},
             {"convertfilestopdf", {"convertfilestopdf.c"}},
             {"convertfilestops", {"convertfilestops.c"}},
@@ -253,6 +255,7 @@ void build(Solution &s)
             {"converttops", {"converttops.c"}},
             {"cornertest", {"cornertest.c"}},
             {"corrupttest", {"corrupttest.c"}},
+            {"croppdf", {"croppdf.c"}},
             {"croptext", {"croptext.c"}},
             {"deskew_it", {"deskew_it.c"}},
             {"dewarprules", {"dewarprules.c"}},
@@ -301,6 +304,7 @@ void build(Solution &s)
             {"maptest", {"maptest.c"}},
             {"messagetest", {"messagetest.c"}},
             {"misctest1", {"misctest1.c"}},
+            {"misctest2", {"misctest2.c"}},
             {"modifyhuesat", {"modifyhuesat.c"}},
             {"morphseq_reg", {"morphseq_reg.c"}},
             {"morphtest1", {"morphtest1.c"}},
@@ -342,6 +346,7 @@ void build(Solution &s)
             {"rotatetest1", {"rotatetest1.c"}},
             {"runlengthtest", {"runlengthtest.c"}},
             {"scaleandtile", {"scaleandtile.c"}},
+            {"scaleimages", {"scaleimages.c"}},
             {"scale_it", {"scale_it.c"}},
             {"scaletest1", {"scaletest1.c"}},
             {"scaletest2", {"scaletest2.c"}},
@@ -354,6 +359,7 @@ void build(Solution &s)
             {"skewtest", {"skewtest.c"}},
             {"sorttest", {"sorttest.c"}},
             {"splitimage2pdf", {"splitimage2pdf.c"}},
+            {"splitpdf", {"splitpdf.c"}},
             {"sudokutest", {"sudokutest.c"}},
             {"textorient", {"textorient.c"}},
             {"tiffpdftest", {"tiffpdftest.c"}},

@@ -1152,6 +1152,7 @@ PTA       *pta1, *pta2, *ptad;
 
         /* Generate the plot points */
     pta1 = ptaCreate(n);
+    maxw = maxh = 0;       
     for (i = 0; i < n; i++) {
         numaGetFValue(na, i, &val);
         if (orient == L_HORIZONTAL_LINE) {
@@ -2696,7 +2697,7 @@ l_float32  minval, maxval, incr;
     if (minval == maxval)
         return (PIX *)ERROR_PTR("all values in fpix are equal", __func__, NULL);
     incr = (maxval - minval) / ((l_float32)ncontours - 1);
-    return fpixRenderContours(fpix, incr, 0.15);
+    return fpixRenderContours(fpix, incr, 0.15f);
 }
 
 
@@ -2733,7 +2734,7 @@ PIXCMAP    *cmap;
     if (incr <= 0.0)
         return (PIX *)ERROR_PTR("incr <= 0.0", __func__, NULL);
     if (proxim <= 0.0)
-        proxim = 0.15;  /* default */
+        proxim = 0.15f;  /* default */
 
     fpixGetDimensions(fpixs, &w, &h);
     if ((pixd = pixCreate(w, h, 8)) == NULL)

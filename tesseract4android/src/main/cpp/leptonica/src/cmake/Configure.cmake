@@ -94,9 +94,8 @@ if (JPEG_FOUND)
     set(HAVE_LIBJPEG 1)
 endif()
 
-if (JP2K_FOUND)
+if (OPENJPEG_SUPPORT)
     set(HAVE_LIBJP2K 1)
-    set(LIBJP2K_HEADER <${JP2K_HEADER_DIR}/openjpeg.h>)
 endif()
 
 if (PNG_FOUND)
@@ -107,7 +106,7 @@ if (TIFF_FOUND)
     set(HAVE_LIBTIFF 1)
 endif()
 
-if (WEBP_FOUND)
+if (LIBWEBP_SUPPORT)
     set(HAVE_LIBWEBP 1)
     set(HAVE_LIBWEBP_ANIM 1)
 endif()
@@ -122,7 +121,6 @@ file(APPEND ${AUTOCONFIG_SRC} "
 
 /* Define to 1 if you have libopenjp2. */
 #cmakedefine HAVE_LIBJP2K 1
-#cmakedefine LIBJP2K_HEADER <${JP2K_HEADER_DIR}/openjpeg.h>
 
 /* Define to 1 if you have jpeg. */
 #cmakedefine HAVE_LIBJPEG 1

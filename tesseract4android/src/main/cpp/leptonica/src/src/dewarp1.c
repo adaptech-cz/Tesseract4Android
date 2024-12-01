@@ -1112,11 +1112,13 @@ L_DEWARP  *dew;
     if (!filename)
         return (L_DEWARP *)ERROR_PTR("filename not defined", __func__, NULL);
     if ((fp = fopenReadStream(filename)) == NULL)
-        return (L_DEWARP *)ERROR_PTR("stream not opened", __func__, NULL);
+        return (L_DEWARP *)ERROR_PTR_1("stream not opened",
+                                       filename, __func__, NULL);
 
     if ((dew = dewarpReadStream(fp)) == NULL) {
         fclose(fp);
-        return (L_DEWARP *)ERROR_PTR("dew not read", __func__, NULL);
+        return (L_DEWARP *)ERROR_PTR_1("dew not read",
+                                       filename, __func__, NULL);
     }
 
     fclose(fp);
@@ -1148,7 +1150,7 @@ l_int32    version, sampling, redfactor, minlines, pageno, hasref, refpage;
 l_int32    w, h, nx, ny, vdispar, hdispar, nlines;
 l_int32    mincurv, maxcurv, leftslope, rightslope, leftcurv, rightcurv;
 L_DEWARP  *dew;
-FPIX      *fpixv, *fpixh;
+FPIX      *fpixv = NULL, *fpixh = NULL;
 
     if (!fp)
         return (L_DEWARP *)ERROR_PTR("stream not defined", __func__, NULL);
@@ -1283,11 +1285,11 @@ FILE    *fp;
         return ERROR_INT("dew not defined", __func__, 1);
 
     if ((fp = fopenWriteStream(filename, "wb")) == NULL)
-        return ERROR_INT("stream not opened", __func__, 1);
+        return ERROR_INT_1("stream not opened", filename, __func__, 1);
     ret = dewarpWriteStream(fp, dew);
     fclose(fp);
     if (ret)
-        return ERROR_INT("dew not written to stream", __func__, 1);
+        return ERROR_INT_1("dew not written to stream", filename, __func__, 1);
     return 0;
 }
 
@@ -1383,9 +1385,9 @@ FILE    *fp;
     ret = dewarpWriteStream(fp, dew);
     fputc('\0', fp);
     fclose(fp);
-    *psize = *psize - 1;
+    if (*psize > 0) *psize = *psize - 1;
 #else
-    L_INFO("work-around: writing to a temp file\n", __func__);
+    L_INFO("no fmemopen API --> work-around: write to temp file\n", __func__);
   #ifdef _WIN32
     if ((fp = fopenWriteWinTempfile()) == NULL)
         return ERROR_INT("tmpfile stream not opened", __func__, 1);
@@ -1420,11 +1422,13 @@ L_DEWARPA  *dewa;
     if (!filename)
         return (L_DEWARPA *)ERROR_PTR("filename not defined", __func__, NULL);
     if ((fp = fopenReadStream(filename)) == NULL)
-        return (L_DEWARPA *)ERROR_PTR("stream not opened", __func__, NULL);
+        return (L_DEWARPA *)ERROR_PTR_1("stream not opened",
+                                        filename, __func__, NULL);
 
     if ((dewa = dewarpaReadStream(fp)) == NULL) {
         fclose(fp);
-        return (L_DEWARPA *)ERROR_PTR("dewa not read", __func__, NULL);
+        return (L_DEWARPA *)ERROR_PTR_1("dewa not read",
+                                        filename, __func__, NULL);
     }
 
     fclose(fp);
@@ -1559,11 +1563,11 @@ FILE    *fp;
         return ERROR_INT("dewa not defined", __func__, 1);
 
     if ((fp = fopenWriteStream(filename, "wb")) == NULL)
-        return ERROR_INT("stream not opened", __func__, 1);
+        return ERROR_INT_1("stream not opened", filename, __func__, 1);
     ret = dewarpaWriteStream(fp, dewa);
     fclose(fp);
     if (ret)
-        return ERROR_INT("dewa not written to stream", __func__, 1);
+        return ERROR_INT_1("dewa not written to stream", filename, __func__, 1);
     return 0;
 }
 
@@ -1652,9 +1656,9 @@ FILE    *fp;
     ret = dewarpaWriteStream(fp, dewa);
     fputc('\0', fp);
     fclose(fp);
-    *psize = *psize - 1;
+    if (*psize > 0) *psize = *psize - 1;
 #else
-    L_INFO("work-around: writing to a temp file\n", __func__);
+    L_INFO("no fmemopen API --> work-around: write to temp file\n", __func__);
   #ifdef _WIN32
     if ((fp = fopenWriteWinTempfile()) == NULL)
         return ERROR_INT("tmpfile stream not opened", __func__, 1);

@@ -121,7 +121,7 @@ ptaCreate(l_int32  n)
 {
 PTA  *pta;
 
-    if (n <= 0 || n > MaxArraySize)
+    if (n <= 0 || n > (l_int32)MaxArraySize)
         n = InitialArraySize;
 
     pta = (PTA *)LEPT_CALLOC(1, sizeof(PTA));
@@ -366,7 +366,7 @@ size_t  oldsize, newsize;
 
     if (!pta)
         return ERROR_INT("pta not defined", __func__, 1);
-    if (pta->nalloc > MaxArraySize)
+    if (pta->nalloc > (l_int32)MaxArraySize)  /* belt & suspenders */
         return ERROR_INT("pta at maximum size; can't extend", __func__, 1);
     oldsize = 4 * pta->nalloc;
     if (pta->nalloc > MaxArraySize / 2) {
@@ -636,11 +636,12 @@ PTA   *pta;
         return (PTA *)ERROR_PTR("filename not defined", __func__, NULL);
 
     if ((fp = fopenReadStream(filename)) == NULL)
-        return (PTA *)ERROR_PTR("stream not opened", __func__, NULL);
+        return (PTA *)ERROR_PTR_1("stream not opened",
+                                  filename, __func__, NULL);
     pta = ptaReadStream(fp);
     fclose(fp);
     if (!pta)
-        return (PTA *)ERROR_PTR("pta not read", __func__, NULL);
+        return (PTA *)ERROR_PTR_1("pta not read", filename, __func__, NULL);
     return pta;
 }
 
@@ -676,7 +677,7 @@ PTA       *pta;
         return (PTA *)ERROR_PTR("not a pta file", __func__, NULL);
     if (n < 0)
         return (PTA *)ERROR_PTR("num pts <= 0", __func__, NULL);
-    if (n > MaxArraySize)
+    if (n > (l_int32)MaxArraySize)
         return (PTA *)ERROR_PTR("too many pts", __func__, NULL);
     if (n == 0) L_INFO("the pta is empty\n", __func__);
 
@@ -785,11 +786,11 @@ FILE    *fp;
         return ERROR_INT("pta not defined", __func__, 1);
 
     if ((fp = fopenWriteStream(filename, "w")) == NULL)
-        return ERROR_INT("stream not opened", __func__, 1);
+        return ERROR_INT_1("stream not opened", filename, __func__, 1);
     ret = ptaWriteStream(fp, pta, type);
     fclose(fp);
     if (ret)
-        return ERROR_INT("pta not written to stream", __func__, 1);
+        return ERROR_INT_1("pta not written to stream", filename, __func__, 1);
     return 0;
 }
 
@@ -873,9 +874,9 @@ FILE    *fp;
     ret = ptaWriteStream(fp, pta, type);
     fputc('\0', fp);
     fclose(fp);
-    *psize = *psize - 1;
+    if (*psize > 0) *psize = *psize - 1;
 #else
-    L_INFO("work-around: writing to a temp file\n", __func__);
+    L_INFO("no fmemopen API --> work-around: write to temp file\n", __func__);
   #ifdef _WIN32
     if ((fp = fopenWriteWinTempfile()) == NULL)
         return ERROR_INT("tmpfile stream not opened", __func__, 1);
@@ -906,7 +907,7 @@ ptaaCreate(l_int32  n)
 {
 PTAA  *ptaa;
 
-    if (n <= 0 || n > MaxPtrArraySize)
+    if (n <= 0 || n > (l_int32)MaxPtrArraySize)
         n = InitialArraySize;
 
     ptaa = (PTAA *)LEPT_CALLOC(1, sizeof(PTAA));
@@ -1274,11 +1275,12 @@ PTAA  *ptaa;
         return (PTAA *)ERROR_PTR("filename not defined", __func__, NULL);
 
     if ((fp = fopenReadStream(filename)) == NULL)
-        return (PTAA *)ERROR_PTR("stream not opened", __func__, NULL);
+        return (PTAA *)ERROR_PTR_1("stream not opened",
+                                   filename, __func__, NULL);
     ptaa = ptaaReadStream(fp);
     fclose(fp);
     if (!ptaa)
-        return (PTAA *)ERROR_PTR("ptaa not read", __func__, NULL);
+        return (PTAA *)ERROR_PTR_1("ptaa not read", filename, __func__, NULL);
     return ptaa;
 }
 
@@ -1312,7 +1314,7 @@ PTAA    *ptaa;
         return (PTAA *)ERROR_PTR("not a ptaa file", __func__, NULL);
     if (n < 0)
         return (PTAA *)ERROR_PTR("num pta ptrs <= 0", __func__, NULL);
-    if (n > MaxPtrArraySize)
+    if (n > (l_int32)MaxPtrArraySize)
         return (PTAA *)ERROR_PTR("too many pta ptrs", __func__, NULL);
     if (n == 0) L_INFO("the ptaa is empty\n", __func__);
 
@@ -1409,11 +1411,11 @@ FILE    *fp;
         return ERROR_INT("ptaa not defined", __func__, 1);
 
     if ((fp = fopenWriteStream(filename, "w")) == NULL)
-        return ERROR_INT("stream not opened", __func__, 1);
+        return ERROR_INT_1("stream not opened", filename, __func__, 1);
     ret = ptaaWriteStream(fp, ptaa, type);
     fclose(fp);
     if (ret)
-        return ERROR_INT("ptaa not written to stream", __func__, 1);
+        return ERROR_INT_1("ptaa not written to stream", filename, __func__, 1);
     return 0;
 }
 
@@ -1490,9 +1492,9 @@ FILE    *fp;
     ret = ptaaWriteStream(fp, ptaa, type);
     fputc('\0', fp);
     fclose(fp);
-    *psize = *psize - 1;
+    if (*psize > 0) *psize = *psize - 1;
 #else
-    L_INFO("work-around: writing to a temp file\n", __func__);
+    L_INFO("no fmemopen API --> work-around: write to temp file\n", __func__);
   #ifdef _WIN32
     if ((fp = fopenWriteWinTempfile()) == NULL)
         return ERROR_INT("tmpfile stream not opened", __func__, 1);

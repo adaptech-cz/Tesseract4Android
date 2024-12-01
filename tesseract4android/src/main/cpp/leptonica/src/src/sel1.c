@@ -154,8 +154,8 @@ static const l_int32 InitialPtrArraySize = 50;      /*!< n'importe quoi */
 static const l_uint32  MaxKernelSize = 10000;
 
     /* Bounds on pix template size */
-static const l_uint32  MaxPixTemplateSize = 100;
-static const l_uint32  MaxPixTemplateHits = 1000;
+static const l_uint32  MaxPixTemplateSize = 300;
+static const l_uint32  MaxPixTemplateHits = 3000;
 
     /* Static functions */
 static l_int32 selaExtendArray(SELA *sela);
@@ -252,7 +252,7 @@ selaCreate(l_int32  n)
 {
 SELA  *sela;
 
-    if (n <= 0 || n > MaxPtrArraySize)
+    if (n <= 0 || n > (l_int32)MaxPtrArraySize)
         n = InitialPtrArraySize;
 
         /* Make array of sel ptrs */
@@ -508,9 +508,9 @@ create2dIntArray(l_int32  sy,
 l_int32    i;
 l_int32  **array;
 
-    if (sx <= 0 || sx > MaxKernelSize)
+    if (sx <= 0 || sx > (l_int32)MaxKernelSize)
         return (l_int32 **)ERROR_PTR("sx out of bounds", __func__, NULL);
-    if (sy <= 0 || sy > MaxKernelSize)
+    if (sy <= 0 || sy > (l_int32)MaxKernelSize)
         return (l_int32 **)ERROR_PTR("sy out of bounds", __func__, NULL);
 
     array = (l_int32 **)LEPT_CALLOC(sy, sizeof(l_int32 *));
@@ -935,7 +935,7 @@ selaGetCombName(SELA    *sela,
                 l_int32  size,
                 l_int32  direction)
 {
-char    *selname;
+char    *selname = NULL;
 char     combname[256];
 l_int32  i, nsels, sx, sy, found;
 SEL     *sel;
@@ -1263,10 +1263,10 @@ SELA  *sela;
         return (SELA *)ERROR_PTR("fname not defined", __func__, NULL);
 
     if ((fp = fopenReadStream(fname)) == NULL)
-        return (SELA *)ERROR_PTR("stream not opened", __func__, NULL);
+        return (SELA *)ERROR_PTR_1("stream not opened", fname, __func__, NULL);
     if ((sela = selaReadStream(fp)) == NULL) {
         fclose(fp);
-        return (SELA *)ERROR_PTR("sela not returned", __func__, NULL);
+        return (SELA *)ERROR_PTR_1("sela not returned", fname, __func__, NULL);
     }
     fclose(fp);
 
@@ -1329,10 +1329,10 @@ SEL   *sel;
         return (SEL *)ERROR_PTR("fname not defined", __func__, NULL);
 
     if ((fp = fopenReadStream(fname)) == NULL)
-        return (SEL *)ERROR_PTR("stream not opened", __func__, NULL);
+        return (SEL *)ERROR_PTR_1("stream not opened", fname, __func__, NULL);
     if ((sel = selReadStream(fp)) == NULL) {
         fclose(fp);
-        return (SEL *)ERROR_PTR("sela not returned", __func__, NULL);
+        return (SEL *)ERROR_PTR_1("sela not returned", fname, __func__, NULL);
     }
     fclose(fp);
 
@@ -1405,7 +1405,7 @@ FILE  *fp;
         return ERROR_INT("sela not defined", __func__, 1);
 
     if ((fp = fopenWriteStream(fname, "wb")) == NULL)
-        return ERROR_INT("stream not opened", __func__, 1);
+        return ERROR_INT_1("stream not opened", fname, __func__, 1);
     selaWriteStream(fp, sela);
     fclose(fp);
 
@@ -1463,7 +1463,7 @@ FILE  *fp;
         return ERROR_INT("sel not defined", __func__, 1);
 
     if ((fp = fopenWriteStream(fname, "wb")) == NULL)
-        return ERROR_INT("stream not opened", __func__, 1);
+        return ERROR_INT_1("stream not opened", fname, __func__, 1);
     selWriteStream(fp, sel);
     fclose(fp);
 
@@ -1949,11 +1949,15 @@ l_uint32  val;
         L_ERROR("pix template too large (w = %d, h = %d)\n", __func__, w, h);
         return NULL;
     }
+    if (w > MaxPixTemplateSize / 5 || h > MaxPixTemplateSize / 5)
+        L_WARNING("large pix template: w = %d, h = %d\n", __func__, w, h);
     pixCountPixels(pix, &nhits, NULL);
     if (nhits > MaxPixTemplateHits) {
         L_ERROR("too many hits (%d) in pix template\n", __func__, nhits);
         return NULL;
     }
+    if (nhits > MaxPixTemplateHits / 5)
+        L_WARNING("many hits (%d) in pix template\n", __func__, nhits);
 
     sel = selCreate(h, w, name);
     selSetOrigin(sel, cy, cx);

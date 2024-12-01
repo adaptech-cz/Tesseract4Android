@@ -39,6 +39,7 @@ libleptonica_la_SOURCES = adaptmap.c affine.c                        \
  numabasic.c numafunc1.c numafunc2.c                            \
  pageseg.c paintcmap.c                                          \
  parseprotos.c partify.c partition.c                            \
+ pdfapp.c pdfappstub.c                                          \
  pdfio1.c pdfio1stub.c pdfio2.c pdfio2stub.c                    \
  pix1.c pix2.c pix3.c pix4.c pix5.c                             \
  pixabasic.c pixacc.c pixafunc1.c pixafunc2.c                   \
@@ -50,7 +51,7 @@ libleptonica_la_SOURCES = adaptmap.c affine.c                        \
  quadtree.c queue.c rank.c rbtree.c                             \
  readbarcode.c readfile.c                                       \
  recogbasic.c recogdid.c recogident.c                           \
- recogtrain.c regutils.c                                        \
+ recogtrain.c regutils.c renderpdf.c                            \
  rop.c roplow.c                                                 \
  rotate.c rotateam.c rotateorth.c rotateshear.c                 \
  runlength.c sarray1.c sarray2.c                                \

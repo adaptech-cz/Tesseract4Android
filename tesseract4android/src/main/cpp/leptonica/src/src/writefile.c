@@ -44,6 +44,7 @@
  *     Selection of output format if default is requested
  *        l_int32     pixChooseOutputFormat()
  *        l_int32     getImpliedFileFormat()
+ *        l_int32     getFormatFromExtension()
  *        l_int32     pixGetAutoFormat()
  *        const char *getFormatExtension()
  *
@@ -92,7 +93,8 @@
 #include <string.h>
 #include "allheaders.h"
 
-    /* Display program (xv, xli, xzgv, open) to be invoked by pixDisplay()  */
+    /* Set defaults for the display program (xv, xli, xzgv, open, irfanview)
+     * that is invoked by pixDisplay()  */
 #ifdef _WIN32
 static l_int32  var_DISPLAY_PROG = L_DISPLAY_WITH_IV;  /* default */
 #elif  defined(__APPLE__)
@@ -110,7 +112,7 @@ static const l_int32  MaxSizeForPng = 200;
 static const l_float32  DefaultScaling = 1.0;
 
     /* Global array of image file format extension names.                */
-    /* This is in 1-1 corrspondence with format enum in imageio.h.       */
+    /* This is in 1-1 correspondence with format enum in imageio.h.      */
     /* The empty string at the end represents the serialized format,     */
     /* which has no recognizable extension name, but the array must      */
     /* be padded to agree with the format enum.                          */
@@ -141,25 +143,31 @@ LEPT_DLL const char *ImageFileFormatExtensions[] =
           "default",
           ""};
 
-    /* Local map of image file name extension to output format */
+    /* Local map of image file name extension to output format.
+     * Note that the extension string always includes a '.'  */
 struct ExtensionMap
 {
-    char     extension[8];
+    char     extension[16];
     l_int32  format;
 };
 static const struct ExtensionMap extension_map[] =
-                            { { ".bmp",  IFF_BMP       },
-                              { ".jpg",  IFF_JFIF_JPEG },
-                              { ".jpeg", IFF_JFIF_JPEG },
-                              { ".png",  IFF_PNG       },
-                              { ".tif",  IFF_TIFF      },
-                              { ".tiff", IFF_TIFF      },
-                              { ".pnm",  IFF_PNM       },
-                              { ".gif",  IFF_GIF       },
-                              { ".jp2",  IFF_JP2       },
-                              { ".ps",   IFF_PS        },
-                              { ".pdf",  IFF_LPDF      },
-                              { ".webp", IFF_WEBP      } };
+                            { { ".bmp",      IFF_BMP       },
+                              { ".jpg",      IFF_JFIF_JPEG },
+                              { ".jpeg",     IFF_JFIF_JPEG },
+                              { ".JPG",      IFF_JFIF_JPEG },
+                              { ".png",      IFF_PNG       },
+                              { ".tif",      IFF_TIFF      },
+                              { ".tiff",     IFF_TIFF      },
+                              { ".tiffg4",   IFF_TIFF_G4   },
+                              { ".pbm",      IFF_PNM       },
+                              { ".pgm",      IFF_PNM       },
+                              { ".pnm",      IFF_PNM       },
+                              { ".gif",      IFF_GIF       },
+                              { ".jp2",      IFF_JP2       },
+                              { ".j2k",      IFF_JP2       },
+                              { ".ps",       IFF_PS        },
+                              { ".pdf",      IFF_LPDF      },
+                              { ".webp",     IFF_WEBP      } };
 
 
 /*---------------------------------------------------------------------*
@@ -342,12 +350,12 @@ FILE    *fp;
         return ERROR_INT("fname not defined", __func__, 1);
 
     if ((fp = fopenWriteStream(fname, "wb+")) == NULL)
-        return ERROR_INT("stream not opened", __func__, 1);
+        return ERROR_INT_1("stream not opened", fname, __func__, 1);
 
     ret = pixWriteStream(fp, pix, format);
     fclose(fp);
     if (ret)
-        return ERROR_INT("pix not written to stream", __func__, 1);
+        return ERROR_INT_1("pix not written to stream", fname, __func__, 1);
     return 0;
 }
 
@@ -433,7 +441,7 @@ pixWriteStream(FILE    *fp,
         return pixWriteStreamGif(fp, pix);
 
     case IFF_JP2:
-        return pixWriteStreamJp2k(fp, pix, 34, 4, L_JP2_CODEC, 0, 0);
+        return pixWriteStreamJp2k(fp, pix, 34, 0, L_JP2_CODEC, 0, 0);
 
     case IFF_WEBP:
         return pixWriteStreamWebP(fp, pix, 80, 0);
@@ -568,11 +576,42 @@ l_int32
 getImpliedFileFormat(const char  *filename)
 {
 char    *extension;
-int      i, numext;
 l_int32  format = IFF_UNKNOWN;
+
+    if (!filename)
+        return ERROR_INT("extension not defined", __func__, IFF_UNKNOWN);
 
     if (splitPathAtExtension (filename, NULL, &extension))
         return IFF_UNKNOWN;
+
+    format = getFormatFromExtension(extension);
+    LEPT_FREE(extension);
+    return format;
+}
+
+
+/*!
+ * \brief   getFormatFromExtension()
+ *
+ * \param[in]    extension
+ * \return  output format, or IFF_UNKNOWN on error or invalid extension.
+ *
+ * <pre>
+ * Notes:
+ *      (1) This determines the integer for writing in a format that
+ *          corresponds to the image file type extension.  For example,
+ *          the integer code corresponding to the extension "jpg" is 2;
+ *          it is used to write with jpeg encoding.
+ * </pre>
+ */
+l_int32
+getFormatFromExtension(const char  *extension)
+{
+int      i, numext;
+l_int32  format = IFF_UNKNOWN;
+
+    if (!extension)
+        return ERROR_INT("extension not defined", __func__, IFF_UNKNOWN);
 
     numext = sizeof(extension_map) / sizeof(extension_map[0]);
     for (i = 0; i < numext; i++) {
@@ -581,8 +620,6 @@ l_int32  format = IFF_UNKNOWN;
             break;
         }
     }
-
-    LEPT_FREE(extension);
     return format;
 }
 
@@ -829,8 +866,10 @@ PIX  *pixs, *pixd;
  *          may be unpredictable.
  *      (2) It does nothing unless LeptDebugOK == TRUE.
  *      (3) It uses these programs to display the image:
- *             On Unix: xzgv, xli or xv
- *             On Windows: i_view
+ *             On Unix: xzgv, xli, xv or (for apple) open
+ *             On Windows: i_view or the application currently registered
+ *                         as the default viewer (the browser 'open' action
+ *                         based on the extension of the image file).
  *          The display program must be on your $PATH variable.  It is
  *          chosen by setting the global var_DISPLAY_PROG, using
  *          l_chooseDisplayProg().  Default on Unix is xzgv.
@@ -851,6 +890,8 @@ PIX  *pixs, *pixd;
  *          versions of the image: the image with a fully opaque
  *          alpha, the alpha, and the image as it would appear with
  *          a white background.
+ *      (7) pixDisplay() can be inactivated at runtime by calling:
+ *               l_chooseDisplayProg(L_DISPLAY_WITH_NONE);
  * </pre>
  */
 l_ok
@@ -874,7 +915,8 @@ pixDisplay(PIX     *pixs,
  * <pre>
  * Notes:
  *      (1) See notes for pixDisplay().
- *      (2) This displays the image if dispflag == 1; otherwise it punts.
+ *      (2) This displays the image if dispflag == 1 and the global
+ *          var_DISPLAY_PROG != L_DISPLAY_WITH_NONE; otherwise it punts.
  * </pre>
  */
 l_ok
@@ -886,7 +928,7 @@ pixDisplayWithTitle(PIX         *pixs,
 {
 char           *tempname;
 char            buffer[Bufsize];
-static l_int32  index = 0;  /* caution: not .so or thread safe */
+static l_atomic index = 0;  /* caution: not .so safe */
 l_int32         w, h, d, spp, maxheight, opaque, threeviews;
 l_float32       ratw, rath, ratmin;
 PIX            *pix0, *pix1, *pix2;
@@ -908,16 +950,24 @@ char            fullpath[_MAX_PATH];
     return ERROR_INT("iOS 11 does not support system()", __func__, 1);
 #endif /* OS_IOS */
 
-    if (dispflag != 1) return 0;
+    if (dispflag != 1 || var_DISPLAY_PROG == L_DISPLAY_WITH_NONE)
+        return 0;
     if (!pixs)
         return ERROR_INT("pixs not defined", __func__, 1);
+
+#ifndef _WIN32  /* unix */
     if (var_DISPLAY_PROG != L_DISPLAY_WITH_XZGV &&
         var_DISPLAY_PROG != L_DISPLAY_WITH_XLI &&
         var_DISPLAY_PROG != L_DISPLAY_WITH_XV &&
-        var_DISPLAY_PROG != L_DISPLAY_WITH_IV &&
-        var_DISPLAY_PROG != L_DISPLAY_WITH_OPEN) {
-        return ERROR_INT("no program chosen for display", __func__, 1);
-    }
+        var_DISPLAY_PROG != L_DISPLAY_WITH_OPEN)
+        return ERROR_INT("invalid unix program chosen for display",
+                         __func__, 1);
+#else  /* _WIN32 */
+    if (var_DISPLAY_PROG != L_DISPLAY_WITH_IV &&
+        var_DISPLAY_PROG != L_DISPLAY_WITH_OPEN)
+        return ERROR_INT("invalid windows program chosen for display",
+                         __func__, 1);
+#endif  /* _WIN32 */
 
         /* Display with three views if either spp = 4 or if colormapped
          * and the alpha component is not fully opaque */
@@ -1010,23 +1060,27 @@ char            fullpath[_MAX_PATH];
             snprintf(buffer, Bufsize,
                      "xv -quit -geometry +%d+%d %s &", x, y, tempname);
         }
-    } else if (var_DISPLAY_PROG == L_DISPLAY_WITH_OPEN) {
+    } else {  /* L_DISPLAY_WITH_OPEN */
         snprintf(buffer, Bufsize, "open %s &", tempname);
     }
     callSystemDebug(buffer);
 
 #else  /* _WIN32 */
 
-        /* Windows: L_DISPLAY_WITH_IV */
+        /* Windows: L_DISPLAY_WITH_IV || L_DISPLAY_WITH_OPEN */
     pathname = genPathname(tempname, NULL);
     _fullpath(fullpath, pathname, sizeof(fullpath));
-    if (title) {
-        snprintf(buffer, Bufsize,
-                 "i_view32.exe \"%s\" /pos=(%d,%d) /title=\"%s\"",
-                 fullpath, x, y, title);
-    } else {
-        snprintf(buffer, Bufsize, "i_view32.exe \"%s\" /pos=(%d,%d)",
-                 fullpath, x, y);
+    if (var_DISPLAY_PROG == L_DISPLAY_WITH_IV) {
+        if (title) {
+            snprintf(buffer, Bufsize,
+                     "i_view32.exe \"%s\" /pos=(%d,%d) /title=\"%s\"",
+                     fullpath, x, y, title);
+        } else {
+            snprintf(buffer, Bufsize, "i_view32.exe \"%s\" /pos=(%d,%d)",
+                     fullpath, x, y);
+        }
+    } else {  /* L_DISPLAY_WITH_OPEN */
+        snprintf(buffer, Bufsize, "explorer.exe /open,\"%s\"", fullpath);
     }
     callSystemDebug(buffer);
     LEPT_FREE(pathname);

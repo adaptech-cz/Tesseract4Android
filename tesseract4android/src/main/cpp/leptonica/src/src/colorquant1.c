@@ -544,7 +544,7 @@ pixOctreeColorQuant(PIX     *pixs,
     if (colors < 128 || colors > 240)  /* further restricted */
         return (PIX *)ERROR_PTR("colors must be in [128, 240]", __func__, NULL);
 
-    return pixOctreeColorQuantGeneral(pixs, colors, ditherflag, 0.01, 0.01);
+    return pixOctreeColorQuantGeneral(pixs, colors, ditherflag, 0.01f, 0.01f);
 }
 
 
@@ -3083,11 +3083,11 @@ pixFewColorsOctcubeQuant2(PIX      *pixs,
 l_int32    w, h, wpls, wpld, i, j, nerrors;
 l_int32    ncubes, depth, cindex, oval;
 l_int32    rval, gval, bval;
-l_int32   *octarray;
+l_int32   *octarray = NULL;
 l_uint32   octindex;
 l_uint32  *rtab, *gtab, *btab;
 l_uint32  *lines, *lined, *datas, *datad, *ppixel;
-l_uint32  *colorarray;
+l_uint32  *colorarray = NULL;
 PIX       *pixd;
 PIXCMAP   *cmap;
 
@@ -3110,7 +3110,10 @@ PIXCMAP   *cmap;
     makeRGBToIndexTables(level, &rtab, &gtab, &btab);
 
         /* The octarray will give a ptr from the octcube to the colorarray */
-    ncubes = numaGetCount(na);
+    if ((ncubes = numaGetCount(na)) == 0) {
+        L_ERROR("no slots in pixel occupation histogram", __func__);
+        goto cleanup_arrays;
+    }
     octarray = (l_int32 *)LEPT_CALLOC(ncubes, sizeof(l_int32));
 
         /* The colorarray will hold the colors of the first pixel
@@ -3284,7 +3287,7 @@ PIXCMAP   *cmap, *cmapd;
     if (darkthresh <= 0) darkthresh = 20;
     if (lightthresh <= 0) lightthresh = 244;
     if (diffthresh <= 0) diffthresh = 20;
-    if (minfract <= 0.0) minfract = 0.05;
+    if (minfract <= 0.0) minfract = 0.05f;
     if (maxspan <= 2) maxspan = 15;
 
         /* Start with a simple fixed octcube quantizer. */

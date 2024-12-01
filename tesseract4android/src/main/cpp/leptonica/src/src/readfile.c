@@ -194,14 +194,13 @@ PIX   *pix;
     if (!filename)
         return (PIX *)ERROR_PTR("filename not defined", __func__, NULL);
 
-    if ((fp = fopenReadStream(filename)) == NULL) {
-        L_ERROR("image file not found: %s\n", __func__, filename);
-        return NULL;
-    }
+    if ((fp = fopenReadStream(filename)) == NULL)
+        return (PIX*)ERROR_PTR_1("image file not found",
+                                 filename, __func__, NULL);
     pix = pixReadStream(fp, 0);
     fclose(fp);
     if (!pix)
-        return (PIX *)ERROR_PTR("pix not read", __func__, NULL);
+        return (PIX *)ERROR_PTR_1("pix not read", filename, __func__, NULL);
     return pix;
 }
 
@@ -231,12 +230,14 @@ PIX   *pix;
         return (PIX *)ERROR_PTR("filename not defined", __func__, NULL);
 
     if ((fp = fopenReadStream(filename)) == NULL)
-        return (PIX *)ERROR_PTR("image file not found", __func__, NULL);
+        return (PIX *)ERROR_PTR_1("image file not found",
+                                  filename, __func__, NULL);
     pix = pixReadStream(fp, hint);
     fclose(fp);
 
     if (!pix)
-        return (PIX *)ERROR_PTR("image not returned", __func__, NULL);
+        return (PIX *)ERROR_PTR_1("image not returned",
+                                  filename, __func__, NULL);
     return pix;
 }
 
@@ -455,7 +456,7 @@ PIX     *pix;
         return ERROR_INT("filename not defined", __func__, 1);
 
     if ((fp = fopenReadStream(filename)) == NULL)
-        return ERROR_INT("image file not found", __func__, 1);
+        return ERROR_INT_1("image file not found", filename, __func__, 1);
     findFileFormatStream(fp, &format);
     fclose(fp);
 
@@ -463,26 +464,27 @@ PIX     *pix;
     {
     case IFF_BMP:  /* cheating: reading the entire file */
         if ((pix = pixRead(filename)) == NULL)
-            return ERROR_INT( "bmp: pix not read", __func__, 1);
+            return ERROR_INT_1( "bmp: pix not read", filename, __func__, 1);
         pixGetDimensions(pix, &w, &h, &d);
-        if (pixGetColormap(pix))
-            iscmap = 1;
-        pixDestroy(&pix);
         bps = (d == 32) ? 8 : d;
-        spp = (d == 32) ? 3 : 1;
+        spp = pixGetSpp(pix);
+        iscmap = (pixGetColormap(pix)) ? 1 : 0;
+        pixDestroy(&pix);
         break;
 
     case IFF_JFIF_JPEG:
         ret = readHeaderJpeg(filename, &w, &h, &spp, NULL, NULL);
         bps = 8;
         if (ret)
-            return ERROR_INT( "jpeg: no header info returned", __func__, 1);
+            return ERROR_INT_1("jpeg: no header info returned",
+                               filename, __func__, 1);
         break;
 
     case IFF_PNG:
         ret = readHeaderPng(filename, &w, &h, &bps, &spp, &iscmap);
         if (ret)
-            return ERROR_INT( "png: no header info returned", __func__, 1);
+            return ERROR_INT_1("png: no header info returned",
+                               filename, __func__, 1);
         break;
 
     case IFF_TIFF:
@@ -497,18 +499,20 @@ PIX     *pix;
         ret = readHeaderTiff(filename, 0, &w, &h, &bps, &spp, NULL, &iscmap,
                              &format);
         if (ret)
-            return ERROR_INT( "tiff: no header info returned", __func__, 1);
+            return ERROR_INT_1("tiff: no header info returned",
+                               filename, __func__, 1);
         break;
 
     case IFF_PNM:
         ret = readHeaderPnm(filename, &w, &h, &d, &type, &bps, &spp);
         if (ret)
-            return ERROR_INT( "pnm: no header info returned", __func__, 1);
+            return ERROR_INT_1("pnm: no header info returned",
+                               filename, __func__, 1);
         break;
 
     case IFF_GIF:  /* cheating: reading the entire file */
         if ((pix = pixRead(filename)) == NULL)
-            return ERROR_INT( "gif: pix not read", __func__, 1);
+            return ERROR_INT_1( "gif: pix not read", filename, __func__, 1);
         pixGetDimensions(pix, &w, &h, &d);
         pixDestroy(&pix);
         iscmap = 1;  /* always colormapped; max 256 colors */
@@ -522,7 +526,8 @@ PIX     *pix;
 
     case IFF_WEBP:
         if (readHeaderWebP(filename, &w, &h, &spp))
-            return ERROR_INT( "webp: no header info returned", __func__, 1);
+            return ERROR_INT_1("webp: no header info returned",
+                               filename, __func__, 1);
         bps = 8;
         break;
 
@@ -537,13 +542,12 @@ PIX     *pix;
     case IFF_SPIX:
         ret = readHeaderSpix(filename, &w, &h, &bps, &spp, &iscmap);
         if (ret)
-            return ERROR_INT( "spix: no header info returned", __func__, 1);
+            return ERROR_INT_1("spix: no header info returned",
+                               filename, __func__, 1);
         break;
 
     case IFF_UNKNOWN:
-        L_ERROR("unknown format in file %s\n", __func__, filename);
-        return 1;
-        break;
+        return ERROR_INT_1("unknown format in file", filename, __func__, 1);
     }
 
     if (pw) *pw = w;
@@ -580,7 +584,7 @@ FILE    *fp;
         return ERROR_INT("filename not defined", __func__, 1);
 
     if ((fp = fopenReadStream(filename)) == NULL)
-        return ERROR_INT("image file not found", __func__, 1);
+        return ERROR_INT_1("image file not found", filename, __func__, 1);
     ret = findFileFormatStream(fp, pformat);
     fclose(fp);
     return ret;
@@ -1122,19 +1126,19 @@ PIXCMAP  *cmap;
 
     findFileFormat(filename, &format);
     if (format == IFF_JP2) {
-        fpin = lept_fopen(filename, "rb");
+        fpin = fopenReadStream(filename);
         fgetJp2kResolution(fpin, &xres, &yres);
-        fclose(fpin);
+        if (fpin) fclose(fpin);
         fprintf(fpout, "  xres = %d, yres = %d\n", xres, yres);
     } else if (format == IFF_PNG) {
-        fpin = lept_fopen(filename, "rb");
+        fpin = fopenReadStream(filename);
         fgetPngResolution(fpin, &xres, &yres);
-        fclose(fpin);
+        if (fpin) fclose(fpin);
         fprintf(fpout, "  xres = %d, yres = %d\n", xres, yres);
         if (iscmap) {
-            fpin = lept_fopen(filename, "rb");
+            fpin = fopenReadStream(filename);
             fgetPngColormapInfo(fpin, &cmap, &transparency);
-            fclose(fpin);
+            if (fpin) fclose(fpin);
             if (transparency)
                 fprintf(fpout, "  colormap has transparency\n");
             else
@@ -1143,9 +1147,9 @@ PIXCMAP  *cmap;
             pixcmapDestroy(&cmap);
         }
     } else if (format == IFF_JFIF_JPEG) {
-        fpin = lept_fopen(filename, "rb");
+        fpin = fopenReadStream(filename);
         fgetJpegResolution(fpin, &xres, &yres);
-        fclose(fpin);
+        if (fpin) fclose(fpin);
         fprintf(fpout, "  xres = %d, yres = %d\n", xres, yres);
     }
 
@@ -1196,9 +1200,9 @@ PIXCMAP  *cmap;
     if (format == IFF_TIFF || format == IFF_TIFF_G4 ||
         format == IFF_TIFF_G3 || format == IFF_TIFF_PACKBITS) {
         fprintf(fpout, "  Tiff header information:\n");
-        fpin = lept_fopen(filename, "rb");
+        fpin = fopenReadStream(filename);
         tiffGetCount(fpin, &npages);
-        lept_fclose(fpin);
+        if (fpin) fclose(fpin);
         if (npages == 1)
             fprintf(fpout, "    One page in file\n");
         else
@@ -1219,7 +1223,7 @@ PIXCMAP  *cmap;
          * result when a white background is visible through the
          * transparency layer. */
     if (pixGetSpp(pix) == 4) {
-        pixt = pixDisplayLayersRGBA(pix, 0xffffff00, 600.0);
+        pixt = pixDisplayLayersRGBA(pix, 0xffffff00, 600);
         pixDisplay(pixt, 100, 100);
         pixDestroy(&pixt);
     }
@@ -1354,7 +1358,7 @@ PIXCMAP   *cmap;
 #endif  /* HAVE_LIBPNG */
 
         /* ----------------------- TIFF -------------------------- */
-#if HAVE_LIBTIFF
+#if HAVE_LIBTIFF && HAVE_LIBJPEG
         /* TIFF works for 1, 2, 4, 8, 16 and 32 bpp images.
          * Because 8 bpp tiff always writes 256 entry colormaps, the
          * colormap sizes may be different for 8 bpp images with
@@ -1474,7 +1478,7 @@ PIXCMAP   *cmap;
         }
         pixDestroy(&pix1);
     }
-#endif  /* HAVE_LIBTIFF */
+#endif  /* HAVE_LIBTIFF && HAVE_LIBJPEG */
 
         /* ----------------------- PNM -------------------------- */
 

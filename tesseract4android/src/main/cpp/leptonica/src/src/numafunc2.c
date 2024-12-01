@@ -210,9 +210,9 @@ NUMA       *nad;
     if ((fas = (l_float32 *)LEPT_CALLOC(len, sizeof(l_float32))) == NULL)
         return (NUMA *)ERROR_PTR("fas not made", __func__, NULL);
     for (i = 0; i < hsize; i++)
-         fas[i] = 1.0e37;
+         fas[i] = 1.0e37f;
     for (i = hsize + n; i < len; i++)
-         fas[i] = 1.0e37;
+         fas[i] = 1.0e37f;
     fa = numaGetFArray(nas, L_NOCOPY);
     for (i = 0; i < n; i++)
          fas[hsize + i] = fa[i];
@@ -221,7 +221,7 @@ NUMA       *nad;
     numaCopyParameters(nad, nas);
     fad = numaGetFArray(nad, L_NOCOPY);
     for (i = 0; i < n; i++) {
-        minval = 1.0e37;  /* start big */
+        minval = 1.0e37f;  /* start big */
         for (j = 0; j < size; j++)
             minval = L_MIN(minval, fas[i + j]);
         fad[i] = minval;
@@ -277,9 +277,9 @@ NUMA       *nad;
     if ((fas = (l_float32 *)LEPT_CALLOC(len, sizeof(l_float32))) == NULL)
         return (NUMA *)ERROR_PTR("fas not made", __func__, NULL);
     for (i = 0; i < hsize; i++)
-         fas[i] = -1.0e37;
+         fas[i] = -1.0e37f;
     for (i = hsize + n; i < len; i++)
-         fas[i] = -1.0e37;
+         fas[i] = -1.0e37f;
     fa = numaGetFArray(nas, L_NOCOPY);
     for (i = 0; i < n; i++)
          fas[hsize + i] = fa[i];
@@ -288,7 +288,7 @@ NUMA       *nad;
     numaCopyParameters(nad, nas);
     fad = numaGetFArray(nad, L_NOCOPY);
     for (i = 0; i < n; i++) {
-        maxval = -1.0e37;  /* start small */
+        maxval = -1.0e37f;  /* start small */
         for (j = 0; j < size; j++)
             maxval = L_MAX(maxval, fas[i + j]);
         fad[i] = maxval;
@@ -605,7 +605,7 @@ NUMA       *na1, *nad;
         suma[i + 1] = sum;
     }
 
-    norm = 1. / (2 * wc + 1);
+    norm = 1.f / (2 * wc + 1);
     for (i = 0; i < n; i++)
         fad[i] = norm * (suma[width + i] - suma[i]);
 
@@ -663,7 +663,7 @@ NUMA       *na1, *nad;
         suma[i + 1] = sum;
     }
 
-    norm = 1. / (2 * wc + 1);
+    norm = 1.f / (2 * wc + 1);
     for (i = 0; i < n; i++)
         fad[i] = norm * (suma[width + i] - suma[i]);
 
@@ -702,7 +702,7 @@ numaWindowedVariance(NUMA   *nam,
 {
 l_int32     i, nm, nms;
 l_float32   var;
-l_float32  *fam, *fams, *fav, *farv;
+l_float32  *fam, *fams, *fav = NULL, *farv = NULL;
 NUMA       *nav, *narv;  /* variance and square root of variance */
 
     if (pnav) *pnav = NULL;
@@ -889,7 +889,7 @@ NUMA      *nai, *nahist;
         /* Determine binsize */
     range = imaxval - iminval + 1;
     if (range > maxbins - 1) {
-        ratio = (l_float64)range / (l_float64)maxbins;
+        ratio = (l_float32)range / (l_float32)maxbins;
         binsize = 0;
         for (i = 0; i < NBinSizes; i++) {
             if (ratio < BinSizeArray[i]) {
@@ -937,7 +937,7 @@ NUMA      *nai, *nahist;
         ibin = (ival - iminval) / binsize;
         if (ibin >= 0 && ibin < nbins) {
             numaGetIValue(nahist, ibin, &hval);
-            numaSetValue(nahist, ibin, hval + 1.0);
+            numaSetValue(nahist, ibin, hval + 1.0f);
         }
     }
 
@@ -1000,7 +1000,7 @@ NUMA      *nah;
             numaGetIValue(na, i, &ival);
             ibin = ival - imin;
             numaGetIValue(nah, ibin, &ival);
-            numaSetValue(nah, ibin, ival + 1.0);
+            numaSetValue(nah, ibin, ival + 1.0f);
         }
 
         return nah;
@@ -1023,7 +1023,7 @@ NUMA      *nah;
         ibin = (l_int32)((fval - minval) / binsize);
         ibin = L_MIN(ibin, maxbins - 1);  /* "edge" case; stay in bounds */
         numaGetIValue(nah, ibin, &ival);
-        numaSetValue(nah, ibin, ival + 1.0);
+        numaSetValue(nah, ibin, ival + 1.0f);
     }
 
     return nah;
@@ -1082,7 +1082,7 @@ NUMA      *nad;
         ibin = (l_int32)(val / binsize);
         if (ibin >= 0 && ibin < nbins) {
             numaGetIValue(nad, ibin, &ival);
-            numaSetValue(nad, ibin, ival + 1.0);
+            numaSetValue(nad, ibin, ival + 1.0f);
         }
     }
 
@@ -1412,7 +1412,7 @@ l_float32  sum, sumval, halfsum, moment, var, x, y, ymax;
         *pxvariance = var / sum - moment * moment / (sum * sum);
 
     if (pxmedian) {
-        halfsum = sum / 2.0;
+        halfsum = sum / 2.0f;
         for (sumval = 0.0, i = ifirst; i <= ilast; i++) {
             numaGetFValue(nahisto, i, &y);
             sumval += y;
@@ -1613,6 +1613,7 @@ l_float32  startval, binsize, rankcount, total, sum, fract, val;
     numaGetSum(na, &total);
     rankcount = rank * total;  /* count that corresponds to rank */
     sum = 0.0;
+    val = 0.0;
     for (i = 0; i < n; i++) {
         numaGetFValue(na, i, &val);
         if (sum + val >= rankcount)
@@ -1883,7 +1884,7 @@ l_float32  maxval, delx;
  * <pre>
  * Notes:
  *      (1) The numbers in the bins can differ by 1.  The sum of
- *          bin numbers in @naeach is @ntotal.
+ *          bin numbers in %naeach is %ntotal.
  * </pre>
  */
 NUMA *
@@ -1900,6 +1901,13 @@ NUMA    *naeach;
 
     if ((naeach = numaCreate(nbins)) == NULL)
         return (NUMA *)ERROR_PTR("naeach not made", __func__, NULL);
+
+    if (ntotal < nbins) {  /* put 1 in each of %ntotal bins */
+        for (i = 0; i < ntotal; i++)
+            numaAddNumber(naeach, 1);
+        return naeach;
+    }
+
     start = 0;
     for (i = 0; i < nbins; i++) {
         end = ntotal * (i + 1) / nbins;
@@ -1994,7 +2002,7 @@ NUMA      *nascore, *naave1, *naave2, *nanum1, *nanum2;
     numaGetSum(na, &sum);
     if (sum <= 0.0)
         return ERROR_INT("sum <= 0.0", __func__, 1);
-    norm = 4.0 / ((l_float32)(n - 1) * (n - 1));
+    norm = 4.0f / ((l_float32)(n - 1) * (n - 1));
     ave1prev = 0.0;
     numaGetHistogramStats(na, 0.0, 1.0, &ave2prev, NULL, NULL, NULL);
     num1prev = 0.0;
@@ -2043,7 +2051,7 @@ NUMA      *nascore, *naave1, *naave2, *nanum1, *nanum2;
         /* Next, for all contiguous scores within a specified fraction
          * of the max, choose the split point as the value with the
          * minimum in the histogram. */
-    minscore = (1. - scorefract) * maxscore;
+    minscore = (1.f - scorefract) * maxscore;
     for (i = maxindex - 1; i >= 0; i--) {
         numaGetFValue(nascore, i, &val);
         if (val < minscore)
@@ -2151,7 +2159,7 @@ NUMA       *na1, *na2, *nad;
         na1 = numaaGetNuma(naa1, i, L_CLONE);
         na2 = numaaGetNuma(naa2, i, L_CLONE);
         numaEarthMoverDistance(na1, na2, &dist);
-        numaAddNumber(nad, dist / 255.);  /* normalize to [0.0 - 1.0] */
+        numaAddNumber(nad, dist / 255.f);  /* normalize to [0.0 - 1.0] */
         numaDestroy(&na1);
         numaDestroy(&na2);
     }
@@ -2815,7 +2823,7 @@ NUMA      *nat, *nac;
         /* Compute the number of crossings for different thresholds */
     nat = numaCreate(41);
     for (i = 0; i < 41; i++) {
-        thresh = estthresh - 80.0 + 4.0 * i;
+        thresh = estthresh - 80.0f + 4.0f * i;
         nac = numaCrossingsByThreshold(nax, nay, thresh);
         numaAddNumber(nat, numaGetCount(nac));
         numaDestroy(&nac);
@@ -2869,7 +2877,7 @@ NUMA      *nat, *nac;
         }
     }
 
-    *pbestthresh = estthresh - 80.0 + 2.0 * (l_float32)(maxstart + maxend);
+    *pbestthresh = estthresh - 80.0f + 2.0f * (l_float32)(maxstart + maxend);
 
 #if  DEBUG_CROSSINGS
     lept_stderr("\nCrossings attain a maximum at %d thresholds, between:\n"
@@ -2998,7 +3006,7 @@ NUMA      *nap, *nad;
     for (i = 0; i < np; i++) {
         numaGetIValue(nap, i, &curindex);
         numaGetFValue(nay, curindex, &curval);
-        thresh = (prevval + curval) / 2.0;
+        thresh = (prevval + curval) / 2.0f;
         if (nax)
             numaGetFValue(nax, previndex, &xval1);
         else
@@ -3097,7 +3105,7 @@ l_float32  bestwidth, bestshift, bestscore;
         return ERROR_INT("nas not defined", __func__, 1);
 
     bestscore = bestwidth = bestshift = 0.0;
-    delwidth = (maxwidth - minwidth) / (nwidth - 1.0);
+    delwidth = (maxwidth - minwidth) / (nwidth - 1.0f);
     for (i = 0; i < nwidth; i++) {
         width = minwidth + delwidth * i;
         delshift = width / (l_float32)(nshift);
@@ -3178,12 +3186,12 @@ l_float32  score, weight, val;
     nsamp = (l_int32)((n - shift) / width);
     for (i = 0; i < nsamp; i++) {
         index = (l_int32)(shift + i * width);
-        weight = (i % 2) ? 1.0 : -1.0 * relweight;
+        weight = (i % 2) ? 1.0f : -1.0f * relweight;
         numaGetFValue(nas, index, &val);
         score += weight * val;
     }
 
-    *pscore = 2.0 * width * score / (l_float32)n;
+    *pscore = 2.0f * width * score / (l_float32)n;
     return 0;
 }
 

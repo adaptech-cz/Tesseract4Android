@@ -443,7 +443,7 @@ pixaCopy(PIXA    *pixa,
          l_int32  copyflag)
 {
 l_int32  i, nb;
-BOX     *boxc;
+BOX     *boxc = NULL;
 PIX     *pixc;
 PIXA    *pixac;
 
@@ -1803,7 +1803,7 @@ pixaaCreateFromPixa(PIXA    *pixa,
 {
 l_int32  count, i, j, npixa;
 PIX     *pix;
-PIXA    *pixat;
+PIXA    *pixat = NULL;
 PIXAA   *paa;
 
     if (!pixa)
@@ -2490,11 +2490,13 @@ PIXA  *pixa;
         return (PIXA *)ERROR_PTR("filename not defined", __func__, NULL);
 
     if ((fp = fopenReadStream(filename)) == NULL)
-        return (PIXA *)ERROR_PTR("stream not opened", __func__, NULL);
+        return (PIXA *)ERROR_PTR_1("stream not opened",
+                                   filename, __func__, NULL);
     pixa = pixaReadStream(fp);
     fclose(fp);
     if (!pixa)
-        return (PIXA *)ERROR_PTR("pixa not read", __func__, NULL);
+        return (PIXA *)ERROR_PTR_1("pixa not read",
+                                   filename, __func__, NULL);
     return pixa;
 }
 
@@ -2652,11 +2654,11 @@ FILE    *fp;
         return ERROR_INT("pixa not defined", __func__, 1);
 
     if ((fp = fopenWriteStream(filename, "wb")) == NULL)
-        return ERROR_INT("stream not opened", __func__, 1);
+        return ERROR_INT_1("stream not opened", filename, __func__, 1);
     ret = pixaWriteStream(fp, pixa);
     fclose(fp);
     if (ret)
-        return ERROR_INT("pixa not written to stream", __func__, 1);
+        return ERROR_INT_1("pixa not written to stream", filename, __func__, 1);
     return 0;
 }
 
@@ -2742,9 +2744,9 @@ FILE    *fp;
     ret = pixaWriteStream(fp, pixa);
     fputc('\0', fp);
     fclose(fp);
-    *psize = *psize - 1;
+    if (*psize > 0) *psize = *psize - 1;
 #else
-    L_INFO("work-around: writing to a temp file\n", __func__);
+    L_INFO("no fmemopen API --> work-around: write to temp file\n", __func__);
   #ifdef _WIN32
     if ((fp = fopenWriteWinTempfile()) == NULL)
         return ERROR_INT("tmpfile stream not opened", __func__, 1);
@@ -2890,11 +2892,12 @@ PIXAA  *paa;
         return (PIXAA *)ERROR_PTR("filename not defined", __func__, NULL);
 
     if ((fp = fopenReadStream(filename)) == NULL)
-        return (PIXAA *)ERROR_PTR("stream not opened", __func__, NULL);
+        return (PIXAA *)ERROR_PTR_1("stream not opened",
+                                    filename, __func__, NULL);
     paa = pixaaReadStream(fp);
     fclose(fp);
     if (!paa)
-        return (PIXAA *)ERROR_PTR("paa not read", __func__, NULL);
+        return (PIXAA *)ERROR_PTR_1("paa not read", filename, __func__, NULL);
     return paa;
 }
 
@@ -3022,11 +3025,11 @@ FILE    *fp;
         return ERROR_INT("paa not defined", __func__, 1);
 
     if ((fp = fopenWriteStream(filename, "wb")) == NULL)
-        return ERROR_INT("stream not opened", __func__, 1);
+        return ERROR_INT_1("stream not opened", filename, __func__, 1);
     ret = pixaaWriteStream(fp, paa);
     fclose(fp);
     if (ret)
-        return ERROR_INT("paa not written to stream", __func__, 1);
+        return ERROR_INT_1("paa not written to stream", filename, __func__, 1);
     return 0;
 }
 
@@ -3111,9 +3114,9 @@ FILE    *fp;
     ret = pixaaWriteStream(fp, paa);
     fputc('\0', fp);
     fclose(fp);
-    *psize = *psize - 1;
+    if (*psize > 0) *psize = *psize - 1;
 #else
-    L_INFO("work-around: writing to a temp file\n", __func__);
+    L_INFO("no fmemopen API --> work-around: write to temp file\n", __func__);
   #ifdef _WIN32
     if ((fp = fopenWriteWinTempfile()) == NULL)
         return ERROR_INT("tmpfile stream not opened", __func__, 1);

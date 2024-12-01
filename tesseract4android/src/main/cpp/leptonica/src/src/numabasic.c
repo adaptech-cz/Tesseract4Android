@@ -812,7 +812,8 @@ l_int32  *array;
     if (!na)
         return (l_int32 *)ERROR_PTR("na not defined", __func__, NULL);
 
-    n = numaGetCount(na);
+    if ((n = numaGetCount(na)) == 0)
+        return (l_int32 *)ERROR_PTR("na is empty", __func__, NULL);
     if ((array = (l_int32 *)LEPT_CALLOC(n, sizeof(l_int32))) == NULL)
         return (l_int32 *)ERROR_PTR("array not made", __func__, NULL);
     for (i = 0; i < n; i++) {
@@ -859,7 +860,8 @@ l_float32  *array;
     if (copyflag == L_NOCOPY) {
         array = na->array;
     } else {  /* copyflag == L_COPY */
-        n = numaGetCount(na);
+        if ((n = numaGetCount(na)) == 0)
+            return (l_float32 *)ERROR_PTR("na is empty", __func__, NULL);
         if ((array = (l_float32 *)LEPT_CALLOC(n, sizeof(l_float32))) == NULL)
             return (l_float32 *)ERROR_PTR("array not made", __func__, NULL);
         for (i = 0; i < n; i++)
@@ -1027,11 +1029,13 @@ NUMA  *na;
         return (NUMA *)ERROR_PTR("filename not defined", __func__, NULL);
 
     if ((fp = fopenReadStream(filename)) == NULL)
-        return (NUMA *)ERROR_PTR("stream not opened", __func__, NULL);
+        return (NUMA *)ERROR_PTR_1("stream not opened",
+                                   filename, __func__, NULL);
     na = numaReadStream(fp);
     fclose(fp);
     if (!na)
-        return (NUMA *)ERROR_PTR("na not read", __func__, NULL);
+        return (NUMA *)ERROR_PTR_1("na not read",
+                                   filename, __func__, NULL);
     return na;
 }
 
@@ -1158,11 +1162,11 @@ FILE    *fp;
         return ERROR_INT("na not defined", __func__, 1);
 
     if ((fp = fopenWriteStream(filename, "w")) == NULL)
-        return ERROR_INT("stream not opened", __func__, 1);
+        return ERROR_INT_1("stream not opened", filename, __func__, 1);
     ret = numaWriteStream(fp, na);
     fclose(fp);
     if (ret)
-        return ERROR_INT("na not written to stream", __func__, 1);
+        return ERROR_INT_1("na not written to stream", filename, __func__, 1);
     return 0;
 }
 
@@ -1269,9 +1273,9 @@ FILE    *fp;
     ret = numaWriteStream(fp, na);
     fputc('\0', fp);
     fclose(fp);
-    *psize = *psize - 1;
+    if (*psize > 0) *psize = *psize - 1;
 #else
-    L_INFO("work-around: writing to a temp file\n", __func__);
+    L_INFO("no fmemopen API --> work-around: write to temp file\n", __func__);
   #ifdef _WIN32
     if ((fp = fopenWriteWinTempfile()) == NULL)
         return ERROR_INT("tmpfile stream not opened", __func__, 1);
@@ -1759,11 +1763,13 @@ NUMAA  *naa;
         return (NUMAA *)ERROR_PTR("filename not defined", __func__, NULL);
 
     if ((fp = fopenReadStream(filename)) == NULL)
-        return (NUMAA *)ERROR_PTR("stream not opened", __func__, NULL);
+        return (NUMAA *)ERROR_PTR_1("stream not opened",
+                                    filename, __func__, NULL);
     naa = numaaReadStream(fp);
     fclose(fp);
     if (!naa)
-        return (NUMAA *)ERROR_PTR("naa not read", __func__, NULL);
+        return (NUMAA *)ERROR_PTR_1("naa not read",
+                                    filename, __func__, NULL);
     return naa;
 }
 
@@ -1861,11 +1867,11 @@ FILE    *fp;
         return ERROR_INT("naa not defined", __func__, 1);
 
     if ((fp = fopenWriteStream(filename, "w")) == NULL)
-        return ERROR_INT("stream not opened", __func__, 1);
+        return ERROR_INT_1("stream not opened", filename, __func__, 1);
     ret = numaaWriteStream(fp, naa);
     fclose(fp);
     if (ret)
-        return ERROR_INT("naa not written to stream", __func__, 1);
+        return ERROR_INT_1("naa not written to stream", filename, __func__, 1);
     return 0;
 }
 
@@ -1940,9 +1946,9 @@ FILE    *fp;
     ret = numaaWriteStream(fp, naa);
     fputc('\0', fp);
     fclose(fp);
-    *psize = *psize - 1;
+    if (*psize > 0) *psize = *psize - 1;
 #else
-    L_INFO("work-around: writing to a temp file\n", __func__);
+    L_INFO("no fmemopen API --> work-around: write to temp file\n", __func__);
   #ifdef _WIN32
     if ((fp = fopenWriteWinTempfile()) == NULL)
         return ERROR_INT("tmpfile stream not opened", __func__, 1);

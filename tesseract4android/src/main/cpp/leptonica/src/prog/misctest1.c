@@ -37,6 +37,9 @@
  *        * Extract parts of an image using a boxa
  *        * Display pixaa in row major order by component pixa.
  *        * Test zlib compression in png
+ *        * Show sampled scaling with and without source indexing shift
+ *        * Display differences in images with pixDisplayDiff()
+ *        * Demonstrate read of cmap+alpha png, and I/O of rgba pnm, bmp, webp
  */
 
 #ifdef HAVE_CONFIG_H
@@ -52,11 +55,11 @@ static const size_t  zlibsize[5] = {1047868, 215039, 195778, 189709, 180987};
 int main(int    argc,
          char **argv)
 {
-l_int32   w, h, bx, by, bw, bh, i, j;
+l_int32   w, h, bx, by, bw, bh, i, j, same;
 size_t    size;
 BOX      *box1, *box2;
 BOXA     *boxa1, *boxa2, *boxae, *boxao;
-PIX      *pixs, *pix1, *pix2, *pix3, *pixg, *pixb, *pixd, *pixc;
+PIX      *pixs, *pix1, *pix2, *pix3, *pix4, *pixg, *pixb, *pixd, *pixc;
 PIX      *pixm, *pixm2, *pixd2, *pixs2;
 PIXA     *pixa1, *pixa2;
 PIXAA    *paa;
@@ -340,9 +343,74 @@ PIXCMAP  *cmap, *cmapg;
         pixWrite("/tmp/lept/misc/zlibtest.png", pixs, IFF_PNG);
         size = nbytesInFile("/tmp/lept/misc/zlibtest.png");
         lept_stderr("zlib level = %d, file size = %lu, delta = %lu\n",
-                    2 * i, (unsigned long)size, (unsigned long)(size - zlibsize[i]));
+                    2 * i, (unsigned long)size,
+                    (unsigned long)(size - zlibsize[i]));
     }
     pixDestroy(&pixs);
+
+        /* Show sampled scaling with and without source indexing shift */
+    pixs = pixCreate(3, 3, 4);
+    cmap = pixcmapCreateRandom(4, 0, 0);
+    for (i = 0; i < 3; i++)
+        for (j = 0; j < 3; j++)
+            pixSetPixel(pixs, j, i, 3 * i + j);
+    pixSetColormap(pixs, cmap);
+    pix1 = pixScaleBySampling(pixs, 100, 100);
+    pix2 = pixScaleBySamplingWithShift(pixs, 100, 100, 0.0, 0.0);
+    pixa1 = pixaCreate(2);
+    pixaAddPix(pixa1, pix1, L_INSERT);
+    pixaAddPix(pixa1, pix2, L_INSERT);
+    pix3 = pixaDisplayTiledInColumns(pixa1, 2, 1.0, 30, 2);
+    pixWrite("/tmp/lept/misc/sampletest.png", pix3, IFF_PNG);
+    pixDisplay(pix3, 1000, 100);
+    pixDestroy(&pixs);
+    pixDestroy(&pix3);
+    pixaDestroy(&pixa1);
+
+        /* Display differences in images with pixDisplayDiff() */
+    pix1 = pixRead("feyn-fract.tif");
+    pix2 = pixTranslate(NULL, pix1, 20, 0, L_BRING_IN_WHITE);
+    pix3 = pixDisplayDiff(pix1, pix2, 1, 1, 0xff000000);
+    pixWrite("/tmp/lept/misc/diff-1bit.png", pix3, IFF_PNG);
+    pixDisplay(pix3, 100, 1000);
+    pixDestroy(&pix1);
+    pixDestroy(&pix2);
+    pixDestroy(&pix3);
+    pix1 = pixRead("test-rgb.png");
+    pix2 = pixExpandReplicate(pix1, 4);
+    pix3 = pixTranslate(NULL, pix2, 1, 0, L_BRING_IN_WHITE);
+    pix4 = pixDisplayDiff(pix2, pix3, 1, 10, 0xff000000);
+    pixWrite("/tmp/lept/misc/diff-32bit.png", pix4, IFF_PNG);
+    pixDisplay(pix4, 400, 1000);
+    pixDestroy(&pix1);
+    pixDestroy(&pix2);
+    pixDestroy(&pix3);
+    pixDestroy(&pix4);
+
+        /* Demonstrate read of cmap+alpha png; I/O of rgba pnm, bmp, webp */
+    pix1 = pixRead("elephant-cmap-alpha.png");  /* has colormap */
+    pixDisplay(pix1, 1300, 800);
+    pixWrite("/tmp/lept/misc/e.pnm", pix1, IFF_PNM);
+    pixWrite("/tmp/lept/misc/e.bmp", pix1, IFF_BMP);
+  #if HAVE_LIBWEBP
+    pixWrite("/tmp/lept/misc/e.webp", pix1, IFF_WEBP);
+  #endif  /* HAVE_LIBWEBP */
+    pix2 = pixRead("/tmp/lept/misc/e.pnm");
+    pixEqual(pix1, pix2, &same);
+    lept_stderr("png vs pnm same? (yes): %d\n", same);
+    pixDestroy(&pix2);
+    pix2 = pixRead("/tmp/lept/misc/e.bmp");
+    pixEqual(pix1, pix2, &same);
+    lept_stderr("png vs bmp same? (yes): %d\n", same);
+    pixDestroy(&pix2);
+  #if HAVE_LIBWEBP
+    pix2 = pixRead("/tmp/lept/misc/e.webp");
+    pixDisplay(pix2, 1440, 800);  /* interesting change in rgb layer */
+    pixEqual(pix1, pix2, &same);
+    lept_stderr("png vs webp same? (no): %d\n", same);
+    pixDestroy(&pix2);
+  #endif  /* HAVE_LIBWEBP */
+    pixDestroy(&pix1);
 
     return 0;
 }

@@ -394,7 +394,7 @@ PTA       *ptas1, *ptas2;
 
     if (!psame)
         return ERROR_INT("&same not defined", __func__, 1);
-    *psame = 0.0;
+    *psame = 0.0f;
     if (!pta1 || !pta2)
         return ERROR_INT("pta1 and pta2 not both defined", __func__, 1);
 
@@ -633,7 +633,6 @@ l_hmapCreateFromPta(PTA  *pta)
 {
 l_int32      i, n, x, y;
 l_uint64     key;
-L_HASHITEM  *hitem;
 L_HASHMAP   *hmap;
 
     if (!pta)
@@ -645,7 +644,7 @@ L_HASHMAP   *hmap;
     for (i = 0; i < n; i++) {
         ptaGetIPt(pta, i, &x, &y);
         l_hashPtToUint64(x, y, &key);
-        hitem = l_hmapLookup(hmap, key, i, L_HMAP_CREATE);
+        l_hmapLookup(hmap, key, i, L_HMAP_CREATE);
     }
     return hmap;
 }
