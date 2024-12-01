@@ -1,3 +1,46 @@
+2024-11-10 - V5.5.0
+* Set hOCR capabilities ocrp_dir and ocrp_lang unconditionally.
+* Calculate row bounding box in single-word mode per (issue #4304).
+* Reduce clock syscalls (#4303).
+* Several small performance and other code fixes.
+* Modernized code.
+* Print time for tessedit_timing_debug in milliseconds.
+* Print time for ErrorCounter::ComputeErrorRate in milliseconds.
+* cmake: Correctly set the soversion based on SemVer properties.
+* Do not export PDBs for static libraries (issue #4279).
+* Several other small fixes and improvements for builds and CI.
+* Modernize code for renderers and remove filename conversion for Windows (#4330).
+* Add build rule for Windows installer.
+* Support symbolic values for --oem and --psm options.
+* Remove Tensorflow support.
+* Add RISC-V V support (#4346).
+* Remove broken GitHub action msys2-4.1.1.
+
+2024-06-11 - V5.4.1
+* Avoid FP overflow in NormEvidenceOf (fixes issue #4257) (#4259)
+* Small build fixes and code improvements (#4262, #4263, #4266, #4267)
+
+2024-06-06 - V5.4.0
+* Small build fixes and code improvements
+  (#4241, #4243, #4244, #4245, #4246, #4248, #4249, #4250, #4253)
+
+2024-05-19 - V5.4.0-rc2
+* Fix setup of datadir on installations with Conda (issue #4230) (#4240)
+* Fix FP exception in Wordrec::angle_change (issue #4242) (#4243)
+
+2024-05-12 - V5.4.0-rc1
+* Build fixes, code refactoring and other smaller changes.
+* Fix grey result of indexed PNG in pdfrenderer.
+* Rename frk -> deu_latf (ISO 639-3, ISO 15924).
+* Remove broken Dockerfile.
+* Fixes for several issues reported by Coverity Scan.
+* Remove unsupported OpenCL code and related API functions (#4220).
+* Facilitate vectorization for generic build (#4223).
+* Add PAGE XML renderer / export (#4214).
+* Support training without lstmf files.
+* Improve CCUtil::main_setup (fixes issue #4230 related to Coda).
+* Allow for text angle/gradient to be retrieved (#4070).
+
 2024-01-18 - V5.3.4
 * Fixes for scrollview
 * Fixes for autoconf, clang and sw builds

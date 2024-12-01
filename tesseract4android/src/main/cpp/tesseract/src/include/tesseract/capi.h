@@ -156,6 +156,7 @@ TESS_API TessResultRenderer *TessHOcrRendererCreate(const char *outputbase);
 TESS_API TessResultRenderer *TessHOcrRendererCreate2(const char *outputbase,
                                                      BOOL font_info);
 TESS_API TessResultRenderer *TessAltoRendererCreate(const char *outputbase);
+TESS_API TessResultRenderer *TessPAGERendererCreate(const char *outputbase);
 TESS_API TessResultRenderer *TessTsvRendererCreate(const char *outputbase);
 TESS_API TessResultRenderer *TessPDFRendererCreate(const char *outputbase,
                                                    const char *datadir,
@@ -185,8 +186,6 @@ TESS_API int TessResultRendererImageNum(TessResultRenderer *renderer);
 
 TESS_API TessBaseAPI *TessBaseAPICreate();
 TESS_API void TessBaseAPIDelete(TessBaseAPI *handle);
-
-TESS_API size_t TessBaseAPIGetOpenCLDevice(TessBaseAPI *handle, void **device);
 
 TESS_API void TessBaseAPISetInputName(TessBaseAPI *handle, const char *name);
 TESS_API const char *TessBaseAPIGetInputName(TessBaseAPI *handle);
@@ -274,6 +273,7 @@ TESS_API void TessBaseAPISetRectangle(TessBaseAPI *handle, int left, int top,
                                       int width, int height);
 
 TESS_API struct Pix *TessBaseAPIGetThresholdedImage(TessBaseAPI *handle);
+TESS_API float TessBaseAPIGetGradient(TessBaseAPI *handle);
 TESS_API struct Boxa *TessBaseAPIGetRegions(TessBaseAPI *handle,
                                             struct Pixa **pixa);
 TESS_API struct Boxa *TessBaseAPIGetTextlines(TessBaseAPI *handle,
@@ -324,6 +324,7 @@ TESS_API char *TessBaseAPIGetUTF8Text(TessBaseAPI *handle);
 TESS_API char *TessBaseAPIGetHOCRText(TessBaseAPI *handle, int page_number);
 
 TESS_API char *TessBaseAPIGetAltoText(TessBaseAPI *handle, int page_number);
+TESS_API char *TessBaseAPIGetPAGEText(TessBaseAPI *handle, int page_number);
 TESS_API char *TessBaseAPIGetTsvText(TessBaseAPI *handle, int page_number);
 
 TESS_API char *TessBaseAPIGetBoxText(TessBaseAPI *handle, int page_number);

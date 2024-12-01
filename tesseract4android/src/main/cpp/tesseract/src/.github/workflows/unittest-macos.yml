@@ -13,23 +13,21 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - { name: macos-12-clang-unittest, os: macos-12, cxx: clang++ }
-          - { name: macos-12-gcc-unittest, os: macos-12, cxx: g++ }
+          - { name: macos-arm-14-clang-unittest, os: macos-14, cxx: clang++ } # Apple silicon
+          - { name: macos-latest-clang-unittest, os: macos-latest, cxx: clang++ }
+          - { name: macos-latest-gcc-unittest, os: macos-latest, cxx: g++ }
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: recursive
 
     - name: Install dependencies (macOS Homebrew)
       run: |
-           brew install autoconf automake libarchive
-           brew install leptonica cairo pango
-           brew install cabextract
-
+           brew install autoconf automake cabextract libtool
+           brew install curl icu4c leptonica libarchive pango
     - name: Setup
       run: |
-           mkdir -p m4
            ./autogen.sh
 
     - name: Configure (macOS Homebrew)

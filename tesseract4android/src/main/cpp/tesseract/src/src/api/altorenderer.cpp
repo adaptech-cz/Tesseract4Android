@@ -14,9 +14,7 @@
 // limitations under the License.
 
 #include "errcode.h" // for ASSERT_HOST
-#ifdef _WIN32
-#  include "host.h"  // windows.h for MultiByteToWideChar, ...
-#endif
+#include "helpers.h" // for copy_string
 #include "tprintf.h" // for tprintf
 
 #include <tesseract/baseapi.h>
@@ -70,7 +68,6 @@ bool TessAltoRenderer::AddImageHandler(TessBaseAPI *api) {
     AppendString(
       "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
       "<alto xmlns=\"http://www.loc.gov/standards/alto/ns-v3#\" "
-      "xmlns:xlink=\"http://www.w3.org/1999/xlink\" "
       "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" "
       "xsi:schemaLocation=\"http://www.loc.gov/standards/alto/ns-v3# "
       "http://www.loc.gov/alto/v3/alto-3-0.xsd\">\n"
@@ -145,20 +142,6 @@ char *TessBaseAPI::GetAltoText(ETEXT_DESC *monitor, int page_number) {
     SetInputName(nullptr);
   }
 
-#ifdef _WIN32
-  // convert input name from ANSI encoding to utf-8
-  int str16_len = MultiByteToWideChar(CP_ACP, 0, input_file_.c_str(), -1, nullptr, 0);
-  wchar_t *uni16_str = new WCHAR[str16_len];
-  str16_len = MultiByteToWideChar(CP_ACP, 0, input_file_.c_str(), -1, uni16_str, str16_len);
-  int utf8_len =
-      WideCharToMultiByte(CP_UTF8, 0, uni16_str, str16_len, nullptr, 0, nullptr, nullptr);
-  char *utf8_str = new char[utf8_len];
-  WideCharToMultiByte(CP_UTF8, 0, uni16_str, str16_len, utf8_str, utf8_len, nullptr, nullptr);
-  input_file_ = utf8_str;
-  delete[] uni16_str;
-  delete[] utf8_str;
-#endif
-
   std::stringstream alto_str;
   // Use "C" locale (needed for int values larger than 999).
   alto_str.imbue(std::locale::classic());
@@ -169,7 +152,7 @@ char *TessBaseAPI::GetAltoText(ETEXT_DESC *monitor, int page_number) {
            << " WIDTH=\"" << rect_width_ << "\""
            << " HEIGHT=\"" << rect_height_ << "\">\n";
 
-  ResultIterator *res_it = GetIterator();
+  std::unique_ptr<ResultIterator> res_it(GetIterator());
   while (!res_it->Empty(RIL_BLOCK)) {
     if (res_it->Empty(RIL_WORD)) {
       res_it->Next(RIL_WORD);
@@ -186,7 +169,7 @@ char *TessBaseAPI::GetAltoText(ETEXT_DESC *monitor, int page_number) {
         // Handle all kinds of images.
         // TODO: optionally add TYPE, for example TYPE="photo".
         alto_str << "\t\t\t\t<Illustration ID=\"cblock_" << bcnt++ << "\"";
-        AddBoxToAlto(res_it, RIL_BLOCK, alto_str);
+        AddBoxToAlto(res_it.get(), RIL_BLOCK, alto_str);
         alto_str << "</Illustration>\n";
         res_it->Next(RIL_BLOCK);
         continue;
@@ -195,7 +178,7 @@ char *TessBaseAPI::GetAltoText(ETEXT_DESC *monitor, int page_number) {
       case PT_VERT_LINE:
         // Handle horizontal and vertical lines.
         alto_str << "\t\t\t\t<GraphicalElement ID=\"cblock_" << bcnt++ << "\"";
-        AddBoxToAlto(res_it, RIL_BLOCK, alto_str);
+        AddBoxToAlto(res_it.get(), RIL_BLOCK, alto_str);
         alto_str << "</GraphicalElement >\n";
         res_it->Next(RIL_BLOCK);
         continue;
@@ -208,24 +191,24 @@ char *TessBaseAPI::GetAltoText(ETEXT_DESC *monitor, int page_number) {
 
     if (res_it->IsAtBeginningOf(RIL_BLOCK)) {
       alto_str << "\t\t\t\t<ComposedBlock ID=\"cblock_" << bcnt << "\"";
-      AddBoxToAlto(res_it, RIL_BLOCK, alto_str);
+      AddBoxToAlto(res_it.get(), RIL_BLOCK, alto_str);
       alto_str << "\n";
     }
 
     if (res_it->IsAtBeginningOf(RIL_PARA)) {
       alto_str << "\t\t\t\t\t<TextBlock ID=\"block_" << tcnt << "\"";
-      AddBoxToAlto(res_it, RIL_PARA, alto_str);
+      AddBoxToAlto(res_it.get(), RIL_PARA, alto_str);
       alto_str << "\n";
     }
 
     if (res_it->IsAtBeginningOf(RIL_TEXTLINE)) {
       alto_str << "\t\t\t\t\t\t<TextLine ID=\"line_" << lcnt << "\"";
-      AddBoxToAlto(res_it, RIL_TEXTLINE, alto_str);
+      AddBoxToAlto(res_it.get(), RIL_TEXTLINE, alto_str);
       alto_str << "\n";
     }
 
     alto_str << "\t\t\t\t\t\t\t<String ID=\"string_" << wcnt << "\"";
-    AddBoxToAlto(res_it, RIL_WORD, alto_str);
+    AddBoxToAlto(res_it.get(), RIL_WORD, alto_str);
     alto_str << " CONTENT=\"";
 
     bool last_word_in_line = res_it->IsAtFinalElement(RIL_TEXTLINE, RIL_WORD);
@@ -271,12 +254,8 @@ char *TessBaseAPI::GetAltoText(ETEXT_DESC *monitor, int page_number) {
 
   alto_str << "\t\t\t</PrintSpace>\n"
            << "\t\t</Page>\n";
-  const std::string &text = alto_str.str();
 
-  char *result = new char[text.length() + 1];
-  strcpy(result, text.c_str());
-  delete res_it;
-  return result;
+  return copy_string(alto_str.str());
 }
 
 } // namespace tesseract

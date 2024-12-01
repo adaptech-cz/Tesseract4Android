@@ -19,7 +19,7 @@
 #ifndef TESSERACT_CCUTIL_TPRINTF_H
 #define TESSERACT_CCUTIL_TPRINTF_H
 
-#include "params.h" // for BOOL_VAR_H
+#include "params.h"           // for INT_VAR_H
 #include <tesseract/export.h> // for TESS_API
 
 namespace tesseract {
@@ -35,6 +35,9 @@ extern TESS_API INT_VAR_H(log_level);
 extern TESS_API void tprintf( // Trace printf
     const char *format, ...)  // Message
     __attribute__((format(printf, 1, 2)));
+
+// Get file for debug output.
+FILE *get_debugfp();
 
 } // namespace tesseract
 
