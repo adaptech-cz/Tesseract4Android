@@ -3,6 +3,7 @@ version: 1.6.x-{build}
 branches:
   except:
     - /libpng[0-1][0-7]/
+    - /v[0-1][.][0-7][.][0-9]+/
 
 image:
   - Visual Studio 2022
@@ -20,7 +21,6 @@ environment:
     - TOOLCHAIN: vstudio
       AUTOMATION: cmake
       ARCH: arm64
-      CI_NO_TEST: 1
     - TOOLCHAIN: llvm
       AUTOMATION: cmake
       ARCH: x64
@@ -48,6 +48,7 @@ install:
   - 'if "%TOOLCHAIN%"=="vstudio" C:\tools\vcpkg\vcpkg.exe integrate install'
   - 'if "%TOOLCHAIN%"=="llvm" C:\tools\vcpkg\vcpkg.exe install zlib:%ARCH%-windows'
   - 'if "%TOOLCHAIN%"=="llvm" C:\tools\vcpkg\vcpkg.exe integrate install'
+  - 'if "%TOOLCHAIN%"=="msys2" if "%AUTOMATION%"=="cmake" C:\msys64\usr\bin\pacman.exe -S --noconfirm mingw-w64-%ARCH%-cmake mingw-w64-%ARCH%-ninja'
 
 before_build:
   - 'if "%TOOLCHAIN%"=="vstudio" set CI_CMAKE_GENERATOR=Visual Studio 17 2022'
@@ -55,15 +56,16 @@ before_build:
   - 'if "%TOOLCHAIN%"=="vstudio" if "%ARCH%"=="x86" set CI_CMAKE_GENERATOR_PLATFORM=Win32'
   - 'if "%TOOLCHAIN%"=="vstudio" if "%ARCH%"=="x64" set CI_CMAKE_GENERATOR_PLATFORM=x64'
   - 'if "%TOOLCHAIN%"=="vstudio" if "%ARCH%"=="arm64" set CI_CMAKE_GENERATOR_PLATFORM=ARM64'
+  - 'if "%TOOLCHAIN%"=="vstudio" if "%ARCH%"=="arm64" set CI_CMAKE_VARS=-DPNG_TESTS=0'
   - 'if "%TOOLCHAIN%"=="llvm" set CI_CMAKE_GENERATOR=Ninja'
   - 'if "%TOOLCHAIN%"=="llvm" set CI_CMAKE_TOOLCHAIN_FILE=C:\tools\vcpkg\scripts\buildsystems\vcpkg.cmake'
-  - 'if "%TOOLCHAIN%"=="llvm" set CI_CC=clang.exe'
-  - 'if "%TOOLCHAIN%"=="msys2" if "%AUTOMATION%"=="cmake" set CI_CMAKE_GENERATOR=Unix Makefiles'
-  - 'if "%TOOLCHAIN%"=="msys2" if "%ARCH%"=="i686" set PATH=C:\msys64\mingw32\bin;%PATH%'
-  - 'if "%TOOLCHAIN%"=="msys2" if "%ARCH%"=="x86_64" set PATH=C:\msys64\mingw64\bin;%PATH%'
-  - 'if "%TOOLCHAIN%"=="msys2" set CI_CC=%ARCH%-w64-mingw32-gcc.exe'
-  - 'set CI_CMAKE_BUILD_FLAGS=--parallel 2'
-  - 'set CI_CTEST_FLAGS=--parallel 2'
+  - 'if "%TOOLCHAIN%"=="llvm" set CI_CC=clang'
+  - 'if "%TOOLCHAIN%"=="msys2" set CI_CMAKE_GENERATOR=Ninja'
+  - 'if "%TOOLCHAIN%"=="msys2" set CI_CC=gcc'
+  - 'if "%TOOLCHAIN%"=="msys2" if "%ARCH%"=="i686" set MSYSTEM=MINGW32'
+  - 'if "%TOOLCHAIN%"=="msys2" if "%ARCH%"=="x86_64" set MSYSTEM=MINGW64'
+  - 'set CI_CMAKE_BUILD_FLAGS=-j2'
+  - 'set CI_CTEST_FLAGS=-j2'
   - 'set CI_MAKE_FLAGS=-j2'
   - 'set CI_MAKEFILES=scripts/makefile.gcc scripts/makefile.msys scripts/makefile.std'
 
@@ -76,3 +78,4 @@ build_script:
 
 cache:
   - C:\tools\vcpkg\installed
+  - C:\msys64\var\cache\pacman
