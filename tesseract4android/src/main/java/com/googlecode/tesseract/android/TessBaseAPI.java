@@ -26,6 +26,7 @@ import android.util.Log;
 
 import androidx.annotation.IntDef;
 import androidx.annotation.Keep;
+import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
 
 import com.googlecode.leptonica.android.Pix;
@@ -713,6 +714,81 @@ public class TessBaseAPI {
 		String text = nativeGetUTF8Text(mNativeData);
 
 		return text != null ? text.trim() : null;
+	}
+
+	/**
+	 * Returns text where items on the given iterator level (symbol, word, line, paragraph, block)
+	 * which has confidence lower than given threshold are filtered out.
+	 * <p>
+	 * Important: Recognition results must be already available when calling this method.
+	 * This means {@link #getUTF8Text} or {@link #getHOCRText} needs to be called before this.
+	 *
+	 * @param minConfidence Minimal confidence threshold (0-100) to accept the item.
+	 * @param level         Target level to iterate over and check the minimal confidence on.
+	 * @return the recognized and filtered text
+	 */
+	@NonNull
+	public String getConfidentText(int minConfidence, @PageIteratorLevel.Level int level) {
+		StringBuilder sb = new StringBuilder();
+
+		ResultIterator it = getResultIterator();
+		try {
+			it.begin();
+
+			// Iterate to first instance of the target level
+			while (!it.isAtBeginningOf(level)) {
+				if (!it.next(level)) {
+					// End of the page, no data
+					return "";
+				}
+			}
+
+			while (true) {
+				boolean addSeparator = false;
+
+				if (it.isAtBeginningOf(level)) {
+					String text = it.getUTF8Text(level);
+
+					// Trim text of unwanted trailing spaces and line endings
+					text = text.stripTrailing();
+
+					// Append the text of current element
+					if (it.confidence(level) >= minConfidence) {
+						if (!text.isEmpty()) {
+							addSeparator = true;
+							sb.append(text);
+						}
+					} /*else {
+						Log.d(TAG, "getConfidentText: Ignoring low confidence" +
+								" text '" + text + "' " +
+								" with confidence " + it.confidence(level));
+					}*/
+				}
+
+				if (!it.next(level)) {
+					// End of the page, exit the loop
+					break;
+				}
+
+				// Based on next element pick separator (new line for block/para, space for word)
+				if (!addSeparator) {
+					continue;
+				}
+				if (it.isAtBeginningOf(PageIteratorLevel.RIL_BLOCK)) {
+					sb.append("\n\n");
+				} else if (it.isAtBeginningOf(PageIteratorLevel.RIL_PARA)) {
+					sb.append("\n");
+				} else if (it.isAtBeginningOf(PageIteratorLevel.RIL_TEXTLINE)) {
+					sb.append("\n");
+				} else if (it.isAtBeginningOf(PageIteratorLevel.RIL_WORD)) {
+					sb.append(' ');
+				}
+			}
+		} finally {
+			it.delete();
+		}
+
+		return sb.toString();
 	}
 
 	/**
