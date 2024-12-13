@@ -56,22 +56,25 @@ public class Assets {
             throw new RuntimeException("Can't create directory " + tessDir);
         }
 
-        // Extract all assets to our local directory.
-        // All *.traineddata into "tessdata" subdirectory, other files into root.
-        try {
-            for (String assetName : am.list("")) {
-                final File targetFile;
-                if (assetName.endsWith(".traineddata")) {
-                    targetFile = new File(tessDir, assetName);
-                } else {
-                    targetFile = new File(localDir, assetName);
-                }
-                if (!targetFile.exists()) {
-                    copyFile(am, assetName, targetFile);
-                }
+        // Extract our assets to local directory.
+        // Note we don't use am.list() to get list of all assets, because we wouldn't know which
+		// files are ours and which were added by other libraries
+        String[] filesToExtract = new String[]{
+                "eng.traineddata",
+                "sample.jpg",
+        };
+        for (String assetName : filesToExtract) {
+            final File targetFile;
+
+            // Put all *.traineddata into "tessdata" subdirectory, other files into root.
+            if (assetName.endsWith(".traineddata")) {
+                targetFile = new File(tessDir, assetName);
+            } else {
+                targetFile = new File(localDir, assetName);
             }
-        } catch (IOException e) {
-            e.printStackTrace();
+            if (!targetFile.exists()) {
+                copyFile(am, assetName, targetFile);
+            }
         }
     }
 
