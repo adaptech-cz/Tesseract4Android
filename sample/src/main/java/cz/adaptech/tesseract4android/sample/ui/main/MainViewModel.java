@@ -96,6 +96,9 @@ public class MainViewModel extends AndroidViewModel {
             // Or set it as Bitmap, Pix,...
             // tessApi.setImage(imageBitmap);
 
+            // Set page segmentation mode (default is PSM_SINGLE_BLOCK)
+            tessApi.setPageSegMode(TessBaseAPI.PageSegMode.PSM_AUTO_OSD);
+
             long startTime = SystemClock.uptimeMillis();
 
             // Use getHOCRText(0) method to trigger recognition with progress notifications and
@@ -109,6 +112,11 @@ public class MainViewModel extends AndroidViewModel {
             // trigger the recognition and return the same result, but we would received no progress
             // notifications and we wouldn't be able to stop() the ongoing recognition.
             String text = tessApi.getUTF8Text();
+
+            // Alternatively we can get resulting text filtered based on confidence threshold.
+            // Note this call internally calls getResultIterator() which means we need to call
+            // getHOCRText or getUTF8Text method before to make sure there are results to process.
+            //String text = tessApi.getConfidentText(40, TessBaseAPI.PageIteratorLevel.RIL_WORD);
 
             // We can free up the recognition results and any stored image data in the tessApi
             // if we don't need them anymore.
