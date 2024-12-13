@@ -70,6 +70,9 @@ project for such usage, additionally with progress notifications and a way to st
 // Create TessBaseAPI instance (this internally creates the native Tesseract instance)
 TessBaseAPI tess = new TessBaseAPI();
 
+// NOTE: TessBaseAPI is not thread-safe. If you want to process multiple images in parallel,
+// create separate instance of TessBaseAPI for each thread.
+
 // Given path must contain subdirectory `tessdata` where are `*.traineddata` language files
 // The path must be directly readable by the app
 String dataPath = new File(context.getFilesDir(), "tesseract").getAbsolutePath();
@@ -99,7 +102,8 @@ tess.recycle();
 ## Sample app
 
 There is example application in the [sample](/sample) directory. It shows basic usage of the TessBaseAPI
-inside ViewModel, showing progress indication, allowing stopping the processing and more.
+inside ViewModel, showing progress indication, allowing stopping the processing, filtering results
+based on confidence, and more.
 
 It uses sample image and english traineddata, which are extracted from the assets in the APK
 to app's private directory on device. This is simple, but you are keeping 2 instances of the data
