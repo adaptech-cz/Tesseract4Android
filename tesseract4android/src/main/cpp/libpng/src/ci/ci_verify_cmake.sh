@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -o errexit -o pipefail -o posix
 
-# Copyright (c) 2019-2024 Cosmin Truta.
+# Copyright (c) 2019-2025 Cosmin Truta.
 #
 # Use, modification and distribution are subject to the MIT License.
 # Please see the accompanying file LICENSE_MIT.txt
@@ -16,12 +16,6 @@ CI_SRC_DIR="$CI_TOPLEVEL_DIR"
 CI_OUT_DIR="$CI_TOPLEVEL_DIR/out"
 CI_BUILD_DIR="$CI_OUT_DIR/ci_verify_cmake.$CI_TARGET_SYSTEM.$CI_TARGET_ARCH.build"
 CI_INSTALL_DIR="$CI_OUT_DIR/ci_verify_cmake.$CI_TARGET_SYSTEM.$CI_TARGET_ARCH.install"
-
-# Keep the following relative paths in sync with the absolute paths.
-# We use them for the benefit of native Windows tools that might be
-# otherwise confused by the path encoding used by Bash-on-Windows.
-CI_BUILD_TO_SRC_RELDIR="../.."
-CI_BUILD_TO_INSTALL_RELDIR="../ci_verify_cmake.$CI_TARGET_SYSTEM.$CI_TARGET_ARCH.install"
 
 function ci_init_build {
     # Ensure that the mandatory variables are initialized.
@@ -70,6 +64,7 @@ function ci_trace_build {
     ci_info "environment option: \$CI_RANLIB: '$CI_RANLIB'"
     ci_info "environment option: \$CI_SANITIZERS: '$CI_SANITIZERS'"
     ci_info "environment option: \$CI_FORCE: '$CI_FORCE'"
+    ci_info "environment option: \$CI_NO_BUILD: '$CI_NO_BUILD'"
     ci_info "environment option: \$CI_NO_TEST: '$CI_NO_TEST'"
     ci_info "environment option: \$CI_NO_INSTALL: '$CI_NO_INSTALL'"
     ci_info "environment option: \$CI_NO_CLEAN: '$CI_NO_CLEAN'"
@@ -148,40 +143,35 @@ function ci_build {
     all_cmake_build_flags+=($CI_CMAKE_BUILD_FLAGS)
     all_ctest_flags+=($CI_CTEST_FLAGS)
     # And... build!
-    # Use $CI_BUILD_TO_SRC_RELDIR and $CI_BUILD_TO_INSTALL_RELDIR
-    # instead of $CI_SRC_DIR and $CI_INSTALL_DIR from this point onwards.
     ci_spawn mkdir -p "$CI_BUILD_DIR"
-    ci_spawn cd "$CI_BUILD_DIR"
-    [[ $CI_BUILD_TO_SRC_RELDIR -ef $CI_SRC_DIR ]] || {
-        ci_err_internal "bad or missing \$CI_BUILD_TO_SRC_RELDIR"
-    }
-    ci_spawn mkdir -p "$CI_INSTALL_DIR"
-    [[ $CI_BUILD_TO_INSTALL_RELDIR -ef $CI_INSTALL_DIR ]] || {
-        ci_err_internal "bad or missing \$CI_BUILD_TO_INSTALL_RELDIR"
-    }
     # Spawn "cmake ...".
-    ci_spawn "$CI_CMAKE" -DCMAKE_INSTALL_PREFIX="$CI_BUILD_TO_INSTALL_RELDIR" \
-                         "${all_cmake_vars[@]}" \
-                         "$CI_BUILD_TO_SRC_RELDIR"
-    # Spawn "cmake --build ...".
-    ci_spawn "$CI_CMAKE" --build . \
-                         --config "$CI_CMAKE_BUILD_TYPE" \
-                         "${all_cmake_build_flags[@]}"
+    ci_spawn "$CI_CMAKE" -B "$CI_BUILD_DIR" \
+                         -S . \
+                         -DCMAKE_INSTALL_PREFIX="$CI_INSTALL_DIR" \
+                         "${all_cmake_vars[@]}"
+    ci_expr $((CI_NO_BUILD)) || {
+        # Spawn "cmake --build ...".
+        ci_spawn "$CI_CMAKE" --build "$CI_BUILD_DIR" \
+                             --config "$CI_CMAKE_BUILD_TYPE" \
+                             "${all_cmake_build_flags[@]}"
+    }
     ci_expr $((CI_NO_TEST)) || {
         # Spawn "ctest" if testing is not disabled.
+        ci_spawn pushd "$CI_BUILD_DIR"
         ci_spawn "$CI_CTEST" --build-config "$CI_CMAKE_BUILD_TYPE" \
                              "${all_ctest_flags[@]}"
+        ci_spawn popd
     }
     ci_expr $((CI_NO_INSTALL)) || {
         # Spawn "cmake --build ... --target install" if installation is not disabled.
-        ci_spawn "$CI_CMAKE" --build . \
+        ci_spawn "$CI_CMAKE" --build "$CI_BUILD_DIR" \
                              --config "$CI_CMAKE_BUILD_TYPE" \
                              --target install \
                              "${all_cmake_build_flags[@]}"
     }
     ci_expr $((CI_NO_CLEAN)) || {
         # Spawn "make --build ... --target clean" if cleaning is not disabled.
-        ci_spawn "$CI_CMAKE" --build . \
+        ci_spawn "$CI_CMAKE" --build "$CI_BUILD_DIR" \
                              --config "$CI_CMAKE_BUILD_TYPE" \
                              --target clean \
                              "${all_cmake_build_flags[@]}"

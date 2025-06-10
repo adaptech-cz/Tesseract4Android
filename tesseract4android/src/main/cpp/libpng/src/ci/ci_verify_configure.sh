@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -o errexit -o pipefail -o posix
 
-# Copyright (c) 2019-2024 Cosmin Truta.
+# Copyright (c) 2019-2025 Cosmin Truta.
 #
 # Use, modification and distribution are subject to the MIT License.
 # Please see the accompanying file LICENSE_MIT.txt
@@ -58,6 +58,7 @@ function ci_trace_build {
     ci_info "environment option: \$CI_LD_FLAGS: '$CI_LD_FLAGS'"
     ci_info "environment option: \$CI_SANITIZERS: '$CI_SANITIZERS'"
     ci_info "environment option: \$CI_FORCE: '$CI_FORCE'"
+    ci_info "environment option: \$CI_NO_BUILD: '$CI_NO_BUILD'"
     ci_info "environment option: \$CI_NO_TEST: '$CI_NO_TEST'"
     ci_info "environment option: \$CI_NO_INSTALL: '$CI_NO_INSTALL'"
     ci_info "environment option: \$CI_NO_CLEAN: '$CI_NO_CLEAN'"
@@ -122,13 +123,19 @@ function ci_build {
         ci_spawn export CFLAGS="${CFLAGS:-"-O2"} -fsanitize=$CI_SANITIZERS"
         ci_spawn export LDFLAGS="${LDFLAGS}${LDFLAGS:+" "}-fsanitize=$CI_SANITIZERS"
     }
+    # Spawn "autogen.sh" if the configure script is not available.
+    [[ -x "$CI_SRC_DIR/configure" ]] || {
+        ci_spawn "$CI_SRC_DIR/autogen.sh" --maintainer
+    }
     # And... build!
     ci_spawn mkdir -p "$CI_BUILD_DIR"
     ci_spawn cd "$CI_BUILD_DIR"
     # Spawn "configure".
     ci_spawn "$CI_SRC_DIR/configure" --prefix="$CI_INSTALL_DIR" $CI_CONFIGURE_FLAGS
-    # Spawn "make".
-    ci_spawn "$CI_MAKE" $CI_MAKE_FLAGS
+    ci_expr $((CI_NO_BUILD)) || {
+        # Spawn "make".
+        ci_spawn "$CI_MAKE" $CI_MAKE_FLAGS
+    }
     ci_expr $((CI_NO_TEST)) || {
         # Spawn "make test" if testing is not disabled.
         ci_spawn "$CI_MAKE" $CI_MAKE_FLAGS test
