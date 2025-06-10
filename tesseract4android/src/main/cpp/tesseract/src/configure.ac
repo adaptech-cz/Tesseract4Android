@@ -28,8 +28,8 @@ AM_INIT_AUTOMAKE([foreign subdir-objects nostdinc])
 
 # Define date of package, etc. Could be useful in auto-generated
 # documentation.
-PACKAGE_YEAR=2024
-PACKAGE_DATE="11/10"
+PACKAGE_YEAR=2025
+PACKAGE_DATE="05/25"
 
 abs_top_srcdir=`AS_DIRNAME([$0])`
 
@@ -221,9 +221,9 @@ fi
 # additional checks for RVV targets
 if test x$check_for_rvv = x1; then
   AC_MSG_NOTICE([checking how to detect RVV availability])
-  AC_CHECK_FUNCS([getauxval])
+  AC_CHECK_FUNCS([getauxval elf_aux_info])
 
-  if test $ac_cv_func_getauxval = no; then
+  if test $ac_cv_func_getauxval = no && test $ac_cv_func_elf_aux_info = no; then
       AC_MSG_WARN([RVV is available, but we don't know how to check for it.  Will not be able to use RVV.])
   fi
 fi

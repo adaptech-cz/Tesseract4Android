@@ -282,7 +282,7 @@ endif()
 # Compiler specific environment
 if(CMAKE_COMPILER_IS_GNUCXX OR MINGW)
   set(CMAKE_CXX_FLAGS_DEBUG
-      "${CMAKE_CXX_FLAGS_DEBUG} -Wall -DDEBUG -pedantic -Og")
+      "${CMAKE_CXX_FLAGS_DEBUG} -Wall -DDEBUG -pedantic -Og -Wno-unknown-pragmas")
 elseif(MSVC)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS)
   add_definitions(-D_CRT_NONSTDC_NO_DEPRECATE) # strdup
@@ -306,6 +306,10 @@ elseif(MSVC)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
     message(STATUS "Building with static CRT.")
   endif()
+  # Workaround: When building on VS 2022 17.10 or newer, but using an older runtime,
+  # mutexes can crash
+  # https://stackoverflow.com/questions/78598141/first-stdmutexlock-crashes-in-application-built-with-latest-visual-studio
+  add_definitions(-D_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR)
 endif()
 if(CLANG) # clang all platforms
   set(CMAKE_CXX_FLAGS_RELEASE
@@ -320,7 +324,10 @@ if(OPENMP_BUILD
   set(OPENMP_BUILD OFF)
 endif()
 if(OPENMP_BUILD)
-  find_package(OpenMP QUIET)
+  if(MSVC)  # supported from cmake 3.30
+    set(OpenMP_RUNTIME_MSVC "llvm")
+  endif(MSVC)
+  find_package(OpenMP)
   # https://stackoverflow.com/questions/12399422
   # how-to-set-linker-flags-for-openmp-in-cmakes-try-compile-function
   if(NOT OpenMP_FOUND
@@ -519,6 +526,7 @@ message(STATUS "General configuration for Tesseract ${PACKAGE_VERSION}")
 message(STATUS "--------------------------------------------------------")
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE} ${BUILD_ARCH}")
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID}")
+message(STATUS "Compiler version: ${CMAKE_CXX_COMPILER_VERSION}")
 message(STATUS "Used standard: C++${CMAKE_CXX_STANDARD}")
 message(STATUS "CXX compiler options: ${COMPILER_FLAGS}")
 get_directory_property(DirCompDefs COMPILE_DEFINITIONS)
@@ -891,7 +899,9 @@ if(BUILD_TESTS
    AND EXISTS
        ${CMAKE_CURRENT_SOURCE_DIR}/unittest/third_party/googletest/CMakeLists.txt
 )
+  enable_testing()
   add_subdirectory(unittest/third_party/googletest)
+  add_subdirectory(unittest)
 endif()
 
 if(BUILD_TRAINING_TOOLS)
