@@ -11,10 +11,10 @@ which is based on [Tesseract Tools for Android][tesseract-android-tools].
 
 This project uses additional libraries (with their own specific licenses):
 
- - [Tesseract OCR][tesseract-ocr] 5.5.0
+ - [Tesseract OCR][tesseract-ocr] 5.5.1
  - [Leptonica][leptonica] 1.85.0
  - [libjpeg][jpeg] v9f
- - [libpng][png] 1.6.44
+ - [libpng][png] 1.6.48
 
 ## Prerequisites
 
@@ -53,10 +53,10 @@ allprojects {
 ```gradle
 dependencies {
     // To use Standard variant:
-    implementation 'cz.adaptech.tesseract4android:tesseract4android:4.8.0'
+    implementation 'cz.adaptech.tesseract4android:tesseract4android:4.9.0'
 
     // To use OpenMP variant:
-    implementation 'cz.adaptech.tesseract4android:tesseract4android-openmp:4.8.0'
+    implementation 'cz.adaptech.tesseract4android:tesseract4android-openmp:4.9.0'
 }
 ```
 
