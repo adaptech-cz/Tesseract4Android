@@ -31,7 +31,7 @@ set(JPEG_PATH "../libjpeg/src/")
 set(PNG_PATH "../libpng/src/")
 
 configure_file(
-        endianness.h.in
+        ${CMAKE_CURRENT_SOURCE_DIR}/endianness.h.in
         ${CMAKE_CURRENT_SOURCE_DIR}/${LEPT_PATH}endianness.h @ONLY)
 
 file(GLOB leptonica_src "${LEPT_PATH}*.c")

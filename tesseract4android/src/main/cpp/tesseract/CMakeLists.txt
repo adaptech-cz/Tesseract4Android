@@ -45,11 +45,11 @@ set(GENERIC_MINOR_VERSION ${VERSION_MINOR})
 set(GENERIC_MICRO_VERSION ${VERSION_PATCH})
 
 configure_file(
-        ${TESS_INCLUDE_PATH}tesseract/version.h.in
+        ${CMAKE_CURRENT_SOURCE_DIR}/${TESS_INCLUDE_PATH}tesseract/version.h.in
         ${CMAKE_CURRENT_SOURCE_DIR}/${TESS_INCLUDE_PATH}tesseract/version.h @ONLY)
 
 configure_file(
-        config_auto.h.in
+        ${CMAKE_CURRENT_SOURCE_DIR}/config_auto.h.in
         ${CMAKE_CURRENT_SOURCE_DIR}/${TESS_PATH}api/config_auto.h @ONLY)
 
 file(GLOB tesseract_src
