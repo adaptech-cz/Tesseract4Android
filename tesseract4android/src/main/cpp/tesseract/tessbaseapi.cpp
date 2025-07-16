@@ -752,6 +752,15 @@ jboolean Java_com_googlecode_tesseract_android_TessBaseAPI_nativeAddPageToDocume
   return JNI_TRUE;
 }
 
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_googlecode_tesseract_android_TessBaseAPI_nativeRecognize(JNIEnv *env, jobject thiz,
+                                                                  jlong mNativeData) {
+    native_data_t *nat = (native_data_t*) mNativeData;
+    nat->api.Recognize(nullptr);
+}
+
 #ifdef __cplusplus
 }
 #endif

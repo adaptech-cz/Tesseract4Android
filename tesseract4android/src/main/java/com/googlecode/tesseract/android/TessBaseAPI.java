@@ -716,6 +716,14 @@ public class TessBaseAPI {
 		return text != null ? text.trim() : null;
 	}
 
+	@WorkerThread
+	public void recognize() {
+		if (mRecycled)
+			throw new IllegalStateException();
+
+		nativeRecognize(mNativeData);
+	}
+
 	/**
 	 * Returns text where items on the given iterator level (symbol, word, line, paragraph, block)
 	 * which has confidence lower than given threshold are filtered out.
@@ -1218,4 +1226,6 @@ public class TessBaseAPI {
 	private native boolean nativeEndDocument(long rendererPointer);
 
 	private native boolean nativeAddPageToDocument(long mNativeData, long nativePix, String imagePath, long rendererPointer);
+
+	private native void nativeRecognize(long mNativeData);
 }
