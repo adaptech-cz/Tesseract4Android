@@ -97,7 +97,8 @@ public class MainViewModel extends AndroidViewModel {
             // tessApi.setImage(imageBitmap);
 
             // Set page segmentation mode (default is PSM_SINGLE_BLOCK)
-            tessApi.setPageSegMode(TessBaseAPI.PageSegMode.PSM_AUTO_OSD);
+            tessApi.setPageSegMode(TessBaseAPI.PageSegMode.PSM_RAW_LINE);
+            tessApi.setVariable(TessBaseAPI.VAR_CHAR_WHITELIST, "01:23456789");
 
             long startTime = SystemClock.uptimeMillis();
 

@@ -62,6 +62,8 @@ public class Assets {
         String[] filesToExtract = new String[]{
                 "eng.traineddata",
                 "sample.jpg",
+                "7seg.traineddata",
+                "7seg.png",
         };
         for (String assetName : filesToExtract) {
             final File targetFile;
