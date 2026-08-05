@@ -6,7 +6,7 @@ plugins {
 android {
 	namespace 'cz.adaptech.tesseract4android'
 	compileSdk 35
-	ndkVersion "27.2.12479018"
+	ndkVersion "29.0.14206865"
 
 	defaultConfig {
 		minSdk 21
@@ -19,9 +19,7 @@ android {
 				// TODO: Include eyes-two in some build flavor of the library?
 				//targets "jpeg", "pngx", "leptonica", "tesseract"
 
-				// Support 16 KB page sizes with NDK r27
-				// This can be removed with NDK r28, which supports it by default.
-				arguments "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
+				// 16 KB page size support is enabled by default since NDK r28.
 			}
 		}
 		ndk {
